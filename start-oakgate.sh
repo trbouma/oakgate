@@ -35,13 +35,14 @@ docker compose config --quiet
 
 printf '%s\n' 'Starting OakGate...'
 if [ "$force_recreate" = true ]; then
-    docker compose up --detach --force-recreate
+    docker compose up --build --detach --force-recreate
 else
-    docker compose up --detach
+    docker compose up --build --detach
 fi
 
 docker compose ps
 printf '%s\n' \
-    'Startup requested. Keycloak may still be initializing.' \
-    'Check startup logs with: docker compose logs --tail=100 keycloak' \
+    'Startup requested. Services may still be initializing.' \
+    'Check startup logs with: docker compose logs --tail=100 app keycloak' \
+    'App: http://<beelink-address>:8801/ (or OAKGATE_PORT from .env)' \
     'Admin console: https://keycloak.safebox.dev/admin/master/console/'

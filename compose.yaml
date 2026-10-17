@@ -1,6 +1,13 @@
 name: oakgate
 
 services:
+  app:
+    build:
+      context: .
+    restart: unless-stopped
+    ports:
+      - "${OAKGATE_BIND_ADDRESS:-0.0.0.0}:${OAKGATE_PORT:-8801}:8000"
+
   keycloak:
     image: quay.io/keycloak/keycloak:26.8.0
     command: ["start-dev"]

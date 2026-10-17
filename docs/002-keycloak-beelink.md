@@ -25,7 +25,7 @@ openssl rand -hex 24
 Put the generated password in `.env` as `KC_BOOTSTRAP_ADMIN_PASSWORD`. The file is ignored by Git. Prepare storage as described below, then start Keycloak:
 
 ```sh
-docker compose up -d
+docker compose up -d keycloak
 docker compose logs --tail=100 keycloak
 ```
 
@@ -58,7 +58,7 @@ From the repository directory on Beelink:
 ./refresh-containers.sh
 ```
 
-Like Mainstay, the refresh script rejects tracked local changes and pulls with `--ff-only`, then delegates to `start-oakgate.sh --force-recreate`. Startup validates the Compose configuration and shows container status; verify readiness using the checks below. The scripts preserve the existing `.env` file and external storage directory. Review release instructions before upgrading Keycloak versions.
+Like Mainstay, the refresh script rejects tracked local changes and pulls with `--ff-only`, then delegates to `start-oakgate.sh --force-recreate`. Startup validates the Compose configuration, builds the FastAPI app on the deployment host, and shows container status; verify readiness using the checks below. The scripts preserve the existing `.env` file and external storage directory. Review release instructions before upgrading Keycloak versions.
 
 ## Open from your computer
 

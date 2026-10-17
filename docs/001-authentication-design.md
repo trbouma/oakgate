@@ -7,6 +7,8 @@ Date: 2026-10-17
 
 OakGate (OpenID Access Gate) is an application in the Mainstay family. Its first milestone is a working FastAPI application where a user can sign in with Google through Keycloak, view a protected page, and sign out.
 
+OakGate’s product direction is a custodial application around safebox-acorn. The [Go Independent design note](004-go-independent.md) records the requirement to support independent recovery and ending custody; that workflow is deferred but must inform identity and storage choices.
+
 FastAPI, Keycloak, and Google sign-in are confirmed requirements. The browser interface, session storage, and deployment choices below are proposed starting points.
 
 ## Architecture
@@ -105,7 +107,6 @@ Production requires HTTPS, persistent Keycloak storage, protected Redis access, 
 
 ## Open decisions
 
-- Is OakGate eventually an application portal, an identity demonstration, or a reusable foundation for other Mainstay apps?
 - Should access be open to any Google account, restricted to a Workspace domain, or invitation-only?
 - Will production require immediate remote logout propagation, and which hosting environment will it use?
 

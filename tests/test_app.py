@@ -1,0 +1,38 @@
+import asyncio
+
+import httpx
+
+from app.main import app
+
+
+def get(path):
+    async def request():
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+        ) as client:
+            return await client.get(path)
+    return asyncio.run(request())
+
+
+def test_liveness_does_not_require_keycloak_or_secrets():
+    response = get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok", "service": "oakgate"}
+
+
+def test_landing_page_assets_are_available():
+    home = get("/")
+    assert home.status_code == 200
+    assert "Sign-in is coming next." in home.text
+    assert get("/static/style.css").status_code == 200
+    logo = get("/logo.png")
+    assert logo.headers["content-type"] == "image/png"
+    assert logo.content.startswith(b"\x89PNG\r\n\x1a\n")
+    assert get("/.env").status_code == 404
+    assert get("/static/../.env").status_code == 404
+
+
+def test_api_schema_documents_health():
+    schema = get("/openapi.json").json()
+    assert schema["info"]["title"] == "OakGate"
+    assert "/health" in schema["paths"]

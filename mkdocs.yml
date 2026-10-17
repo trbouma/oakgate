@@ -1,0 +1,62 @@
+site_name: OakGate
+site_description: A welcoming way into your safebox. Managed by default, with a path to independence.
+site_url: https://trbouma.github.io/oakgate/
+repo_url: https://github.com/trbouma/oakgate
+repo_name: trbouma/oakgate
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  language: en
+  font: false
+  logo: assets/oakgate-logo.png
+  favicon: assets/oakgate-logo.png
+  features:
+    - navigation.top
+    - navigation.sections
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Use dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Use light mode
+
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - Understand OakGate:
+      - Product direction: product-direction.md
+      - Go Independent: 004-go-independent.md
+      - Project status: project-status.md
+  - Build and deploy:
+      - FastAPI app: 003-fastapi-app.md
+      - Keycloak on Beelink: 002-keycloak-beelink.md
+      - Authentication design: 001-authentication-design.md
+
+markdown_extensions:
+  - attr_list
+  - md_in_html
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+extra_css:
+  - stylesheets/extra.css
+copyright: OakGate is open-source software released under the MIT License.

@@ -1,0 +1,10 @@
+**
+!pyproject.toml
+!poetry.lock
+!app/
+!app/**
+!assets/
+!assets/branding/
+!assets/branding/oakgate-logo-flat.png
+**/__pycache__/
+**/*.pyc

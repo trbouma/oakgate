@@ -1,0 +1,39 @@
+:root {
+  --md-primary-fg-color: #506337;
+  --md-primary-fg-color--light: #72834f;
+  --md-primary-fg-color--dark: #334729;
+  --md-accent-fg-color: #87552e;
+  --oakgate-ink: #293b25;
+  --oakgate-panel: #f4f4ea;
+  --oakgate-border: #dce2cf;
+  --md-text-font: system-ui, sans-serif;
+}
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #506337;
+  --md-accent-fg-color: #d9ab75;
+  --oakgate-ink: #e9efdc;
+  --oakgate-panel: #262d25;
+  --oakgate-border: #45503e;
+}
+.oakgate-hero { padding: clamp(1.5rem, 4vw, 3rem); text-align: center; background: var(--oakgate-panel); border-block: 1px solid var(--oakgate-border); margin-bottom: 1.5rem; }
+.oakgate-mark { display: block; width: 9rem; height: 9rem; object-fit: contain; margin: 0 auto 1rem; }
+.oakgate-eyebrow { font-size: .6rem; font-weight: 700; letter-spacing: .18em; color: var(--oakgate-ink); }
+.md-typeset .oakgate-hero h1 { color: var(--oakgate-ink); font-size: clamp(2.5rem, 6vw, 4rem); font-weight: 700; letter-spacing: -.04em; margin: .4rem 0 .6rem; }
+.oakgate-tagline { color: var(--oakgate-ink); font-size: 1.25rem; font-weight: 650; margin: 0 0 .75rem; }
+.oakgate-intro { max-width: 34rem; margin: 0 auto 1.4rem; line-height: 1.65; }
+.oakgate-hero .md-button { margin: .25rem; }
+.oakgate-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .9rem; margin: 1.5rem 0 2rem; }
+.oakgate-card { border: 1px solid var(--oakgate-border); border-radius: 8px; padding: 1rem; }
+.md-typeset .oakgate-card h3 { margin-top: 0; color: var(--oakgate-ink); }
+.oakgate-card p { font-size: .78rem; }
+.oakgate-independence { padding: 1.4rem 1.6rem; border-left: 4px solid #a37342; background: var(--oakgate-panel); margin: 1.5rem 0 2rem; }
+.md-typeset .oakgate-independence h2 { margin-top: 0; color: var(--oakgate-ink); }
+.oakgate-family { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .9rem; }
+.oakgate-family p { border-bottom: 2px solid var(--oakgate-border); padding-bottom: .8rem; font-size: .76rem; }
+.md-header__button.md-logo img { background: #faf8f1; border-radius: 4px; }
+@media (max-width: 52rem) {
+  .oakgate-grid, .oakgate-family { grid-template-columns: 1fr; }
+  .oakgate-hero { padding: 1.2rem .9rem; }
+  .oakgate-mark { width: 7rem; height: 7rem; }
+  .oakgate-hero .md-button { display: block; margin: .6rem 0; }
+}
