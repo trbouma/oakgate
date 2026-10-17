@@ -90,3 +90,5 @@ The included GitHub Pages workflow publishes on pushes to `main` once **Settings
 - [Keycloak deployment and first login](docs/002-keycloak-beelink.md)
 - [FastAPI development and deployment](docs/003-fastapi-app.md)
 - [Go Independent: custody and leaving OakGate](docs/004-go-independent.md)
+
+- [OakGate and safebox-web custody models](docs/006-custody-models.md)

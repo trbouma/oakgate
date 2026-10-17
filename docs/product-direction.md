@@ -19,6 +19,8 @@ Keys and recovery details should stay out of the normal interface until the user
 
 Custody introduces responsibilities for account recovery, protection of stored secrets, and ending access. Authentication alone does not implement these responsibilities.
 
+The [custody models comparison](006-custody-models.md) explains the shared safebox-acorn architecture, identity-provider recovery, and the tradeoffs for unattended services such as Nostr Wallet Connect.
+
 ## An exit designed from the beginning
 
 **Go Independent** means taking responsibility for the safebox and asking OakGate to delete the information it holds about the user. Recovery comes first; deletion follows explicit confirmation. Showing recovery material by itself does not end custody.
