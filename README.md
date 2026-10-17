@@ -4,7 +4,7 @@ OpenID Access Gate — part of the Mainstay family.
 
 ## Run on Beelink
 
-Requires Docker with Docker Compose and an available port 8080.
+Requires Docker with Docker Compose and an available port 8800.
 
 ```sh
 git clone https://github.com/trbouma/oakgate.git
@@ -31,7 +31,7 @@ Then run:
 docker compose up -d
 ```
 
-Keycloak runs in development mode with persistent storage and listens on Beelink's loopback address. Open it through the SSH tunnel described in the [Beelink setup guide](docs/002-keycloak-beelink.md).
+Keycloak runs in development mode with persistent storage and publishes `0.0.0.0:8800` on Beelink (container port 8080). From another machine, open `http://<beelink-vpn-ip-or-hostname>:8800/admin/`. See the [Beelink setup guide](docs/002-keycloak-beelink.md).
 
 For subsequent updates, use the same workflow as Mainstay:
 

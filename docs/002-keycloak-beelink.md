@@ -6,9 +6,9 @@ Status: Initial development setup, 2026-10-17
 
 Start one Keycloak container on Beelink with persistent local storage. This is the first milestone; FastAPI, Google sign-in, PostgreSQL, and Redis are not required to reach it. The broader authentication design remains a future proposal.
 
-Use Keycloak development mode and its embedded database for this initial experiment. Docker publishes the service only on Beelink's loopback interface. Reach it through an SSH tunnel over your VPN, so the browser sees a consistent `http://localhost:8080` address. Direct access using Beelink's VPN address is intentionally not configured in this first setup.
+Use Keycloak development mode and its embedded database for this initial experiment. Docker publishes `0.0.0.0:8800` on Beelink, forwarding to container port 8080. Other machines can connect directly using Beelink's VPN IP or hostname. The host binding covers all IPv4 interfaces; use your host firewall or VPN access controls to limit who can reach it.
 
-Prerequisites: Docker Engine and the Docker Compose plugin on Beelink, plus SSH access from your computer. Run the deployment commands yourself over your existing SSH connection. Port 8080 must be available on Beelink.
+Prerequisites: Docker Engine and the Docker Compose plugin on Beelink, plus SSH access from your computer. Run the deployment commands yourself over your existing SSH connection. Port 8800 must be available on Beelink.
 
 ## Start on Beelink
 
@@ -62,13 +62,9 @@ Like Mainstay, the refresh script rejects tracked local changes and pulls with `
 
 ## Open from your computer
 
-Replace `YOUR_BEELINK_SSH_TARGET` with your actual SSH alias or `user@vpn-hostname`:
+Visit `http://<beelink-vpn-ip-or-hostname>:8800/admin/` from another machine on your network or VPN. Replace the placeholder with Beelink's actual reachable address. Sign in with `admin` and the password you configured.
 
-```sh
-ssh -N -o ExitOnForwardFailure=yes -L 8080:127.0.0.1:8080 YOUR_BEELINK_SSH_TARGET
-```
-
-Keep that terminal open, then visit <http://localhost:8080/admin/>. Port 8080 must be free on your computer. Sign in with `admin` and the password you configured.
+Development mode derives URLs from incoming requests, so redirects no longer point to localhost. Use the same address consistently. A previously configured realm Frontend URL, if any, must also be updated. For future OIDC clients, select a fixed HTTPS hostname before registering callbacks.
 
 The bootstrap account is temporary. Create a permanent administrator in the `master` realm, give it the `admin` realm role, test it in a separate browser session, and remove the bootstrap account. Changing the bootstrap password in `.env` does not reset an existing administrator's password.
 
@@ -76,17 +72,17 @@ Create a realm named `oakgate` from the realm selector. Keep application users a
 
 ## Check that it works
 
-With the tunnel open, run on your computer:
+Run on your computer, replacing `BEELINK_ADDRESS` with the same IP or hostname used in your browser:
 
 ```sh
-curl --fail http://localhost:8080/realms/oakgate/.well-known/openid-configuration
+curl --fail http://BEELINK_ADDRESS:8800/realms/oakgate/.well-known/openid-configuration
 ```
 
-The response should be JSON with issuer `http://localhost:8080/realms/oakgate`. Restart Keycloak with `docker compose restart keycloak` on Beelink and confirm that the realm and administrator still exist. `docker compose ps` and container logs help diagnose startup problems; this initial file does not define a readiness probe.
+The response should be JSON with issuer `http://BEELINK_ADDRESS:8800/realms/oakgate`. Restart Keycloak with `docker compose restart keycloak` on Beelink and confirm that the realm and administrator still exist. `docker compose ps` and container logs help diagnose startup problems; this initial file does not define a readiness probe.
 
 ## Next step
 
-Once the console and persistence checks pass, add Google as an identity provider and then the FastAPI client. The tunnel keeps a localhost callback available for initial development. Before using a shared VPN hostname, choose a stable HTTPS URL and update the issuer and callback registrations together. Move to PostgreSQL and Keycloak production mode before relying on this service beyond development. This single-container setup is not a production deployment.
+Once the console and persistence checks pass, add Google as an identity provider and then the FastAPI client. For Google sign-in over the network, choose a stable HTTPS URL and update the issuer and callback registrations together; the current HTTP URL is for initial Keycloak setup. Move to PostgreSQL and Keycloak production mode before relying on this service beyond development. This single-container setup is not a production deployment.
 
 ## References
 

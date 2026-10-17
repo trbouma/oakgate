@@ -8,9 +8,10 @@ services:
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME:-admin}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD:?Set KC_BOOTSTRAP_ADMIN_PASSWORD in .env}
-      KC_HOSTNAME: http://localhost:8080
+      # Resolve development URLs from the incoming request.
+      KC_HOSTNAME_STRICT: "false"
     ports:
-      - "127.0.0.1:8080:8080"
+      - "0.0.0.0:8800:8080"
     volumes:
       - type: bind
         source: ${KEYCLOAK_DATA_DIR:-/mnt/bitcoin/keycloak}
