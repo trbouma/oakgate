@@ -3,23 +3,51 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#5b6f3a">
-  <title>OakGate · Mainstay</title>
+  <meta name="theme-color" content="#506337">
+  <meta name="description" content="OakGate is a custodial companion for your safebox. Familiar sign-in, managed recovery, and a planned path to independence, built on safebox-acorn.">
+  <title>OakGate · A welcoming way into your safebox</title>
   <link rel="icon" type="image/png" href="/logo.png">
   <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
-  <header><a class="family" href="/">MAINSTAY <span>/ OAKGATE</span></a><span class="tag">OpenID Access Gate</span></header>
-  <main>
-    <img class="logo" src="/logo.png" alt="Oak tree forming an open gate" width="260" height="260">
-    <p class="eyebrow">ROOTED IN TRUST</p>
-    <h1>Welcome to OakGate.</h1>
-    <p class="intro">A welcoming way into your Mainstay world.</p>
-    <div class="status"><span class="dot" aria-hidden="true"></span> Your OakGate app is running</div>
-    <p><a class="primary-action" href="/auth/login">Sign in</a></p>
-    <p class="note">Continue securely with your OakGate account.</p>
-    <nav aria-label="Application resources"><a href="/docs">Explore the API <span aria-hidden="true">↗</span></a><a href="/health">Check app health <span aria-hidden="true">↗</span></a></nav>
+<body class="landing">
+  <a class="skip-link" href="#content">Skip to content</a>
+  <header class="site-header">
+    <a class="family" href="/">MAINSTAY <span>/ OAKGATE</span></a>
+    <nav class="site-nav" aria-label="Main navigation"><a href="#about">About</a><a href="https://trbouma.github.io/oakgate/">Documentation</a><a class="nav-signin" href="/auth/login">Sign in <span aria-hidden="true">↗</span></a></nav>
+  </header>
+  <main id="content" class="landing-main">
+    <section class="hero" aria-labelledby="hero-title">
+      <img class="hero-mark" src="/logo.png" alt="Oak tree forming an open gate" width="180" height="180">
+      <p class="eyebrow">PART OF THE MAINSTAY FAMILY</p>
+      <h1 id="hero-title">OakGate</h1>
+      <p class="hero-tagline">A welcoming way into your safebox.</p>
+      <p class="hero-intro">Familiar sign-in. A little more help. OakGate is being built for people who want a provider to look after their safebox keys and recovery.</p>
+      <div class="hero-actions"><a class="primary-action" href="/auth/login">Sign in to OakGate <span aria-hidden="true">→</span></a><a class="secondary-action" href="#about">Meet OakGate</a></div>
+      <p class="hero-caption">Continue through Keycloak with your Google account.</p>
+    </section>
+    <div class="promise">Managed by default. <strong>Independent by choice.</strong></div>
+    <section id="about" class="content-section" aria-labelledby="about-title">
+      <div class="section-heading"><p class="eyebrow">A LITTLE LESS TO MANAGE</p><h2 id="about-title">Your safebox, with someone<br class="desktop-break"> to help look after it.</h2><p>OakGate adds a managed experience around safebox-acorn. The aim is simple: use your safebox without handling keys, recovery phrases, and relay settings every day.</p></div>
+      <div class="feature-grid">
+        <article class="feature"><span class="feature-number">01 / ACCESS</span><h3>A familiar entrance</h3><p>Sign in with Google through Keycloak. Your identity provider brings its own account-recovery process, giving you a familiar way back in.</p><span class="feature-state">Available today</span></article>
+        <article class="feature"><span class="feature-number">02 / RECOVERY</span><h3>Recovery kept close</h3><p>OakGate is designed to retain your keys, recovery phrase, and the information needed to recover your safebox. Hidden from everyday use, available when you ask.</p><span class="feature-state planned">In development</span></article>
+        <article class="feature"><span class="feature-number">03 / CONTINUITY</span><h3>Help while you’re away</h3><p>Managed custody opens the door to services that keep running when you close your browser, such as an authorized Nostr Wallet Connect service.</p><span class="feature-state planned">Planned capability</span></article>
+      </div>
+    </section>
+    <section class="custody-band" aria-labelledby="custody-title">
+      <div><p class="eyebrow">SAME FOUNDATION. YOUR CHOICE.</p><h2 id="custody-title">A custodial cloak<br>around Acorn.</h2></div>
+      <div><p>Underneath, the safebox-acorn architecture stays the same. OakGate changes who holds the secrets and takes responsibility for operating your safebox.</p><p>With OakGate, you choose to trust a provider with your keys and recovery information. With safebox-web, the service retains no user secrets, and you take responsibility for keeping them safe.</p><a class="text-link" href="https://trbouma.github.io/oakgate/006-custody-models/">Explore the custody tradeoffs <span aria-hidden="true">→</span></a></div>
+    </section>
+    <section class="independence content-section" aria-labelledby="independence-title">
+      <p class="eyebrow">ROOM TO GO YOUR OWN WAY</p><h2 id="independence-title">When you’re ready,<br>Go Independent.</h2><p>The planned Go Independent flow will help you recover your safebox outside OakGate, then ask the provider to end custody and delete the information it holds about you.</p><p class="muted">The handover comes first. Your safebox remains yours to use. Deletion has limits that must be explained honestly—it cannot be independently proven.</p><a class="secondary-action" href="https://trbouma.github.io/oakgate/004-go-independent/">Read about Go Independent <span aria-hidden="true">→</span></a>
+    </section>
+    <section class="family-section" aria-labelledby="family-title"><p class="eyebrow">CONNECTED BY DESIGN</p><h2 id="family-title">One family. Distinct responsibilities.</h2><div class="family-grid">
+      <a href="https://trbouma.github.io/mainstay/"><strong>Mainstay <span aria-hidden="true">↗</span></strong><span>A local home for records, value, and community continuity.</span></a>
+      <a href="https://trbouma.github.io/safebox-acorn/"><strong>Acorn <span aria-hidden="true">↗</span></strong><span>The shared safebox capabilities beneath the experience.</span></a>
+      <a href="https://trbouma.github.io/safebox-web/"><strong>Safebox Web <span aria-hidden="true">↗</span></strong><span>Access your safebox while keeping responsibility for your secrets.</span></a>
+    </div></section>
+    <aside class="development-note"><strong>A working entrance. More to come.</strong><p>Sign-in and sign-out work today. Custodial storage, managed safebox recovery, background wallet services, and Go Independent are still being built.</p></aside>
   </main>
-  <footer>OakGate <span>Part of the Mainstay family.</span></footer>
+  <footer class="site-footer"><a class="family" href="/">OAKGATE <span>Part of the Mainstay family.</span></a><div><a href="https://trbouma.github.io/oakgate/">Documentation</a><a href="https://github.com/trbouma/oakgate">GitHub</a></div></footer>
 </body>
 </html>

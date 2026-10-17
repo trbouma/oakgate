@@ -24,3 +24,75 @@ footer { border-top: 1px solid #e6e7dc; }
 
 .primary-action { display: inline-block; margin-top: 18px; padding: 13px 28px; border: 0; border-radius: 6px; background: #506337; color: white; font: inherit; font-weight: 600; cursor: pointer; }
 .primary-action:hover { background: #334729; }
+
+/* Public landing page; account and authentication layouts retain their own styles. */
+.landing { background: #fffefb; }
+.skip-link { position: absolute; left: 20px; top: -80px; padding: 12px; background: white; z-index: 5; }
+.skip-link:focus { top: 12px; }
+.landing .site-header { padding: 22px max(24px, calc((100vw - 1120px) / 2)); gap: 24px; }
+.landing .site-nav { margin: 0; gap: 26px; align-items: center; flex-wrap: wrap; }
+.landing .site-nav a { border: 0; padding: 6px 0; }
+.landing .nav-signin { font-weight: 700; color: #44562e; }
+.landing-main { padding: 0; text-align: left; }
+.landing h2 { font-size: clamp(28px, 3.5vw, 42px); line-height: 1.18; letter-spacing: -.035em; font-weight: 600; margin: 12px 0 22px; }
+.landing p { line-height: 1.7; }
+.landing .hero { text-align: center; background: #f0f3e9; padding: 48px 24px 56px; border-bottom: 1px solid #dce3d0; }
+.hero-mark { width: 160px; height: 160px; object-fit: contain; mix-blend-mode: multiply; }
+.landing .hero h1 { font-size: clamp(56px, 8vw, 82px); margin: 12px 0 16px; font-weight: 650; color: #334729; }
+.hero-tagline { font-size: clamp(21px, 3vw, 29px); font-weight: 600; margin: 0 0 14px; }
+.hero-intro { max-width: 620px; margin: 0 auto; color: #58614e; font-size: 17px; }
+.hero-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 14px; margin-top: 28px; }
+.landing .primary-action, .secondary-action { margin: 0; padding: 14px 24px; border-radius: 5px; font-size: 14px; font-weight: 650; display: inline-block; }
+.secondary-action { border: 1px solid #7b8868; color: #40532d; }
+.secondary-action:hover { background: #e7ecdf; }
+.hero-caption { font-size: 12px; color: #626c56; margin: 18px 0 0; }
+.promise { text-align: center; padding: 23px 20px; background: #faf5e9; border-bottom: 1px solid #ece2cc; color: #72532c; font-size: 16px; }
+.content-section, .family-section, .custody-band, .development-note { max-width: 1120px; margin-inline: auto; }
+.content-section { padding: 76px 24px; }
+.section-heading { max-width: 680px; }
+.section-heading > p:last-child { max-width: 610px; color: #62695c; }
+.feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 36px; }
+.feature { background: #f8f9f4; border: 1px solid #e0e5d6; border-radius: 8px; padding: 26px; display: flex; flex-direction: column; }
+.feature-number { color: #6a7657; font-size: 10px; letter-spacing: .12em; font-weight: 700; }
+.feature h3 { font-size: 21px; font-weight: 600; margin: 24px 0 0; letter-spacing: -.025em; }
+.feature p { font-size: 14px; color: #62695c; margin: 14px 0 26px; }
+.feature-state { margin-top: auto; font-size: 11px; color: #3c592c; font-weight: 650; }
+.feature-state.planned { color: #7c6140; }
+.custody-band { display: grid; grid-template-columns: 1fr 1.25fr; gap: 60px; background: #edf1e5; padding: 48px; border-block: 1px solid #d9e1cb; }
+.custody-band p { font-size: 15px; }
+.custody-band .eyebrow { font-size: 11px; }
+.text-link { display: inline-block; color: #41552d; font-weight: 650; font-size: 14px; border-bottom: 1px solid #8b9878; padding-bottom: 5px; margin-top: 12px; }
+.independence { max-width: 720px; text-align: center; padding-block: 80px; }
+.independence > p { color: #58614e; }
+.independence .muted { font-size: 14px; color: #707365; margin-bottom: 26px; }
+.family-section { border-top: 1px solid #e0e5d6; padding: 44px 24px; }
+.family-section h2 { font-size: 29px; }
+.family-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; margin-top: 26px; }
+.family-grid a { border-top: 2px solid #c9d4b9; padding-top: 18px; }
+.family-grid a:hover { border-color: #87552e; }
+.family-grid strong { display: flex; justify-content: space-between; font-size: 18px; color: #44562e; }
+.family-grid a > span { display: block; font-size: 14px; color: #62695c; line-height: 1.6; margin-top: 12px; }
+.development-note { margin: 0 auto 48px; padding: 22px 26px; max-width: 1072px; background: #faf5e9; border-left: 3px solid #af8b47; font-size: 13px; color: #6d5c3b; }
+.development-note p { margin: 6px 0 0; }
+.landing .site-footer { padding: 26px max(24px, calc((100vw - 1120px) / 2)); gap: 20px; }
+.site-footer > div { display: flex; gap: 24px; }
+.landing a:focus-visible, button:focus-visible { outline: 3px solid #87552e; outline-offset: 5px; }
+@media (max-width: 760px) {
+ .landing .site-header { flex-wrap: wrap; justify-content: center; gap: 16px; }
+ .landing .site-nav { font-size: 12px; gap: 24px; }
+ .landing .hero { padding: 32px 22px 38px; }
+ .hero-mark { width: 125px; height: 125px; }
+ .hero-intro { font-size: 16px; }
+ .feature-grid, .family-grid, .custody-band { grid-template-columns: 1fr; }
+ .feature-grid { gap: 14px; }
+ .feature { padding: 24px; }
+ .feature h3 { margin-top: 16px; }
+ .content-section { padding: 48px 24px; }
+ .custody-band { padding: 32px 24px; gap: 0; }
+ .desktop-break { display: none; }
+ .family-grid { gap: 26px; }
+ .development-note { margin-inline: 24px; }
+ .landing .site-footer { flex-direction: column; align-items: flex-start; }
+ .site-footer .family span { letter-spacing: 0; margin-left: 8px; }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
