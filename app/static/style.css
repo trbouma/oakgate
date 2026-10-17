@@ -96,3 +96,24 @@ footer { border-top: 1px solid #e6e7dc; }
  .site-footer .family span { letter-spacing: 0; margin-left: 8px; }
 }
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+
+/* Signed-in Acorn setup and balance. */
+.wallet-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; max-width:1000px; margin:32px auto; text-align:left; }
+.wallet-panel { border:1px solid #dce3d0; background:#fffefb; border-radius:10px; padding:28px; max-width:700px; margin:28px auto; }
+.wallet-options .wallet-panel { margin:0; width:100%; }
+.wallet-panel h2 { margin-top:0; font-weight:600; }
+.wallet-panel p { line-height:1.6; }
+.wallet-panel label:not(.custody-check) { display:block; font-size:14px; font-weight:600; margin:18px 0 7px; }
+.wallet-panel textarea, .wallet-panel input[type=url] { width:100%; padding:12px; border:1px solid #899577; border-radius:5px; font:inherit; background:#fff; color:#293527; }
+.wallet-panel textarea:focus-visible, .wallet-panel input:focus-visible, summary:focus-visible { outline:3px solid #87552e; outline-offset:3px; }
+.custody-check { display:flex; align-items:flex-start; gap:9px; font-size:13px; line-height:1.5; margin-top:20px; }
+.wallet-panel details { font-size:13px; margin-top:16px; }
+.wallet-panel summary { cursor:pointer; }
+.wallet-message { max-width:850px; margin:20px auto; background:#fff2d8; border:1px solid #b69863; border-radius:6px; padding:16px; line-height:1.6; }
+.custody-explanation { max-width:620px; margin:auto; color:#62695c; line-height:1.6; }
+.cash-balance { font-size:clamp(36px,6vw,62px); font-weight:650; margin:12px 0; }
+.cash-balance span { font-size:20px; font-weight:400; }
+.wallet-identity { font-size:12px; overflow-wrap:anywhere; color:#62695c; margin-top:28px; }
+.relay-address { overflow-wrap:anywhere; }
+.signout-form { margin-top:32px; }
+@media (max-width:760px) { .wallet-options { grid-template-columns:1fr; } .wallet-panel { padding:22px; } }

@@ -45,6 +45,7 @@ nav:
   - Build and deploy:
       - FastAPI app: 003-fastapi-app.md
       - Connect sign-in: 005-keycloak-sign-in.md
+      - Connect an Acorn: 007-acorn-custody.md
       - Keycloak on Beelink: 002-keycloak-beelink.md
       - Authentication design: 001-authentication-design.md
 

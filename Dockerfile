@@ -4,16 +4,18 @@ ENV POETRY_VERSION=1.8.2 \
     POETRY_VIRTUALENVS_IN_PROJECT=true \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 WORKDIR /app
+RUN apt-get update && apt-get install --yes --no-install-recommends git build-essential autoconf automake libtool pkg-config libffi-dev && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir "poetry==${POETRY_VERSION}"
 COPY pyproject.toml poetry.lock ./
 RUN poetry install --only main --no-root --no-ansi
+RUN .venv/bin/python -c "from acorn.acorn import Acorn"
 
 FROM python:3.12-slim AS runtime
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 WORKDIR /app
-RUN useradd --uid 10001 --create-home oakgate
+RUN useradd --uid 10001 --create-home oakgate && install -d -o oakgate -g oakgate -m 700 /app/data
 COPY --from=builder /app/.venv /app/.venv
 COPY app ./app
 COPY assets/branding/oakgate-logo-flat.png ./assets/branding/oakgate-logo-flat.png

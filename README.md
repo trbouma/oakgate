@@ -59,7 +59,7 @@ You can also use `./start-oakgate.sh` for routine startup, or continue to run `d
 
 Set `KC_HOSTNAME` in `.env` to the public HTTPS origin (default: `https://keycloak.safebox.dev`). Recreate the container after changing it.
 
-The intended app address is `https://oakgate.safebox.dev`, served by Nginx. Its upstream is `http://<beelink-address>:8801/`. Set `OAKGATE_PUBLIC_URL`, `OAKGATE_PORT`, and `OAKGATE_BIND_ADDRESS` in `.env`. Keycloak has separate `KC_HOSTNAME`, `KEYCLOAK_PORT`, and `KEYCLOAK_BIND_ADDRESS` settings. Existing `.env` files can omit these settings and use the defaults. The app uses a private Redis service for temporary sessions, with no persistent app storage mount.
+The intended app address is `https://oakgate.safebox.dev`, served by Nginx. Its upstream is `http://<beelink-address>:8801/`. Set `OAKGATE_PUBLIC_URL`, `OAKGATE_PORT`, and `OAKGATE_BIND_ADDRESS` in `.env`. Keycloak has separate `KC_HOSTNAME`, `KEYCLOAK_PORT`, and `KEYCLOAK_BIND_ADDRESS` settings. Existing `.env` files can omit these settings and use the defaults. The app uses private Redis for temporary sessions and encrypted SQLite custody storage at `/mnt/bitcoin/oakgate`. Follow [Connect an Acorn](docs/007-acorn-custody.md) to prepare that directory and configure the custody encryption key before starting the updated containers.
 
 To rebuild only the app on Beelink:
 
@@ -92,3 +92,5 @@ The included GitHub Pages workflow publishes on pushes to `main` once **Settings
 - [Go Independent: custody and leaving OakGate](docs/004-go-independent.md)
 
 - [OakGate and safebox-web custody models](docs/006-custody-models.md)
+
+- [Connect an Acorn and configure custody storage](docs/007-acorn-custody.md)

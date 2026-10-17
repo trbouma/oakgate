@@ -11,6 +11,16 @@ services:
       OAKGATE_OIDC_CLIENT_ID: ${OAKGATE_OIDC_CLIENT_ID:-oakgate-web}
       OAKGATE_OIDC_CLIENT_SECRET: ${OAKGATE_OIDC_CLIENT_SECRET:-}
       OAKGATE_REDIS_URL: redis://sessions:6379/0
+      OAKGATE_CUSTODY_KEY: ${OAKGATE_CUSTODY_KEY:-}
+      OAKGATE_DATA_DIR: /app/data
+      OAKGATE_BOOTSTRAP_RELAY: ${OAKGATE_BOOTSTRAP_RELAY:-wss://spurline.safebox.dev}
+      OAKGATE_ALLOWED_RELAYS: ${OAKGATE_ALLOWED_RELAYS:-wss://spurline.safebox.dev}
+    volumes:
+      - type: bind
+        source: ${OAKGATE_DATA_DIR:-/mnt/bitcoin/oakgate}
+        target: /app/data
+        bind:
+          create_host_path: false
     depends_on:
       sessions:
         condition: service_healthy

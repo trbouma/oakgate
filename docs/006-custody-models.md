@@ -1,7 +1,7 @@
 # OakGate and safebox-web custody models
 
 Date: 2026-10-17  
-Status: Product design; custodial storage and unattended services remain to be implemented
+Status: Product design; initial custody storage implemented, unattended services and Go Independent deferred
 
 ## The same safebox-acorn architecture
 
@@ -58,4 +58,4 @@ That departure must include background services and delegated access, not just t
 
 ## Current implementation boundary
 
-OakGate's Keycloak and Google sign-in and sign-out flow is working. Custodial secret storage, managed safebox recovery, unattended wallet services, and Go Independent remain product requirements. This comparison describes the intended custody relationship and should guide those future implementation decisions.
+OakGate's Keycloak and Google sign-in and sign-out flow is working. The [initial Acorn integration](007-acorn-custody.md) implements creation, connection by recovery phrase, encrypted secret storage, and cash-balance display. Complete independent recovery, unattended wallet services, and Go Independent remain product requirements. This comparison should guide those future implementation decisions.

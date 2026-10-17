@@ -106,8 +106,8 @@ async def account(request: Request):
     session = await current_session(request)
     if not session:
         return RedirectResponse("/auth/login", status_code=303)
-    return request.app.state.templates.TemplateResponse(
-        request=request, name="account.html", context=session)
+    from app.wallet_routes import account_page
+    return await account_page(request, session)
 
 
 @router.get("/api/me", tags=["Account"])

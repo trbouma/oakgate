@@ -11,12 +11,14 @@ from app.auth import current_session, error_page, router
 from app.config import AuthSettings
 from app.oidc import KeycloakProvider
 from app.sessions import MemoryStore, RedisStore
+from app.wallets import configured_service
+from app.wallet_routes import router as wallet_router
 
 APP_DIR = Path(__file__).resolve().parent
 LOGO = APP_DIR.parent / "assets" / "branding" / "oakgate-logo-flat.png"
 
 
-def create_app(settings=None, store=None, provider=None):
+def create_app(settings=None, store=None, provider=None, wallets=None):
     settings = settings or AuthSettings.from_env()
     store = store or (RedisStore(settings.redis_url) if settings.redis_url else MemoryStore())
 
@@ -27,12 +29,14 @@ def create_app(settings=None, store=None, provider=None):
 
     app = FastAPI(title="OakGate", description="OpenID Access Gate — part of the Mainstay family.",
                   version="0.1.0", servers=[{"url": settings.origin}], lifespan=lifespan)
+    app.state.wallets = wallets if wallets is not None else configured_service()
     app.state.settings = settings
     app.state.store = store
     app.state.provider = provider or KeycloakProvider(settings)
     app.state.templates = Jinja2Templates(directory=APP_DIR / "templates")
     app.mount("/static", StaticFiles(directory=APP_DIR / "static"), name="static")
     app.include_router(router)
+    app.include_router(wallet_router)
 
     @app.middleware("http")
     async def private_responses(request, call_next):
@@ -43,7 +47,7 @@ def create_app(settings=None, store=None, provider=None):
             # Keep the account form's origin available for logout validation,
             # while suppressing callback URLs (which can contain login codes).
             response.headers["Referrer-Policy"] = (
-                "strict-origin" if request.url.path == "/account" else "no-referrer"
+                "strict-origin" if request.url.path.startswith("/account") else "no-referrer"
             )
         response.headers["X-Content-Type-Options"] = "nosniff"
         return response

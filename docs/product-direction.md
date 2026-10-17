@@ -29,4 +29,4 @@ The complete [Go Independent design note](004-go-independent.md) records the int
 
 ## What exists today
 
-The running foundation is a FastAPI app and a separate Keycloak server. The custodial model above is a design goal, not a claim that OakGate currently stores or recovers user safeboxes. See [project status](project-status.md).
+The FastAPI app supports Keycloak sign-in, connecting or creating an Acorn, encrypted recovery storage, and cash-balance display. See [Connect an Acorn](007-acorn-custody.md) for setup and verification limits. Complete independent recovery and Go Independent remain future work; see [project status](project-status.md).

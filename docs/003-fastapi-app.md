@@ -18,7 +18,7 @@ Commit `pyproject.toml`, `poetry.lock`, application source, the logo asset, Dock
 
 The Docker build installs only runtime dependencies from the lockfile in a builder stage. The final Python 3.12 image runs as a non-root user and contains the application, its logo, and its virtual environment. An allowlist in `.dockerignore` excludes local credentials, virtual environments, and unrelated repository files. Production runs without reload. Container liveness checks `/health`.
 
-The app publishes port 8801 by default; Keycloak retains port 8800. Configure `OAKGATE_PORT` and `OAKGATE_BIND_ADDRESS` in the deployment `.env` to change the app binding. Redis stores temporary sessions in memory, with no persistent app volume. Keycloak continues using `/mnt/bitcoin/keycloak`.
+The app publishes port 8801 by default; Keycloak retains port 8800. Configure `OAKGATE_PORT` and `OAKGATE_BIND_ADDRESS` in the deployment `.env` to change the app binding. Redis stores temporary sessions in memory. Acorn custody uses a separate encrypted database mounted from `/mnt/bitcoin/oakgate`; see [Connect an Acorn](007-acorn-custody.md) for directory permissions and the encryption key. Keycloak continues using `/mnt/bitcoin/keycloak`.
 
 ## HTTPS and authentication follow-up
 
@@ -75,4 +75,4 @@ docker compose logs --tail=100 app
 curl --fail https://oakgate.safebox.dev/health
 ```
 
-If changing Keycloak's bind address or port too, apply its configuration separately with `docker compose up -d keycloak` and update the Nginx upstream to match. Normal `./refresh-containers.sh` updates both services. No app storage mount is needed yet.
+If changing Keycloak's bind address or port too, apply its configuration separately with `docker compose up -d keycloak` and update the Nginx upstream to match. Normal `./refresh-containers.sh` updates both services. Prepare the app custody mount before starting the updated Compose service.

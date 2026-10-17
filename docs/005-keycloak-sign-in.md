@@ -96,6 +96,6 @@ Use the same reachable upstream as your existing OakGate proxy. Validate and rel
 - Logout requires a POST with a session-bound CSRF token. Local logout still succeeds if Keycloak is unavailable. Keycloak may ask for confirmation because OakGate does not retain an ID token for logout.
 - Back-channel logout is not implemented: revoking a Keycloak session does not immediately invalidate an already-issued OakGate session. Its short expiry limits this delay.
 - A session-store outage fails closed. `/health` is process liveness, not an authentication-readiness check.
-- This authenticates users permitted by the realm; it adds no role-based access policy, safebox creation, custodial storage, or Go Independent implementation.
+- This authenticates users permitted by the realm; the sign-in layer adds no role-based access policy. [Acorn creation and custody storage](007-acorn-custody.md) are now provided by a separate application layer; Go Independent remains deferred.
 
 Automated tests use a simulated OIDC server and signed tokens. Complete a real Google login and logout on both local and deployed origins after configuring the client; those live checks cannot be replaced by the automated suite.

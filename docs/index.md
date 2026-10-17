@@ -23,7 +23,7 @@ hide:
 </section>
 
 !!! note "Early development"
-    The FastAPI app and Keycloak deployment are in place. App sign-in is implemented and needs the [Keycloak client setup](005-keycloak-sign-in.md). Custodial storage and Go Independent remain planned features.
+    The FastAPI app and Keycloak deployment are in place. App sign-in is implemented and needs the [Keycloak client setup](005-keycloak-sign-in.md). [Acorn creation, connection, encrypted custody storage, and cash-balance display](007-acorn-custody.md) are implemented; live relay verification remains part of deployment. Go Independent remains planned.
 
 ## Managed by default. Independent by choice.
 

@@ -222,3 +222,6 @@ client_secret_311971727961-a49c2ue79f58oigbotlcpq6csg4ffjjf.apps.googleuserconte
 
 # Local sign-in credentials
 .env.dev
+
+# Encrypted local Acorn custody data
+.oakgate/

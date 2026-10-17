@@ -1,6 +1,6 @@
 # Getting started
 
-OakGate currently provides a branded FastAPI landing page, API documentation, a health endpoint, and a separate Keycloak deployment. Custodial account management is a future milestone.
+OakGate currently provides a branded FastAPI landing page, API documentation, a health endpoint, and a separate Keycloak deployment. It also supports [creating or connecting an Acorn](007-acorn-custody.md), with encrypted recovery storage and cash-balance display.
 
 ## Run the app locally
 
@@ -24,7 +24,7 @@ poetry run pytest
 
 ## Deploy on your server
 
-On Beelink, configure `.env`, confirm the external storage mount, and run:
+On Beelink, configure `.env`, confirm the external storage mount, and prepare the [Acorn data directory and custody key](007-acorn-custody.md#deploy-on-beelink), then run:
 
 ```sh
 docker compose up -d --build
