@@ -21,3 +21,6 @@ nav a { padding-bottom: 5px; border-bottom: 1px solid #b7bea6; }
 nav a:hover { color: #87552e; }
 footer { border-top: 1px solid #e6e7dc; }
 @media (max-width: 520px) { .tag { display: none; } main { padding-top: 32px; } footer { gap: 20px; } }
+
+.primary-action { display: inline-block; margin-top: 18px; padding: 13px 28px; border: 0; border-radius: 6px; background: #506337; color: white; font: inherit; font-weight: 600; cursor: pointer; }
+.primary-action:hover { background: #334729; }

@@ -218,3 +218,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+client_secret_311971727961-a49c2ue79f58oigbotlcpq6csg4ffjjf.apps.googleusercontent.com.json
+
+# Local sign-in credentials
+.env.dev

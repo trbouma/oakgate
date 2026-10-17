@@ -14,7 +14,7 @@ poetry install
 ./dev.sh
 ```
 
-Open <http://127.0.0.1:8801>. Source changes reload automatically. Stop the server with **Ctrl+C**. This workflow does not build a container and does not need local Keycloak credentials.
+Open <http://127.0.0.1:8801>. Source changes reload automatically. Stop the server with **Ctrl+C**. This workflow does not build a container. To test Google sign-in, follow [Connect OakGate sign-in](005-keycloak-sign-in.md) to create the application client and configure `.env.dev`.
 
 ```sh
 poetry run pytest

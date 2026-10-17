@@ -23,7 +23,7 @@ def test_liveness_does_not_require_keycloak_or_secrets():
 def test_landing_page_assets_are_available():
     home = get("/")
     assert home.status_code == 200
-    assert "Sign-in is coming next." in home.text
+    assert 'href="/auth/login"' in home.text
     assert get("/static/style.css").status_code == 200
     logo = get("/logo.png")
     assert logo.headers["content-type"] == "image/png"

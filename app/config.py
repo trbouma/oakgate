@@ -1,4 +1,5 @@
 import os
+from dataclasses import dataclass, field
 from urllib.parse import urlsplit
 
 
@@ -19,3 +20,38 @@ def public_url() -> str:
     # Accessing port validates malformed and out-of-range port values.
     _ = parsed.port
     return value.rstrip("/")
+
+
+@dataclass(frozen=True)
+class AuthSettings:
+    origin: str
+    issuer: str = "https://keycloak.safebox.dev/realms/oakgate"
+    client_id: str = "oakgate-web"
+    client_secret: str = field(default="", repr=False)
+    redis_url: str = field(default="", repr=False)
+
+    @property
+    def secure(self):
+        return self.origin.startswith("https://")
+
+    @property
+    def enabled(self):
+        return bool(self.client_secret and not self.client_secret.startswith("<"))
+
+    @classmethod
+    def from_env(cls):
+        settings = cls(
+            origin=public_url(),
+            issuer=os.getenv("OAKGATE_OIDC_ISSUER", "https://keycloak.safebox.dev/realms/oakgate").rstrip("/"),
+            client_id=os.getenv("OAKGATE_OIDC_CLIENT_ID", "oakgate-web"),
+            client_secret=os.getenv("OAKGATE_OIDC_CLIENT_SECRET", ""),
+            redis_url=os.getenv("OAKGATE_REDIS_URL", ""),
+        )
+        issuer = urlsplit(settings.issuer)
+        if issuer.scheme != "https" or not issuer.hostname or issuer.username or issuer.password or issuer.query or issuer.fragment:
+            raise ValueError("OAKGATE_OIDC_ISSUER must be a trusted HTTPS realm URL")
+        if settings.enabled and not settings.secure and urlsplit(settings.origin).hostname not in {"localhost", "127.0.0.1", "::1"}:
+            raise ValueError("HTTP sign-in is allowed only for loopback development")
+        if settings.enabled and settings.secure and not settings.redis_url:
+            raise ValueError("HTTPS sign-in requires OAKGATE_REDIS_URL for server-side sessions")
+        return settings

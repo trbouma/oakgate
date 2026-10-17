@@ -7,8 +7,27 @@ services:
     restart: unless-stopped
     environment:
       OAKGATE_PUBLIC_URL: ${OAKGATE_PUBLIC_URL:-https://oakgate.safebox.dev}
+      OAKGATE_OIDC_ISSUER: ${OAKGATE_OIDC_ISSUER:-https://keycloak.safebox.dev/realms/oakgate}
+      OAKGATE_OIDC_CLIENT_ID: ${OAKGATE_OIDC_CLIENT_ID:-oakgate-web}
+      OAKGATE_OIDC_CLIENT_SECRET: ${OAKGATE_OIDC_CLIENT_SECRET:-}
+      OAKGATE_REDIS_URL: redis://sessions:6379/0
+    depends_on:
+      sessions:
+        condition: service_healthy
     ports:
       - "${OAKGATE_BIND_ADDRESS:-0.0.0.0}:${OAKGATE_PORT:-8801}:8000"
+
+  sessions:
+    image: redis:7.4-alpine
+    tmpfs:
+      - /data
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "128mb", "--maxmemory-policy", "noeviction"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.8.0

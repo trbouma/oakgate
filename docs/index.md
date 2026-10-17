@@ -23,7 +23,7 @@ hide:
 </section>
 
 !!! note "Early development"
-    The FastAPI app and Keycloak deployment are in place. Account linking, custodial storage, Google sign-in through the app, and Go Independent are planned—not available features yet.
+    The FastAPI app and Keycloak deployment are in place. App sign-in is implemented and needs the [Keycloak client setup](005-keycloak-sign-in.md). Custodial storage and Go Independent remain planned features.
 
 ## Managed by default. Independent by choice.
 

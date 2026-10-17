@@ -12,9 +12,9 @@ poetry install
 ./dev.sh
 ```
 
-Open <http://127.0.0.1:8801>. Source changes reload automatically. Run tests with `poetry run pytest`. No local Keycloak, `.env`, or Docker service is required for this first app version.
+Open <http://127.0.0.1:8801>. Source changes reload automatically. Run tests with `poetry run pytest`. No local Docker service is required. To test sign-in, configure `.env.dev` with the Keycloak client credentials using the [sign-in setup guide](docs/005-keycloak-sign-in.md).
 
-The app includes the OakGate landing page and logo, `/health`, and interactive API documentation at `/docs`. Sign-in is not implemented yet. The running Keycloak instance will be connected in the next authentication milestone.
+The app includes the OakGate landing page and logo, `/health`, and interactive API documentation at `/docs`. Keycloak sign-in, a protected account page, `/api/me`, and sign-out are implemented. The realm supplies Google sign-in. An unconfigured app still serves the landing page and explains that sign-in setup is needed.
 
 ## Run on Beelink
 
@@ -59,7 +59,7 @@ You can also use `./start-oakgate.sh` for routine startup, or continue to run `d
 
 Set `KC_HOSTNAME` in `.env` to the public HTTPS origin (default: `https://keycloak.safebox.dev`). Recreate the container after changing it.
 
-The intended app address is `https://oakgate.safebox.dev`, served by Nginx. Its upstream is `http://<beelink-address>:8801/`. Set `OAKGATE_PUBLIC_URL`, `OAKGATE_PORT`, and `OAKGATE_BIND_ADDRESS` in `.env`. Keycloak has separate `KC_HOSTNAME`, `KEYCLOAK_PORT`, and `KEYCLOAK_BIND_ADDRESS` settings. Existing `.env` files can omit these settings and use the defaults. The app has no persistent data yet and needs no storage mount.
+The intended app address is `https://oakgate.safebox.dev`, served by Nginx. Its upstream is `http://<beelink-address>:8801/`. Set `OAKGATE_PUBLIC_URL`, `OAKGATE_PORT`, and `OAKGATE_BIND_ADDRESS` in `.env`. Keycloak has separate `KC_HOSTNAME`, `KEYCLOAK_PORT`, and `KEYCLOAK_BIND_ADDRESS` settings. Existing `.env` files can omit these settings and use the defaults. The app uses a private Redis service for temporary sessions, with no persistent app storage mount.
 
 To rebuild only the app on Beelink:
 
@@ -68,7 +68,7 @@ docker compose up -d --build app
 docker compose logs --tail=100 app
 ```
 
-This leaves Keycloak running. Check `/health` after deployment. To serve `oakgate.safebox.dev` over HTTPS, configure its Nginx server block to proxy to Beelink's app port. See the [deployment settings](docs/003-fastapi-app.md#deployment-settings). The first app version does not trust forwarded headers or generate authentication redirects.
+This leaves Keycloak running. Check `/health` after deployment. To serve `oakgate.safebox.dev` over HTTPS, configure its Nginx server block to proxy to Beelink's app port. See the [deployment settings](docs/003-fastapi-app.md#deployment-settings). Authentication redirects use the configured public origin rather than forwarded headers. Follow the [sign-in setup guide](docs/005-keycloak-sign-in.md) to register exact callback URLs and set the client secret.
 
 ## Documentation site
 
@@ -85,6 +85,7 @@ The included GitHub Pages workflow publishes on pushes to `main` once **Settings
 
 ## Design
 
+- [Connect Keycloak sign-in](docs/005-keycloak-sign-in.md)
 - [Authentication design](docs/001-authentication-design.md)
 - [Keycloak deployment and first login](docs/002-keycloak-beelink.md)
 - [FastAPI development and deployment](docs/003-fastapi-app.md)

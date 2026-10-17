@@ -9,6 +9,8 @@ OakGate (OpenID Access Gate) is an application in the Mainstay family. Its first
 
 OakGate’s product direction is a custodial application around safebox-acorn. The [Go Independent design note](004-go-independent.md) records the requirement to support independent recovery and ending custody; that workflow is deferred but must inform identity and storage choices.
 
+The first implementation and exact client settings are documented in [Connect OakGate sign-in](005-keycloak-sign-in.md). This original design includes future capabilities beyond that initial slice.
+
 FastAPI, Keycloak, and Google sign-in are confirmed requirements. The browser interface, session storage, and deployment choices below are proposed starting points.
 
 ## Architecture
