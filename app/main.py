@@ -39,7 +39,12 @@ def create_app(settings=None, store=None, provider=None):
         response = await call_next(request)
         if request.url.path == "/" or request.url.path.startswith(("/auth/", "/account", "/api/me")):
             response.headers["Cache-Control"] = "no-store"
-            response.headers["Referrer-Policy"] = "no-referrer"
+            # no-referrer makes browsers submit HTML forms with Origin: null.
+            # Keep the account form's origin available for logout validation,
+            # while suppressing callback URLs (which can contain login codes).
+            response.headers["Referrer-Policy"] = (
+                "strict-origin" if request.url.path == "/account" else "no-referrer"
+            )
         response.headers["X-Content-Type-Options"] = "nosniff"
         return response
 

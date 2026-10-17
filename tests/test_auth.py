@@ -98,16 +98,19 @@ def test_login_account_and_logout(signing_key):
             session_cookie = client.cookies.get('__Host-oakgate_session')
             assert 'never-in-browser' not in result.headers['set-cookie']
             assert result.headers['cache-control'] == 'no-store'
+            assert result.headers['referrer-policy'] == 'no-referrer'
             me = await client.get('/api/me')
             assert me.json()['sub'] == 'stable-user-id'
             assert me.json()['iss'] == identity.issuer
             page = await client.get('/account')
             assert '&lt;script&gt;Example&lt;/script&gt;' in page.text
+            assert page.headers['referrer-policy'] == 'strict-origin'
             csrf = re.search(r'name="csrf" value="([^"]+)"', page.text)[1]
             assert (await client.post('/auth/logout', data={'csrf': 'bad'})).status_code == 403
             assert (await client.post('/auth/logout', data={'csrf': csrf}, headers={'origin': 'https://evil.example'})).status_code == 403
             assert (await client.get('/api/me')).status_code == 200
-            logout = await client.post('/auth/logout', data={'csrf': csrf})
+            assert (await client.post('/auth/logout', data={'csrf': csrf}, headers={'origin': 'null'})).status_code == 403
+            logout = await client.post('/auth/logout', data={'csrf': csrf}, headers={'origin': 'https://oakgate.example'})
             assert logout.status_code == 303
             assert logout.headers['location'].startswith(identity.issuer + '/logout?')
             assert await store.get(record_key('session', session_cookie)) is None
