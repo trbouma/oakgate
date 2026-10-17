@@ -8,13 +8,15 @@ Start one Keycloak container on Beelink with persistent local storage. This is t
 
 Use Keycloak development mode and its embedded database for this initial experiment. Docker publishes the service only on Beelink's loopback interface. Reach it through an SSH tunnel over your VPN, so the browser sees a consistent `http://localhost:8080` address. Direct access using Beelink's VPN address is intentionally not configured in this first setup.
 
-Prerequisites: Docker Engine and the Docker Compose plugin on Beelink, plus SSH access from your computer. The SSH hostname and VPN type still need to be confirmed.
+Prerequisites: Docker Engine and the Docker Compose plugin on Beelink, plus SSH access from your computer. Run the deployment commands yourself over your existing SSH connection. Port 8080 must be available on Beelink.
 
 ## Start on Beelink
 
-Copy or clone the OakGate repository to Beelink, then run these commands from its root:
+After the setup files have been committed and pushed, clone the repository on Beelink:
 
 ```sh
+git clone https://github.com/trbouma/oakgate.git
+cd oakgate
 cp .env.example .env
 chmod 600 .env
 openssl rand -hex 24
@@ -28,6 +30,16 @@ docker compose logs --tail=100 keycloak
 ```
 
 The image is pinned to `26.8.0`, the version shown in the official Docker getting-started guide consulted for this setup. The named volume retains realms and users across container recreation. Do not use `docker compose down -v` unless you intend to delete this data.
+
+## Update an existing deployment
+
+From the repository directory on Beelink:
+
+```sh
+./refresh-containers.sh
+```
+
+Like Mainstay, the refresh script rejects tracked local changes and pulls with `--ff-only`, then delegates to `start-oakgate.sh --force-recreate`. Startup validates the Compose configuration and shows container status; verify readiness using the checks below. The scripts preserve the existing `.env` file and Docker volume. Review release instructions before upgrading Keycloak versions.
 
 ## Open from your computer
 
