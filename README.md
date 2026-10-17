@@ -31,7 +31,7 @@ Then run:
 docker compose up -d
 ```
 
-Keycloak runs in development mode with persistent storage and publishes `0.0.0.0:8800` on Beelink (container port 8080). From another machine, open `http://<beelink-vpn-ip-or-hostname>:8800/admin/`. See the [Beelink setup guide](docs/002-keycloak-beelink.md).
+Keycloak runs in development mode with persistent storage and publishes `0.0.0.0:8800` on Beelink (container port 8080). From another machine, open `https://keycloak.safebox.dev/admin/master/console/`. See the [Beelink setup guide](docs/002-keycloak-beelink.md).
 
 For subsequent updates, use the same workflow as Mainstay:
 
@@ -42,6 +42,8 @@ For subsequent updates, use the same workflow as Mainstay:
 This refuses tracked working-tree changes, pulls fast-forward updates, and calls `start-oakgate.sh --force-recreate`. The startup script validates the Compose configuration before starting containers. It preserves the existing `.env` and storage directory. It reports container status; use the setup guide to verify readiness.
 
 You can also use `./start-oakgate.sh` for routine startup, or continue to run `docker compose up -d` directly.
+
+Set `KC_HOSTNAME` in `.env` to the public HTTPS origin (default: `https://keycloak.safebox.dev`). Recreate the container after changing it.
 
 ## Design
 

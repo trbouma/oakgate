@@ -6,7 +6,7 @@ Status: Initial development setup, 2026-10-17
 
 Start one Keycloak container on Beelink with persistent local storage. This is the first milestone; FastAPI, Google sign-in, PostgreSQL, and Redis are not required to reach it. The broader authentication design remains a future proposal.
 
-Use Keycloak development mode and its embedded database for this initial experiment. Docker publishes `0.0.0.0:8800` on Beelink, forwarding to container port 8080. Other machines can connect directly using Beelink's VPN IP or hostname. The host binding covers all IPv4 interfaces; use your host firewall or VPN access controls to limit who can reach it.
+Use Keycloak development mode and its embedded database for this initial experiment. Docker publishes `0.0.0.0:8800` on Beelink, forwarding to container port 8080. Nginx terminates HTTPS at `https://keycloak.safebox.dev` and forwards to port 8800. Restrict direct access to port 8800 to the Nginx proxy, since Keycloak trusts forwarded headers.
 
 Prerequisites: Docker Engine and the Docker Compose plugin on Beelink, plus SSH access from your computer. Run the deployment commands yourself over your existing SSH connection. Port 8800 must be available on Beelink.
 
@@ -62,9 +62,26 @@ Like Mainstay, the refresh script rejects tracked local changes and pulls with `
 
 ## Open from your computer
 
-Visit `http://<beelink-vpn-ip-or-hostname>:8800/admin/` from another machine on your network or VPN. Replace the placeholder with Beelink's actual reachable address. Sign in with `admin` and the password you configured.
+Visit `https://keycloak.safebox.dev/admin/master/console/` from your browser. Sign in with `admin` and the password you configured.
 
-Development mode derives URLs from incoming requests, so redirects no longer point to localhost. Use the same address consistently. A previously configured realm Frontend URL, if any, must also be updated. For future OIDC clients, select a fixed HTTPS hostname before registering callbacks.
+Keycloak uses `KC_HOSTNAME` from `.env` (default: `https://keycloak.safebox.dev`) and accepts `X-Forwarded-*` headers from Nginx. Update any previously configured realm Frontend URL to the same HTTPS origin, or clear that override.
+
+In the existing Nginx HTTPS server block, the proxy location should overwrite these headers:
+
+```nginx
+location / {
+    proxy_pass http://127.0.0.1:8800;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_set_header X-Forwarded-Port 443;
+    proxy_set_header X-Forwarded-For $remote_addr;
+}
+```
+
+The upstream above assumes Nginx runs directly on Beelink. For containerized or remote Nginx, use its reachable address for Beelink instead of loopback. Keep your existing certificate directives. If Nginx runs directly on Beelink, the Docker binding can be narrowed to `127.0.0.1:8800:8080`; otherwise restrict access to the proxy through your network controls. The current `0.0.0.0` binding is retained until the proxy location is confirmed.
+
+See [Keycloak reverse proxy configuration](https://www.keycloak.org/server/reverseproxy).
 
 The bootstrap account is temporary. Create a permanent administrator in the `master` realm, give it the `admin` realm role, test it in a separate browser session, and remove the bootstrap account. Changing the bootstrap password in `.env` does not reset an existing administrator's password.
 
@@ -72,17 +89,17 @@ Create a realm named `oakgate` from the realm selector. Keep application users a
 
 ## Check that it works
 
-Run on your computer, replacing `BEELINK_ADDRESS` with the same IP or hostname used in your browser:
+After creating the `oakgate` realm, run on your computer:
 
 ```sh
-curl --fail http://BEELINK_ADDRESS:8800/realms/oakgate/.well-known/openid-configuration
+curl --fail https://keycloak.safebox.dev/realms/oakgate/.well-known/openid-configuration
 ```
 
-The response should be JSON with issuer `http://BEELINK_ADDRESS:8800/realms/oakgate`. Restart Keycloak with `docker compose restart keycloak` on Beelink and confirm that the realm and administrator still exist. `docker compose ps` and container logs help diagnose startup problems; this initial file does not define a readiness probe.
+The response should be JSON with issuer `https://keycloak.safebox.dev/realms/oakgate`. Restart Keycloak with `docker compose restart keycloak` on Beelink and confirm that the realm and administrator still exist. `docker compose ps` and container logs help diagnose startup problems; this initial file does not define a readiness probe.
 
 ## Next step
 
-Once the console and persistence checks pass, add Google as an identity provider and then the FastAPI client. For Google sign-in over the network, choose a stable HTTPS URL and update the issuer and callback registrations together; the current HTTP URL is for initial Keycloak setup. Move to PostgreSQL and Keycloak production mode before relying on this service beyond development. This single-container setup is not a production deployment.
+Once the console and persistence checks pass, add Google as an identity provider and then the FastAPI client. With provider alias `google`, the Google broker callback will be `https://keycloak.safebox.dev/realms/oakgate/broker/google/endpoint`. Register the exact URI shown by Keycloak when configuring Google. Move to PostgreSQL and Keycloak production mode before relying on this service beyond development. This single-container setup is not a production deployment.
 
 ## References
 

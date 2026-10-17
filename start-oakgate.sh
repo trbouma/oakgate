@@ -44,4 +44,4 @@ docker compose ps
 printf '%s\n' \
     'Startup requested. Keycloak may still be initializing.' \
     'Check startup logs with: docker compose logs --tail=100 keycloak' \
-    'Admin console: http://<beelink-vpn-ip-or-hostname>:8800/admin/'
+    'Admin console: https://keycloak.safebox.dev/admin/master/console/'
