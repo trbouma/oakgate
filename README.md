@@ -59,7 +59,7 @@ You can also use `./start-oakgate.sh` for routine startup, or continue to run `d
 
 Set `KC_HOSTNAME` in `.env` to the public HTTPS origin (default: `https://keycloak.safebox.dev`). Recreate the container after changing it.
 
-The app is available at `http://<beelink-address>:8801/`; set `OAKGATE_PORT` and `OAKGATE_BIND_ADDRESS` in `.env` to change the host binding. Existing `.env` files can omit these settings and use the defaults. The app has no persistent data yet and needs no storage mount.
+The intended app address is `https://oakgate.safebox.dev`, served by Nginx. Its upstream is `http://<beelink-address>:8801/`. Set `OAKGATE_PUBLIC_URL`, `OAKGATE_PORT`, and `OAKGATE_BIND_ADDRESS` in `.env`. Keycloak has separate `KC_HOSTNAME`, `KEYCLOAK_PORT`, and `KEYCLOAK_BIND_ADDRESS` settings. Existing `.env` files can omit these settings and use the defaults. The app has no persistent data yet and needs no storage mount.
 
 To rebuild only the app on Beelink:
 
@@ -68,7 +68,7 @@ docker compose up -d --build app
 docker compose logs --tail=100 app
 ```
 
-This leaves Keycloak running. Check `/health` after deployment. To put the app behind Nginx HTTPS, proxy to Beelink's app port; the application hostname is still to be selected. The first app version does not trust forwarded headers or generate authentication redirects.
+This leaves Keycloak running. Check `/health` after deployment. To serve `oakgate.safebox.dev` over HTTPS, configure its Nginx server block to proxy to Beelink's app port. See the [deployment settings](docs/003-fastapi-app.md#deployment-settings). The first app version does not trust forwarded headers or generate authentication redirects.
 
 ## Documentation site
 

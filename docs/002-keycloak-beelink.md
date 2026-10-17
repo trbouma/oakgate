@@ -6,7 +6,7 @@ Status: Initial development setup, 2026-10-17
 
 Start one Keycloak container on Beelink with persistent local storage. This is the first milestone; FastAPI, Google sign-in, PostgreSQL, and Redis are not required to reach it. The broader authentication design remains a future proposal.
 
-Use Keycloak development mode and its embedded database for this initial experiment. Docker publishes `0.0.0.0:8800` on Beelink, forwarding to container port 8080. Nginx terminates HTTPS at `https://keycloak.safebox.dev` and forwards to port 8800. Restrict direct access to port 8800 to the Nginx proxy, since Keycloak trusts forwarded headers.
+Use Keycloak development mode and its embedded database for this initial experiment. Docker defaults to `0.0.0.0:8800` on Beelink, forwarding to container port 8080. Configure `KEYCLOAK_BIND_ADDRESS` and `KEYCLOAK_PORT` independently of the OakGate app settings. Nginx terminates HTTPS at `https://keycloak.safebox.dev` and forwards to port 8800. Restrict direct access to port 8800 to the Nginx proxy, since Keycloak trusts forwarded headers.
 
 Prerequisites: Docker Engine and the Docker Compose plugin on Beelink, plus SSH access from your computer. Run the deployment commands yourself over your existing SSH connection. Port 8800 must be available on Beelink.
 

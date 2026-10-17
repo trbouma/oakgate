@@ -5,6 +5,8 @@ services:
     build:
       context: .
     restart: unless-stopped
+    environment:
+      OAKGATE_PUBLIC_URL: ${OAKGATE_PUBLIC_URL:-https://oakgate.safebox.dev}
     ports:
       - "${OAKGATE_BIND_ADDRESS:-0.0.0.0}:${OAKGATE_PORT:-8801}:8000"
 
@@ -20,7 +22,7 @@ services:
       KC_HTTP_ENABLED: "true"
       KC_PROXY_HEADERS: xforwarded
     ports:
-      - "0.0.0.0:8800:8080"
+      - "${KEYCLOAK_BIND_ADDRESS:-0.0.0.0}:${KEYCLOAK_PORT:-8800}:8080"
     volumes:
       - type: bind
         source: ${KEYCLOAK_DATA_DIR:-/mnt/bitcoin/keycloak}

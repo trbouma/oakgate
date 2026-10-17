@@ -44,5 +44,6 @@ docker compose ps
 printf '%s\n' \
     'Startup requested. Services may still be initializing.' \
     'Check startup logs with: docker compose logs --tail=100 app keycloak' \
-    'App: http://<beelink-address>:8801/ (or OAKGATE_PORT from .env)' \
-    'Admin console: https://keycloak.safebox.dev/admin/master/console/'
+    'App: OAKGATE_PUBLIC_URL from .env (default https://oakgate.safebox.dev)' \
+    'Host bindings: OAKGATE_BIND_ADDRESS/OAKGATE_PORT and KEYCLOAK_BIND_ADDRESS/KEYCLOAK_PORT' \
+    'Admin console: KC_HOSTNAME from .env followed by /admin/master/console/'
