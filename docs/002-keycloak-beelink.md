@@ -22,14 +22,33 @@ chmod 600 .env
 openssl rand -hex 24
 ```
 
-Put the generated password in `.env` as `KC_BOOTSTRAP_ADMIN_PASSWORD`. The file is ignored by Git. Then start Keycloak:
+Put the generated password in `.env` as `KC_BOOTSTRAP_ADMIN_PASSWORD`. The file is ignored by Git. Prepare storage as described below, then start Keycloak:
 
 ```sh
 docker compose up -d
 docker compose logs --tail=100 keycloak
 ```
 
-The image is pinned to `26.8.0`, the version shown in the official Docker getting-started guide consulted for this setup. The named volume retains realms and users across container recreation. Do not use `docker compose down -v` unless you intend to delete this data.
+The image is pinned to `26.8.0`, the version shown in the official Docker getting-started guide consulted for this setup. The bind mount retains realms and users across container recreation. Docker stores this data directly in `/mnt/bitcoin/keycloak`, rather than a Docker-managed named volume.
+
+## External storage
+
+Following Mainstay's configurable host-directory approach, `KEYCLOAK_DATA_DIR` selects the existing data directory on the Docker host. Its default is `/mnt/bitcoin/keycloak`, mounted at `/opt/keycloak/data` inside Keycloak. Set it in `.env` if a different location is needed.
+
+On Beelink, before the first start:
+
+```sh
+mountpoint /mnt/bitcoin
+# Continue only if the mount check succeeds.
+sudo chown 1000:0 /mnt/bitcoin/keycloak
+sudo chmod 700 /mnt/bitcoin/keycloak
+```
+
+These commands target the directory you already created. The pinned Keycloak image runs as UID 1000, GID 0 ([image source](https://github.com/keycloak/keycloak/blob/26.8.0/quarkus/container/Dockerfile)). These host permissions assume standard rootful Docker without user-namespace remapping.
+
+Compose uses `create_host_path: false` so it will fail if the directory is missing instead of creating it. This does not prove the external drive is mounted: ensure `/mnt/bitcoin` is mounted before starting Docker at boot as well. The storage filesystem must support normal Linux ownership and database file locking.
+
+This is a first-installation storage selection. If Keycloak has already stored users in the earlier `oakgate_keycloak_data` named volume, stop it and explicitly migrate that data before switching mounts; this configuration does not migrate it automatically. Keep the old volume until migration is verified. Stop Keycloak before making a filesystem backup of its embedded database.
 
 ## Update an existing deployment
 
@@ -39,7 +58,7 @@ From the repository directory on Beelink:
 ./refresh-containers.sh
 ```
 
-Like Mainstay, the refresh script rejects tracked local changes and pulls with `--ff-only`, then delegates to `start-oakgate.sh --force-recreate`. Startup validates the Compose configuration and shows container status; verify readiness using the checks below. The scripts preserve the existing `.env` file and Docker volume. Review release instructions before upgrading Keycloak versions.
+Like Mainstay, the refresh script rejects tracked local changes and pulls with `--ff-only`, then delegates to `start-oakgate.sh --force-recreate`. Startup validates the Compose configuration and shows container status; verify readiness using the checks below. The scripts preserve the existing `.env` file and external storage directory. Review release instructions before upgrading Keycloak versions.
 
 ## Open from your computer
 
