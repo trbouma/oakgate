@@ -18,6 +18,7 @@ from app.zaps import encode_lnurl, validate_zap, receipt, publish_event, public_
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+MAX_COMMENT_CHARS = 255
 HEADERS = {'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store'}
 
 
@@ -53,9 +54,11 @@ class PaymentService:
         token = self.wallets.store.cipher.encrypt(json.dumps(snapshot).encode()).decode()
         return {'tag': 'payRequest', 'callback': f'{self.origin}/lnurl/callback/{token}',
                 'minSendable': self.config.min_sat * 1000, 'maxSendable': self.config.max_sat * 1000,
-                'metadata': metadata, 'commentAllowed': 0, 'allowsNostr': True, 'nostrPubkey': pubkey}
+                'metadata': metadata, 'commentAllowed': MAX_COMMENT_CHARS, 'allowsNostr': True, 'nostrPubkey': pubkey}
 
-    async def invoice(self, token, amount, nostr=None):
+    async def invoice(self, token, amount, nostr=None, comment=None):
+        if comment is not None and len(comment) > MAX_COMMENT_CHARS:
+            raise ValueError('Payment comment is too long')
         if not self.config.enabled:
             raise ValueError('Receiving payments is paused')
         if len(token) > 4096 or not re.fullmatch(r'[0-9]{1,12}', amount):
@@ -79,7 +82,7 @@ class PaymentService:
                                           encode_lnurl(f"{self.origin}/.well-known/lnurlp/{snapshot['handle']}"))
             targets = list(dict.fromkeys(targets + requested))
         item, created = self.store.reserve(snapshot['owner'], {
-            'amount': msat // 1000, 'mint': self.config.mint, 'zap': nostr,
+            'amount': msat // 1000, 'mint': self.config.mint, 'zap': nostr, 'comment': comment,
             'description': nostr if zap else snapshot['metadata'], 'relays': targets,
         }, zap['id'] if zap else None)
         if not created:
@@ -202,12 +205,13 @@ async def callback(request: Request, token: str, amount: str = '', nostr: str | 
         return error('Receiving payments is not configured')
     if len(request.scope.get('query_string', b'')) > 24576:
         return error('Payment request is too large')
-    if request.query_params.get('comment'):
-        return error('Payment comments are not supported')
+    comment = request.query_params.get('comment')
+    if comment is not None and len(comment) > MAX_COMMENT_CHARS:
+        return error(f'Payment comments must be {MAX_COMMENT_CHARS} characters or fewer')
     if any(len(request.query_params.getlist(k)) != 1 for k in request.query_params):
         return error('Duplicate payment parameters')
     try:
-        invoice = await service.invoice(token, amount, nostr)
+        invoice = await service.invoice(token, amount, nostr, comment=comment)
         return JSONResponse({'pr': invoice, 'routes': []}, headers=HEADERS)
     except MintCompatibilityError as exc:
         return error(str(exc))

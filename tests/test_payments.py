@@ -255,8 +255,13 @@ def test_public_routes_limits_and_cors(tmp_path):
             result = (await client.get(data['callback'], params={'amount': '13000'})).json()
             assert bolt11.decode(result['pr']).amount_msat == 13000
             assert (await client.get(data['callback']+'?amount=1000&amount=2000')).json()['status'] == 'ERROR'
-            assert (await client.get(data['callback'], params={'amount':'1000','comment':'hello'})).json()['status'] == 'ERROR'
-            for i in range(29):
+            assert data['commentAllowed'] == 255
+            commented = (await client.get(data['callback'], params={'amount':'1000','comment':'hello'})).json()
+            assert bolt11.decode(commented['pr']).amount_msat == 1000
+            rows = [f.service.store.get(pid) for pid in f.service.store.due()]
+            assert any(row.get('comment') == 'hello' for row in rows)
+            assert (await client.get(data['callback'], params={'amount':'1000','comment':'x'*256})).json()['status'] == 'ERROR'
+            for i in range(28):
                 f.service.store.reserve('owner', {'amount': 1})
             assert (await client.get(data['callback'], params={'amount':'1000'})).json()['status'] == 'ERROR'
     asyncio.run(run())
@@ -383,4 +388,24 @@ def test_worker_lifecycle_starts_and_cancels(tmp_path):
         async with app.router.lifespan_context(app):
             await asyncio.wait_for(started.wait(), 1)
         assert stopped.is_set()
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize('comment', [None, '', 'Thanks!', '⚡'*255])
+def test_payment_comments_preserve_metadata_and_zap_binding(tmp_path, comment):
+    async def run():
+        f = setup(tmp_path)
+        raw = zap(f)
+        await f.service.invoice(f.token, '13000', comment=comment)
+        ordinary = f.service.store.get(f.service.store.due()[0])
+        assert ordinary['comment'] == comment
+        assert ordinary['description'] == f.discovery['metadata']
+        pr = await f.service.invoice(f.token, '13000', raw, comment=comment)
+        rows = [f.service.store.get(pid) for pid in f.service.store.due()]
+        zapped = next(row for row in rows if row['zap'])
+        assert zapped['comment'] == comment and zapped['description'] == raw
+        assert bolt11.decode(pr).description_hash == hashlib.sha256(raw.encode()).hexdigest()
+        with pytest.raises(ValueError, match='comment'):
+            await f.service.invoice(f.token, '13000', comment='x'*256)
+        assert len(f.mint.rows) == 2
     asyncio.run(run())
