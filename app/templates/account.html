@@ -12,6 +12,11 @@
 <p class="eyebrow">CASH BALANCE</p>
 {% if balance_error %}<p role="status">Balance unavailable right now.</p><p class="note">Your Acorn is still connected. Try refreshing in a moment.</p>
 {% else %}<p class="cash-balance">{{ '{:,}'.format(balance) }} <span>sats</span></p><p class="note">Cash balance read from your Acorn. Mint spendability has not been checked.</p>{% endif %}
+<section class="receive-payment" aria-labelledby="receive-title">
+<h3 id="receive-title">Receive Lightning</h3>
+{% if lightning_address %}<p class="lightning-address">{{ lightning_address }}</p><p class="note">Share your address to receive payments and Nostr zaps. OakGate adds paid funds to your Acorn, even when you are signed out. Refresh to see your updated balance.</p>
+{% else %}<p class="note">Choose a <a href="/account/preferences">handle in Preferences</a> to receive payments at your OakGate address. Receiving requires this instance’s HTTPS domain.</p>{% endif %}
+</section>
 <section class="clear-balances" aria-labelledby="clear-title">
 <h3 id="clear-title">Clear balances</h3>
 {% if clear_error %}<p role="status">Clear balances unavailable right now. Try refreshing in a moment.</p>

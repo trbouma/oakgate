@@ -16,7 +16,7 @@ router = APIRouter()
 async def account_page(request, session, message=None, status=200):
     service = request.app.state.wallets
     context = {**session, 'wallet_enabled': service is not None, 'wallet': None,
-               'balance': None, 'message': message, 'balance_error': False,
+               'lightning_address': None, 'balance': None, 'message': message, 'balance_error': False,
                'clear_balances': [], 'clear_error': False, 'active_page': 'balances',
                'default_relay': service.default_relay if service else ''}
     if service:
@@ -29,6 +29,8 @@ async def account_page(request, session, message=None, status=200):
                 # Never pass recovery secrets or native wallet metadata to templates.
                 context['wallet'] = {'npub': record['material']['npub'], 'status': record['status']}
                 if record['status'] == 'active':
+                    if handle and request.app.state.payments:
+                        context['lightning_address'] = request.app.state.payments.address(handle)
                     cash, clear = await asyncio.gather(
                         service.balance(record['material']),
                         service.clear_balances(record['material']), return_exceptions=True)

@@ -94,3 +94,9 @@ The included GitHub Pages workflow publishes on pushes to `main` once **Settings
 - [OakGate and safebox-web custody models](docs/006-custody-models.md)
 
 - [Connect an Acorn and configure custody storage](docs/007-acorn-custody.md)
+
+- [Identity mapping, storage, and backups](docs/008-identity-storage-backups.md)
+
+### Receiving payments
+
+Choose a handle in Preferences to receive Lightning payments and zaps directly into your connected Acorn. The app processes payments while you are signed out and resumes pending work after a restart. The default mint is `https://mint.safebox.dev`; public zap relays and receiving limits are configurable. Invoice compatibility mode matches Safebox Web, with optional strict description-hash validation. See [Lightning payments and zaps](docs/009-lightning-receiving.md) for configuration, client compatibility and backup requirements.

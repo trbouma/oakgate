@@ -43,7 +43,9 @@ class CustodyStore:
                 encrypted BLOB NOT NULL, status TEXT NOT NULL,
                 lease TEXT, lease_until REAL NOT NULL DEFAULT 0)''')
 
+            db.execute('CREATE TABLE IF NOT EXISTS lightning_handles (normalized_handle TEXT PRIMARY KEY, owner TEXT NOT NULL)')
             db.execute('CREATE TABLE IF NOT EXISTS user_preferences (owner TEXT PRIMARY KEY, handle TEXT NOT NULL, normalized_handle TEXT NOT NULL UNIQUE)')
+            db.execute("INSERT OR IGNORE INTO lightning_handles(normalized_handle,owner) SELECT p.normalized_handle,p.owner FROM user_preferences p JOIN wallets w ON p.owner=w.owner WHERE w.status='active'")
 
     def preference(self, owner):
         with closing(self.connect()) as db:
@@ -56,14 +58,33 @@ class CustodyStore:
             raise ValueError('Use 3–32 letters, numbers, hyphens or underscores, starting with a letter or number.')
         try:
             with closing(self.connect()) as db, db:
+                db.execute('BEGIN IMMEDIATE')
+                reserved = db.execute('SELECT owner FROM lightning_handles WHERE normalized_handle=?', (handle.lower(),)).fetchone()
+                if reserved and reserved['owner'] != owner:
+                    raise HandleTaken
                 if not handle:
                     db.execute('DELETE FROM user_preferences WHERE owner=?', (owner,))
                 else:
                     db.execute('INSERT INTO user_preferences(owner,handle,normalized_handle) VALUES(?,?,?) '
                                'ON CONFLICT(owner) DO UPDATE SET handle=excluded.handle,normalized_handle=excluded.normalized_handle',
                                (owner, handle, handle.lower()))
+                    db.execute("INSERT OR IGNORE INTO lightning_handles(normalized_handle,owner) SELECT ?,owner FROM wallets WHERE owner=? AND status='active'", (handle.lower(), owner))
         except sqlite3.IntegrityError:
             raise HandleTaken from None
+
+    def address_owner(self, handle):
+        # Once advertised for payments, a handle cannot be reassigned to someone
+        # else. Renaming/removing it disables discovery but preserves reservation.
+        with closing(self.connect()) as db, db:
+            db.execute('BEGIN IMMEDIATE')
+            row = db.execute("SELECT p.owner FROM user_preferences p JOIN wallets w ON p.owner=w.owner WHERE p.normalized_handle=? AND w.status='active'", (handle,)).fetchone()
+            if not row:
+                return None
+            db.execute('INSERT OR IGNORE INTO lightning_handles(normalized_handle,owner) VALUES(?,?)', (handle, row['owner']))
+            reserved = db.execute('SELECT owner FROM lightning_handles WHERE normalized_handle=?', (handle,)).fetchone()
+            if reserved['owner'] != row['owner']:
+                raise HandleTaken
+            return row['owner']
 
     def connect(self):
         db = sqlite3.connect(self.path, timeout=5)
@@ -89,6 +110,8 @@ class CustodyStore:
             with closing(self.connect()) as db, db:
                 db.execute('INSERT INTO wallets(owner,wallet_id,encrypted,status) VALUES(?,?,?,?)',
                            (owner, wallet_id, self.seal(owner, material), status))
+                if status == 'active':
+                    db.execute('INSERT OR IGNORE INTO lightning_handles(normalized_handle,owner) SELECT normalized_handle,owner FROM user_preferences WHERE owner=?', (owner,))
         except sqlite3.IntegrityError:
             raise AlreadyConnected from None
 
@@ -105,3 +128,4 @@ class CustodyStore:
         with closing(self.connect()) as db, db:
             db.execute("UPDATE wallets SET lease=NULL,lease_until=0,status=CASE WHEN ? THEN 'active' ELSE status END WHERE owner=? AND lease=?",
                        (active, owner, token))
+            db.execute("INSERT OR IGNORE INTO lightning_handles(normalized_handle,owner) SELECT p.normalized_handle,p.owner FROM user_preferences p JOIN wallets w ON p.owner=w.owner WHERE p.owner=? AND w.status='active'", (owner,))

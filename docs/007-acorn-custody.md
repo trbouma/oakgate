@@ -100,3 +100,5 @@ Handles use 3–32 ASCII letters, numbers, hyphens, or underscores, beginning wi
 The existing persistent SQLite database (`/mnt/bitcoin/oakgate/custody.sqlite3` on Beelink) contains a separate `user_preferences` table, created automatically at startup. Each row is keyed by the hash of the exact Keycloak issuer/subject pair. A UNIQUE constraint on `normalized_handle` enforces uniqueness across all users sharing this database, including simultaneous requests. Failed claims preserve the user's previous handle. Multiple independent database copies do not share a handle namespace.
 
 Handle fields are stored as ordinary text for indexing; custody secrets remain encrypted separately. Database backups include preferences, and any future Go Independent deletion must remove the preference row as well. No new mount, secret, or environment setting is required, but the existing custody storage must be configured before preferences can be saved.
+
+See [Identity mapping storage and backups](008-identity-storage-backups.md) for the Google-to-Keycloak ownership chain, Redis session lifecycle, and coordinated recovery requirements.

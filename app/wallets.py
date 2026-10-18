@@ -1,4 +1,4 @@
-"""Small adapter around the pinned Acorn API. No payment operations."""
+"""Small adapter around the pinned Acorn API."""
 import asyncio
 import hashlib
 import json
@@ -12,6 +12,7 @@ from stroma import Keys
 
 from app.custody import CustodyStore
 from app.clear_balances import ClearLabels
+from app.payment_config import DEFAULT_MINT, secure_url
 
 DEFAULT_RELAY = 'wss://spurline.safebox.dev'
 
@@ -44,9 +45,12 @@ class RecordReadLogger(logging.LoggerAdapter):
 
 
 class AcornBackend:
+    def __init__(self, mint=DEFAULT_MINT):
+        self.mint = secure_url(mint, 'https')
+
     def wallet(self, material):
         wallet = Acorn(nsec=material['nsec'], home_relay=material['relay'],
-                       relays=[material['relay']], logging_level=logging.CRITICAL + 1)
+                       relays=[material['relay']], mints=[self.mint], logging_level=logging.CRITICAL + 1)
         # Acorn declares these mutable defaults on the class; isolate each user.
         wallet.known_mints = {}
         wallet.user_records = []
@@ -195,6 +199,7 @@ def configured_service():
         return None
     return WalletService(
         CustodyStore(os.getenv('OAKGATE_DATA_DIR', '.oakgate'), key),
+        backend=AcornBackend(os.getenv('OAKGATE_BOOTSTRAP_MINT', DEFAULT_MINT)),
         default_relay=os.getenv('OAKGATE_BOOTSTRAP_RELAY', DEFAULT_RELAY),
         allowed_relays=[r.strip() for r in os.getenv('OAKGATE_ALLOWED_RELAYS', os.getenv('OAKGATE_BOOTSTRAP_RELAY', DEFAULT_RELAY)).split(',') if r.strip()],
     )

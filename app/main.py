@@ -1,4 +1,5 @@
-from contextlib import asynccontextmanager
+import asyncio
+from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -13,6 +14,7 @@ from app.oidc import KeycloakProvider
 from app.sessions import MemoryStore, RedisStore
 from app.wallets import configured_service
 from app.wallet_routes import router as wallet_router
+from app.payments import PaymentService, router as payment_router
 
 APP_DIR = Path(__file__).resolve().parent
 LOGO = APP_DIR.parent / "assets" / "branding" / "oakgate-logo-flat.png"
@@ -24,12 +26,20 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
 
     @asynccontextmanager
     async def lifespan(app):
-        yield
-        await store.close()
+        worker = asyncio.create_task(app.state.payments.run()) if app.state.payments and app.state.payments.config.enabled else None
+        try:
+            yield
+        finally:
+            if worker:
+                worker.cancel()
+                with suppress(asyncio.CancelledError):
+                    await worker
+            await store.close()
 
     app = FastAPI(title="OakGate", description="OpenID Access Gate — part of the Mainstay family.",
                   version="0.1.0", servers=[{"url": settings.origin}], lifespan=lifespan)
     app.state.wallets = wallets if wallets is not None else configured_service()
+    app.state.payments = PaymentService(app.state.wallets, settings.origin) if app.state.wallets else None
     app.state.settings = settings
     app.state.store = store
     app.state.provider = provider or KeycloakProvider(settings)
@@ -37,6 +47,7 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
     app.mount("/static", StaticFiles(directory=APP_DIR / "static"), name="static")
     app.include_router(router)
     app.include_router(wallet_router)
+    app.include_router(payment_router)
 
     @app.middleware("http")
     async def private_responses(request, call_next):

@@ -151,3 +151,6 @@ footer { border-top: 1px solid #e6e7dc; }
 .preferences-panel { max-width:560px; text-align:left; }
 .preferences-panel input[type=text] { width:100%; padding:12px; border:1px solid #899577; border-radius:5px; font:inherit; color:#293527; background:white; }
 @media(max-width:520px) { .account-nav { padding:0 8px; } .account-nav a { padding:16px 8px; font-size:14px; } .record-list a { padding:16px 4px; } .record-contents { padding:16px; } }
+
+.receive-payment { margin: 1.5rem 0; }
+.lightning-address { overflow-wrap: anywhere; font-size: 1.1rem; font-weight: 600; user-select: all; }
