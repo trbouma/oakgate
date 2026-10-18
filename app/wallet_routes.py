@@ -1,4 +1,5 @@
 import secrets
+import asyncio
 
 from fastapi import APIRouter, Request
 from fastapi.responses import RedirectResponse
@@ -15,6 +16,7 @@ async def account_page(request, session, message=None, status=200):
     service = request.app.state.wallets
     context = {**session, 'wallet_enabled': service is not None, 'wallet': None,
                'balance': None, 'message': message, 'balance_error': False,
+               'clear_balances': [], 'clear_error': False,
                'default_relay': service.default_relay if service else ''}
     if service:
         try:
@@ -23,10 +25,17 @@ async def account_page(request, session, message=None, status=200):
                 # Never pass recovery secrets or native wallet metadata to templates.
                 context['wallet'] = {'npub': record['material']['npub'], 'status': record['status']}
                 if record['status'] == 'active':
-                    try:
-                        context['balance'] = await service.balance(record['material'])
-                    except Exception:
+                    cash, clear = await asyncio.gather(
+                        service.balance(record['material']),
+                        service.clear_balances(record['material']), return_exceptions=True)
+                    if isinstance(cash, Exception):
                         context['balance_error'] = True
+                    else:
+                        context['balance'] = cash
+                    if isinstance(clear, Exception):
+                        context['clear_error'] = True
+                    else:
+                        context['clear_balances'] = clear
         except Exception:
             return error_page(request, 'Safebox storage is unavailable. Please try again shortly.', 503)
     return request.app.state.templates.TemplateResponse(

@@ -10,6 +10,7 @@ from acorn.func_utils import generate_seed_phrase_and_nsec, recover_nsec_from_se
 from stroma import Keys
 
 from app.custody import CustodyStore
+from app.clear_balances import ClearLabels
 
 DEFAULT_RELAY = 'wss://spurline.safebox.dev'
 
@@ -78,6 +79,10 @@ class AcornBackend:
         await wallet.load_data(force_profile_creation=False)
         return self.cash(wallet)
 
+    async def clear_balances(self, material):
+        wallet = self.wallet(material)
+        return await wallet.get_clear_balances()
+
     @staticmethod
     def cash(wallet):
         # load_data reads cash proofs; Clear balances remain separate.
@@ -91,6 +96,7 @@ class WalletService:
     def __init__(self, store, backend=None, default_relay=DEFAULT_RELAY, allowed_relays=None):
         self.store = store
         self.backend = backend or AcornBackend()
+        self.clear_labels = ClearLabels()
         self.default_relay = normalize_relay(default_relay)
         self.allowed_relays = {normalize_relay(v) for v in (allowed_relays or [default_relay])}
         if self.default_relay not in self.allowed_relays:
@@ -106,6 +112,11 @@ class WalletService:
     async def balance(self, material):
         self.relay(material['relay'])
         return await asyncio.wait_for(self.backend.balance(material), timeout=40)
+
+    async def clear_balances(self, material):
+        self.relay(material['relay'])
+        balances = await asyncio.wait_for(self.backend.clear_balances(material), timeout=40)
+        return await self.clear_labels.resolve(balances)
 
     async def initialize(self, owner):
         token = self.store.acquire(owner)

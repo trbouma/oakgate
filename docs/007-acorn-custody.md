@@ -2,7 +2,7 @@
 
 Date: 2026-10-17
 
-After signing in, a user can connect an existing Acorn with its recovery phrase and bootstrap relay, or create a new Acorn. Each Keycloak identity can hold one connection. The account page reads the connected Acorn's cash balance in sats.
+After signing in, a user can connect an existing Acorn with its recovery phrase and bootstrap relay, or create a new Acorn. Each Keycloak identity can hold one connection. The account page reads the connected Acorn's cash balance in sats and displays Clear balances separately.
 
 ## User experience
 
@@ -72,3 +72,13 @@ OakGate pins safebox-acorn to revision `20c0663c55ddd188e1486f7ebdb540c173c19527
 Automated tests cover real offline Acorn generation and derivation, encrypted restart recovery, ownership isolation, duplicate connections, pending setup retries, unavailable balances, and request protections. Relay operations are simulated in the suite. A live create/connect/readback test on your relay remains part of deployment verification; no funded wallet or recovery phrase is used by these tests.
 
 This slice does not implement payments, Nostr Wallet Connect, secret revelation, connection replacement, deletion, or Go Independent. Stored recovery material keeps the [Go Independent design](004-go-independent.md) possible, but the full independent recovery and deletion workflow is still to be built. Additional Acorn recovery state may be required as further capabilities are introduced.
+
+## Clear balances and friendly units
+
+The account page calls Acorn's `get_clear_balances()` to read held Clear proofs. Each mint, canonical unit, and keyset remains a separate balance, even if friendly labels happen to be identical. Clear amounts are never added to cash or to other units. Pending receipts are not included, and displaying a balance does not perform a payment or check mint spendability.
+
+Following Safebox Web, OakGate reads `/v1/keysets` from the mint and matches the balance's exact unit and keyset ID. `friendly_alias` (or `friendly_name`) supplies the name; `friendly_unit_alias` supplies the displayed unit. The issuer and expandable asset details keep the underlying mint, unit, and keyset visible. Missing or unavailable metadata falls back to the canonical unit without hiding the amount.
+
+Metadata requests use public HTTPS endpoints, validate DNS answers at connection time, disallow redirects, and have short timeouts and a 64 KiB response limit. Private-network mints still have balances displayed, but their friendly labels are not fetched by this initial implementation. Labels are cached in memory for five minutes; failures are retried after 30 seconds. No wallet secrets are sent to the mint metadata endpoint.
+
+Cash and Clear reads run independently. A Clear relay failure displays “Clear balances unavailable,” while a successful empty result displays “No Clear balances yet.” The **Refresh balances** link reloads both. Tests cover exact label matching, fallback behavior, escaping, and partial outages; verify the displayed friendly names against your live mint after deployment.

@@ -37,6 +37,9 @@ class Backend:
             raise RuntimeError('SECRET-PHRASE provider details')
         return 0
 
+    async def clear_balances(self, material):
+        return []
+
     async def balance(self, material):
         if self.down:
             raise RuntimeError('SECRET-NSEC provider details')

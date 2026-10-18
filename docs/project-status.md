@@ -10,7 +10,7 @@ OakGate is an early-stage project. This page separates working foundations from 
 | Keycloak | Instance running behind Nginx HTTPS; `oakgate` realm created |
 | Google provider | Configured in Keycloak; realm login tested |
 | App sign-in | Code flow with PKCE, server-side sessions, account page and logout implemented; application client setup and live verification required |
-| Acorn integration and custody | Create/connect, encrypted recovery storage, and cash-balance display implemented; live relay verification pending |
+| Acorn integration and custody | Create/connect, encrypted recovery storage, and cash and Clear balance display with friendly units implemented; live relay verification pending |
 | Recovery information | Phrase, nsec, relay, and native creation metadata encrypted at rest; complete independent recovery workflow pending |
 | Go Independent | Design note agreed; implementation deferred |
 | Documentation | MkDocs site prepared; publication depends on GitHub Pages deployment |

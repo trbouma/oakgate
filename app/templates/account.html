@@ -12,7 +12,22 @@
 <p class="eyebrow">CASH BALANCE</p>
 {% if balance_error %}<p role="status">Balance unavailable right now.</p><p class="note">Your Acorn is still connected. Try refreshing in a moment.</p>
 {% else %}<p class="cash-balance">{{ '{:,}'.format(balance) }} <span>sats</span></p><p class="note">Cash balance read from your Acorn. Mint spendability has not been checked.</p>{% endif %}
-<a class="secondary-action" href="/account">Refresh balance</a>
+<section class="clear-balances" aria-labelledby="clear-title">
+<h3 id="clear-title">Clear balances</h3>
+{% if clear_error %}<p role="status">Clear balances unavailable right now. Try refreshing in a moment.</p>
+{% elif clear_balances %}
+{% for item in clear_balances %}
+<article class="clear-balance-row">
+<h4>{{ item.display_name }}</h4>
+<p class="clear-amount">{{ '{:,}'.format(item.amount) }} <span>{{ item.display_unit }}</span></p>
+<p class="note">{{ item.mint }}</p>
+<details><summary>Asset details</summary><p>Unit: {{ item.unit }}</p>{% if item.keyset_id %}<p>Keyset: {{ item.keyset_id }}</p>{% endif %}</details>
+</article>
+{% endfor %}
+<p class="note">Balances held in your Acorn. Pending receipts are not included.</p>
+{% else %}<p class="note">No Clear balances yet.</p>{% endif %}
+</section>
+<a class="secondary-action" href="/account">Refresh balances</a>
 {% else %}
 <p>Your new Acorn setup is pending.</p><p class="note">Your recovery information is saved. Retry to finish setting up the same Acorn.</p>
 <form method="post" action="/account/acorn/retry"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="primary-action" type="submit">Retry setup</button></form>
