@@ -1,5 +1,6 @@
 """Durable encrypted custody, independent of ephemeral sign-in sessions."""
 from app.localization import N_
+from app.currency_rates import CURRENCY_METADATA
 import hashlib
 import re
 import json
@@ -45,6 +46,7 @@ class CustodyStore:
                 encrypted BLOB NOT NULL, status TEXT NOT NULL,
                 lease TEXT, lease_until REAL NOT NULL DEFAULT 0)''')
 
+            db.execute('CREATE TABLE IF NOT EXISTS user_currency_preferences (owner TEXT PRIMARY KEY, currency TEXT NOT NULL)')
             db.execute('CREATE TABLE IF NOT EXISTS user_display_preferences (owner TEXT PRIMARY KEY, language TEXT NOT NULL)')
             db.execute('CREATE TABLE IF NOT EXISTS lightning_handles (normalized_handle TEXT PRIMARY KEY, owner TEXT NOT NULL)')
             db.execute('CREATE TABLE IF NOT EXISTS user_preferences (owner TEXT PRIMARY KEY, handle TEXT NOT NULL, normalized_handle TEXT NOT NULL UNIQUE)')
@@ -60,7 +62,14 @@ class CustodyStore:
             row = db.execute('SELECT language FROM user_display_preferences WHERE owner=?', (owner,)).fetchone()
         return supported_language(row['language']) if row else 'en'
 
-    def save_handle(self, owner, handle, *, language=None):
+    def currency(self, owner, default='USD'):
+        with closing(self.connect()) as db:
+            row = db.execute('SELECT currency FROM user_currency_preferences WHERE owner=?', (owner,)).fetchone()
+        return row['currency'] if row and row['currency'] in CURRENCY_METADATA else default
+
+    def save_handle(self, owner, handle, *, language=None, currency=None):
+        if currency is not None and currency not in CURRENCY_METADATA:
+            raise ValueError(N_('Choose a supported currency.'))
         if language is not None and language not in SUPPORTED_LANGUAGES:
             raise ValueError(N_('Choose a supported language.'))
         handle = handle.strip()
@@ -69,6 +78,9 @@ class CustodyStore:
         try:
             with closing(self.connect()) as db, db:
                 db.execute('BEGIN IMMEDIATE')
+                if currency is not None:
+                    db.execute('INSERT INTO user_currency_preferences(owner,currency) VALUES(?,?) '
+                               'ON CONFLICT(owner) DO UPDATE SET currency=excluded.currency', (owner, currency))
                 if language is not None:
                     db.execute('INSERT INTO user_display_preferences(owner,language) VALUES(?,?) '
                                'ON CONFLICT(owner) DO UPDATE SET language=excluded.language', (owner, language))

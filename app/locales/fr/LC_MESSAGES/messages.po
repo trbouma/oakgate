@@ -340,3 +340,39 @@ msgstr ""
 "vide pour désactiver l’adresse. Une fois associé à un Acorn actif, cet identifiant vous reste "
 "réservé. Cela ne change pas l’identité de votre Acorn."
 
+msgid "Local currency"
+msgstr "Devise locale"
+
+msgid "Exchange rates"
+msgstr "Taux de change"
+
+msgid "Currency"
+msgstr "Devise"
+
+msgid "Value of 1 BTC"
+msgstr "Valeur de 1 BTC"
+
+msgid "Updated"
+msgstr "Mis à jour"
+
+msgid "Awaiting rate"
+msgstr "En attente du taux"
+
+msgid "Possibly stale"
+msgstr "Peut être obsolète"
+
+msgid "Local currency estimate unavailable."
+msgstr "Estimation en devise locale indisponible."
+
+msgid "Choose a supported currency."
+msgstr "Choisissez une devise prise en charge."
+
+msgid "Used for estimated cash values. Your Acorn balance remains in sats."
+msgstr "Utilisée pour estimer la valeur de vos fonds. Le solde de votre Acorn reste en sats."
+
+msgid "Rate sources"
+msgstr "Sources des taux"
+
+msgid "Exchange rates are unavailable right now."
+msgstr "Les taux de change sont indisponibles pour le moment."
+

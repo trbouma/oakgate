@@ -6,6 +6,9 @@
 {% if preferences_enabled %}
 <form method="post" action="/account/preferences">
 <input type="hidden" name="csrf" value="{{ csrf }}">
+<label for="currency">{{ _("Local currency") }}</label>
+<select id="currency" name="currency" required>{% for option in currency_options %}<option value="{{ option.code }}"{% if option.code == currency %} selected{% endif %}>{{ option.code }} — {{ _(option.description) }}</option>{% endfor %}</select>
+<p class="note">{{ _("Used for estimated cash values. Your Acorn balance remains in sats.") }}</p>
 <label for="language">{{ _("Preferred language") }}</label>
 <select id="language" name="language" required>{% for tag, label in language_options.items() %}<option value="{{ tag }}"{% if tag == language %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
 <p class="note">{{ _("Saved to your OakGate account and used on all your devices.") }}</p>

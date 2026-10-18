@@ -18,7 +18,7 @@ router = APIRouter()
 
 async def account_page(request, session, message=None, status=200):
     service = request.app.state.wallets
-    context = {**session, 'wallet_enabled': service is not None, 'wallet': None,
+    context = {**session, 'fiat_estimate': None, 'wallet_enabled': service is not None, 'wallet': None,
                'lightning_address': None, 'balance': None, 'message': message, 'balance_error': False,
                'clear_balances': [], 'clear_error': False, 'active_page': 'balances',
                'default_relay': service.default_relay if service else ''}
@@ -41,6 +41,7 @@ async def account_page(request, session, message=None, status=200):
                         context['balance_error'] = True
                     else:
                         context['balance'] = cash
+                        context['fiat_estimate'] = balance_estimate(request, session, cash)
                     if isinstance(clear, Exception):
                         context['clear_error'] = True
                     else:
@@ -174,6 +175,8 @@ async def preferences_page(request, session, message=None, status=200):
     return request.app.state.templates.TemplateResponse(
         request=request, name='preferences.html', status_code=status,
         context={**session, 'active_page': 'preferences', 'handle': handle,
+                 'currency': service.store.currency(identity_key(session['user']), request.app.state.rates.default_currency) if service else 'USD',
+                 'currency_options': request.app.state.rates.rows() if service else [],
                  'preferences_enabled': service is not None, 'message': message})
 
 
@@ -196,7 +199,8 @@ async def save_preferences(request: Request):
         return error_page(request, 'Preferences storage has not been configured yet.', 503)
     try:
         language = str(form.get('language', service.store.language(identity_key(session['user']))))
-        service.store.save_handle(identity_key(session['user']), str(form.get('handle', '')), language=language)
+        currency = str(form.get('currency', service.store.currency(identity_key(session['user']), request.app.state.rates.default_currency))).strip().upper()
+        service.store.save_handle(identity_key(session['user']), str(form.get('handle', '')), language=language, currency=currency)
         request.state.language = language
     except HandleTaken:
         return await preferences_page(request, session, N_('That handle is already taken. Please choose another.'), 409)
@@ -215,7 +219,7 @@ async def transactions_page(request: Request):
         return RedirectResponse('/auth/login', status_code=303)
     service = request.app.state.wallets
     context = {**session, 'active_page': 'balances', 'connected': False,
-               'balance': None, 'balance_error': False, 'history_error': False, 'transactions': []}
+               'balance': None, 'fiat_estimate': None, 'balance_error': False, 'history_error': False, 'transactions': []}
     try:
         owner = identity_key(session['user'])
         record = service.store.get(owner) if service else None
@@ -227,6 +231,7 @@ async def transactions_page(request: Request):
                 context['balance_error'] = True
             else:
                 context['balance'] = balance
+                context['fiat_estimate'] = balance_estimate(request, session, balance)
             if isinstance(history, Exception):
                 context['history_error'] = True
                 history = []
@@ -319,3 +324,32 @@ def folder_view(records, request):
         'folders': [{'label': child, 'url': url(prefix + child)} for child in sorted(children, key=str.casefold)],
         'breadcrumbs': [{'label': 'Records', 'url': url('')}] +
             [{'label': part, 'url': url('/'.join(parts[:i+1]))} for i, part in enumerate(parts)]}
+
+
+def balance_estimate(request, session, sats):
+    rates = request.app.state.rates
+    if not rates:
+        return None
+    # Rates are optional display data; a cache failure must never hide the sats.
+    try:
+        currency = rates.store.currency(identity_key(session['user']), rates.default_currency)
+        return rates.estimate(sats, currency)
+    except Exception:
+        return None
+
+
+@router.get('/rates', include_in_schema=False)
+async def rates_page(request: Request):
+    session = await current_session(request)
+    rates = request.app.state.rates
+    try:
+        rows = rates.rows() if rates and rates.enabled else []
+        unavailable = False
+    except Exception:
+        rows, unavailable = [], True
+    response = request.app.state.templates.TemplateResponse(request=request, name='rates.html',
+        context={**(session or {}), 'active_page': 'balances' if session else None,
+                 'rates': rows, 'rates_enabled': bool(rates and rates.enabled), 'unavailable': unavailable,
+                 'home_url': '/account' if session else '/'})
+    response.headers['Cache-Control'] = 'no-store'
+    return response

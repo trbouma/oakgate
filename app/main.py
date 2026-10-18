@@ -10,6 +10,7 @@ from redis.exceptions import RedisError
 
 from app.auth import current_session, error_page, router
 from app.config import AuthSettings
+from app.currency_rates import CurrencyRates
 from app.templating import localization_context
 from app.oidc import KeycloakProvider
 from app.sessions import MemoryStore, RedisStore
@@ -29,6 +30,7 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
     @asynccontextmanager
     async def lifespan(app):
         worker = asyncio.create_task(app.state.payments.run()) if app.state.payments and app.state.payments.config.enabled else None
+        rates_worker = asyncio.create_task(app.state.rates.run()) if app.state.rates and app.state.rates.enabled else None
         try:
             yield
         finally:
@@ -36,11 +38,16 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
                 worker.cancel()
                 with suppress(asyncio.CancelledError):
                     await worker
+            if rates_worker:
+                rates_worker.cancel()
+                with suppress(asyncio.CancelledError):
+                    await rates_worker
             await store.close()
 
     app = FastAPI(title="OakGate", description="OpenID Access Gate — part of the Mainstay family.",
                   version="0.1.0", servers=[{"url": settings.origin}], lifespan=lifespan)
     app.state.wallets = wallets if wallets is not None else configured_service()
+    app.state.rates = CurrencyRates(app.state.wallets.store) if app.state.wallets else None
     app.state.payments = PaymentService(app.state.wallets, settings.origin) if app.state.wallets else None
     app.state.settings = settings
     app.state.store = store

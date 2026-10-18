@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="rates-panel"><h1>{{ _("Exchange rates") }}</h1>
+<p class="note">{{ _("Indicative local currency values for one bitcoin. Estimates only; payments and balances remain in sats.") }}</p>
+{% if not rates_enabled %}<p>{{ _("Exchange-rate display is not enabled.") }}</p>
+{% elif unavailable %}<p role="status">{{ _("Exchange rates are unavailable right now.") }}</p>
+{% else %}
+<div class="rates-table-wrap"><table class="rates-table"><thead><tr><th scope="col">{{ _("Currency") }}</th><th scope="col">{{ _("Value of 1 BTC") }}</th><th scope="col">{{ _("Updated") }}</th></tr></thead><tbody>
+{% for rate in rates %}<tr><th scope="row">{{ rate.code }}<span class="rate-description">{{ _(rate.description) }}</span></th><td>{% if rate.formatted_rate %}{{ rate.symbol }}{{ rate.formatted_rate }}{% else %}{{ _("Awaiting rate") }}{% endif %}</td><td>{% if rate.updated %}<span>{{ rate.updated }}</span>{% if rate.stale %}<span class="rate-stale">{{ _("Possibly stale") }}</span>{% endif %}{% else %}—{% endif %}</td></tr>{% endfor %}
+</tbody></table></div>
+<p class="note">{{ _("Rates refresh in the background. If the provider is unavailable, the last successful rates are retained.") }}</p>
+<details><summary>{{ _("Rate sources") }}</summary>{% for source in rates|map(attribute='source')|select|unique %}<p class="note">{{ source }}</p>{% else %}<p>{{ _("Awaiting the first successful refresh.") }}</p>{% endfor %}</details>
+{% endif %}
+<p><a href="{{ home_url }}">{{ _("Back to OakGate") }}</a></p></section>
+{% endblock %}

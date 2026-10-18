@@ -339,3 +339,39 @@ msgstr ""
 " para desactivar la dirección. Una vez asociado a un Acorn activo, el identificador queda "
 "reservado para ti. Esto no cambia la identidad de tu Acorn."
 
+msgid "Local currency"
+msgstr "Moneda local"
+
+msgid "Exchange rates"
+msgstr "Tipos de cambio"
+
+msgid "Currency"
+msgstr "Moneda"
+
+msgid "Value of 1 BTC"
+msgstr "Valor de 1 BTC"
+
+msgid "Updated"
+msgstr "Actualizado"
+
+msgid "Awaiting rate"
+msgstr "Esperando el tipo de cambio"
+
+msgid "Possibly stale"
+msgstr "Puede estar desactualizado"
+
+msgid "Local currency estimate unavailable."
+msgstr "Estimación en moneda local no disponible."
+
+msgid "Choose a supported currency."
+msgstr "Elige una moneda compatible."
+
+msgid "Used for estimated cash values. Your Acorn balance remains in sats."
+msgstr "Se usa para estimar el valor de tus fondos. El saldo de tu Acorn sigue en sats."
+
+msgid "Rate sources"
+msgstr "Fuentes de los tipos de cambio"
+
+msgid "Exchange rates are unavailable right now."
+msgstr "Los tipos de cambio no están disponibles en este momento."
+

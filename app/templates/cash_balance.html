@@ -1,0 +1,8 @@
+{% if fiat_estimate %}
+<p class="cash-balance fiat-balance">≈ {{ fiat_estimate.symbol }}{{ fiat_estimate.amount }} <span>{{ fiat_estimate.code }}</span></p>
+<p class="cash-sats">₿ {{ '{:,}'.format(balance) }} <span>sats</span></p>
+{% if fiat_estimate.stale %}<p class="note rate-stale">{{ _("Cached rate may be stale.") }}</p>{% endif %}
+{% else %}
+<p class="cash-balance">₿ {{ '{:,}'.format(balance) }} <span>sats</span></p>
+<p class="note">{{ _("Local currency estimate unavailable.") }}</p>
+{% endif %}

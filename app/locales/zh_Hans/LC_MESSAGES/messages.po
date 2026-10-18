@@ -328,3 +328,39 @@ msgid ""
 "change your Acorn identity."
 msgstr "连接 Acorn 后，您的用户名将成为您的 Lightning 地址。留空可停用该地址。一旦用户名与有效的 Acorn 关联，它就会一直为您保留。这不会改变您的 Acorn 身份。"
 
+msgid "Local currency"
+msgstr "本地货币"
+
+msgid "Exchange rates"
+msgstr "汇率"
+
+msgid "Currency"
+msgstr "货币"
+
+msgid "Value of 1 BTC"
+msgstr "1 BTC 的价值"
+
+msgid "Updated"
+msgstr "更新时间"
+
+msgid "Awaiting rate"
+msgstr "等待汇率"
+
+msgid "Possibly stale"
+msgstr "可能已过期"
+
+msgid "Local currency estimate unavailable."
+msgstr "本地货币估值暂不可用。"
+
+msgid "Choose a supported currency."
+msgstr "请选择支持的货币。"
+
+msgid "Used for estimated cash values. Your Acorn balance remains in sats."
+msgstr "用于估算资金价值。您的 Acorn 余额仍以聪计量。"
+
+msgid "Rate sources"
+msgstr "汇率来源"
+
+msgid "Exchange rates are unavailable right now."
+msgstr "汇率暂不可用。"
+

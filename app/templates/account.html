@@ -11,7 +11,7 @@
 {% if wallet.status == 'active' %}
 <p class="eyebrow">{{ _("CASH BALANCE") }}</p>
 {% if balance_error %}<p role="status">{{ _("Balance unavailable right now.") }}</p><p class="note">{{ _("Your Acorn is still connected. Try refreshing in a moment.") }}</p>
-{% else %}<a class="balance-link" href="/account/transactions" aria-label="{{ '{:,}'.format(balance) }} sats. View recent transactions"><p class="cash-balance">{{ '{:,}'.format(balance) }} <span>sats</span></p></a><p class="note">{{ _("Cash balance read from your Acorn. Mint spendability has not been checked.") }}</p>{% endif %}
+{% else %}<a class="balance-link" href="/account/transactions" aria-label="{{ '{:,}'.format(balance) }} sats. View recent transactions">{% include "cash_balance.html" %}</a><p class="note">{{ _("Cash balance read from your Acorn. Mint spendability has not been checked.") }}</p>{% endif %}
 <section class="receive-payment" aria-labelledby="receive-title">
 <h3 id="receive-title">{{ _("Receive Lightning") }}</h3>
 {% if lightning_address %}<p class="lightning-address">{{ lightning_address }}</p><p class="note">{{ _("Share your address to receive payments and Nostr zaps. OakGate adds paid funds to your Acorn, even when you are signed out. Refresh to see your updated balance.") }}</p>
@@ -61,4 +61,5 @@
 </div>
 {% endif %}
 <form class="signout-form" method="post" action="/auth/logout"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="primary-action" type="submit">{{ _("Sign out") }}</button></form>
+<p class="rates-link"><a href="/rates">{{ _("Exchange rates") }}</a></p>
 {% endblock %}

@@ -342,3 +342,39 @@ msgstr ""
 "leer, um die Adresse zu deaktivieren. Sobald das Kürzel mit einem aktiven Acorn verbunden ist, "
 "bleibt es für dich reserviert. Die Identität deines Acorn ändert sich dadurch nicht."
 
+msgid "Local currency"
+msgstr "Landeswährung"
+
+msgid "Exchange rates"
+msgstr "Wechselkurse"
+
+msgid "Currency"
+msgstr "Währung"
+
+msgid "Value of 1 BTC"
+msgstr "Wert von 1 BTC"
+
+msgid "Updated"
+msgstr "Aktualisiert"
+
+msgid "Awaiting rate"
+msgstr "Kurs ausstehend"
+
+msgid "Possibly stale"
+msgstr "Möglicherweise veraltet"
+
+msgid "Local currency estimate unavailable."
+msgstr "Schätzung in Landeswährung nicht verfügbar."
+
+msgid "Choose a supported currency."
+msgstr "Wähle eine unterstützte Währung."
+
+msgid "Used for estimated cash values. Your Acorn balance remains in sats."
+msgstr "Wird für den geschätzten Geldwert verwendet. Dein Acorn-Guthaben bleibt in Sats."
+
+msgid "Rate sources"
+msgstr "Kursquellen"
+
+msgid "Exchange rates are unavailable right now."
+msgstr "Wechselkurse sind derzeit nicht verfügbar."
+
