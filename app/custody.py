@@ -1,5 +1,6 @@
 """Durable encrypted custody, independent of ephemeral sign-in sessions."""
 import hashlib
+import re
 import json
 import os
 import secrets
@@ -12,6 +13,10 @@ from cryptography.fernet import Fernet
 
 
 class AlreadyConnected(Exception):
+    pass
+
+
+class HandleTaken(Exception):
     pass
 
 
@@ -37,6 +42,28 @@ class CustodyStore:
                 owner TEXT PRIMARY KEY, wallet_id TEXT NOT NULL UNIQUE,
                 encrypted BLOB NOT NULL, status TEXT NOT NULL,
                 lease TEXT, lease_until REAL NOT NULL DEFAULT 0)''')
+
+            db.execute('CREATE TABLE IF NOT EXISTS user_preferences (owner TEXT PRIMARY KEY, handle TEXT NOT NULL, normalized_handle TEXT NOT NULL UNIQUE)')
+
+    def preference(self, owner):
+        with closing(self.connect()) as db:
+            row = db.execute('SELECT handle FROM user_preferences WHERE owner=?', (owner,)).fetchone()
+        return row['handle'] if row else ''
+
+    def save_handle(self, owner, handle):
+        handle = handle.strip()
+        if handle and not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]{2,31}', handle):
+            raise ValueError('Use 3–32 letters, numbers, hyphens or underscores, starting with a letter or number.')
+        try:
+            with closing(self.connect()) as db, db:
+                if not handle:
+                    db.execute('DELETE FROM user_preferences WHERE owner=?', (owner,))
+                else:
+                    db.execute('INSERT INTO user_preferences(owner,handle,normalized_handle) VALUES(?,?,?) '
+                               'ON CONFLICT(owner) DO UPDATE SET handle=excluded.handle,normalized_handle=excluded.normalized_handle',
+                               (owner, handle, handle.lower()))
+        except sqlite3.IntegrityError:
+            raise HandleTaken from None
 
     def connect(self):
         db = sqlite3.connect(self.path, timeout=5)

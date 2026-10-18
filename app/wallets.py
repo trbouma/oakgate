@@ -1,5 +1,6 @@
 """Small adapter around the pinned Acorn API. No payment operations."""
 import asyncio
+import hashlib
 import json
 import logging
 import os
@@ -105,8 +106,31 @@ class AcornBackend:
             if not isinstance(label, str) or not label.strip():
                 continue
             timestamp = int(record.get('timestamp', 0))
-            labels.append({'label': label, 'timestamp': timestamp})
+            labels.append({'label': label, 'timestamp': timestamp, 'ref': self.record_ref(record)})
         return sorted(labels, key=lambda row: (-row['timestamp'], row['label']))
+
+    @staticmethod
+    def record_ref(record):
+        # Opaque URL identifier; labels and contents stay out of request URLs.
+        identity = record.get('id') or json.dumps([record.get('tag'), record.get('timestamp')])
+        return hashlib.sha256(str(identity).encode()).hexdigest()
+
+    async def record_detail(self, material, reference):
+        wallet = self.wallet(material)
+        wallet.logger = RecordReadLogger(wallet.logger, {})
+        # Only records returned by Acorn's user-record reader are accessible.
+        # Do not expose an arbitrary label lookup that could reveal wallet secrets.
+        for record in await wallet.get_user_records(record_kind=37375, reverse=True):
+            if self.record_ref(record) != reference:
+                continue
+            tag = record.get('tag')
+            label = tag[0] if isinstance(tag, list) and tag else tag
+            if not isinstance(label, str) or not label.strip():
+                continue
+            payload = record.get('payload', record.get('content', ''))
+            text = payload if isinstance(payload, str) else json.dumps(payload, ensure_ascii=False, indent=2)
+            return {'label': label, 'contents': text}
+        return None
 
     @staticmethod
     def cash(wallet):
@@ -146,6 +170,10 @@ class WalletService:
     async def records(self, material):
         self.relay(material['relay'])
         return await asyncio.wait_for(self.backend.records(material), timeout=40)
+
+    async def record_detail(self, material, reference):
+        self.relay(material['relay'])
+        return await asyncio.wait_for(self.backend.record_detail(material, reference), timeout=40)
 
     async def initialize(self, owner):
         token = self.store.acquire(owner)

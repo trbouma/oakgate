@@ -21,7 +21,7 @@ def test_record_adapter_returns_only_labels_newest_first():
             ])
         wallet=Wallet()
         backend.wallet=lambda material: wallet
-        assert await backend.records({}) == [
+        assert [{k:v for k,v in row.items() if k != 'ref'} for row in await backend.records({})] == [
             {'label':'Newest','timestamp':30}, {'label':'Middle','timestamp':20}, {'label':'Old','timestamp':10}]
         wallet.get_user_records.assert_awaited_once_with(record_kind=37375, reverse=True)
     asyncio.run(run())
@@ -49,7 +49,7 @@ def test_records_page_navigation_privacy_and_states(tmp_path):
             assert page.headers['referrer-policy']=='strict-origin'
             assert 'href="/account/records" aria-current="page"' in page.text
             assert '&lt;script&gt;Newest&lt;/script&gt;' in page.text
-            assert page.text.index('Newest&lt;') < page.text.index('<li>Old')
+            assert page.text.index('Newest&lt;') < page.text.index('>Old <span')
             assert 'SECRET' not in page.text
             balances=await client.get('/account')
             assert 'href="/account" aria-current="page"' in balances.text

@@ -5,6 +5,7 @@
 {% if active_page %}<nav class="account-nav" aria-label="Account navigation">
 <a href="/account"{% if active_page == 'balances' %} aria-current="page"{% endif %}>Balances</a>
 <a href="/account/records"{% if active_page == 'records' %} aria-current="page"{% endif %}>Records</a>
+<a href="/account/preferences"{% if active_page == 'preferences' %} aria-current="page"{% endif %}>Preferences</a>
 </nav>{% endif %}
 <main><img class="logo" src="/logo.png" alt="OakGate" width="180" height="180">{% block content %}{% endblock %}</main>
 <footer>OakGate <span>Part of the Mainstay family.</span></footer></body></html>

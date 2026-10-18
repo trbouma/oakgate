@@ -85,6 +85,18 @@ Cash and Clear reads run independently. A Clear relay failure displays “Clear 
 
 ## Records
 
-The signed-in account navigation switches between **Balances** and **Records**. Records lists user-record labels in descending event-timestamp order, with alphabetical ordering for ties. It reads Acorn's standard stored user records (kind 37375); Acorn filters its internal wallet records. Payloads, recovery material, and timestamps are not displayed or sent to the template. This is a read-only list with no record opening, editing, or deletion.
+The signed-in account navigation switches between **Balances**, **Records**, and **Preferences**. Records lists user-record labels in descending event-timestamp order, with alphabetical ordering for ties. It reads Acorn's standard stored user records (kind 37375); Acorn filters its internal wallet records. The list shows labels only. Clicking a label opens a read-only detail page with the record payload rendered as escaped text or indented JSON. HTML is not executed, and external content is not fetched. There is no editing or deletion.
+
+Detail URLs contain an opaque record reference and resolve only against the signed-in user's Acorn user-record listing, not arbitrary internal labels. Missing records return 404; unavailable reads return 503 without exposing provider errors.
 
 The reader uses Acorn's configured record query limit and does not paginate older relay results in this first version. Reported relay/decryption failures show an unavailable state rather than an empty list. The responsive list wraps long labels, and both navigation links remain available on phone and desktop layouts.
+
+## Preferences and unique handles
+
+Preferences lets a signed-in user set, change, or clear a custom OakGate handle. A saved handle is used in the account greeting. It does not change the Acorn public identity or Keycloak account.
+
+Handles use 3–32 ASCII letters, numbers, hyphens, or underscores, beginning with a letter or number. Surrounding whitespace is removed. Display capitalization is preserved, while lowercase normalization makes `Tim` and `tim` the same claim. Clearing or changing a handle releases the old name for reuse; these are display preferences, not immutable identifiers or login credentials.
+
+The existing persistent SQLite database (`/mnt/bitcoin/oakgate/custody.sqlite3` on Beelink) contains a separate `user_preferences` table, created automatically at startup. Each row is keyed by the hash of the exact Keycloak issuer/subject pair. A UNIQUE constraint on `normalized_handle` enforces uniqueness across all users sharing this database, including simultaneous requests. Failed claims preserve the user's previous handle. Multiple independent database copies do not share a handle namespace.
+
+Handle fields are stored as ordinary text for indexing; custody secrets remain encrypted separately. Database backups include preferences, and any future Go Independent deletion must remove the preference row as well. No new mount, secret, or environment setting is required, but the existing custody storage must be configured before preferences can be saved.

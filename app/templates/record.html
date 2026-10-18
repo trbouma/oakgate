@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="record-detail">
+<a class="back-link" href="/account/records">← Records</a>
+<h1>{{ record.label }}</h1>
+<pre class="record-contents">{{ record.contents }}</pre>
+</section>
+{% endblock %}

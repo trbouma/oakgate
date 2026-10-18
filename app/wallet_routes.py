@@ -1,4 +1,5 @@
 import secrets
+import re
 import asyncio
 
 from fastapi import APIRouter, Request
@@ -6,7 +7,7 @@ from fastapi.responses import RedirectResponse
 from starlette.exceptions import HTTPException
 
 from app.auth import current_session, error_page
-from app.custody import AlreadyConnected, Busy, identity_key
+from app.custody import AlreadyConnected, Busy, HandleTaken, identity_key
 from app.wallets import WalletInputError
 
 router = APIRouter()
@@ -20,6 +21,9 @@ async def account_page(request, session, message=None, status=200):
                'default_relay': service.default_relay if service else ''}
     if service:
         try:
+            handle = service.store.preference(identity_key(session['user']))
+            if handle:
+                context['user'] = {**session['user'], 'name': handle}
             record = service.store.get(identity_key(session['user']))
             if record:
                 # Never pass recovery secrets or native wallet metadata to templates.
@@ -130,3 +134,64 @@ async def records_page(request: Request):
             return error_page(request, 'Safebox storage is unavailable. Please try again shortly.', 503)
     return request.app.state.templates.TemplateResponse(
         request=request, name='records.html', context=context)
+
+
+@router.get('/account/records/{reference}', include_in_schema=False)
+async def record_detail_page(request: Request, reference: str):
+    session = await current_session(request)
+    if not session:
+        return RedirectResponse('/auth/login', status_code=303)
+    if not re.fullmatch(r'[a-f0-9]{64}', reference):
+        raise HTTPException(404, 'Record not found')
+    service = request.app.state.wallets
+    detail = None
+    try:
+        record = service.store.get(identity_key(session['user'])) if service else None
+        if record and record['status'] == 'active':
+            detail = await service.record_detail(record['material'], reference)
+    except Exception:
+        return error_page(request, 'This record is unavailable right now. Please return to Records and try again.', 503)
+    if detail is None:
+        return error_page(request, 'Record not found. Return to Records to see the current list.', 404)
+    return request.app.state.templates.TemplateResponse(
+        request=request, name='record.html', context={**session, 'active_page': 'records', 'record': detail})
+
+
+async def preferences_page(request, session, message=None, status=200):
+    service = request.app.state.wallets
+    try:
+        handle = service.store.preference(identity_key(session['user'])) if service else ''
+    except Exception:
+        return error_page(request, 'Preferences are unavailable right now.', 503)
+    return request.app.state.templates.TemplateResponse(
+        request=request, name='preferences.html', status_code=status,
+        context={**session, 'active_page': 'preferences', 'handle': handle,
+                 'preferences_enabled': service is not None, 'message': message})
+
+
+@router.get('/account/preferences', include_in_schema=False)
+async def get_preferences(request: Request):
+    session = await current_session(request)
+    if not session:
+        return RedirectResponse('/auth/login', status_code=303)
+    return await preferences_page(request, session)
+
+
+@router.post('/account/preferences', include_in_schema=False)
+async def save_preferences(request: Request):
+    session = await current_session(request)
+    if not session:
+        return RedirectResponse('/auth/login', status_code=303)
+    form = await checked_form(request, session)
+    service = request.app.state.wallets
+    if service is None:
+        return error_page(request, 'Preferences storage has not been configured yet.', 503)
+    try:
+        service.store.save_handle(identity_key(session['user']), str(form.get('handle', '')))
+    except HandleTaken:
+        return await preferences_page(request, session, 'That handle is already taken. Please choose another.', 409)
+    except ValueError as exc:
+        return await preferences_page(request, session, str(exc), 400)
+    except Exception:
+        return error_page(request, 'Your preferences could not be saved. Please try again.', 503)
+    return await preferences_page(request, session, 'Preferences saved.')
