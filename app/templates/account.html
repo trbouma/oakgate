@@ -11,7 +11,7 @@
 {% if wallet.status == 'active' %}
 <p class="eyebrow">CASH BALANCE</p>
 {% if balance_error %}<p role="status">Balance unavailable right now.</p><p class="note">Your Acorn is still connected. Try refreshing in a moment.</p>
-{% else %}<p class="cash-balance">{{ '{:,}'.format(balance) }} <span>sats</span></p><p class="note">Cash balance read from your Acorn. Mint spendability has not been checked.</p>{% endif %}
+{% else %}<a class="balance-link" href="/account/transactions" aria-label="{{ '{:,}'.format(balance) }} sats. View recent transactions"><p class="cash-balance">{{ '{:,}'.format(balance) }} <span>sats</span></p></a><p class="note">Cash balance read from your Acorn. Mint spendability has not been checked.</p>{% endif %}
 <section class="receive-payment" aria-labelledby="receive-title">
 <h3 id="receive-title">Receive Lightning</h3>
 {% if lightning_address %}<p class="lightning-address">{{ lightning_address }}</p><p class="note">Share your address to receive payments and Nostr zaps. OakGate adds paid funds to your Acorn, even when you are signed out. Refresh to see your updated balance.</p>

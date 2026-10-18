@@ -102,3 +102,10 @@ The existing persistent SQLite database (`/mnt/bitcoin/oakgate/custody.sqlite3` 
 Handle fields are stored as ordinary text for indexing; custody secrets remain encrypted separately. Database backups include preferences, and any future Go Independent deletion must remove the preference row as well. No new mount, secret, or environment setting is required, but the existing custody storage must be configured before preferences can be saved.
 
 See [Identity mapping storage and backups](008-identity-storage-backups.md) for the Google-to-Keycloak ownership chain, Redis session lifecycle, and coordinated recovery requirements.
+
+
+## Cash transaction history
+
+Click the cash balance to open **Cash transactions**. The page shows the current balance and the ten newest transactions as cards, read only from the user’s Acorn relay history. OakGate’s local payment journal is not included. A received payment appears here only when a transaction-history entry exists in the Acorn. Cards show direction, date (UTC), sats, fees, available historical balance and notes; a missing historical balance is shown as a dash. Sent amounts include fees, following Safebox Web's presentation.
+
+Click the balance on the transaction page to return to the main Balances page. Cash history is read-only, protected by the existing account session, and never includes private keys, proofs or payment preimages. If Acorn history is unavailable, the page shows an error rather than substituting local journal entries or reporting an empty history. Clear balance headings, amounts and details are centred on the main page.

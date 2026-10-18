@@ -99,6 +99,13 @@ class AcornBackend:
         wallet = self.wallet(material)
         return await wallet.get_clear_balances()
 
+    async def transactions(self, material):
+        wallet = self.wallet(material)
+        history = await wallet.get_tx_history()
+        if not isinstance(history, list):
+            raise ValueError('Invalid transaction history')
+        return history
+
     async def records(self, material):
         wallet = self.wallet(material)
         wallet.logger = RecordReadLogger(wallet.logger, {})
@@ -170,6 +177,10 @@ class WalletService:
         self.relay(material['relay'])
         balances = await asyncio.wait_for(self.backend.clear_balances(material), timeout=40)
         return await self.clear_labels.resolve(balances)
+
+    async def transactions(self, material):
+        self.relay(material['relay'])
+        return await asyncio.wait_for(self.backend.transactions(material), timeout=40)
 
     async def records(self, material):
         self.relay(material['relay'])

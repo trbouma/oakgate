@@ -197,3 +197,32 @@ async def save_preferences(request: Request):
     except Exception:
         return error_page(request, 'Your preferences could not be saved. Please try again.', 503)
     return await preferences_page(request, session, 'Preferences saved.')
+
+
+@router.get('/account/transactions', include_in_schema=False)
+async def transactions_page(request: Request):
+    from app.transactions import transaction_cards
+    session = await current_session(request)
+    if not session:
+        return RedirectResponse('/auth/login', status_code=303)
+    service = request.app.state.wallets
+    context = {**session, 'active_page': 'balances', 'connected': False,
+               'balance': None, 'balance_error': False, 'history_error': False, 'transactions': []}
+    try:
+        owner = identity_key(session['user'])
+        record = service.store.get(owner) if service else None
+        if record and record['status'] == 'active':
+            context['connected'] = True
+            balance, history = await asyncio.gather(service.balance(record['material']),
+                                                    service.transactions(record['material']), return_exceptions=True)
+            if isinstance(balance, Exception):
+                context['balance_error'] = True
+            else:
+                context['balance'] = balance
+            if isinstance(history, Exception):
+                context['history_error'] = True
+                history = []
+            context['transactions'] = transaction_cards(history)
+    except Exception:
+        return error_page(request, 'Cash transactions are unavailable right now. Please try again shortly.', 503)
+    return request.app.state.templates.TemplateResponse(request=request, name='transactions.html', context=context)
