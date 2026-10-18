@@ -119,3 +119,10 @@ This note defines the backup requirements; it does not install a backup schedule
 Future [Go Independent](004-go-independent.md) implementation must also account for backups. Restoring an older snapshot must not silently recreate a departed user's custody or handle claim. The existing design requires an explicit deletion and restore policy before promising that departure workflow.
 
 Related notes: [Connect sign-in](005-keycloak-sign-in.md), [Acorn custody](007-acorn-custody.md), and [custody models](006-custody-models.md).
+
+## Application identity backup
+
+Preserve `OAKGATE_SERVICE_NSEC` securely with the configuration backup. Its public
+npub is bound to the `service_identity` table in `custody.sqlite3`; keep the
+matching database and secret together on restore. This is OakGate's zap-receipt
+signer, separate from the custody encryption key and all user Acorn keys.

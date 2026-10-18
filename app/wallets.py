@@ -6,9 +6,9 @@ import logging
 import os
 from urllib.parse import urlsplit
 
+import bolt11
+from acorn.models import Proof
 from acorn.acorn import Acorn
-from acorn.func_utils import generate_seed_phrase_and_nsec, recover_nsec_from_seed
-from stroma import Keys
 
 from app.custody import CustodyStore
 from app.clear_balances import ClearLabels
@@ -56,10 +56,36 @@ class AcornBackend:
         wallet.user_records = []
         return wallet
 
+    def public_identity(self, material):
+        return self.wallet(material).public_identity()
+
+    async def payment_proofs(self, material, item, *, prepare=False):
+        wallet = self.wallet(material)
+        proofs = [Proof(**p) for p in item['proofs']]
+        wallet.known_mints = {proof.id: item['mint'] for proof in proofs}
+        if prepare:
+            events = await wallet.add_proofs_obj(proofs, prepare_only=True)
+            return events[0]
+        await wallet.add_proofs_obj(proofs, prepared_events=[item['proof_event']], verify=True)
+        return True
+
+    async def payment_history(self, material, item, *, prepare=False):
+        wallet = self.wallet(material)
+        comment = item.get('comment')
+        if not comment and item.get('zap'):
+            comment = json.loads(item['zap']).get('content')
+        result = await wallet.add_tx_history(
+            tx_type='C', amount=item['amount'],
+            comment=comment or ('Nostr zap received' if item.get('zap') else 'Lightning payment received'),
+            invoice=item['invoice'], payment_hash=bolt11.decode(item['invoice']).payment_hash,
+            description_hash=f"cashu-mint:{item['mint']}:{item['quote']}",
+            created_at=item['paid_at'], use_wallet_balance=False, prepare_only=prepare,
+            prepared_event=None if prepare else item['history_event'], verify=True)
+        return result if prepare else True
+
+
     async def prepare(self, relay):
-        phrase, nsec = generate_seed_phrase_and_nsec(strength=256)
-        material = {'nsec': nsec, 'phrase': phrase, 'relay': relay,
-                    'npub': Keys(priv_k=nsec).public_key_bech32(), 'legacy': False}
+        material = {**Acorn.generate_recovery_material(strength=256), 'relay': relay}
         wallet = self.wallet(material)
         # Let Acorn construct its native metadata, but save it durably before
         # publishing. Retrying reuses this payload, including the generated nut key.
@@ -67,7 +93,7 @@ class AcornBackend:
             material['initial_wallet_info'] = label_info
             return {}
         wallet.set_wallet_info = capture
-        await wallet.create_instance(seed_phrase=phrase)
+        await wallet.create_instance(seed_phrase=material['phrase'])
         return material
 
     def recover(self, phrase, relay, legacy=False):
@@ -75,11 +101,10 @@ class AcornBackend:
         if len(phrase) > 512:
             raise WalletInputError('Check the recovery phrase and its word order.')
         try:
-            nsec = recover_nsec_from_seed(phrase, legacy=legacy)
+            material = Acorn.recover_material(phrase, legacy=legacy)
         except (ValueError, TypeError):
             raise WalletInputError('Check the recovery phrase and its word order.') from None
-        return {'nsec': nsec, 'phrase': phrase, 'relay': relay,
-                'npub': Keys(priv_k=nsec).public_key_bech32(), 'legacy': legacy}
+        return {**material, 'relay': relay}
 
     async def initialize(self, material):
         wallet = self.wallet(material)

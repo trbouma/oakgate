@@ -1,16 +1,12 @@
-"""NIP-57 validation and bounded, public-only receipt delivery."""
-import asyncio
+"""NIP-57 request validation. OakGate service identity signs receipts."""
 import ipaddress
 import json
 import re
-import secrets
 from urllib.parse import urlsplit
 
-import aiohttp
 from bech32 import bech32_encode, convertbits
-from stroma import Event, Keys
+from stroma import Event
 
-from app.clear_balances import PublicResolver
 from app.payment_config import secure_url
 
 
@@ -32,7 +28,7 @@ def public_relay(value):
     return value
 
 
-def validate_zap(raw, amount_msat, recipient, lnurl):
+def validate_zap(raw, amount_msat, recipient, lnurl, *, provider=None):
     if len(raw.encode()) > 16384:
         raise ValueError('Zap request is too large')
     payload = json.loads(raw)
@@ -52,8 +48,8 @@ def validate_zap(raw, amount_msat, recipient, lnurl):
         return values[0] if values else None
     if tag('p', True)[1] != recipient:
         raise ValueError('Zap recipient does not match this Acorn')
-    if tag('P') and tag('P')[1] != recipient:
-        raise ValueError('Zap provider does not match this Acorn')
+    if tag('P') and tag('P')[1] != (provider or recipient):
+        raise ValueError('Zap provider does not match this service')
     if tag('amount') and tag('amount')[1] != str(amount_msat):
         raise ValueError('Zap amount does not match the invoice')
     if tag('lnurl') and tag('lnurl')[1].lower() != lnurl.lower():
@@ -70,55 +66,3 @@ def validate_zap(raw, amount_msat, recipient, lnurl):
         except ValueError:
             continue
     return payload, list(dict.fromkeys(relays))
-
-
-def receipt(raw, invoice, nsec, paid_at):
-    request = json.loads(raw)
-    keys = Keys(priv_k=nsec)
-    tags = [t for t in request['tags'] if t[0] in ('p', 'e', 'a', 'k')]
-    tags += [['P', request['pubkey']], ['bolt11', invoice], ['description', raw]]
-    event = Event(kind=9735, pub_key=keys.public_key_hex(), created_at=paid_at, content='', tags=tags)
-    event.sign(keys.private_key_hex())
-    return event.data()
-
-
-async def publish_event(relay, event, *, private=False):
-    """Check the signed event is readable, or receive an OK for public receipts.
-
-    Home relays are operator-allowlisted. Payer-provided public destinations also
-    enforce public DNS at connection time and reject HTTP redirects.
-    """
-    if not private:
-        public_relay(relay)
-    async def no_redirect(session, context, params):
-        raise ValueError('Relay redirects are not supported')
-    trace = aiohttp.TraceConfig()
-    trace.on_request_redirect.append(no_redirect)
-    connector = aiohttp.TCPConnector(resolver=PublicResolver()) if not private else aiohttp.TCPConnector()
-    async with aiohttp.ClientSession(connector=connector, trace_configs=[trace], trust_env=False,
-                                     timeout=aiohttp.ClientTimeout(total=8)) as client:
-        async with asyncio.timeout(8):
-            async with client.ws_connect(relay, max_msg_size=262144) as socket:
-                await socket.send_json(['EVENT', event])
-                sub = secrets.token_hex(8)
-                if private:
-                    await socket.send_json(['REQ', sub, {'ids': [event['id']], 'limit': 1}])
-                async for message in socket:
-                    if message.type != aiohttp.WSMsgType.TEXT:
-                        continue
-                    data = json.loads(message.data)
-                    if not isinstance(data, list) or not data:
-                        continue
-                    if data[0] == 'OK' and len(data) >= 3 and data[1] == event['id']:
-                        if data[2] is True:
-                            # Re-query after acknowledgment if the initial REQ
-                            # raced the relay's write transaction.
-                            if private:
-                                await socket.send_json(['REQ', sub, {'ids': [event['id']], 'limit': 1}])
-                            else:
-                                return True
-                    if (private and data[0] == 'EVENT' and len(data) == 3
-                            and data[1] == sub and isinstance(data[2], dict)
-                            and data[2].get('id') == event['id'] and Event.load(data[2]).is_valid()):
-                        return True
-    return False

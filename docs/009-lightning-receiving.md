@@ -42,8 +42,9 @@ On 2026-10-18, a public capability check showed that `mint.safebox.dev` advertis
 3. OakGate validates the amount and any signed kind-9734 request, including its recipient, optional amount, event tags and LNURL. Amounts must be whole sats within the configured limits. Callback comments of up to 255 characters are advertised and accepted. They are stored inside the encrypted payment journal and never appended to invoice metadata or the signed zap request. A zap's signed content is retained unchanged.
 4. It reserves a payment row, requests the mint quote, and saves the invoice, quote, mint keys and generated blinding secrets encrypted in SQLite **before returning the invoice**. Repeated identical zap requests reuse the unpaid invoice. A changed serialization of the same zap event is rejected so the description binding cannot silently change.
 5. The background worker polls the mint, normally every five seconds for unexpired invoices. Once payment is confirmed, it requests Cashu signatures for the saved outputs and unblinds them using Acorn's primitives.
-6. OakGate constructs a native encrypted kind-7375 Acorn proof event, saves that exact signed event, publishes it to the user's allowed home relay, and verifies readback. Funds are credited directly to the user's Acorn.
-7. For a zap, OakGate signs a kind-9735 receipt with that user's Acorn key, saves it, and publishes it to the configured relays and usable relay hints from the payer. Receipts retain the original signed request and invoice, recipient/event tags, and sender attribution. Only confirmed, credited payments reach this stage.
+6. OakGate calls Acorn’s `add_proofs_obj()` to prepare a native encrypted proof write, saves the opaque prepared result, then calls the same Acorn method to deliver and verify it on the home relay. Funds are credited directly to the user's Acorn.
+7. After credit, OakGate calls Acorn’s `add_tx_history()` to prepare and deliver an encrypted credit entry with verified home-relay readback. The entry contains the amount, invoice, payment time, and comment (or signed zap content). The exact signed event is saved before publication and reused on retries. Historical balance is left unknown rather than inferred from a later balance.
+8. For a zap, OakGate signs a receipt with its operator-owned service identity through Stroma, saves the exact event for retries, and uses Stroma to publish it to the configured relays and usable relay hints from the payer. Receipts retain the original signed request and invoice, recipient/event tags, and sender attribution. Only confirmed, credited payments reach this stage.
 
 Users do not need an active browser or Google session. The balance page reads the Acorn again when refreshed. “Immediate” means automatic settlement shortly after confirmation, subject to worker load and mint/relay availability; it is not a synchronous credit guarantee.
 
@@ -55,7 +56,7 @@ A short database lease and bounded processing time prevent two app processes fro
 
 Before mint issuance, blinding material is already durable. If the mint issues signatures but the response is lost, OakGate uses NUT-09 `/v1/restore` for those same outputs. It does not mint fresh outputs for the same payment. NUT-09 support is required even in compatibility mode.
 
-The encrypted proof event and public receipt are also stored before publication. A lost acknowledgment causes the same event ID to be retried. Zap relay acknowledgments are tracked independently; a failed public relay does not remint or recredit a payment. There is no receipt until the funds have been delivered to the Acorn. Delivery errors log only an opaque journal ID and exception type, never exception bodies that may contain secrets.
+The encrypted proof event, encrypted transaction-history event, and public receipt are also stored before publication. A lost acknowledgment causes the same event ID to be retried. Zap relay acknowledgments are tracked independently; a failed public relay does not remint or recredit a payment. There is no receipt until the funds have been delivered to the Acorn. Delivery errors log only an opaque journal ID and exception type, never exception bodies that may contain secrets.
 
 Expired unpaid quotes remain in the journal and are checked hourly, so later confirmation is not silently discarded. A paid quote remains recoverable even after its invoice expires, subject to the mint's issuance policy. Partial signature restoration or malformed mint replies leave the payment pending for retry/operator investigation; OakGate does not declare success or create replacement funds. A crash before an invoice is returned may leave an unused creation row or mint quote, but no payer has been told to pay it.
 
@@ -75,3 +76,61 @@ See [Identity, storage and backups](008-identity-storage-backups.md) for the Goo
 - In strict mode, first verify the mint produces the expected description-hash invoice. In compatibility mode, verify each intended client accepts the invoice and receipt.
 
 References: [BOLT11 invoice encoding](https://github.com/lightning/bolts/blob/master/11-payment-encoding.md), [LNURL-pay](https://github.com/lnurl/luds/blob/luds/06.md), [NIP-57](https://github.com/nostr-protocol/nips/blob/master/57.md), [Cashu NUT-09 recovery](https://github.com/cashubtc/nuts/blob/main/09.md).
+
+
+### History backfill on upgrade
+
+Previously completed OakGate payments are scheduled for history-only delivery when they do not have a confirmed history write. This uses their original saved payment time and invoice and does not mint funds or republish cash proofs. Zaps issued under the previous user-key signer need to finish before this upgrade. Old pending receipts are not silently re-signed by the service key; funds and history can still be credited, but receipt delivery needs operator reconciliation. Completed zaps are not republished during history backfill. The transaction page still reads only Acorn history; local journal rows are never substituted into the display. Backfill requires the retained payment journal, custody key, and reachable home relay. `OAKGATE_PAYMENTS_ENABLED=false` pauses this work as well.
+
+
+### Acorn owns user Nostr writes
+
+OakGate does not construct, encrypt, sign or publish the user's proof events or transaction-history events. Both go through Acorn methods. Public zap receipts use the separate OakGate service identity through Stroma. OakGate handles the payment journal and passes Acorn's prepared result back unchanged when a write needs retrying. It never substitutes a local journal entry into the user-facing transaction list.
+
+This integration requires the Acorn prepared-write API (`prepare_only`, `prepared_events`/`prepared_event`, and public-identity methods). Publish that Acorn revision and update OakGate's Poetry Git pin and lockfile before deploying this change. The existing pinned revision does not provide those arguments. Local verification can use the updated sibling source via `PYTHONPATH=/Users/trbouma/projects/safebox-acorn`; that override is for development only, not container deployment.
+
+
+### Mandatory user-key boundary
+
+Every operation using the user's private key belongs in an Acorn method, including public-identity derivation, recovery-key generation and derivation, encryption/decryption, signing and user event publication. OakGate is a custodian and orchestrator; possession of the key does not make it a second implementation of Acorn. The adapter may supply opaque custody material to Acorn and store opaque prepared delivery results, but may not perform the key operation itself.
+
+If an API is missing, extend Acorn. Any exception needs a specific documented rationale and the project owner's approval; none is currently approved. Public-only request validation and encryption of custody records with the separate operator key do not cross this boundary. Cashu blinding factors are independently generated ephemeral secrets, not the user's Acorn private key.
+
+The repository's `AGENTS.md` records this rule and `tests/test_acorn_boundary.py` checks for direct Nostr key operations and access to nsec outside the adapter. This is a regression guard, not a proof against every possible bypass; code review must preserve the data-flow boundary as well.
+
+### Nostr library boundary
+
+Stroma (`stroma-nostr`) is an explicit OakGate dependency and the Nostr protocol
+implementation. OakGate validates public zap requests with Stroma. User-key
+operations go through Acorn, which uses Stroma for events, encryption, signatures
+and relay transport. Acorn supplies public DNS and redirect policy to Stroma's
+relay client; it does not implement relay frames itself. Prepared event retries
+retain the same event ID and private writes are checked by reading them back.
+
+The new Acorn and Stroma APIs must be published and the resolved dependencies
+updated together before deploying these changes.
+
+### OakGate instance identity
+
+Like Clear, Spurline, Safebox Web and Mainstay, OakGate uses a stable operator
+Nostr identity configured separately from user identities. Set
+`OAKGATE_SERVICE_NSEC` in `.env` to a fresh private key (hex or nsec). Generate
+once with `openssl rand -hex 32`; never reuse a user Acorn or custody key.
+Compose passes this value to the app. The local development server must load
+`.env`, as with the other application settings.
+
+The public npub is bound transactionally to `custody.sqlite3` in
+`service_identity`, following Clear's database-binding pattern. Startup refuses
+a missing or changed key after binding. Stroma derives the npub and matching
+FIPS address, as in Spurline and Safebox Web. No private service key is stored
+in that table. Back up the service secret securely alongside the custody key
+and retain the database binding. Do not delete the binding to rotate identity.
+
+LNURL discovery advertises this service's hex key as `nostrPubkey`; the zap
+request's `p` tag still identifies the recipient Acorn. An optional request `P`
+tag must match the service signer. Receipt author is the service; receipt `p`
+is the recipient and receipt `P` is the payer. This follows
+[NIP-57](https://github.com/nostr-protocol/nips/blob/master/57.md).
+The signer is saved with each invoice and callback so an old request cannot
+silently switch signer. Fresh instances without a key allow ordinary payments
+but advertise `allowsNostr: false` and reject zap requests.

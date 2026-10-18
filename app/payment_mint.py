@@ -11,10 +11,8 @@ from urllib.parse import quote
 import bolt11
 import httpx
 from acorn.b_dhke import step1_alice, step3_alice, alice_verify_dleq
-from acorn.models import Proof, NIP60Proofs
+from acorn.models import Proof
 from acorn.secp import PrivateKey, PublicKey
-from acorn.stroma_compat import ExtendedNIP44Encrypt
-from stroma import Event
 
 
 class MintCompatibilityError(Exception):
@@ -115,11 +113,3 @@ class CashuMint:
             proofs.append(Proof(amount=output['amount'], id=output['id'], secret=secret['secret'],
                                 Y=secret['Y'], C=step3_alice(c, r, a).serialize().hex()).model_dump())
         return proofs
-
-
-def proof_event(wallet, mint, proofs):
-    payload = NIP60Proofs(mint=mint, proofs=[Proof(**p) for p in proofs]).model_dump_json()
-    event = Event(kind=7375, pub_key=wallet.pubkey_hex,
-                  content=ExtendedNIP44Encrypt(wallet.k).encrypt(payload, to_pub_k=wallet.pubkey_hex))
-    event.sign(wallet.privkey_hex)
-    return event.data()

@@ -9,12 +9,12 @@ from urllib.parse import urlsplit
 from cryptography.fernet import InvalidToken
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, Response
-from stroma import Keys
 
+from app.identity import ServiceIdentity
 from app.payment_config import PaymentSettings
-from app.payment_mint import CashuMint, MintCompatibilityError, proof_event
+from app.payment_mint import CashuMint, MintCompatibilityError
 from app.payment_store import PaymentStore, PaymentBusy
-from app.zaps import encode_lnurl, validate_zap, receipt, publish_event, public_relay
+from app.zaps import encode_lnurl, validate_zap, public_relay
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -23,13 +23,13 @@ HEADERS = {'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store'}
 
 
 class PaymentService:
-    def __init__(self, wallets, origin, config=None, mint=None, publisher=None):
+    def __init__(self, wallets, origin, config=None, mint=None, identity=None):
         self.wallets = wallets
         self.origin = origin.rstrip('/')
         self.config = config or PaymentSettings.from_env()
+        self.identity = identity or ServiceIdentity(wallets.store)
         self.store = PaymentStore(wallets.store)
         self.mint = mint or CashuMint(self.config.require_description_hash)
-        self.publisher = publisher or publish_event
         self.relays = [public_relay(r) for r in self.config.relays]
 
     def address(self, handle):
@@ -47,14 +47,15 @@ class PaymentService:
         if not wallet or wallet['status'] != 'active':
             raise ValueError('Lightning address not found')
         self.wallets.relay(wallet['material']['relay'])
-        pubkey = Keys(priv_k=wallet['material']['nsec']).public_key_hex()
+        pubkey = self.wallets.backend.public_identity(wallet['material'])['hex']
         address = self.address(handle)
         metadata = json.dumps([['text/plain', f'Payment to {address}'], ['text/identifier', address]], separators=(',', ':'))
-        snapshot = {'owner': owner, 'handle': handle, 'metadata': metadata, 'pubkey': pubkey}
+        snapshot = {'owner': owner, 'handle': handle, 'metadata': metadata, 'pubkey': pubkey, 'service_pubkey': self.identity.pubkey}
         token = self.wallets.store.cipher.encrypt(json.dumps(snapshot).encode()).decode()
         return {'tag': 'payRequest', 'callback': f'{self.origin}/lnurl/callback/{token}',
                 'minSendable': self.config.min_sat * 1000, 'maxSendable': self.config.max_sat * 1000,
-                'metadata': metadata, 'commentAllowed': MAX_COMMENT_CHARS, 'allowsNostr': True, 'nostrPubkey': pubkey}
+                'metadata': metadata, 'commentAllowed': MAX_COMMENT_CHARS, 'allowsNostr': bool(self.identity.pubkey),
+                **({'nostrPubkey': self.identity.pubkey} if self.identity.pubkey else {})}
 
     async def invoice(self, token, amount, nostr=None, comment=None):
         if comment is not None and len(comment) > MAX_COMMENT_CHARS:
@@ -74,15 +75,17 @@ class PaymentService:
         if not wallet or wallet['status'] != 'active':
             raise ValueError('Acorn unavailable')
         self.wallets.relay(wallet['material']['relay'])
-        if Keys(priv_k=wallet['material']['nsec']).public_key_hex() != snapshot['pubkey']:
+        if self.wallets.backend.public_identity(wallet['material'])['hex'] != snapshot['pubkey']:
             raise ValueError('Acorn identity changed')
         zap, targets = None, self.relays.copy()
         if nostr is not None:
+            if not self.identity.pubkey or snapshot.get('service_pubkey') != self.identity.pubkey:
+                raise ValueError('Resolve the Lightning address again for the service identity')
             zap, requested = validate_zap(nostr, msat, snapshot['pubkey'],
-                                          encode_lnurl(f"{self.origin}/.well-known/lnurlp/{snapshot['handle']}"))
+                                          encode_lnurl(f"{self.origin}/.well-known/lnurlp/{snapshot['handle']}"), provider=self.identity.pubkey)
             targets = list(dict.fromkeys(targets + requested))
         item, created = self.store.reserve(snapshot['owner'], {
-            'amount': msat // 1000, 'mint': self.config.mint, 'zap': nostr, 'comment': comment,
+            'service_pubkey': self.identity.pubkey, 'amount': msat // 1000, 'mint': self.config.mint, 'zap': nostr, 'comment': comment,
             'description': nostr if zap else snapshot['metadata'], 'relays': targets,
         }, zap['id'] if zap else None)
         if not created:
@@ -111,7 +114,7 @@ class PaymentService:
         item = None
         try:
             item = self.store.get(payment_id)
-            if item['state'] not in ('waiting', 'credited'):
+            if item['state'] not in ('waiting', 'credited', 'complete') or (item['state'] == 'complete' and item.get('history_written')):
                 return
             async with asyncio.timeout(60):
                 await self.settle(item, token)
@@ -129,7 +132,7 @@ class PaymentService:
         if not wallet_record or wallet_record['status'] != 'active':
             raise ValueError('Recipient unavailable')
         material = wallet_record['material']
-        relay = self.wallets.relay(material['relay'])
+        self.wallets.relay(material['relay'])
         if item['state'] == 'waiting':
             if not item.get('paid_at'):
                 state = await self.mint.state(item)
@@ -144,17 +147,26 @@ class PaymentService:
                 item['proofs'] = await self.mint.issue(item)
                 self.store.save(item, token)
             if 'proof_event' not in item:
-                wallet = self.wallets.backend.wallet(material)
-                item['proof_event'] = proof_event(wallet, item['mint'], item['proofs'])
+                item['proof_event'] = await self.wallets.backend.payment_proofs(material, item, prepare=True)
                 # The exact signed event survives publication/acknowledgment loss.
                 self.store.save(item, token)
-            if not await self.publisher(relay, item['proof_event'], private=True):
+            if not await self.wallets.backend.payment_proofs(material, item):
                 raise RuntimeError('Proof delivery not confirmed')
             item['state'] = 'credited'
             self.store.save(item, token)
+        if not item.get('history_written'):
+            if 'history_event' not in item:
+                item['history_event'] = await self.wallets.backend.payment_history(material, item, prepare=True)
+                self.store.save(item, token)
+            if not await self.wallets.backend.payment_history(material, item):
+                raise RuntimeError('Acorn history delivery not confirmed')
+            item['history_written'] = True
+            self.store.save(item, token)
+        if item['state'] == 'complete':
+            return  # History-only backfill must not republish an old receipt.
         if item['zap']:
             if 'receipt' not in item:
-                item['receipt'] = receipt(item['zap'], item['invoice'], material['nsec'], item['paid_at'])
+                item['receipt'] = self.identity.receipt(item)
                 item['acknowledged'] = []
                 self.store.save(item, token)
             # All configured/default relays plus safe client hints; retry failures
@@ -162,7 +174,7 @@ class PaymentService:
             pending = [r for r in item['relays'] if r not in item['acknowledged']]
             for start in range(0, len(pending), 4):
                 batch = pending[start:start+4]
-                results = await asyncio.gather(*(self.publisher(r, item['receipt']) for r in batch), return_exceptions=True)
+                results = await asyncio.gather(*(self.identity.publish_receipt(item, r) for r in batch), return_exceptions=True)
                 item['acknowledged'].extend(r for r, ok in zip(batch, results) if ok is True)
                 self.store.save(item, token)
             if len(item['acknowledged']) != len(item['relays']):

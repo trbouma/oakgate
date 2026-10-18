@@ -15,7 +15,8 @@ httpx = ">=0.27,<1.0"
 redis = ">=5,<7"
 jinja2 = ">=3.1,<4"
 python-multipart = ">=0.0.20,<1"
-safebox-acorn = {git = "https://github.com/trbouma/safebox-acorn.git", rev = "20c0663c55ddd188e1486f7ebdb540c173c19527"}
+safebox-acorn = {git = "https://github.com/trbouma/safebox-acorn.git", branch = "main"}
+stroma-nostr = {git = "https://github.com/trbouma/stroma.git", branch = "main"}
 cryptography = ">=49,<50"
 bitstring = ">=4.2,<5"
 aiohttp = ">=3.12,<4"
