@@ -61,14 +61,14 @@ Set `KC_HOSTNAME` in `.env` to the public HTTPS origin (default: `https://keyclo
 
 The intended app address is `https://oakgate.safebox.dev`, served by Nginx. Its upstream is `http://<beelink-address>:8801/`. Set `OAKGATE_PUBLIC_URL`, `OAKGATE_PORT`, and `OAKGATE_BIND_ADDRESS` in `.env`. Keycloak has separate `KC_HOSTNAME`, `KEYCLOAK_PORT`, and `KEYCLOAK_BIND_ADDRESS` settings. Existing `.env` files can omit these settings and use the defaults. The app uses private Redis for temporary sessions and encrypted SQLite custody storage at `/mnt/bitcoin/oakgate`. Follow [Connect an Acorn](docs/007-acorn-custody.md) to prepare that directory and configure the custody encryption key before starting the updated containers.
 
-To rebuild only the app on Beelink:
+For routine app-only updates on Beelink, use:
 
 ```sh
-docker compose up -d --build app
+./refresh-app.sh
 docker compose logs --tail=100 app
 ```
 
-This leaves Keycloak running. Check `/health` after deployment. To serve `oakgate.safebox.dev` over HTTPS, configure its Nginx server block to proxy to Beelink's app port. See the [deployment settings](docs/003-fastapi-app.md#deployment-settings). Authentication redirects use the configured public origin rather than forwarded headers. Follow the [sign-in setup guide](docs/005-keycloak-sign-in.md) to register exact callback URLs and set the client secret.
+This refuses tracked working-tree changes, pulls fast-forward updates, and rebuilds/recreates only `app` using `--no-deps`. Keycloak and Redis stay running, so the session service must already be started. For first startup or changes to other services, use `./start-oakgate.sh` or `./refresh-containers.sh`. Check `/health` after deployment. To serve `oakgate.safebox.dev` over HTTPS, configure its Nginx server block to proxy to Beelink's app port. See the [deployment settings](docs/003-fastapi-app.md#deployment-settings). Authentication redirects use the configured public origin rather than forwarded headers. Follow the [sign-in setup guide](docs/005-keycloak-sign-in.md) to register exact callback URLs and set the client secret.
 
 ## Documentation site
 

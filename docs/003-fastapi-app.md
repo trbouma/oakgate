@@ -14,7 +14,7 @@ No container image is built locally. Sign-in reads client settings from `.env.de
 
 ## Deployment
 
-Commit `pyproject.toml`, `poetry.lock`, application source, the logo asset, Dockerfile, and Compose changes together. Pull them on Beelink and run `./start-oakgate.sh`, or use `./refresh-containers.sh` for normal updates. Both use `docker compose up --build` on the deployment machine. An app-only rebuild is `docker compose up -d --build app`.
+Commit `pyproject.toml`, `poetry.lock`, application source, the logo asset, Dockerfile, and Compose changes together. Pull them on Beelink and run `./start-oakgate.sh`, or use `./refresh-containers.sh` for normal updates. Both use `docker compose up --build` on the deployment machine. For routine app-only updates, use `./refresh-app.sh`: it checks for tracked changes, pulls with `--ff-only`, validates Compose, and runs `docker compose up --build --detach --no-deps --force-recreate app`. Keycloak and Redis stay running. This requires an existing running session service; use the full startup workflow for initial deployment.
 
 The Docker build installs only runtime dependencies from the lockfile in a builder stage. The final Python 3.12 image runs as a non-root user and contains the application, its logo, and its virtual environment. An allowlist in `.dockerignore` excludes local credentials, virtual environments, and unrelated repository files. Production runs without reload. Container liveness checks `/health`.
 
