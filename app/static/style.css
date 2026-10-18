@@ -173,3 +173,72 @@ footer { border-top: 1px solid #e6e7dc; }
 .transaction-details dd { margin:4px 0 0; }
 .transaction-note { border-top:1px solid #e6e7dc; padding-top:14px; margin-bottom:0; font-size:14px; white-space:pre-wrap; }
 @media(max-width:520px) { .transaction-card { padding:18px; } .transaction-card-heading { flex-direction:column; } }
+
+/* Record file previews follow Safebox Web, with OakGate colours. */
+.pkpass-preview { display: grid; gap: .85rem; margin: 1rem 0; padding: 1rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--surface); }
+.pkpass-header { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .75rem; align-items: center; }
+.pkpass-logo { width: 3rem; height: 3rem; object-fit: contain; border-radius: .35rem; background: var(--surface-soft); }
+.pkpass-strip { width: 100%; max-height: 11rem; object-fit: cover; border-radius: .35rem; background: var(--surface-soft); }
+.pkpass-org { margin: 0; font-weight: 800; overflow-wrap: anywhere; }
+.pkpass-description { margin: .2rem 0 0; color: var(--muted); overflow-wrap: anywhere; }
+.pkpass-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem .9rem; margin: 0; }
+.pkpass-fields div { min-width: 0; }
+.pkpass-fields dt { color: var(--muted); font-size: .78rem; font-weight: 750; text-transform: uppercase; }
+.pkpass-fields dd { margin: .1rem 0 0; font-weight: 750; overflow-wrap: anywhere; }
+.pkpass-barcode, .pkpass-serial { margin: 0; color: var(--muted); overflow-wrap: anywhere; }
+.pkpass-barcode { display: grid; justify-items: center; gap: .6rem; }
+.pkpass-barcode p { width: 100%; margin: 0; }
+.pkpass-barcode span { display: block; font-size: .78rem; font-weight: 750; text-transform: uppercase; }
+.pkpass-barcode-image { display: flex; width: 100%; padding: .8rem; justify-content: center; border-radius: .35rem; background: #fff; }
+.pkpass-barcode-image svg { display: block; width: 100%; height: auto; color: #000; }
+.json-credential-preview { margin: 1rem 0; padding: 1rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--surface); }
+.json-credential-preview h3 { margin: 0 0 .65rem; font-size: 1.05rem; }
+.credential-summary { display: grid; gap: .45rem; margin: 0 0 1rem; padding-bottom: .85rem; border-bottom: 1px solid var(--border); }
+.credential-summary div { min-width: 0; }
+.credential-summary dt { display: inline; font-weight: 800; overflow-wrap: anywhere; }
+.credential-summary dd { display: inline; margin: 0 0 0 .35rem; overflow-wrap: anywhere; }
+.json-credential-technical-fields { margin-top: 1rem; }
+.json-credential-technical-fields summary { cursor: pointer; color: var(--muted); }
+.json-credential-technical-fields[open] summary { margin-bottom: .75rem; }
+.json-credential-raw { display: grid; gap: .45rem; margin: 0; }
+.json-credential-raw div { min-width: 0; }
+.json-credential-raw dt { display: inline; font-weight: 800; overflow-wrap: anywhere; }
+.json-credential-raw dd { display: inline; margin: 0 0 0 .35rem; overflow-wrap: anywhere; }
+.json-credential-depth-1 { padding-left: 1rem; }
+.json-credential-depth-2 { padding-left: 2rem; }
+.json-credential-depth-3, .json-credential-depth-4, .json-credential-depth-5, .json-credential-depth-6 { padding-left: 3rem; }
+.json-credential-truncated { margin: .75rem 0 0; color: var(--muted); font-size: .92rem; }
+.mdoc-preview { margin: 1rem 0; padding: 1rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--surface); }
+.mdoc-preview h3 { margin: 0 0 .65rem; font-size: 1.05rem; }
+.preview-status { margin: 0 0 .85rem; color: var(--muted); font-size: .92rem; overflow-wrap: anywhere; }
+.mdoc-summary { display: grid; gap: .45rem; margin: 0 0 1rem; padding-bottom: .85rem; border-bottom: 1px solid var(--border); }
+.mdoc-summary div { min-width: 0; }
+.mdoc-summary dt { display: inline; font-weight: 800; overflow-wrap: anywhere; }
+.mdoc-summary dd { display: inline; margin: 0 0 0 .35rem; overflow-wrap: anywhere; }
+.mdoc-fields { display: grid; gap: .45rem; margin: 0; }
+.mdoc-fields div { min-width: 0; }
+.mdoc-fields dt { display: inline; font-weight: 800; overflow-wrap: anywhere; }
+.mdoc-fields dd { display: inline; margin: 0 0 0 .35rem; overflow-wrap: anywhere; }
+.credential-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: .75rem 1.25rem; margin: 0; }
+.credential-fields div { min-width: 0; padding-bottom: .5rem; border-bottom: 1px solid var(--border); }
+.credential-fields dt { margin: 0 0 .15rem; font-weight: 800; overflow-wrap: anywhere; }
+.credential-fields dd { margin: 0; overflow-wrap: anywhere; }
+.mdoc-technical-fields { margin-top: 1rem; }
+.mdoc-technical-fields summary { cursor: pointer; color: var(--muted); }
+.mdoc-technical-fields[open] summary { margin-bottom: .75rem; }
+.mdoc-depth-1 { padding-left: 1rem; }
+.mdoc-depth-2 { padding-left: 2rem; }
+.mdoc-depth-3, .mdoc-depth-4, .mdoc-depth-5, .mdoc-depth-6 { padding-left: 3rem; }
+.mdoc-truncated { margin: .75rem 0 0; color: var(--muted); font-size: .92rem; }
+
+.record-detail { --border:#dce3d0; --surface:#fffefb; --muted:#57614e; min-width:0; }
+.blob-record { min-width:0; overflow-wrap:anywhere; }
+.blob-preview { margin:1rem 0; }
+.blob-preview img { max-width:100%; height:auto; display:block; margin:auto; }
+.record-fingerprint { overflow-wrap:anywhere; }
+.inline-icon { width:1.2rem; height:1.2rem; vertical-align:middle; }
+.pdf-canvas { display:block; max-width:100%; height:auto; margin:auto; background:white; }
+.pdf-controls { display:flex; align-items:center; justify-content:center; gap:1rem; flex-wrap:wrap; margin:1rem 0; }
+.pdf-controls[hidden], .pdf-canvas[hidden] { display:none; }
+.pdf-controls button { min-height:44px; }
+@media(max-width:520px) { .json-credential-raw > div, .mdoc-fields > div { padding-left:0; } }

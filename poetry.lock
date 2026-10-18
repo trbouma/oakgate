@@ -289,6 +289,25 @@ files = [
 cryptography = "*"
 
 [[package]]
+name = "aztec-py"
+version = "1.2.1"
+description = "GS1 2027-compliant pure-Python Aztec Code generator. FLG(0) Reader Initialisation, batch encoding, SVG/PDF/PNG, CLI, boarding passes, GS1 labels. ISO 24778."
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "aztec_py-1.2.1-py3-none-any.whl", hash = "sha256:41c63ce2b6ace0454f366dfe6031ffbaaaafd4bf64430ea9013aaff6b051b15c"},
+    {file = "aztec_py-1.2.1.tar.gz", hash = "sha256:6884f8e14d5ec8c9cd44121afa012e3e167203b8fd64457ba61479973d884d5a"},
+]
+
+[package.extras]
+decode = ["zxing (>=1.0.4)"]
+decode-fast = ["pillow (>=8.0)", "zxingcpp (>=2.2)"]
+dev = ["fpdf2 (>=2.7)", "hypothesis (>=6.0)", "mypy (>=1.0)", "pillow (>=8.0)", "pytest (>=8.0)", "pytest-cov (>=5.0)", "ruff (>=0.5)"]
+image = ["pillow (>=8.0)"]
+pdf = ["fpdf2 (>=2.7)", "pillow (>=8.0)"]
+svg = ["lxml (>=4.9)"]
+
+[[package]]
 name = "babel"
 version = "2.18.0"
 description = "Internationalization utilities"
@@ -1155,13 +1174,13 @@ files = [
 
 [[package]]
 name = "fastapi"
-version = "0.144.0"
+version = "0.146.0"
 description = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "fastapi-0.144.0-py3-none-any.whl", hash = "sha256:ce62d92f1abe5e06f9111a3d39c675340d440ee7095beab06ec31fee7c070a71"},
-    {file = "fastapi-0.144.0.tar.gz", hash = "sha256:7392b2609ebaf7e2dbffd38b8a927499e61a50e55dd0e57323ebee30efc1a462"},
+    {file = "fastapi-0.146.0-py3-none-any.whl", hash = "sha256:0eb9985a7d5bb11ce9a962d4b65e0cf1a2e13d6aca2e14da57bc526370e26748"},
+    {file = "fastapi-0.146.0.tar.gz", hash = "sha256:e96047fc353ff43f7fda069c3578a7d94902a762d9aca2e065f7f801abd91a49"},
 ]
 
 [package.dependencies]
@@ -3126,7 +3145,7 @@ post-quantum = ["liboqs-python (>=0.14.1,<0.17.0)"]
 type = "git"
 url = "https://github.com/trbouma/safebox-acorn.git"
 reference = "main"
-resolved_reference = "01310c1fb7e52405f555e007660fb6412ca1ac05"
+resolved_reference = "63765b474a72f3a86f777703e09105668ee47b6a"
 
 [[package]]
 name = "secp256k1"
@@ -3202,13 +3221,13 @@ files = [
 
 [[package]]
 name = "starlette"
-version = "1.8.0"
+version = "1.9.0"
 description = "The little ASGI library that shines."
 optional = false
 python-versions = ">=3.11"
 files = [
-    {file = "starlette-1.8.0-py3-none-any.whl", hash = "sha256:dfdd6b29c26483288088d990eee59631dedadd66ce20d203402a7ca8e3c4656f"},
-    {file = "starlette-1.8.0.tar.gz", hash = "sha256:1565dc0b35d5737a271ed1e0e04e949f4e81198799f216d2667b0a0fb9cf9522"},
+    {file = "starlette-1.9.0-py3-none-any.whl", hash = "sha256:fd3f159936e882d06c1108f84688f7cda2cf85fc6a592a50edbd175e882c2ddc"},
+    {file = "starlette-1.9.0.tar.gz", hash = "sha256:3d931de246ed870e35ce605974440816ef895e592f255d1396cfdf191d4c4318"},
 ]
 
 [package.dependencies]
@@ -3910,4 +3929,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.12,<3.13"
-content-hash = "bc81dcc24b507ff78ee0c541e286b89620ba3673f2f65ec8794dd7d97a7e1d52"
+content-hash = "3594daea4edb377e6af1e470eb0c08acda1faa9a2060912da04983df7e8bf55d"

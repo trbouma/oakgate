@@ -4,5 +4,15 @@
 <a class="back-link" href="/account/records">← Records</a>
 <h1>{{ record.label }}</h1>
 <pre class="record-contents">{{ record.contents }}</pre>
+{% if record.has_blob %}
+{% if record.preview_error %}<p role="status">The file preview is unavailable. You can try opening or downloading the file.</p>{% endif %}
+{% with label=record.label, has_blob=record.has_blob, blob_type=record.blob_type,
+blob_preview=record.blob_preview, blob_fingerprint=record.blob_fingerprint,
+pkpass_preview=record.pkpass_preview, json_credential_preview=record.json_credential_preview,
+mdoc_preview=record.mdoc_preview, blob_url=record.blob_url, blob_inline_url=record.blob_inline_url %}
+{% include "record_preview.html" %}
+{% endwith %}
+<p><a class="back-link" href="{{ record.blob_url }}">Download record file</a></p>
+{% endif %}
 </section>
 {% endblock %}

@@ -109,3 +109,23 @@ See [Identity mapping storage and backups](008-identity-storage-backups.md) for 
 Click the cash balance to open **Cash transactions**. The page shows the current balance and the ten newest transactions as cards, read only from the user’s Acorn relay history. OakGate’s local payment journal is not included. A received payment appears here only when a transaction-history entry exists in the Acorn. OakGate now calls Acorn’s `add_tx_history()` to write that native entry after crediting each incoming Lightning payment or zap, and backfills retained completed payments after upgrade. History writes are verified and retried without repeating the payment. Cards show direction, date (UTC), sats, fees, available historical balance and notes; a missing historical balance is shown as a dash. Sent amounts include fees, following Safebox Web's presentation.
 
 Click the balance on the transaction page to return to the main Balances page. Cash history is read-only, protected by the existing account session, and never includes private keys, proofs or payment preimages. If Acorn history is unavailable, the page shows an error rather than substituting local journal entries or reporting an empty history. Clear balance headings, amounts and details are centred on the main page.
+
+## Record file previews
+
+Record details use the same presentation helpers and locally served PDF.js viewer
+as Safebox Web: images, PDFs, Apple Wallet passes, JSON VC/VP credentials and
+mdoc containers (including mDL and EUDI PID). Other file types remain downloadable.
+Plain text stays escaped; record HTML and SVG never execute in the page.
+Credential previews decode contents but do not verify issuer or holder proofs.
+
+Every file request authenticates the session and resolves the opaque record
+reference within that user's Acorn. Acorn retrieves and decrypts files through
+its `get_record_blobdata(public_only=True)` path, using bounded Stroma Blossom
+retrieval with public-address checks. Private HTTP/local Blossom routes require
+a future explicitly trusted infrastructure policy. Preview failures leave the
+record readable and downloads retryable. No decrypted files are saved to disk
+or placed in a shared application cache.
+
+This requires the Acorn revision introducing `public_only`; publish that change
+and update OakGate's lockfile before deploying. Previews do not add sharing,
+editing, deletion or credential-verification workflows.

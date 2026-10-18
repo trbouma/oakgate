@@ -72,3 +72,7 @@ Deletion is not independently provable to the user. OakGate can describe its pro
 Before enabling Go Independent, demonstrate independent recovery of the same safebox, removal of application access and scheduled activity, safe handling of partial failures, and prevention of account resurrection after backup restoration. The user-facing explanation must accurately describe remaining retention and the limits of deletion assurances.
 
 No routes, deletion jobs, credential storage, or UI controls are introduced by this note. The requirement should guide the custodial design from the beginning, even though implementation comes later.
+
+## Family principles
+
+The user must be free to choose independence at any time, with safe completion accounting for in-flight work. Neither Google nor a functioning OakGate login may be a permanent dependency of independent recovery. The [Mainstay principles](010-mainstay-principles.md) place this commitment alongside community operation and replaceable authentication, and distinguish the commitment from current implementation.

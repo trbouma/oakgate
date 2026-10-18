@@ -46,3 +46,15 @@ than relying on Acorn's transitive dependency. Public-only validation can call
 Stroma directly; operations using user keys must still go through Acorn methods,
 which use Stroma underneath. Do not add alternate Nostr libraries or hand-built
 relay frames. Extend Stroma when a required protocol capability is missing.
+
+## Mainstay trust and continuity commitments
+
+Custody must remain a choice. Preserve a path to independent Acorn recovery and
+Go Independent without permanent reliance on OakGate or Google. Community-run
+infrastructure and standalone deployment remain first-class use cases.
+Google is an upstream authentication option, not the user's wallet identity.
+Provider transitions must preserve the existing issuer/subject mapping or use
+an explicitly designed, verified migration; never transfer custody by email.
+Do not advertise recovery, departure, commissioning or restoration capabilities
+as implemented until their acceptance checks pass. Consult
+`docs/010-mainstay-principles.md` for the review and outstanding boundary work.

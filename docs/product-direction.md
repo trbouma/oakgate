@@ -30,3 +30,7 @@ The complete [Go Independent design note](004-go-independent.md) records the int
 ## What exists today
 
 The FastAPI app supports Keycloak sign-in, connecting or creating an Acorn, encrypted recovery storage, and cash-balance display. See [Connect an Acorn](007-acorn-custody.md) for setup and verification limits. Complete independent recovery and Go Independent remain future work; see [project status](project-status.md).
+
+## Mainstay commitments
+
+Custody is a choice, community operation is a first-class deployment model, and Google is a replaceable upstream sign-in provider. The [Mainstay principles and review](010-mainstay-principles.md) records these requirements, the safe provider-transition boundary, and the gaps still to close. The user must retain a path to independence; the complete workflow is not implemented yet.

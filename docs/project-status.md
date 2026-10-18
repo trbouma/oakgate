@@ -23,4 +23,4 @@ OakGate is an early-stage project. This page separates working foundations from 
 3. Extend the initial custody inventory and independently verify recovery before adding further capabilities.
 4. Keep Go Independent requirements visible as identity, storage, background jobs, and backups are introduced.
 
-These are development intentions, not a release schedule. The current application is not yet a custodial safebox service.
+These are development intentions, not a release schedule. The application now stores and operates user Acorns custodially. Recovery disclosure, Go Independent and rehearsed disaster recovery remain incomplete. See the [Mainstay principles review](010-mainstay-principles.md#review-findings-and-follow-up-work) for the alignment gaps and acceptance requirements.

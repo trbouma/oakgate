@@ -126,3 +126,7 @@ Preserve `OAKGATE_SERVICE_NSEC` securely with the configuration backup. Its publ
 npub is bound to the `service_identity` table in `custody.sqlite3`; keep the
 matching database and secret together on restore. This is OakGate's zap-receipt
 signer, separate from the custody encryption key and all user Acorn keys.
+
+## Replacing the upstream sign-in provider
+
+Google can be replaced through Keycloak while preserving the existing realm user and issuer. Verify an alternative login against that same identity before removing Google. A new user with the same email does not preserve custody ownership. Replacing Keycloak or changing its issuer requires a separate migration design; see [Mainstay principles and provider continuity](010-mainstay-principles.md#google-is-replaceable).

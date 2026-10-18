@@ -39,6 +39,7 @@ nav:
   - Getting started: getting-started.md
   - Understand OakGate:
       - Product direction: product-direction.md
+      - Mainstay principles: 010-mainstay-principles.md
       - Custody models: 006-custody-models.md
       - Go Independent: 004-go-independent.md
       - Project status: project-status.md

@@ -1,0 +1,202 @@
+{% if has_blob %}
+<section class="blob-record" aria-labelledby="blob-heading">
+  <h2 id="blob-heading">Record File</h2>
+  <p>The Record File is protected by Acorn and stored separately from its record metadata.</p>
+  {% if blob_type_notice %}
+  <p class="record-type-notice">{{ blob_type_notice }}</p>
+  {% endif %}
+  {% if blob_fingerprint %}
+  <p class="record-fingerprint">
+    <svg class="inline-icon" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+      stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 11a2 2 0 0 1 2 2c0 3-.7 5.7-2 8"></path>
+      <path d="M8.2 20c1.2-2.2 1.8-4.5 1.8-7a2 2 0 0 1 4 0c0 2.6-.4 5-1.2 7.2"></path>
+      <path d="M5.5 18.5A15 15 0 0 0 7 12.8a5 5 0 0 1 10 0c0 2.2-.2 4.4-.8 6.5"></path>
+      <path d="M4 14v-1.2a8 8 0 0 1 16 0c0 1.2 0 2.4-.2 3.6"></path>
+      <path d="M7 6.2A8 8 0 0 1 18.5 8"></path>
+    </svg>
+    <span>Record File Fingerprint:</span> <code>{{ blob_fingerprint }}</code>
+  </p>
+  {% endif %}
+  {% if blob_preview == "image" %}
+  <figure class="blob-preview">
+    <img src="{{ blob_inline_url }}" alt="Image attached to {{ label }}">
+  </figure>
+  {% elif blob_preview == "pdf" %}
+  <p><a class="pdf-open-link nav-button" href="{{ blob_inline_url }}">Open PDF full screen</a></p>
+  <div class="blob-preview blob-preview-pdf" data-pdf-viewer
+    data-pdf-url="{{ blob_inline_url }}" aria-label="PDF attached to {{ label }}">
+    <p data-pdf-status role="status">Loading PDF…</p>
+    <div class="pdf-controls" data-pdf-controls hidden>
+      <button type="button" data-pdf-previous>Previous</button>
+      <span data-pdf-page aria-live="polite"></span>
+      <button type="button" data-pdf-next>Next</button>
+    </div>
+    <canvas class="pdf-canvas" aria-label="Rendered PDF page" hidden></canvas>
+  </div>
+  <noscript><p>JavaScript is required for the inline PDF preview. Use the open
+  or download link instead.</p></noscript>
+  <script type="module" src="/static/pdf-viewer.js"></script>
+  {% elif blob_type == "application/vnd.apple.pkpass" %}
+  {% if pkpass_preview %}
+  <article class="pkpass-preview" aria-label="Wallet pass preview">
+    {% if pkpass_preview.images.strip %}
+    <img class="pkpass-strip" src="{{ pkpass_preview.images.strip|safe }}" alt="">
+    {% endif %}
+    <div class="pkpass-header">
+      {% if pkpass_preview.images.logo %}
+      <img class="pkpass-logo" src="{{ pkpass_preview.images.logo|safe }}" alt="">
+      {% elif pkpass_preview.images.icon %}
+      <img class="pkpass-logo" src="{{ pkpass_preview.images.icon|safe }}" alt="">
+      {% endif %}
+      <div>
+        <p class="pkpass-org">{{ pkpass_preview.logo_text or pkpass_preview.organization or "Wallet Pass" }}</p>
+        {% if pkpass_preview.description %}
+        <p class="pkpass-description">{{ pkpass_preview.description }}</p>
+        {% endif %}
+      </div>
+    </div>
+    {% if pkpass_preview.fields %}
+    <dl class="pkpass-fields">
+      {% for field in pkpass_preview.fields %}
+      <div>
+        {% if field.label %}<dt>{{ field.label }}</dt>{% endif %}
+        <dd>{{ field.value }}</dd>
+      </div>
+      {% endfor %}
+    </dl>
+    {% endif %}
+    {% if pkpass_preview.barcode %}
+    <div class="pkpass-barcode">
+      {% if pkpass_preview.barcode.symbol %}
+      <div class="pkpass-barcode-image" aria-label="{{ pkpass_preview.barcode.format }} barcode">
+        {{ pkpass_preview.barcode.symbol | safe }}
+      </div>
+      {% endif %}
+      <p>
+        <span>{{ pkpass_preview.barcode.format }}</span>
+        <code>{{ pkpass_preview.barcode.alt_text or pkpass_preview.barcode.message }}</code>
+      </p>
+    </div>
+    {% endif %}
+    {% if pkpass_preview.serial %}
+    <p class="pkpass-serial">Serial: <code>{{ pkpass_preview.serial }}</code></p>
+    {% endif %}
+  </article>
+  {% else %}
+  <p>No inline preview is available for this Wallet pass.</p>
+  {% endif %}
+  <p><a class="nav-button" href="{{ blob_url }}">Open/Add Wallet Pass</a></p>
+  {% elif blob_type in ["application/vc", "application/vp"] %}
+  {% if json_credential_preview %}
+  <article class="json-credential-preview" aria-label="Credential preview">
+    <h3>{{ json_credential_preview.title }}</h3>
+    <p class="preview-status">Preview only. OakGate decoded this credential but has not verified its issuer proof, credential status, holder binding, or presentation.</p>
+    {% if json_credential_preview.summary %}
+    <dl class="credential-summary">
+      {% for field in json_credential_preview.summary %}
+      <div>
+        <dt>{{ field.label }}</dt>
+        <dd>{{ field.value }}</dd>
+      </div>
+      {% endfor %}
+    </dl>
+    {% endif %}
+    {% if json_credential_preview.claims %}
+    <dl class="credential-fields">
+      {% for field in json_credential_preview.claims %}
+      <div>
+        <dt>{{ field.label }}</dt>
+        <dd>{{ field.value }}</dd>
+      </div>
+      {% endfor %}
+    </dl>
+    {% if json_credential_preview.claims_truncated %}
+    <p class="json-credential-truncated">Claims preview truncated.</p>
+    {% endif %}
+    {% endif %}
+    <details class="json-credential-technical-fields">
+      <summary>Technical credential fields</summary>
+    <dl class="json-credential-raw">
+      {% for row in json_credential_preview.rows %}
+      <div class="json-credential-depth-{{ row.depth }}">
+        <dt>{{ row.key }}</dt>
+        {% if row.value is not none %}<dd>{{ row.value }}</dd>{% endif %}
+      </div>
+      {% endfor %}
+    </dl>
+    </details>
+    {% if json_credential_preview.truncated %}
+    <p class="json-credential-truncated">Technical preview truncated.</p>
+    {% endif %}
+  </article>
+  {% else %}
+  <p>No inline preview is available for this credential.</p>
+  {% endif %}
+  {% elif blob_type == "application/mdoc+cbor" %}
+  {% if mdoc_preview %}
+  <article class="mdoc-preview" aria-label="{% if mdoc_preview.credential_kind == 'eudi_pid' %}EUDI PID preview{% elif mdoc_preview.credential_kind == 'mdl' %}mDL preview{% else %}mdoc preview{% endif %}">
+    {% if mdoc_preview.credential_kind == "eudi_pid" %}
+    <h3>EU Digital Identity PID</h3>
+    {% elif mdoc_preview.credential_kind == "mdl" %}
+    <h3>Mobile Driving Licence</h3>
+    {% endif %}
+    <p class="preview-status">Preview only. OakGate decoded this mdoc container but has not verified issuer signatures, device signatures, or digest bindings.</p>
+    {% if mdoc_preview.doc_type or mdoc_preview.document_count is not none or mdoc_preview.status is not none %}
+    <dl class="mdoc-summary">
+      {% if mdoc_preview.doc_type %}
+      <div>
+        <dt>Document type</dt>
+        <dd><code>{{ mdoc_preview.doc_type }}</code></dd>
+      </div>
+      {% endif %}
+      {% if mdoc_preview.document_count is not none %}
+      <div>
+        <dt>Documents</dt>
+        <dd>{{ mdoc_preview.document_count }}</dd>
+      </div>
+      {% endif %}
+      {% if mdoc_preview.status is not none %}
+      <div>
+        <dt>Status</dt>
+        <dd>{{ mdoc_preview.status }}</dd>
+      </div>
+      {% endif %}
+    </dl>
+    {% endif %}
+    {% if mdoc_preview.credential_kind in ["eudi_pid", "mdl"] and mdoc_preview.credential_fields %}
+    <dl class="credential-fields">
+      {% for field in mdoc_preview.credential_fields %}
+      <div>
+        <dt>{{ field.label }}</dt>
+        <dd>{{ field.value }}</dd>
+      </div>
+      {% endfor %}
+    </dl>
+    <details class="mdoc-technical-fields">
+      <summary>Technical mdoc fields</summary>
+    {% endif %}
+    <dl class="mdoc-fields">
+      {% for row in mdoc_preview.rows %}
+      <div class="mdoc-depth-{{ row.depth }}">
+        <dt>{{ row.key }}</dt>
+        {% if row.value is not none %}<dd>{{ row.value }}</dd>{% endif %}
+      </div>
+      {% endfor %}
+    </dl>
+    {% if mdoc_preview.credential_kind in ["eudi_pid", "mdl"] and mdoc_preview.credential_fields %}
+    </details>
+    {% endif %}
+    {% if mdoc_preview.truncated %}
+    <p class="mdoc-truncated">Preview truncated.</p>
+    {% endif %}
+  </article>
+  {% else %}
+  <p>No inline preview is available for this mDL/mdoc.</p>
+  {% endif %}
+  {% else %}
+  <p>No inline preview is available{% if blob_type %} for <code>{{ blob_type }}</code>{% endif %}.</p>
+  {% endif %}
+</section>
+{% endif %}

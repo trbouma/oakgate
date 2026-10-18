@@ -165,8 +165,24 @@ class AcornBackend:
                 continue
             payload = record.get('payload', record.get('content', ''))
             text = payload if isinstance(payload, str) else json.dumps(payload, ensure_ascii=False, indent=2)
-            return {'label': label, 'contents': text}
+            return {'label': label, 'contents': text, 'has_blob': bool(record.get('blobsha256') or record.get('blobref')),
+                    'blob_type': record.get('effective_mime') or record.get('blobtype'), 'origsha256': record.get('origsha256'),
+                    'payload': payload}
         return None
+
+    async def record_blob(self, material, reference):
+        # Reauthorize the opaque reference against this Acorn on every request.
+        detail = await self.record_detail(material, reference)
+        if not detail or not detail.get('has_blob'):
+            return None
+        wallet = self.wallet(material)
+        media_type, data = await wallet.get_record_blobdata(
+            record_name=detail['label'], record_kind=37375, public_only=True)
+        if not data:
+            return None
+        if len(data) > 25 * 1024 * 1024:
+            raise ValueError('Record file is too large')
+        return detail, media_type, data
 
     @staticmethod
     def cash(wallet):
@@ -214,6 +230,10 @@ class WalletService:
     async def record_detail(self, material, reference):
         self.relay(material['relay'])
         return await asyncio.wait_for(self.backend.record_detail(material, reference), timeout=40)
+
+    async def record_blob(self, material, reference):
+        self.relay(material['relay'])
+        return await asyncio.wait_for(self.backend.record_blob(material, reference), timeout=40)
 
     async def initialize(self, owner):
         token = self.store.acquire(owner)
