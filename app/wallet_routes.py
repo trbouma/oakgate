@@ -1,3 +1,4 @@
+from app.localization import N_
 import secrets
 import re
 import asyncio
@@ -194,14 +195,16 @@ async def save_preferences(request: Request):
     if service is None:
         return error_page(request, 'Preferences storage has not been configured yet.', 503)
     try:
-        service.store.save_handle(identity_key(session['user']), str(form.get('handle', '')))
+        language = str(form.get('language', service.store.language(identity_key(session['user']))))
+        service.store.save_handle(identity_key(session['user']), str(form.get('handle', '')), language=language)
+        request.state.language = language
     except HandleTaken:
-        return await preferences_page(request, session, 'That handle is already taken. Please choose another.', 409)
+        return await preferences_page(request, session, N_('That handle is already taken. Please choose another.'), 409)
     except ValueError as exc:
         return await preferences_page(request, session, str(exc), 400)
     except Exception:
         return error_page(request, 'Your preferences could not be saved. Please try again.', 503)
-    return await preferences_page(request, session, 'Preferences saved.')
+    return await preferences_page(request, session, N_('Preferences saved.'))
 
 
 @router.get('/account/transactions', include_in_schema=False)

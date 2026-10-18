@@ -1,0 +1,344 @@
+
+msgid ""
+msgstr ""
+"Project-Id-Version: OakGate 0.1.0\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-10-18 18:44-0400\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: de\n"
+"Language-Team: de <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+msgid "Safebox is Connected"
+msgstr "Safebox ist verbunden"
+
+msgid "Connected Mode"
+msgstr "Verbunden"
+
+msgid "Cash Balance"
+msgstr "Cash-Guthaben"
+
+msgid "Clear Balances"
+msgstr "Clear-Guthaben"
+
+msgid "Manage Balances"
+msgstr "Guthaben verwalten"
+
+msgid "Manage Records"
+msgstr "Dokumente verwalten"
+
+msgid "Preferences"
+msgstr "Einstellungen"
+
+msgid "Advisories"
+msgstr "Hinweise"
+
+msgid "Display preferences updated."
+msgstr "Anzeigeeinstellungen aktualisiert."
+
+msgid "Disconnect"
+msgstr "Trennen"
+
+msgid "Updating…"
+msgstr "Aktualisierung…"
+
+msgid "Funds finalization is running in the background."
+msgstr "Die Finalisierung der Guthaben läuft im Hintergrund."
+
+msgid "The previously confirmed balance is temporarily unavailable."
+msgstr "Das zuvor bestätigte Guthaben ist vorübergehend nicht verfügbar."
+
+msgid "Cached rate may be stale."
+msgstr "Der zwischengespeicherte Wechselkurs ist möglicherweise veraltet."
+
+msgid "Previously confirmed balance. Click to receive and accept pending transactions."
+msgstr "Zuvor bestätigtes Guthaben. Klicken Sie, um ausstehende Transaktionen zu empfangen und anzunehmen."
+
+msgid "No Clear balances yet."
+msgstr "Noch kein Clear-Guthaben."
+
+msgid ""
+"Before disconnecting, make sure you have your recovery information. Safebox does not store it, "
+"and it will be impossible to get back in if it is lost."
+msgstr ""
+"Stellen Sie vor dem Trennen sicher, dass Ihnen Ihre Wiederherstellungsinformationen vorliegen. "
+"Safebox speichert diese nicht; bei Verlust kann der Zugang nicht wiederhergestellt werden."
+
+msgid "I have my recovery information and understand Safebox cannot restore it for me."
+msgstr ""
+"Meine Wiederherstellungsinformationen liegen mir vor und ich verstehe, dass Safebox sie nicht für"
+" mich wiederherstellen kann."
+
+msgid "Credit"
+msgstr "Gutschrift"
+
+msgid "Debit"
+msgstr "Belastung"
+
+msgid "Error"
+msgstr "Fehler"
+
+msgid "Transaction"
+msgstr "Transaktion"
+
+msgid "Pending Credit"
+msgstr "Ausstehende Gutschrift"
+
+msgid "Tender"
+msgstr "Ausgangsbetrag"
+
+msgid "Fees"
+msgstr "Gebühren"
+
+msgid "Balance"
+msgstr "Guthaben"
+
+msgid "Note"
+msgstr "Notiz"
+
+msgid "Not a valid Lightning address."
+msgstr "Keine gültige Lightning-Adresse."
+
+msgid "Check the address and try again."
+msgstr "Überprüfen Sie die Adresse und versuchen Sie es erneut."
+
+msgid "The transfer needs review."
+msgstr "Die Übertragung muss überprüft werden."
+
+msgid "Do not retry blindly. Review transaction history and reconcile pending payments first."
+msgstr ""
+"Versuchen Sie es nicht ungeprüft erneut. Prüfen Sie zuerst den Transaktionsverlauf und klären Sie"
+" ausstehende Zahlungen."
+
+msgid "Reason"
+msgstr "Grund"
+
+msgid "The transfer could not be completed."
+msgstr "Die Übertragung konnte nicht abgeschlossen werden."
+
+msgid "The transfer outcome is uncertain. Review pending payments before retrying."
+msgstr ""
+"Das Ergebnis der Übertragung ist ungewiss. Prüfen Sie ausstehende Zahlungen, bevor Sie es erneut "
+"versuchen."
+
+msgid "The mint is temporarily unavailable. Try again later."
+msgstr "Die Mint ist vorübergehend nicht verfügbar. Versuchen Sie es später erneut."
+
+msgid "The wallet proof state needs attention before another transfer."
+msgstr "Der Nachweisstatus der Wallet muss vor einer weiteren Übertragung geprüft werden."
+
+msgid "The available balance is not sufficient for this transfer."
+msgstr "Das verfügbare Guthaben reicht für diese Übertragung nicht aus."
+
+msgid "Scan"
+msgstr "Scannen"
+
+msgid "Receive Silent Payment"
+msgstr "Silent Payment empfangen"
+
+msgid "Availability"
+msgstr "Verfügbarkeit"
+
+msgid "Within this instance"
+msgstr "Innerhalb dieser Instanz"
+
+msgid "On the local network"
+msgstr "Im lokalen Netzwerk"
+
+msgid "Across networks"
+msgstr "Netzwerkübergreifend"
+
+msgid "Balances"
+msgstr "Guthaben"
+
+msgid "Records"
+msgstr "Dokumente"
+
+msgid "Preferred language"
+msgstr "Bevorzugte Sprache"
+
+msgid "Save preferences"
+msgstr "Einstellungen speichern"
+
+msgid "Preferences saved."
+msgstr "Einstellungen gespeichert."
+
+msgid "Saved to your OakGate account and used on all your devices."
+msgstr "Wird in deinem OakGate-Konto gespeichert und auf allen deinen Geräten verwendet."
+
+msgid "Your OakGate handle"
+msgstr "Dein OakGate-Kürzel"
+
+msgid "Choose a supported language."
+msgstr "Wähle eine unterstützte Sprache."
+
+msgid "Sign out"
+msgstr "Abmelden"
+
+msgid "Sign in"
+msgstr "Anmelden"
+
+#, python-format
+msgid "Hello, %(name)s."
+msgstr "Hallo, %(name)s."
+
+msgid "Your Acorn"
+msgstr "Dein Acorn"
+
+msgid "List"
+msgstr "Liste"
+
+msgid "Folders"
+msgstr "Ordner"
+
+msgid "Active shares"
+msgstr "Aktive Freigaben"
+
+msgid "Newest first"
+msgstr "Neueste zuerst"
+
+msgid "Edit"
+msgstr "Bearbeiten"
+
+msgid "Present"
+msgstr "Vorzeigen"
+
+msgid "Share"
+msgstr "Teilen"
+
+msgid "Check"
+msgstr "Prüfen"
+
+msgid "Format"
+msgstr "Format"
+
+msgid "Contents"
+msgstr "Inhalt"
+
+msgid "Text"
+msgstr "Text"
+
+msgid "Save changes"
+msgstr "Änderungen speichern"
+
+msgid "Edit record"
+msgstr "Dokument bearbeiten"
+
+msgid "Presentation"
+msgstr "Präsentation"
+
+msgid "Share record"
+msgstr "Dokument teilen"
+
+msgid "Private presentation code"
+msgstr "Privater Präsentationscode"
+
+msgid "OpenETR check"
+msgstr "OpenETR-Prüfung"
+
+msgid "Received"
+msgstr "Empfangen"
+
+msgid "Sent"
+msgstr "Gesendet"
+
+msgid "Failed"
+msgstr "Fehlgeschlagen"
+
+msgid "Cash transactions"
+msgstr "E-Cash-Transaktionen"
+
+msgid "Most recent transactions"
+msgstr "Neueste Transaktionen"
+
+msgid "Balance after"
+msgstr "Guthaben danach"
+
+msgid "Back to balances"
+msgstr "Zurück zu den Guthaben"
+
+msgid "Refresh balances"
+msgstr "Guthaben aktualisieren"
+
+msgid "Receive Lightning"
+msgstr "Über Lightning empfangen"
+
+msgid "Recovery phrase"
+msgstr "Wiederherstellungsphrase"
+
+msgid "Bootstrap relay"
+msgstr "Bootstrap-Relay"
+
+msgid "Create my Acorn"
+msgstr "Mein Acorn erstellen"
+
+msgid "Connect my Acorn"
+msgstr "Mein Acorn verbinden"
+
+msgid "Try again"
+msgstr "Erneut versuchen"
+
+msgid "No records yet."
+msgstr "Noch keine Dokumente."
+
+msgid "Go to Balances"
+msgstr "Zu den Guthaben"
+
+msgid "That handle is already taken. Please choose another."
+msgstr "Dieses Kürzel ist bereits vergeben. Wähle ein anderes."
+
+msgid "CASH BALANCE"
+msgstr "Cash-Guthaben"
+
+msgid "Clear balances"
+msgstr "Clear-Guthaben"
+
+msgid "← Records"
+msgstr "← Dokumente"
+
+msgid "Folder →"
+msgstr "Ordner →"
+
+msgid "Record"
+msgstr "Dokument"
+
+msgid "Present record"
+msgstr "Dokument vorzeigen"
+
+msgid "Check record"
+msgstr "Dokument prüfen"
+
+msgid "Private sharing code"
+msgstr "Privater Freigabecode"
+
+msgid "Stop presentation"
+msgstr "Präsentation beenden"
+
+msgid "Stop sharing"
+msgstr "Freigabe beenden"
+
+msgid "← Record"
+msgstr "← Dokument"
+
+msgid ""
+"Unique to this OakGate instance. Use 3–32 letters, numbers, hyphens or underscores, starting with"
+" a letter or number. Uppercase and lowercase count as the same name."
+msgstr ""
+"Eindeutig innerhalb dieser OakGate-Instanz. Verwende 3–32 Buchstaben, Ziffern, Bindestriche oder "
+"Unterstriche und beginne mit einem Buchstaben oder einer Ziffer. Groß- und Kleinschreibung werden"
+" nicht unterschieden."
+
+msgid ""
+"Your handle becomes your Lightning address when an Acorn is connected. Leave blank to disable the"
+" address. Once a handle is connected to an active Acorn, it stays reserved to you. This does not "
+"change your Acorn identity."
+msgstr ""
+"Dein Kürzel wird zu deiner Lightning-Adresse, sobald ein Acorn verbunden ist. Lasse das Feld "
+"leer, um die Adresse zu deaktivieren. Sobald das Kürzel mit einem aktiven Acorn verbunden ist, "
+"bleibt es für dich reserviert. Die Identität deines Acorn ändert sich dadurch nicht."
+

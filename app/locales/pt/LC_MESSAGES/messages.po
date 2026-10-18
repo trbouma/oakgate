@@ -1,0 +1,339 @@
+
+msgid ""
+msgstr ""
+"Project-Id-Version: OakGate 0.1.0\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-10-18 18:44-0400\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: pt\n"
+"Language-Team: pt <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+msgid "Safebox is Connected"
+msgstr "Safebox está conectado"
+
+msgid "Connected Mode"
+msgstr "Modo conectado"
+
+msgid "Cash Balance"
+msgstr "Saldo Cash"
+
+msgid "Clear Balances"
+msgstr "Saldos Clear"
+
+msgid "Manage Balances"
+msgstr "Gerenciar saldos"
+
+msgid "Manage Records"
+msgstr "Gerenciar registros"
+
+msgid "Preferences"
+msgstr "Preferências"
+
+msgid "Advisories"
+msgstr "Avisos"
+
+msgid "Display preferences updated."
+msgstr "Preferências de exibição atualizadas."
+
+msgid "Disconnect"
+msgstr "Desconectar"
+
+msgid "Updating…"
+msgstr "Atualizando…"
+
+msgid "Funds finalization is running in the background."
+msgstr "A finalização dos fundos está sendo executada em segundo plano."
+
+msgid "The previously confirmed balance is temporarily unavailable."
+msgstr "O saldo confirmado anteriormente está temporariamente indisponível."
+
+msgid "Cached rate may be stale."
+msgstr "A taxa em cache pode estar desatualizada."
+
+msgid "Previously confirmed balance. Click to receive and accept pending transactions."
+msgstr "Saldo confirmado anteriormente. Clique para receber e aceitar transações pendentes."
+
+msgid "No Clear balances yet."
+msgstr "Ainda não há saldos Clear."
+
+msgid ""
+"Before disconnecting, make sure you have your recovery information. Safebox does not store it, "
+"and it will be impossible to get back in if it is lost."
+msgstr ""
+"Antes de desconectar, certifique-se de ter suas informações de recuperação. O Safebox não as "
+"armazena e será impossível recuperar o acesso se elas forem perdidas."
+
+msgid "I have my recovery information and understand Safebox cannot restore it for me."
+msgstr "Tenho minhas informações de recuperação e entendo que o Safebox não pode restaurá-las para mim."
+
+msgid "Credit"
+msgstr "Crédito"
+
+msgid "Debit"
+msgstr "Débito"
+
+msgid "Error"
+msgstr "Erro"
+
+msgid "Transaction"
+msgstr "Transação"
+
+msgid "Pending Credit"
+msgstr "Crédito pendente"
+
+msgid "Tender"
+msgstr "Montante apresentado"
+
+msgid "Fees"
+msgstr "Taxas"
+
+msgid "Balance"
+msgstr "Saldo"
+
+msgid "Note"
+msgstr "Nota"
+
+msgid "Not a valid Lightning address."
+msgstr "Não é um endereço Lightning válido."
+
+msgid "Check the address and try again."
+msgstr "Verifique o endereço e tente novamente."
+
+msgid "The transfer needs review."
+msgstr "A transferência precisa ser analisada."
+
+msgid "Do not retry blindly. Review transaction history and reconcile pending payments first."
+msgstr ""
+"Não tente novamente sem verificar. Primeiro, revise o histórico de transações e reconcilie os "
+"pagamentos pendentes."
+
+msgid "Reason"
+msgstr "Motivo"
+
+msgid "The transfer could not be completed."
+msgstr "Não foi possível concluir a transferência."
+
+msgid "The transfer outcome is uncertain. Review pending payments before retrying."
+msgstr "O resultado da transferência é incerto. Revise os pagamentos pendentes antes de tentar novamente."
+
+msgid "The mint is temporarily unavailable. Try again later."
+msgstr "A casa da moeda está temporariamente indisponível. Tente novamente mais tarde."
+
+msgid "The wallet proof state needs attention before another transfer."
+msgstr "O estado das provas da carteira precisa de atenção antes de outra transferência."
+
+msgid "The available balance is not sufficient for this transfer."
+msgstr "O saldo disponível não é suficiente para esta transferência."
+
+msgid "Scan"
+msgstr "Escanear"
+
+msgid "Receive Silent Payment"
+msgstr "Receber pagamento silencioso"
+
+msgid "Availability"
+msgstr "Disponibilidade"
+
+msgid "Within this instance"
+msgstr "Nesta instância"
+
+msgid "On the local network"
+msgstr "Na rede local"
+
+msgid "Across networks"
+msgstr "Entre redes"
+
+msgid "Balances"
+msgstr "Saldos"
+
+msgid "Records"
+msgstr "Registos"
+
+msgid "Preferred language"
+msgstr "Idioma preferido"
+
+msgid "Save preferences"
+msgstr "Guardar preferências"
+
+msgid "Preferences saved."
+msgstr "Preferências guardadas."
+
+msgid "Saved to your OakGate account and used on all your devices."
+msgstr "Guardado na sua conta OakGate e usado em todos os seus dispositivos."
+
+msgid "Your OakGate handle"
+msgstr "O seu identificador OakGate"
+
+msgid "Choose a supported language."
+msgstr "Escolha um idioma suportado."
+
+msgid "Sign out"
+msgstr "Terminar sessão"
+
+msgid "Sign in"
+msgstr "Iniciar sessão"
+
+#, python-format
+msgid "Hello, %(name)s."
+msgstr "Olá, %(name)s."
+
+msgid "Your Acorn"
+msgstr "O seu Acorn"
+
+msgid "List"
+msgstr "Lista"
+
+msgid "Folders"
+msgstr "Pastas"
+
+msgid "Active shares"
+msgstr "Partilhas ativas"
+
+msgid "Newest first"
+msgstr "Mais recentes primeiro"
+
+msgid "Edit"
+msgstr "Editar"
+
+msgid "Present"
+msgstr "Apresentar"
+
+msgid "Share"
+msgstr "Partilhar"
+
+msgid "Check"
+msgstr "Verificar"
+
+msgid "Format"
+msgstr "Formato"
+
+msgid "Contents"
+msgstr "Conteúdo"
+
+msgid "Text"
+msgstr "Texto"
+
+msgid "Save changes"
+msgstr "Guardar alterações"
+
+msgid "Edit record"
+msgstr "Editar registo"
+
+msgid "Presentation"
+msgstr "Apresentação"
+
+msgid "Share record"
+msgstr "Partilhar registo"
+
+msgid "Private presentation code"
+msgstr "Código privado de apresentação"
+
+msgid "OpenETR check"
+msgstr "Verificação OpenETR"
+
+msgid "Received"
+msgstr "Recebido"
+
+msgid "Sent"
+msgstr "Enviado"
+
+msgid "Failed"
+msgstr "Falhou"
+
+msgid "Cash transactions"
+msgstr "Transações de dinheiro digital"
+
+msgid "Most recent transactions"
+msgstr "Transações mais recentes"
+
+msgid "Balance after"
+msgstr "Saldo após"
+
+msgid "Back to balances"
+msgstr "Voltar aos saldos"
+
+msgid "Refresh balances"
+msgstr "Atualizar saldos"
+
+msgid "Receive Lightning"
+msgstr "Receber por Lightning"
+
+msgid "Recovery phrase"
+msgstr "Frase de recuperação"
+
+msgid "Bootstrap relay"
+msgstr "Relay de arranque"
+
+msgid "Create my Acorn"
+msgstr "Criar o meu Acorn"
+
+msgid "Connect my Acorn"
+msgstr "Ligar o meu Acorn"
+
+msgid "Try again"
+msgstr "Tentar novamente"
+
+msgid "No records yet."
+msgstr "Ainda não existem registos."
+
+msgid "Go to Balances"
+msgstr "Ir para os saldos"
+
+msgid "That handle is already taken. Please choose another."
+msgstr "Esse identificador já está em uso. Escolha outro."
+
+msgid "CASH BALANCE"
+msgstr "Saldo Cash"
+
+msgid "Clear balances"
+msgstr "Saldos Clear"
+
+msgid "← Records"
+msgstr "← Registos"
+
+msgid "Folder →"
+msgstr "Pastas →"
+
+msgid "Record"
+msgstr "Registo"
+
+msgid "Present record"
+msgstr "Apresentar registo"
+
+msgid "Check record"
+msgstr "Verificar registo"
+
+msgid "Private sharing code"
+msgstr "Código privado de partilha"
+
+msgid "Stop presentation"
+msgstr "Parar apresentação"
+
+msgid "Stop sharing"
+msgstr "Parar partilha"
+
+msgid "← Record"
+msgstr "← Registo"
+
+msgid ""
+"Unique to this OakGate instance. Use 3–32 letters, numbers, hyphens or underscores, starting with"
+" a letter or number. Uppercase and lowercase count as the same name."
+msgstr ""
+"Único nesta instância OakGate. Use entre 3 e 32 letras, números, hífenes ou sublinhados, "
+"começando por uma letra ou um número. Maiúsculas e minúsculas são consideradas iguais."
+
+msgid ""
+"Your handle becomes your Lightning address when an Acorn is connected. Leave blank to disable the"
+" address. Once a handle is connected to an active Acorn, it stays reserved to you. This does not "
+"change your Acorn identity."
+msgstr ""
+"O seu identificador torna-se o seu endereço Lightning quando um Acorn é ligado. Deixe em branco "
+"para desativar o endereço. Depois de associado a um Acorn ativo, o identificador fica reservado "
+"para si. Isto não altera a identidade do seu Acorn."
+

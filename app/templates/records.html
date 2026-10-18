@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="records-heading"><h1>Records</h1><p class="note">Newest first</p></div>
-<nav class="record-actions" aria-label="Record views"><a href="/account/records">List</a><a href="/account/records?view=folders">Folders</a><a href="/account/record-shares">Active shares</a></nav>
+<div class="records-heading"><h1>{{ _("Records") }}</h1><p class="note">{{ _("Newest first") }}</p></div>
+<nav class="record-actions" aria-label="Record views"><a href="/account/records">{{ _("List") }}</a><a href="/account/records?view=folders">{{ _("Folders") }}</a><a href="/account/record-shares">{{ _("Active shares") }}</a></nav>
 {% if folder_mode %}<nav class="record-breadcrumbs" aria-label="Folders">{% for crumb in breadcrumbs %}<a href="{{ crumb.url }}">{{ crumb.label }}</a>{% if not loop.last %}<span>/</span>{% endif %}{% endfor %}</nav>{% endif %}
 <section class="records-panel" aria-label="Acorn records">
 {% if not connected %}
-<p>Connect or create an Acorn to see your records.</p><a class="secondary-action" href="/account">Go to Balances</a>
+<p>{{ _("Connect or create an Acorn to see your records.") }}</p><a class="secondary-action" href="/account">{{ _("Go to Balances") }}</a>
 {% elif records_error %}
-<p role="status">Records are unavailable right now.</p><a class="secondary-action" href="/account/records">Try again</a>
+<p role="status">{{ _("Records are unavailable right now.") }}</p><a class="secondary-action" href="/account/records">{{ _("Try again") }}</a>
 {% elif records or folders %}
-{% if folders %}<ul class="record-list">{% for folder in folders %}<li><a href="{{ folder.url }}">{{ folder.label }} <span>Folder →</span></a></li>{% endfor %}</ul>{% endif %}
+{% if folders %}<ul class="record-list">{% for folder in folders %}<li><a href="{{ folder.url }}">{{ folder.label }} <span>{{ _("Folder →") }}</span></a></li>{% endfor %}</ul>{% endif %}
 <ul class="record-list">{% for record in records %}<li><a href="/account/records/{{ record.ref }}">{{ record.label }} <span aria-hidden="true">→</span></a></li>{% endfor %}</ul>
-{% else %}<p class="note">No records yet.</p>{% endif %}
+{% else %}<p class="note">{{ _("No records yet.") }}</p>{% endif %}
 </section>
-<form class="signout-form" method="post" action="/auth/logout"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="primary-action" type="submit">Sign out</button></form>
+<form class="signout-form" method="post" action="/auth/logout"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="primary-action" type="submit">{{ _("Sign out") }}</button></form>
 {% endblock %}

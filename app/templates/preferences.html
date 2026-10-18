@@ -1,17 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Preferences</h1>
+<h1>{{ _("Preferences") }}</h1>
 <section class="preferences-panel wallet-panel">
-{% if message %}<p role="status">{{ message }}</p>{% endif %}
+{% if message %}<p role="status">{{ _(message) }}</p>{% endif %}
 {% if preferences_enabled %}
 <form method="post" action="/account/preferences">
 <input type="hidden" name="csrf" value="{{ csrf }}">
-<label for="handle">Your OakGate handle</label>
+<label for="language">{{ _("Preferred language") }}</label>
+<select id="language" name="language" required>{% for tag, label in language_options.items() %}<option value="{{ tag }}"{% if tag == language %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+<p class="note">{{ _("Saved to your OakGate account and used on all your devices.") }}</p>
+<label for="handle">{{ _("Your OakGate handle") }}</label>
 <input id="handle" name="handle" type="text" value="{{ handle }}" maxlength="32" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="handle-help">
-<p id="handle-help" class="note">Unique to this OakGate instance. Use 3–32 letters, numbers, hyphens or underscores, starting with a letter or number. Uppercase and lowercase count as the same name.</p>
-<p class="note">Your handle becomes your Lightning address when an Acorn is connected. Leave blank to disable the address. Once a handle is connected to an active Acorn, it stays reserved to you. This does not change your Acorn identity.</p>
-<button class="primary-action" type="submit">Save preferences</button>
+<p id="handle-help" class="note">{{ _("Unique to this OakGate instance. Use 3–32 letters, numbers, hyphens or underscores, starting with a letter or number. Uppercase and lowercase count as the same name.") }}</p>
+<p class="note">{{ _("Your handle becomes your Lightning address when an Acorn is connected. Leave blank to disable the address. Once a handle is connected to an active Acorn, it stays reserved to you. This does not change your Acorn identity.") }}</p>
+<button class="primary-action" type="submit">{{ _("Save preferences") }}</button>
 </form>
-{% else %}<p>Preferences storage is being configured.</p>{% endif %}
+{% else %}<p>{{ _("Preferences storage is being configured.") }}</p>{% endif %}
 </section>
 {% endblock %}

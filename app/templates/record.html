@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 {% block content %}
 <section class="record-detail">
-<a class="back-link" href="/account/records">← Records</a>
+<a class="back-link" href="/account/records">{{ _("← Records") }}</a>
 <h1>{{ record.label }}</h1>
-<nav class="record-actions" aria-label="Record actions">{% for action in ['edit', 'present', 'share'] %}<a href="/account/records/{{ reference }}/{{ action }}">{{ action|capitalize }}</a>{% endfor %}{% if record.has_blob %}<a href="/account/records/{{ reference }}/check">Check</a>{% endif %}</nav>
+<nav class="record-actions" aria-label="Record actions">{% for action in ['edit', 'present', 'share'] %}<a href="/account/records/{{ reference }}/{{ action }}">{{ action_labels[action] }}</a>{% endfor %}{% if record.has_blob %}<a href="/account/records/{{ reference }}/check">{{ _("Check") }}</a>{% endif %}</nav>
 <pre class="record-contents">{{ record.contents }}</pre>
 {% if record.has_blob %}
-{% if record.preview_error %}<p role="status">The file preview is unavailable. You can try opening or downloading the file.</p>{% endif %}
+{% if record.preview_error %}<p role="status">{{ _("The file preview is unavailable. You can try opening or downloading the file.") }}</p>{% endif %}
 {% with label=record.label, has_blob=record.has_blob, blob_type=record.blob_type,
 blob_preview=record.blob_preview, blob_fingerprint=record.blob_fingerprint,
 pkpass_preview=record.pkpass_preview, json_credential_preview=record.json_credential_preview,
 mdoc_preview=record.mdoc_preview, blob_url=record.blob_url, blob_inline_url=record.blob_inline_url %}
 {% include "record_preview.html" %}
 {% endwith %}
-<p><a class="back-link" href="{{ record.blob_url }}">Download record file</a></p>
+<p><a class="back-link" href="{{ record.blob_url }}">{{ _("Download record file") }}</a></p>
 {% endif %}
 </section>
 {% endblock %}

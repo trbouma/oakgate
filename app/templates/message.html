@@ -1,2 +1,2 @@
 {% extends "base.html" %}
-{% block content %}<h1>Let's try that again.</h1><p class="intro">{{ message }}</p><a class="primary-action" href="/auth/login">Sign in</a><nav><a href="/">Back to OakGate</a></nav>{% endblock %}
+{% block content %}<h1>{{ _("Let's try that again.") }}</h1><p class="intro">{{ _(message) }}</p><a class="primary-action" href="/auth/login">{{ _("Sign in") }}</a><nav><a href="/">{{ _("Back to OakGate") }}</a></nav>{% endblock %}

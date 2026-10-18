@@ -1,4 +1,5 @@
 """Read-only cash history presentation; never return secret journal fields."""
+from app.localization import N_
 from datetime import datetime, timezone
 
 
@@ -23,8 +24,8 @@ def transaction_cards(history):
             except (ValueError, TypeError, OverflowError):
                 return default
         kind = str(row.get('tx_type', '')).upper()
-        direction, sign, style = {'C': ('Received', '+', 'credit'), 'D': ('Sent', '−', 'debit'),
-                                   'X': ('Failed', '', 'advisory')}.get(kind, ('Transaction', '', 'advisory'))
+        direction, sign, style = {'C': (N_('Received'), '+', 'credit'), 'D': (N_('Sent'), '−', 'debit'),
+                                   'X': (N_('Failed'), '', 'advisory')}.get(kind, (N_('Transaction'), '', 'advisory'))
         amount, fees = number('amount'), number('fees', 0)
         if amount is not None and kind == 'D':
             amount += fees

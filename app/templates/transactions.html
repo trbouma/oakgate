@@ -1,26 +1,26 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Cash transactions</h1>
+<h1>{{ _("Cash transactions") }}</h1>
 {% if not connected %}
-<p class="note">Connect an Acorn to see your cash transactions.</p>
-<a class="back-link" href="/account">Back to balances</a>
+<p class="note">{{ _("Connect an Acorn to see your cash transactions.") }}</p>
+<a class="back-link" href="/account">{{ _("Back to balances") }}</a>
 {% else %}
 <section class="wallet-panel transaction-balance" aria-label="Cash balance">
-<p class="eyebrow">CASH BALANCE</p>
-{% if balance_error %}<p role="status">Balance unavailable right now.</p><a class="back-link" href="/account">Back to balances</a>
-{% else %}<a class="balance-link" href="/account" aria-label="{{ '{:,}'.format(balance) }} sats. Back to balances"><p class="cash-balance">{{ '{:,}'.format(balance) }} <span>sats</span></p></a><p class="note">Tap your balance to return home.</p>{% endif %}
+<p class="eyebrow">{{ _("CASH BALANCE") }}</p>
+{% if balance_error %}<p role="status">{{ _("Balance unavailable right now.") }}</p><a class="back-link" href="/account">{{ _("Back to balances") }}</a>
+{% else %}<a class="balance-link" href="/account" aria-label="{{ '{:,}'.format(balance) }} sats. Back to balances"><p class="cash-balance">{{ '{:,}'.format(balance) }} <span>sats</span></p></a><p class="note">{{ _("Tap your balance to return home.") }}</p>{% endif %}
 </section>
 <section class="transaction-list" aria-labelledby="transactions-title">
-<h2 id="transactions-title">Most recent transactions</h2>
-{% if history_error %}<p class="note" role="status">Acorn transaction history is unavailable right now. <a href="/account/transactions">Try again</a>.</p>{% endif %}
+<h2 id="transactions-title">{{ _("Most recent transactions") }}</h2>
+{% if history_error %}<p class="note" role="status">{{ _("Acorn transaction history is unavailable right now.") }} <a href="/account/transactions">{{ _("Try again") }}</a>.</p>{% endif %}
 {% for entry in transactions %}
 <article class="transaction-card {{ entry.style }}">
-<div class="transaction-card-heading"><strong>{{ entry.direction }}</strong><time{% if entry.datetime %} datetime="{{ entry.datetime }}"{% endif %}>{{ entry.created }}</time></div>
-<p class="transaction-amount">{% if entry.amount is not none %}{{ entry.sign }}{{ '{:,}'.format(entry.amount) }} <span>sats</span>{% else %}Amount unavailable{% endif %}</p>
-<dl class="transaction-details"><div><dt>Fees</dt><dd>{{ '{:,}'.format(entry.fees) }} sats</dd></div><div><dt>Balance after</dt><dd>{% if entry.balance is not none %}{{ '{:,}'.format(entry.balance) }} sats{% else %}—{% endif %}</dd></div></dl>
+<div class="transaction-card-heading"><strong>{{ _(entry.direction) }}</strong><time{% if entry.datetime %} datetime="{{ entry.datetime }}"{% endif %}>{{ entry.created }}</time></div>
+<p class="transaction-amount">{% if entry.amount is not none %}{{ entry.sign }}{{ '{:,}'.format(entry.amount) }} <span>sats</span>{% else %}{{ _("Amount unavailable") }}{% endif %}</p>
+<dl class="transaction-details"><div><dt>{{ _("Fees") }}</dt><dd>{{ '{:,}'.format(entry.fees) }} sats</dd></div><div><dt>{{ _("Balance after") }}</dt><dd>{% if entry.balance is not none %}{{ '{:,}'.format(entry.balance) }} sats{% else %}—{% endif %}</dd></div></dl>
 {% if entry.comment %}<p class="transaction-note">{{ entry.comment }}</p>{% endif %}
 </article>
-{% else %}{% if not history_error %}<p class="note">No cash transactions yet.</p>{% endif %}{% endfor %}
+{% else %}{% if not history_error %}<p class="note">{{ _("No cash transactions yet.") }}</p>{% endif %}{% endfor %}
 </section>
 {% endif %}
 {% endblock %}

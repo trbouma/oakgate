@@ -41,6 +41,15 @@ async def current_session(request):
         return None
     session = await request.app.state.store.get(record_key("session", value))
     if session and session["expires_at"] > time.time():
+        if not hasattr(request.state, 'language'):
+            from app.custody import identity_key
+            import sqlite3
+            service = request.app.state.wallets
+            try:
+                request.state.language = service.store.language(identity_key(session['user'])) if service else 'en'
+            except sqlite3.Error:
+                # A preference read must not prevent sign-out or session recovery.
+                request.state.language = 'en'
         return session
     return None
 

@@ -10,6 +10,7 @@ from redis.exceptions import RedisError
 
 from app.auth import current_session, error_page, router
 from app.config import AuthSettings
+from app.templating import localization_context
 from app.oidc import KeycloakProvider
 from app.sessions import MemoryStore, RedisStore
 from app.wallets import configured_service
@@ -44,7 +45,7 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
     app.state.settings = settings
     app.state.store = store
     app.state.provider = provider or KeycloakProvider(settings)
-    app.state.templates = Jinja2Templates(directory=APP_DIR / "templates")
+    app.state.templates = Jinja2Templates(directory=APP_DIR / "templates", context_processors=[localization_context])
     app.mount("/static", StaticFiles(directory=APP_DIR / "static"), name="static")
     app.include_router(router)
     app.include_router(wallet_router)
@@ -62,6 +63,7 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
             response.headers["Referrer-Policy"] = (
                 "strict-origin" if request.url.path.startswith("/account") else "no-referrer"
             )
+        response.headers["Content-Language"] = getattr(request.state, "language", "en")
         response.headers["X-Content-Type-Options"] = "nosniff"
         return response
 

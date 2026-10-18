@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OakGate · Mainstay</title><link rel="icon" href="/logo.png"><link rel="stylesheet" href="/static/style.css?v=20261018-record-workflows-1"></head>
-<body{% if active_page %} class="account-shell"{% endif %}><header><a class="family" href="/">MAINSTAY <span>/ OAKGATE</span></a><span class="tag">OpenID Access Gate</span></header>
+<html lang="{{ language }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ _("OakGate · Mainstay") }}</title><link rel="icon" href="/logo.png"><link rel="stylesheet" href="/static/style.css?v=20261018-localization-1"></head>
+<body{% if active_page %} class="account-shell"{% endif %}><header><a class="family" href="/">MAINSTAY <span>/ OAKGATE</span></a><span class="tag">{{ _("OpenID Access Gate") }}</span></header>
 {% if active_page %}<nav class="account-nav" aria-label="Account navigation">
-<a href="/account"{% if active_page == 'balances' %} aria-current="page"{% endif %}>Balances</a>
-<a href="/account/records"{% if active_page == 'records' %} aria-current="page"{% endif %}>Records</a>
-<a href="/account/preferences"{% if active_page == 'preferences' %} aria-current="page"{% endif %}>Preferences</a>
+<a href="/account"{% if active_page == 'balances' %} aria-current="page"{% endif %}>{{ _("Balances") }}</a>
+<a href="/account/records"{% if active_page == 'records' %} aria-current="page"{% endif %}>{{ _("Records") }}</a>
+<a href="/account/preferences"{% if active_page == 'preferences' %} aria-current="page"{% endif %}>{{ _("Preferences") }}</a>
 </nav>{% endif %}
 <main><img class="logo" src="/logo.png" alt="OakGate" width="180" height="180">{% block content %}{% endblock %}</main>
-<footer>OakGate <span>Part of the Mainstay family.</span></footer></body></html>
+<footer>OakGate <span>{{ _("Part of the Mainstay family.") }}</span></footer></body></html>

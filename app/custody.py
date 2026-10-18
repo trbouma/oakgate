@@ -1,4 +1,5 @@
 """Durable encrypted custody, independent of ephemeral sign-in sessions."""
+from app.localization import N_
 import hashlib
 import re
 import json
@@ -10,6 +11,7 @@ from contextlib import closing
 from pathlib import Path
 
 from cryptography.fernet import Fernet
+from app.localization import SUPPORTED_LANGUAGES, supported_language
 
 
 class AlreadyConnected(Exception):
@@ -43,6 +45,7 @@ class CustodyStore:
                 encrypted BLOB NOT NULL, status TEXT NOT NULL,
                 lease TEXT, lease_until REAL NOT NULL DEFAULT 0)''')
 
+            db.execute('CREATE TABLE IF NOT EXISTS user_display_preferences (owner TEXT PRIMARY KEY, language TEXT NOT NULL)')
             db.execute('CREATE TABLE IF NOT EXISTS lightning_handles (normalized_handle TEXT PRIMARY KEY, owner TEXT NOT NULL)')
             db.execute('CREATE TABLE IF NOT EXISTS user_preferences (owner TEXT PRIMARY KEY, handle TEXT NOT NULL, normalized_handle TEXT NOT NULL UNIQUE)')
             db.execute("INSERT OR IGNORE INTO lightning_handles(normalized_handle,owner) SELECT p.normalized_handle,p.owner FROM user_preferences p JOIN wallets w ON p.owner=w.owner WHERE w.status='active'")
@@ -52,13 +55,23 @@ class CustodyStore:
             row = db.execute('SELECT handle FROM user_preferences WHERE owner=?', (owner,)).fetchone()
         return row['handle'] if row else ''
 
-    def save_handle(self, owner, handle):
+    def language(self, owner):
+        with closing(self.connect()) as db:
+            row = db.execute('SELECT language FROM user_display_preferences WHERE owner=?', (owner,)).fetchone()
+        return supported_language(row['language']) if row else 'en'
+
+    def save_handle(self, owner, handle, *, language=None):
+        if language is not None and language not in SUPPORTED_LANGUAGES:
+            raise ValueError(N_('Choose a supported language.'))
         handle = handle.strip()
         if handle and not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]{2,31}', handle):
             raise ValueError('Use 3–32 letters, numbers, hyphens or underscores, starting with a letter or number.')
         try:
             with closing(self.connect()) as db, db:
                 db.execute('BEGIN IMMEDIATE')
+                if language is not None:
+                    db.execute('INSERT INTO user_display_preferences(owner,language) VALUES(?,?) '
+                               'ON CONFLICT(owner) DO UPDATE SET language=excluded.language', (owner, language))
                 reserved = db.execute('SELECT owner FROM lightning_handles WHERE normalized_handle=?', (handle.lower(),)).fetchone()
                 if reserved and reserved['owner'] != owner:
                     raise HandleTaken
