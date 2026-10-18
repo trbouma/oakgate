@@ -45,7 +45,7 @@ Start with server-rendered pages and same-origin browser requests. Use an establ
 
 Keep tokens and temporary login transaction data on the server. Give the browser an opaque, random session identifier in a host-only, HttpOnly cookie with SameSite=Lax and Secure enabled in production. Do not put tokens in browser storage or in a readable signed session cookie.
 
-Use Redis for expiring application sessions and login transactions. Rotate the session identifier after authentication. Proposed limits are 30 minutes idle and eight hours absolute, subject to shorter Keycloak session limits. Refresh tokens only on the server; failed refresh requires a fresh login. Concurrent refreshes for one session must be serialized. Session-store outages fail closed.
+Use Redis for expiring application sessions and login transactions. Rotate the session identifier after authentication. The current implementation uses a fixed one-week session by default, configurable through `OAKGATE_SESSION_TTL_SECONDS`; activity does not renew it. The ID token is validated at sign-in but does not cap the application session lifetime. Refresh tokens are not stored or used. Session-store outages fail closed.
 
 ## Application routes
 

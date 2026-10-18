@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="record-detail">
+<a class="back-link" href="{% if reference %}/account/records/{{ reference }}{% else %}/account/records{% endif %}">← {% if reference %}Record{% else %}Records{% endif %}</a>
+{% if action in ['edit', 'present', 'share', 'check'] %}
+<h1>{{ action|capitalize }} record</h1><p>{{ record.label }}</p>
+<form method="post" class="record-form" {% if action == 'edit' %}enctype="multipart/form-data"{% endif %}>
+<input type="hidden" name="csrf" value="{{ csrf }}">
+{% if action == 'edit' %}
+<label for="record-format">Format</label><select id="record-format" name="format"><option value="text" {% if record.payload is string %}selected{% endif %}>Text</option><option value="json" {% if record.payload is not string %}selected{% endif %}>JSON</option></select>
+<label for="record-payload">Contents</label><textarea id="record-payload" name="payload" rows="12" spellcheck="false">{{ record.contents }}</textarea>
+<label for="record-attachment">{% if record.has_blob %}Replace attached file{% else %}Attach a file{% endif %} (optional, up to 25 MiB)</label><input type="file" id="record-attachment" name="attachment">
+<p class="note">The label stays the same. Leaving the file empty preserves the existing attachment.</p>
+{% elif action == 'check' %}
+<p>Check the original file’s fingerprint against OpenETR anchor events and publisher notices. This sends the fingerprint to the configured public relays; your file and private key stay private.</p>
+<p class="note">A check evaluates retrieved evidence, not legal validity, ownership or recognition of the publisher.</p>
+{% else %}
+<p>{% if action == 'present' %}Create a temporary presentation for another Safebox to view.{% else %}Create a temporary sharing copy that another Safebox can import.{% endif %}</p>
+<p>The code grants access to this record and its attached file for one hour. Anyone with it can read the copy. Presentation is a view-only convention, not protection against copying.</p>
+<p class="note">Stopping requests deletion from the storage server. It cannot recall copies already received, and expiry does not prove deletion.</p>
+{% endif %}
+<label class="record-confirm"><input type="checkbox" name="confirmed" value="yes" required> {% if action == 'edit' %}Save these changes to my Acorn{% elif action == 'check' %}Send the fingerprint to check this file{% else %}Create this temporary copy{% endif %}</label>
+<button class="primary-action" type="submit">{% if action == 'edit' %}Save changes{% else %}{{ action|capitalize }}{% endif %}</button>
+</form>
+{% elif action == 'capability' %}
+<h1>{{ 'Presentation' if item.purpose == 'present' else 'Share record' }}</h1><p>{{ item.label }}</p>
+<p>Scan with a compatible Safebox, or copy the code below.</p>
+{% if qr %}<div class="record-qr">{{ qr|safe }}</div>{% endif %}
+<label for="descriptor">Private {{ 'presentation' if item.purpose == 'present' else 'sharing' }} code</label><textarea id="descriptor" readonly rows="5" spellcheck="false">{{ item.descriptor }}</textarea>
+<p>Expires: {{ expiry }}</p><p class="note">This is a bearer secret. Expiry is enforced by compatible clients; storage retention may differ. You can return through Active shares to request deletion. Copies already received cannot be recalled.</p>
+<form method="post" action="/account/record-shares/{{ item.id }}/stop"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="primary-action">Stop {{ 'presentation' if item.purpose == 'present' else 'sharing' }}</button></form>
+{% elif action == 'shares' %}
+<h1>Active shares</h1><p class="note">Copies awaiting a confirmed deletion request, including expired codes.</p>
+<ul class="record-list">{% for item in shares %}<li><a href="/account/record-shares/{{ item.id }}">{{ item.label }} · {{ 'Presentation' if item.purpose == 'present' else 'Share' }}</a></li>{% else %}<li>No sharing copies tracked.</li>{% endfor %}</ul>
+{% elif action == 'checked' %}
+<h1>OpenETR check</h1><p>{{ record.label }}</p>
+<p class="note">Fingerprint of the original file: <code>{{ history.digest }}</code></p>
+{% if history.error %}<p role="status">{{ history.error }}</p>{% endif %}
+{% for warning in history.warnings %}<p role="status">{{ warning }}</p>{% endfor %}
+{% for graph in history.candidate_graphs %}<article class="openetr-card"><h2>Candidate {{ loop.index }}</h2><p>Publisher: <code>{{ graph.anchor.author }}</code></p><p>{{ graph.publisher_position_label }}</p>
+{% for event in graph.controls %}<p>{{ event.content }}</p>{% endfor %}
+<details><summary>Evidence details</summary><pre>{{ graph|tojson(indent=2) }}</pre></details></article>
+{% else %}{% if not history.error %}<p>No qualifying anchor was found in the retrieved evidence.</p>{% endif %}{% endfor %}
+<p class="note">Bounded relay queries cannot establish global completeness. This check does not establish ownership, legal validity, or recognition of a publisher.</p>
+<details><summary>Ruleset findings</summary><pre>{{ history.verification|tojson(indent=2) }}</pre></details>
+{% endif %}
+</section>
+{% endblock %}

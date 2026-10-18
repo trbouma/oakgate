@@ -14,6 +14,7 @@ from app.oidc import KeycloakProvider
 from app.sessions import MemoryStore, RedisStore
 from app.wallets import configured_service
 from app.wallet_routes import router as wallet_router
+from app.record_routes import router as record_router
 from app.payments import PaymentService, router as payment_router
 
 APP_DIR = Path(__file__).resolve().parent
@@ -47,6 +48,7 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
     app.mount("/static", StaticFiles(directory=APP_DIR / "static"), name="static")
     app.include_router(router)
     app.include_router(wallet_router)
+    app.include_router(record_router)
     app.include_router(payment_router)
 
     @app.middleware("http")

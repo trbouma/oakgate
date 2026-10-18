@@ -92,9 +92,9 @@ Use the same reachable upstream as your existing OakGate proxy. Validate and rel
 - Identity is the issuer plus Keycloak subject (`iss`, `sub`), not an email address.
 - Login state is bound to the browser, expires after ten minutes, and can be consumed once. The server validates the token signature, issuer, audience, nonce, and timestamps.
 - Browser cookies are opaque, HttpOnly, and SameSite=Lax; deployment uses Secure host-only cookies. Profile data and CSRF values stay in server-side storage.
-- Sessions last at most 30 minutes and never longer than the ID token's remaining lifetime. There is no refresh-token handling yet; Keycloak SSO can make the next sign-in quick.
+- OakGate sessions default to one week (604800 seconds), configurable through `OAKGATE_SESSION_TTL_SECONDS`. This is a fixed lifetime from sign-in, not an idle timeout; activity does not extend it. The ID token is validated at sign-in, but its subsequent expiry does not end the independent OakGate session. No refresh tokens are stored or used. New settings apply to new logins; existing sessions keep their original expiry.
 - Logout requires a POST with a session-bound CSRF token. Local logout still succeeds if Keycloak is unavailable. Keycloak may ask for confirmation because OakGate does not retain an ID token for logout.
-- Back-channel logout is not implemented: revoking a Keycloak session does not immediately invalidate an already-issued OakGate session. Its short expiry limits this delay.
+- Back-channel logout is not implemented: revoking a Keycloak session does not immediately invalidate an already-issued OakGate session. Access may therefore continue for the remaining OakGate session lifetime, up to one week by default. OakGate logout deletes its session immediately; restarting the ephemeral Redis store signs everyone out. Google and Keycloak session lifetimes are configured separately.
 - A session-store outage fails closed. `/health` is process liveness, not an authentication-readiness check.
 - This authenticates users permitted by the realm; the sign-in layer adds no role-based access policy. [Acorn creation and custody storage](007-acorn-custody.md) are now provided by a separate application layer; Go Independent remains deferred.
 

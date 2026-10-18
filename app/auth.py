@@ -11,7 +11,6 @@ from app.sessions import record_key
 
 router = APIRouter()
 LOGIN_TTL = 600
-SESSION_TTL = 1800
 AUTH_FAILURES = (AuthlibBaseError, httpx.HTTPError, ValueError, KeyError, TypeError)
 
 
@@ -81,9 +80,11 @@ async def callback(request: Request):
             if not code or not request.app.state.settings.enabled:
                 raise ValueError("Missing code or client configuration")
             claims = await request.app.state.provider.exchange(code, transaction)
-            ttl = min(SESSION_TTL, int(claims["exp"] - time.time()))
-            if ttl <= 0:
+            if claims["exp"] <= time.time():
                 raise ValueError("Expired identity")
+            # The validated ID token establishes identity at sign-in. OakGate
+            # owns a separate fixed-lifetime session; it does not reuse tokens.
+            ttl = request.app.state.settings.session_ttl_seconds
             user = {"iss": claims["iss"], "sub": claims["sub"],
                     "name": claims.get("name") or claims.get("preferred_username") or "OakGate user",
                     "email": claims.get("email"), "email_verified": claims.get("email_verified") is True}

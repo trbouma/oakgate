@@ -1,12 +1,15 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="records-heading"><h1>Records</h1><p class="note">Newest first</p></div>
+<nav class="record-actions" aria-label="Record views"><a href="/account/records">List</a><a href="/account/records?view=folders">Folders</a><a href="/account/record-shares">Active shares</a></nav>
+{% if folder_mode %}<nav class="record-breadcrumbs" aria-label="Folders">{% for crumb in breadcrumbs %}<a href="{{ crumb.url }}">{{ crumb.label }}</a>{% if not loop.last %}<span>/</span>{% endif %}{% endfor %}</nav>{% endif %}
 <section class="records-panel" aria-label="Acorn records">
 {% if not connected %}
 <p>Connect or create an Acorn to see your records.</p><a class="secondary-action" href="/account">Go to Balances</a>
 {% elif records_error %}
 <p role="status">Records are unavailable right now.</p><a class="secondary-action" href="/account/records">Try again</a>
-{% elif records %}
+{% elif records or folders %}
+{% if folders %}<ul class="record-list">{% for folder in folders %}<li><a href="{{ folder.url }}">{{ folder.label }} <span>Folder →</span></a></li>{% endfor %}</ul>{% endif %}
 <ul class="record-list">{% for record in records %}<li><a href="/account/records/{{ record.ref }}">{{ record.label }} <span aria-hidden="true">→</span></a></li>{% endfor %}</ul>
 {% else %}<p class="note">No records yet.</p>{% endif %}
 </section>

@@ -19,3 +19,19 @@ def test_invalid_public_origin_is_rejected(monkeypatch, value):
     monkeypatch.setenv("OAKGATE_PUBLIC_URL", value)
     with pytest.raises(ValueError):
         public_url()
+
+
+def test_session_lifetime_default_and_override(monkeypatch):
+    from app.config import AuthSettings
+    monkeypatch.delenv('OAKGATE_SESSION_TTL_SECONDS', raising=False)
+    assert AuthSettings.from_env().session_ttl_seconds == 604800
+    monkeypatch.setenv('OAKGATE_SESSION_TTL_SECONDS', '3600')
+    assert AuthSettings.from_env().session_ttl_seconds == 3600
+
+
+@pytest.mark.parametrize('value', ['0', '-1', 'abc', '1.5', '31536001'])
+def test_invalid_session_lifetime(monkeypatch, value):
+    from app.config import AuthSettings
+    monkeypatch.setenv('OAKGATE_SESSION_TTL_SECONDS', value)
+    with pytest.raises(ValueError):
+        AuthSettings.from_env()

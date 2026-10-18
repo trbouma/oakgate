@@ -63,9 +63,9 @@ class IdentityServer:
         raise AssertionError(str(request.url))
 
 
-def setup(key, changes=None):
+def setup(key, changes=None, session_ttl_seconds=604800):
     identity = IdentityServer(key, changes)
-    settings = AuthSettings('https://oakgate.example', issuer=identity.issuer, client_secret='test-secret')
+    settings = AuthSettings('https://oakgate.example', issuer=identity.issuer, client_secret='test-secret', session_ttl_seconds=session_ttl_seconds)
     store = MemoryStore()
     provider = KeycloakProvider(settings, transport=httpx.MockTransport(identity.handle))
     app = create_app(settings, store, provider)
@@ -236,4 +236,29 @@ def test_cancelled_and_expired_login(signing_key):
             store.records[key] = (time.time() - 1, transaction)
             assert (await client.get('/auth/callback', params={'state': state, 'code': 'code'})).status_code == 400
             assert identity.exchanges == 0
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize('lifetime', [604800, 3600])
+def test_fixed_application_session_outlives_id_token(signing_key, monkeypatch, lifetime):
+    async def run():
+        client, identity, store, _ = setup(signing_key, session_ttl_seconds=lifetime)
+        async with client:
+            state = await begin(client, identity)
+            result = await client.get('/auth/callback', params={'state': state, 'code': 'code'})
+            assert result.status_code == 303
+            cookie = next(v for v in result.headers.get_list('set-cookie') if '__Host-oakgate_session=' in v)
+            assert f'Max-Age={lifetime}' in cookie
+            key = record_key('session', client.cookies.get('__Host-oakgate_session'))
+            expires, session = store.records[key]
+            assert abs(session['expires_at'] - time.time() - lifetime) < 2
+            assert abs(expires - session['expires_at']) < 1
+            # The fixture ID token expires after five minutes. Local access
+            # remains valid after that, without refreshing or extending expiry.
+            original_expiry = session['expires_at']
+            monkeypatch.setattr(time, 'time', lambda: original_expiry - 1)
+            assert (await client.get('/api/me')).status_code == 200
+            assert session['expires_at'] == original_expiry
+            monkeypatch.setattr(time, 'time', lambda: original_expiry + 1)
+            assert (await client.get('/api/me')).status_code == 401
     asyncio.run(run())

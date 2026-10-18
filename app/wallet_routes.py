@@ -50,21 +50,23 @@ async def account_page(request, session, message=None, status=200):
         request=request, name='account.html', context=context, status_code=status)
 
 
-async def checked_form(request, session):
+async def checked_form(request, session, *, max_bytes=8192, multipart=False):
     # Bound request size before parsing; never echo or log a submitted phrase.
     body = bytearray()
     async for chunk in request.stream():
         body.extend(chunk)
-        if len(body) > 8192:
+        if len(body) > max_bytes:
             raise HTTPException(413, 'Form is too large')
     request._body = bytes(body)
-    if request.headers.get('content-type', '').split(';')[0] != 'application/x-www-form-urlencoded':
+    if request.headers.get('content-type', '').split(';')[0] not in (
+            {'application/x-www-form-urlencoded', 'multipart/form-data'} if multipart else {'application/x-www-form-urlencoded'}):
         raise HTTPException(415, 'Use the account page form')
-    form = await request.form(max_fields=8, max_files=0)
+    form = await request.form(max_fields=8, max_files=1 if multipart else 0)
     csrf = form.get('csrf', '')
     origin = request.headers.get('origin')
     if (not isinstance(csrf, str) or not secrets.compare_digest(csrf, session['csrf'])
             or (origin and origin != request.app.state.settings.origin)):
+        await form.close()
         raise HTTPException(403, 'Please use the form on your account page')
     return form
 
@@ -137,7 +139,7 @@ async def records_page(request: Request):
         except Exception:
             return error_page(request, 'Safebox storage is unavailable. Please try again shortly.', 503)
     return request.app.state.templates.TemplateResponse(
-        request=request, name='records.html', context=context)
+        request=request, name='records.html', context={**context, **folder_view(context['records'], request)})
 
 
 @router.get('/account/records/{reference}', include_in_schema=False)
@@ -159,7 +161,7 @@ async def record_detail_page(request: Request, reference: str):
         return error_page(request, 'Record not found. Return to Records to see the current list.', 404)
     detail = await record_preview(service, record['material'], reference, detail)
     return request.app.state.templates.TemplateResponse(
-        request=request, name='record.html', context={**session, 'active_page': 'records', 'record': detail})
+        request=request, name='record.html', context={**session, 'active_page': 'records', 'record': detail, 'reference': reference})
 
 
 async def preferences_page(request, session, message=None, status=200):
@@ -288,3 +290,29 @@ async def record_file(request: Request, reference: str, inline: bool = False):
         raise
     except Exception:
         return error_page(request, 'This record file is unavailable right now. Please try again.', 503)
+
+
+def folder_view(records, request):
+    from urllib.parse import urlencode
+    folder = request.query_params.get('folder', '')[:1024].strip('/')
+    view = request.query_params.get('view') == 'folders'
+    if not view:
+        return {'folder_mode': False}
+    prefix = folder + '/' if folder else ''
+    children, visible = set(), []
+    for record in records:
+        if not record['label'].startswith(prefix):
+            continue
+        relative = record['label'][len(prefix):]
+        child, sep, rest = relative.partition('/')
+        if sep and child and rest:
+            children.add(child)
+        else:
+            visible.append({**record, 'label': relative})
+    def url(path):
+        return '/account/records?' + urlencode({'view': 'folders', 'folder': path})
+    parts = folder.split('/') if folder else []
+    return {'folder_mode': True, 'records': visible,
+        'folders': [{'label': child, 'url': url(prefix + child)} for child in sorted(children, key=str.casefold)],
+        'breadcrumbs': [{'label': 'Records', 'url': url('')}] +
+            [{'label': part, 'url': url('/'.join(parts[:i+1]))} for i, part in enumerate(parts)]}

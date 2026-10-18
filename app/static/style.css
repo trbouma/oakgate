@@ -242,3 +242,17 @@ footer { border-top: 1px solid #e6e7dc; }
 .pdf-controls[hidden], .pdf-canvas[hidden] { display:none; }
 .pdf-controls button { min-height:44px; }
 @media(max-width:520px) { .json-credential-raw > div, .mdoc-fields > div { padding-left:0; } }
+
+/* Record workflows share a compact, wrapping layout on phones and desktops. */
+.record-actions,.record-breadcrumbs {display:flex;flex-wrap:wrap;gap:.65rem 1rem;margin:1rem 0;align-items:center}
+.record-actions a {padding:.5rem .8rem;border:1px solid #d1d9d4;border-radius:8px;text-decoration:none}
+.record-form {display:grid;gap:1rem}
+.record-detail textarea {width:100%;max-width:100%;box-sizing:border-box;padding:.8rem;font:inherit;border:1px solid #cbd5ce;border-radius:8px;resize:vertical}
+.record-detail select,.record-detail input[type=file] {max-width:100%;font:inherit}
+.record-confirm {display:flex;gap:.6rem;align-items:flex-start}
+.record-confirm input {width:auto;flex:none;margin-top:.3rem}
+.record-qr {width:min(100%,320px);margin:1rem auto;background:white;padding:.7rem;box-sizing:border-box}
+.record-qr svg {display:block;width:100%;height:auto}
+.record-detail code {overflow-wrap:anywhere}
+.record-detail pre {white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%}
+.openetr-card {padding:1rem;border:1px solid #d1d9d4;border-radius:10px;margin:1rem 0}

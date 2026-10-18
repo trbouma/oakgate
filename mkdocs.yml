@@ -47,6 +47,7 @@ nav:
       - FastAPI app: 003-fastapi-app.md
       - Connect sign-in: 005-keycloak-sign-in.md
       - Connect an Acorn: 007-acorn-custody.md
+      - Records and sharing: 011-record-workflows.md
       - Lightning payments and zaps: 009-lightning-receiving.md
       - Identity storage and backups: 008-identity-storage-backups.md
       - Keycloak on Beelink: 002-keycloak-beelink.md

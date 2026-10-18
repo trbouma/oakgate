@@ -30,6 +30,12 @@ class AuthSettings:
     client_secret: str = field(default="", repr=False)
     redis_url: str = field(default="", repr=False)
 
+    session_ttl_seconds: int = 604800
+
+    def __post_init__(self):
+        if type(self.session_ttl_seconds) is not int or not 1 <= self.session_ttl_seconds <= 31536000:
+            raise ValueError("OAKGATE_SESSION_TTL_SECONDS must be between 1 and 31536000 seconds")
+
     @property
     def secure(self):
         return self.origin.startswith("https://")
@@ -42,6 +48,7 @@ class AuthSettings:
     def from_env(cls):
         settings = cls(
             origin=public_url(),
+            session_ttl_seconds=int(os.getenv("OAKGATE_SESSION_TTL_SECONDS", "604800")),
             issuer=os.getenv("OAKGATE_OIDC_ISSUER", "https://keycloak.safebox.dev/realms/oakgate").rstrip("/"),
             client_id=os.getenv("OAKGATE_OIDC_CLIENT_ID", "oakgate-web"),
             client_secret=os.getenv("OAKGATE_OIDC_CLIENT_SECRET", ""),

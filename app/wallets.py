@@ -11,6 +11,7 @@ from acorn.models import Proof
 from acorn.acorn import Acorn
 
 from app.custody import CustodyStore
+from app.record_settings import RecordSettings
 from app.clear_balances import ClearLabels
 from app.payment_config import DEFAULT_MINT, secure_url
 
@@ -47,10 +48,13 @@ class RecordReadLogger(logging.LoggerAdapter):
 class AcornBackend:
     def __init__(self, mint=DEFAULT_MINT):
         self.mint = secure_url(mint, 'https')
+        self.record_settings = RecordSettings()
 
     def wallet(self, material):
         wallet = Acorn(nsec=material['nsec'], home_relay=material['relay'],
-                       relays=[material['relay']], mints=[self.mint], logging_level=logging.CRITICAL + 1)
+                       relays=[material['relay']], mints=[self.mint], logging_level=logging.CRITICAL + 1,
+                       blossom_home_server=self.record_settings.blossom,
+                       blossom_xfer_server=self.record_settings.transfer_server)
         # Acorn declares these mutable defaults on the class; isolate each user.
         wallet.known_mints = {}
         wallet.user_records = []
@@ -167,7 +171,7 @@ class AcornBackend:
             text = payload if isinstance(payload, str) else json.dumps(payload, ensure_ascii=False, indent=2)
             return {'label': label, 'contents': text, 'has_blob': bool(record.get('blobsha256') or record.get('blobref')),
                     'blob_type': record.get('effective_mime') or record.get('blobtype'), 'origsha256': record.get('origsha256'),
-                    'payload': payload}
+                    'payload': payload, 'record_type': record.get('type', 'generic')}
         return None
 
     async def record_blob(self, material, reference):
@@ -183,6 +187,32 @@ class AcornBackend:
         if len(data) > 25 * 1024 * 1024:
             raise ValueError('Record file is too large')
         return detail, media_type, data
+
+    @property
+    def record_workflows_available(self):
+        return getattr(Acorn, 'record_workflows_version', 0) >= 1
+
+    async def update_record(self, material, reference, payload, attachment=None, media_type=None):
+        detail = await self.record_detail(material, reference)
+        if detail is None:
+            raise WalletInputError('This record changed. Reload Records before editing again.')
+        return await self.wallet(material).put_record(
+            detail['label'], payload, record_type=detail.get('record_type', 'generic'),
+            record_kind=37375, preserve_existing_blob=True, return_result=True,
+            blob_data=attachment, blob_type=media_type)
+
+    async def create_record_capability(self, material, reference, purpose):
+        detail = await self.record_detail(material, reference)
+        if detail is None:
+            raise WalletInputError('This record changed. Reload Records and try again.')
+        wallet = self.wallet(material)
+        method = wallet.create_record_presentation if purpose == 'present' else wallet.create_record_transfer
+        return await method(detail['label'], expires_in=3600,
+                            blossom_transfer_server=self.record_settings.transfer_server, public_only=True)
+
+    async def stop_record_capability(self, material, descriptor):
+        return await self.wallet(material).delete_record_transfer(descriptor,
+            allowed_servers=[self.record_settings.transfer_server])
 
     @staticmethod
     def cash(wallet):
@@ -234,6 +264,12 @@ class WalletService:
     async def record_blob(self, material, reference):
         self.relay(material['relay'])
         return await asyncio.wait_for(self.backend.record_blob(material, reference), timeout=40)
+
+    async def record_action(self, material, action, *args):
+        self.relay(material['relay'])
+        if action not in {'update_record', 'create_record_capability', 'stop_record_capability'}:
+            raise ValueError('Unknown record action')
+        return await asyncio.wait_for(getattr(self.backend, action)(material, *args), timeout=60)
 
     async def initialize(self, owner):
         token = self.store.acquire(owner)

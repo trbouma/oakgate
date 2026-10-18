@@ -3,6 +3,7 @@
 <section class="record-detail">
 <a class="back-link" href="/account/records">← Records</a>
 <h1>{{ record.label }}</h1>
+<nav class="record-actions" aria-label="Record actions">{% for action in ['edit', 'present', 'share'] %}<a href="/account/records/{{ reference }}/{{ action }}">{{ action|capitalize }}</a>{% endfor %}{% if record.has_blob %}<a href="/account/records/{{ reference }}/check">Check</a>{% endif %}</nav>
 <pre class="record-contents">{{ record.contents }}</pre>
 {% if record.has_blob %}
 {% if record.preview_error %}<p role="status">The file preview is unavailable. You can try opening or downloading the file.</p>{% endif %}

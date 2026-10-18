@@ -65,7 +65,7 @@ Redis is the private `sessions` Compose service. It has no published host port, 
 | Record | Purpose | Lifetime |
 | --- | --- | --- |
 | Login transaction | Holds the OAuth state, nonce, and PKCE verifier, bound to the browser's login cookie | Ten minutes; consumed once with atomic `GETDEL` |
-| Application session | Holds the Keycloak issuer and subject, basic profile, CSRF token, and expiry | At most 30 minutes, capped by the ID token's remaining lifetime |
+| Application session | Holds the Keycloak issuer and subject, basic profile, CSRF token, and expiry | One week by default; fixed expiry configured with `OAKGATE_SESSION_TTL_SECONDS`, independent of token expiry after sign-in |
 
 The browser holds a random session identifier in an HttpOnly cookie. The Redis lookup key hashes that identifier. Acorn keys and recovery phrases are not copied into sessions, and Keycloak access, refresh, and ID tokens are not retained in Redis.
 
@@ -130,3 +130,11 @@ signer, separate from the custody encryption key and all user Acorn keys.
 ## Replacing the upstream sign-in provider
 
 Google can be replaced through Keycloak while preserving the existing realm user and issuer. Verify an alternative login against that same identity before removing Google. A new user with the same email does not preserve custody ownership. Replacing Keycloak or changing its issuer requires a separate migration design; see [Mainstay principles and provider continuity](010-mainstay-principles.md#google-is-replaceable).
+
+
+Record sharing and presentation codes are also encrypted with the custody key in
+`custody.sqlite3` (`record_capabilities`). Include them in the consistent database
+backup so users retain their Stop controls after restoration. Restoring an older
+backup can restore already-deleted descriptors or omit newer copies; it cannot
+restore a copy already removed from the external Blossom server. See
+[Records and sharing](011-record-workflows.md).
