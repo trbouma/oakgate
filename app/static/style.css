@@ -125,3 +125,17 @@ footer { border-top: 1px solid #e6e7dc; }
 .clear-balance-row .clear-amount { font-size:28px; font-weight:650; margin:10px 0; }
 .clear-amount span { font-size:17px; font-weight:400; }
 .clear-balance-row details { font-size:12px; color:#62695c; }
+
+/* Shared account navigation and a label-only record list. */
+.account-nav { display:flex; justify-content:center; gap:0; margin:0; padding:0 20px; border-bottom:1px solid #dce3d0; background:#fffefb; }
+.account-nav a { min-width:120px; padding:18px 24px; text-align:center; font-size:15px; border-bottom:3px solid transparent; }
+.account-nav a[aria-current="page"] { color:#334729; border-bottom-color:#506337; font-weight:700; }
+.account-nav a:hover { background:#f0f3e9; }
+.account-shell main { padding-top:28px; }
+.account-shell main > .logo { width:88px; margin-bottom:16px; }
+.account-shell h1 { font-size:clamp(28px,4vw,38px); }
+.records-heading { margin:24px auto; }
+.records-panel { max-width:760px; margin:24px auto; }
+.record-list { margin:0; padding:0; list-style:none; text-align:left; border-top:1px solid #dce3d0; }
+.record-list li { padding:18px 16px; border-bottom:1px solid #dce3d0; line-height:1.5; overflow-wrap:anywhere; white-space:pre-wrap; }
+@media(max-width:520px) { .account-nav a { flex:1; min-width:0; } .record-list li { padding:16px 4px; } }

@@ -82,3 +82,9 @@ Following Safebox Web, OakGate reads `/v1/keysets` from the mint and matches the
 Metadata requests use public HTTPS endpoints, validate DNS answers at connection time, disallow redirects, and have short timeouts and a 64 KiB response limit. Private-network mints still have balances displayed, but their friendly labels are not fetched by this initial implementation. Labels are cached in memory for five minutes; failures are retried after 30 seconds. No wallet secrets are sent to the mint metadata endpoint.
 
 Cash and Clear reads run independently. A Clear relay failure displays “Clear balances unavailable,” while a successful empty result displays “No Clear balances yet.” The **Refresh balances** link reloads both. Tests cover exact label matching, fallback behavior, escaping, and partial outages; verify the displayed friendly names against your live mint after deployment.
+
+## Records
+
+The signed-in account navigation switches between **Balances** and **Records**. Records lists user-record labels in descending event-timestamp order, with alphabetical ordering for ties. It reads Acorn's standard stored user records (kind 37375); Acorn filters its internal wallet records. Payloads, recovery material, and timestamps are not displayed or sent to the template. This is a read-only list with no record opening, editing, or deletion.
+
+The reader uses Acorn's configured record query limit and does not paginate older relay results in this first version. Reported relay/decryption failures show an unavailable state rather than an empty list. The responsive list wraps long labels, and both navigation links remain available on phone and desktop layouts.

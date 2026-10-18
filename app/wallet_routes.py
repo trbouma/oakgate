@@ -16,7 +16,7 @@ async def account_page(request, session, message=None, status=200):
     service = request.app.state.wallets
     context = {**session, 'wallet_enabled': service is not None, 'wallet': None,
                'balance': None, 'message': message, 'balance_error': False,
-               'clear_balances': [], 'clear_error': False,
+               'clear_balances': [], 'clear_error': False, 'active_page': 'balances',
                'default_relay': service.default_relay if service else ''}
     if service:
         try:
@@ -107,3 +107,26 @@ async def manage_wallet(request: Request, action: str):
         # Acorn and relay exceptions can contain private payloads. Do not expose them.
         return await account_page(request, session, message='We could not finish this request. For an existing Acorn, check the phrase and bootstrap relay. If new Acorn setup is pending, use Retry setup; its recovery information is already saved.', status=503)
     return RedirectResponse('/account', status_code=303)
+
+
+@router.get('/account/records', include_in_schema=False)
+async def records_page(request: Request):
+    session = await current_session(request)
+    if not session:
+        return RedirectResponse('/auth/login', status_code=303)
+    service = request.app.state.wallets
+    context = {**session, 'active_page': 'records', 'records': [],
+               'records_error': False, 'connected': False}
+    if service:
+        try:
+            record = service.store.get(identity_key(session['user']))
+            if record and record['status'] == 'active':
+                context['connected'] = True
+                try:
+                    context['records'] = await service.records(record['material'])
+                except Exception:
+                    context['records_error'] = True
+        except Exception:
+            return error_page(request, 'Safebox storage is unavailable. Please try again shortly.', 503)
+    return request.app.state.templates.TemplateResponse(
+        request=request, name='records.html', context=context)

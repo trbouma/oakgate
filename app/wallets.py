@@ -31,6 +31,17 @@ def normalize_relay(value):
     return value
 
 
+class RecordReadLogger(logging.LoggerAdapter):
+    def warning(self, msg, *args, **kwargs):
+        # The pinned Acorn reader reports failures here and otherwise returns an
+        # empty list. Surface an unavailable state instead of an empty wallet.
+        if str(msg).startswith('op=get_user_records status=') and any(
+            state in str(msg) for state in ('query_failed', 'decrypt_failed', 'unwrap_failed')
+        ):
+            raise RuntimeError('Records unavailable')
+        super().warning(msg, *args, **kwargs)
+
+
 class AcornBackend:
     def wallet(self, material):
         wallet = Acorn(nsec=material['nsec'], home_relay=material['relay'],
@@ -83,6 +94,20 @@ class AcornBackend:
         wallet = self.wallet(material)
         return await wallet.get_clear_balances()
 
+    async def records(self, material):
+        wallet = self.wallet(material)
+        wallet.logger = RecordReadLogger(wallet.logger, {})
+        records = await wallet.get_user_records(record_kind=37375, reverse=True)
+        labels = []
+        for record in records:
+            tag = record.get('tag')
+            label = tag[0] if isinstance(tag, list) and tag else tag
+            if not isinstance(label, str) or not label.strip():
+                continue
+            timestamp = int(record.get('timestamp', 0))
+            labels.append({'label': label, 'timestamp': timestamp})
+        return sorted(labels, key=lambda row: (-row['timestamp'], row['label']))
+
     @staticmethod
     def cash(wallet):
         # load_data reads cash proofs; Clear balances remain separate.
@@ -117,6 +142,10 @@ class WalletService:
         self.relay(material['relay'])
         balances = await asyncio.wait_for(self.backend.clear_balances(material), timeout=40)
         return await self.clear_labels.resolve(balances)
+
+    async def records(self, material):
+        self.relay(material['relay'])
+        return await asyncio.wait_for(self.backend.records(material), timeout=40)
 
     async def initialize(self, owner):
         token = self.store.acquire(owner)
