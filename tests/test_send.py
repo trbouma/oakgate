@@ -23,9 +23,22 @@ async def prepared(tmp_path):
     await client.post('/account/acorn/create', data=form())
     payload = {'names': {'alice': 'ab'*32}, 'relays': {'ab'*32: [wallets.default_relay]}}
     fetch = AsyncMock(return_value=payload)
+    async def discover(address):
+        if fetch.side_effect is not None or address.endswith(('@ordinary.example', '@primal.net')):
+            raise SafeboxNotFound('No wallet directory')
+        payload = fetch.return_value
+        key = payload['names']['alice']
+        caps = {'acorn-ecash-transfer': {'transports':['nip59'], 'kinds':[7378], 'units':['sat']}}
+        clear = payload.get('clear', {}).get('alice')
+        if clear and 'clear-token-transfer' in clear.get('protocols', []):
+            caps['clear-token-transfer'] = {k:v for k,v in clear.items() if k != 'protocols'}
+        def supports(capability, unit):
+            descriptor = caps.get(capability)
+            return bool(descriptor and (not descriptor.get('units') or unit in descriptor['units']))
+        return SimpleNamespace(pubkey=key, relays=payload['relays'][key],
+                               capabilities=caps, source='safebox-v1', supports=supports)
     service = SendService(wallets, 'https://oakgate.example', None, fetch,
-                          discover=AsyncMock(side_effect=SafeboxNotFound('legacy test instance')))
-    service.legacy_domains.update({'other.example', 'another-safebox.example', 'primal.net'})
+                          discover=AsyncMock(side_effect=discover))
     return client, sessions, wallets, backend, owner, service, fetch
 
 
@@ -39,7 +52,7 @@ def test_direct_send_is_reviewed_and_one_shot(tmp_path):
             assert (await service.send(owner, payment['id']))['state'] == 'sent'
             assert (await service.send(owner, payment['id']))['state'] == 'sent'
             backend.send_payment.assert_awaited_once()
-            assert fetch.await_count == 1  # No Lightning invoice for direct sends.
+            assert fetch.await_count == 0  # Direct sends use only wallet discovery.
             with pytest.raises(ValueError):
                 await service.send('another-owner', payment['id'])
             assert wallets.store.acquire(owner)  # No stale owner lease.
@@ -58,7 +71,7 @@ def test_uncertain_send_never_retries_or_falls_back(tmp_path):
             with pytest.raises(ValueError):
                 await service.send(owner, second['id'])
             backend.send_payment.assert_awaited_once()
-            assert fetch.await_count == 2
+            assert fetch.await_count == 0
     asyncio.run(run())
 
 
@@ -66,7 +79,7 @@ def test_lnurl_fallback_checks_invoice_and_metadata(tmp_path, monkeypatch):
     async def run():
         client, sessions, wallets, backend, owner, service, fetch = await prepared(tmp_path)
         async with aclosing(client):
-            fetch.side_effect = [ {'names': {}},
+            fetch.side_effect = [
                 {'tag': 'payRequest', 'minSendable': 1000, 'maxSendable': 100000,
                  'metadata': '[]', 'callback': 'https://pay.example/callback?token=x'},
                 {'pr': 'invoice'} ]
@@ -77,7 +90,7 @@ def test_lnurl_fallback_checks_invoice_and_metadata(tmp_path, monkeypatch):
             assert fetch.await_args.args[1] == {'token': 'x', 'amount': '42000'}
             await service.send(owner, payment['id'])
             assert backend.send_payment.await_args.args[1]['invoice'] == 'invoice'
-            fetch.side_effect = [ {'names': {}},
+            fetch.side_effect = [
                 {'tag': 'payRequest', 'minSendable': 1000, 'maxSendable': 100000,
                  'metadata': '[]', 'callback': 'https://pay.example'}, {'pr': 'invoice'} ]
             monkeypatch.setattr('app.send.bolt11.decode', lambda value: SimpleNamespace(
@@ -159,7 +172,7 @@ def test_direct_capability_needs_no_bootstrap_mint_match(tmp_path):
             payment = await service.prepare(owner, 'alice@another-safebox.example', '42', '')
             assert payment['route'] == 'ecash'
             assert 'mints' not in payment
-            assert fetch.await_count == 1
+            assert fetch.await_count == 0
     asyncio.run(run())
 
 
@@ -181,7 +194,7 @@ def test_primal_style_unbound_hash_can_be_reviewed(tmp_path, monkeypatch):
     async def run():
         client, sessions, wallets, backend, owner, service, fetch = await prepared(tmp_path)
         async with aclosing(client):
-            fetch.side_effect = [{'names': {}},
+            fetch.side_effect = [
                 {'tag': 'payRequest', 'minSendable': 1000, 'maxSendable': 11000000000,
                  'metadata': '[]', 'callback': 'https://primal.net/lnurlp/trbouma/callback'},
                 {'pr': 'invoice'}]
@@ -231,7 +244,7 @@ def test_provider_comments_follow_advertised_support(tmp_path, monkeypatch, adve
     async def run():
         client, sessions, wallets, backend, owner, service, fetch = await prepared(tmp_path)
         async with aclosing(client):
-            fetch.side_effect = [{'names': {}},
+            fetch.side_effect = [
                 {'tag': 'payRequest', 'minSendable': 1000, 'maxSendable': 100000,
                  'metadata': '[]', 'callback': 'https://pay.example/callback?token=x&comment=old', **advertised},
                 {'pr': 'invoice'}]
@@ -280,5 +293,39 @@ def test_wallet_directory_errors_stop_before_payment(tmp_path, reason):
             with pytest.raises(ValueError, match="No payment was sent"):
                 await service.prepare(owner, "alice@safebox.dev", "42", "")
             fetch.assert_not_awaited()
+            backend.send_payment.assert_not_awaited()
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize('source', ['legacy-nip05', None])
+def test_old_prepared_wallet_payment_is_not_sent(tmp_path, source):
+    import json
+    from contextlib import closing
+    async def run():
+        client, sessions, wallets, backend, owner, service, fetch = await prepared(tmp_path)
+        async with aclosing(client):
+            payment = await service.prepare(owner, 'alice@safebox.dev', '42', '')
+            payment['discovery_source'] = source
+            with closing(wallets.store.connect()) as db, db:
+                db.execute('UPDATE outgoing_payments SET encrypted=? WHERE id=?',
+                    (wallets.store.cipher.encrypt(json.dumps(payment).encode()), payment['id']))
+            with pytest.raises(ValueError, match='retired wallet discovery'):
+                await service.send(owner, payment['id'])
+            backend.send_payment.assert_not_awaited()
+            assert service.get(owner, payment['id'])['state'] == 'prepared'
+    asyncio.run(run())
+
+
+def test_404_never_uses_social_directory_even_with_old_configuration(tmp_path, monkeypatch):
+    monkeypatch.setenv('OAKGATE_SAFEBOX_DOMAINS','safebox.dev')
+    async def run():
+        client, sessions, wallets, backend, owner, service, fetch = await prepared(tmp_path)
+        async with aclosing(client):
+            service.discover = AsyncMock(side_effect=SafeboxNotFound('404'))
+            # A social directory response is deliberately unusable as LNURL metadata.
+            with pytest.raises(ValueError):
+                await service.prepare(owner,'alice@safebox.dev','42','')
+            assert fetch.await_count == 1
+            assert fetch.await_args.args[0].endswith('/.well-known/lnurlp/alice')
             backend.send_payment.assert_not_awaited()
     asyncio.run(run())

@@ -3,7 +3,6 @@ import asyncio
 import ipaddress
 import json
 import logging
-import os
 import re
 import secrets
 import socket
@@ -64,9 +63,6 @@ class SendService:
     def __init__(self, wallets, origin, receiver, fetch=public_json, discover=resolve_safebox_address):
         self.wallets, self.origin, self.receiver, self.fetch = wallets, origin, receiver, fetch
         self.discover = discover
-        # Legacy-domain opt-in applies only after safebox.json returns 404.
-        # Never list domains whose social and wallet identities have split.
-        self.legacy_domains = {v.strip().lower() for v in os.getenv('OAKGATE_SAFEBOX_DOMAINS', 'safebox.dev').split(',') if v.strip()}
         with closing(wallets.store.connect()) as db, db:
             db.execute('CREATE TABLE IF NOT EXISTS outgoing_payments (id TEXT PRIMARY KEY, owner TEXT NOT NULL, state TEXT NOT NULL, encrypted BLOB NOT NULL, created REAL NOT NULL)')
 
@@ -119,24 +115,7 @@ class SendService:
                                    name: {**descriptor, 'protocols': [capability]}}}
                 payment['discovery_source'] = destination.source
             except SafeboxNotFound:
-                if domain in self.legacy_domains:
-                    try:
-                        payload = await self.fetch(f'https://{domain}/.well-known/nostr.json', {'name': name})
-                        if (not isinstance(payload, dict) or not isinstance(payload.get('names'), dict)
-                                or not isinstance(payload.get('relays', {}), dict)):
-                            raise ValueError('Invalid legacy wallet directory')
-                        legacy_key = payload['names'].get(name)
-                        if legacy_key is not None and (
-                                not isinstance(legacy_key, str) or not re.fullmatch(r'[0-9a-fA-F]{64}', legacy_key)):
-                            raise ValueError('Invalid legacy wallet key')
-                        if legacy_key and not isinstance(payload.get('relays', {}).get(legacy_key, []), list):
-                            raise ValueError('Invalid legacy relay hints')
-                        payment['discovery_source'] = 'legacy-nip05'
-                    except httpx.HTTPStatusError as exc:
-                        if exc.response.status_code != 404:
-                            raise PaymentInputError('Legacy wallet discovery is unavailable. No payment was sent.') from None
-                    except (ValueError, httpx.HTTPError, OSError, TimeoutError):
-                        raise PaymentInputError('Legacy wallet discovery is unavailable. No payment was sent.') from None
+                pass  # Cash may request an invoice; never resolve a social NIP-05 key.
             except SafeboxDiscoveryError:
                 raise PaymentInputError('Wallet discovery is unavailable or invalid. No payment was sent. Try again later.') from None
         if selected:
@@ -153,7 +132,7 @@ class SendService:
             hints = relay_map.get(pubkey, []) if isinstance(relay_map, dict) and isinstance(pubkey, str) else []
             relay = next((r for r in hints if isinstance(r, str) and r in self.wallets.allowed_relays), None) if isinstance(hints, list) else None
             if (isinstance(pubkey, str) and re.fullmatch(r'[0-9a-fA-F]{64}', pubkey)
-                    and relay and (advertised or domain in self.legacy_domains)
+                    and relay and advertised
                     and getattr(self.wallets.backend, 'direct_sending_available', False)):
                 payment.update(route='ecash', pubkey=pubkey.lower(), relay=relay)
         if payment.get('route') not in {'ecash', 'clear'}:
@@ -263,6 +242,9 @@ class SendService:
             payment = self.get(owner, payment_id)
             if payment['state'] != 'prepared':
                 return payment
+            if (payment['route'] in {'ecash', 'clear'}
+                    and payment.get('discovery_source') not in {'safebox-v1', 'local-wallet'}):
+                raise PaymentInputError('This payment used retired wallet discovery. Start a new payment.')
             if payment['expires'] <= time.time():
                 raise ValueError('Payment confirmation expired. Start again.')
             record = self.wallets.store.get(owner)

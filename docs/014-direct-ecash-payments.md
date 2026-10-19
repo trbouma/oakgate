@@ -18,10 +18,10 @@ LNURL's `nostrPubkey` remains OakGate's receipt-signing service identity.
 
 OakGate and Safebox Web prefer `/.well-known/safebox.json?name=handle` for
 cash and Clear payment delivery. Its explicit wallet key and capabilities take
-precedence over social NIP-05. Only a 404 permits legacy NIP-05 lookup, and only
-on configured older wallet domains. OakGate uses `OAKGATE_SAFEBOX_DOMAINS`,
-defaulting to `safebox.dev`; an empty value disables this fallback. Invalid
-responses and network failures stop preparation rather than downgrading.
+precedence over social NIP-05. There is no NIP-05 wallet fallback. The retired
+`OAKGATE_SAFEBOX_DOMAINS` setting is ignored. A 404 or absent cash capability may
+use ordinary Lightning; Clear requires wallet discovery. Invalid responses and
+network failures stop preparation rather than downgrading.
 
 Direct delivery uses a relay in `OAKGATE_ALLOWED_RELAYS`. New receiving relays
 must be approved by the operator. Mint selection and redemption use Acorn's
@@ -95,7 +95,6 @@ user-facing pending-receipts page are not included in this change.
 ```dotenv
 OAKGATE_ECASH_RECEIVE_ENABLED=true
 OAKGATE_ECASH_POLL_SECONDS=30
-OAKGATE_SAFEBOX_DOMAINS=safebox.dev
 ```
 
 The receiver is independent of user login sessions. Disabling it stops background

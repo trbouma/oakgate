@@ -42,9 +42,9 @@ ordinary external Lightning address does not need Safebox or NIP-05 support.
 Clear payments, continuity-only transfers and wallet messages do not fall back
 to Lightning.
 
-A 404 permits legacy NIP-05 wallet lookup only for explicitly configured older
-wallet domains. A successful response lacking the requested capability never
-triggers a social-key lookup. Malformed data, unsupported versions, timeouts and
+A 404 or missing cash capability may permit ordinary Lightning for cash.
+NIP-05 is never a wallet fallback, including for previously configured legacy
+domains. Clear and wallet messages require their advertised wallet capability. Malformed data, unsupported versions, timeouts and
 non-404 HTTP errors stop preparation rather than silently switching to Lightning
 or a social key. Once a send has begun, an uncertain outcome never triggers an
 automatic second payment by another route.
@@ -95,8 +95,8 @@ Phases 1 and 2, cash/Clear readers, and Safebox Web wallet-message delivery and
 attribution are implemented. OakGate also implements the optional social-key
 preference from phase 4; deployment compatibility restrictions still apply.
 Acorn's resolver has no legacy fallback: it returns a distinct not-found error
-only for HTTP 404 and never queries `nostr.json`. Applications own the explicit
-legacy-domain policy described below.
+only for HTTP 404 and never queries `nostr.json`. Applications also disable legacy NIP-05 wallet fallback, including old
+environment settings.
 
 1. Publish the Acorn commit containing `acorn.safebox_discovery`.
 2. In each app, run `poetry update safebox-acorn`, inspect and commit its lockfile,
@@ -107,8 +107,8 @@ legacy-domain policy described below.
    public wallet relay list during dual publication. With no public relay list,
    it returns 404 rather than exposing an internal home relay. OakGate uses the
    existing approved Acorn bootstrap relay. Invalid public routing returns 503.
-5. Deploy the payment readers with the correct legacy-domain configuration.
-   Safebox Web also applies it to wallet messages. There is no automatic social-key cutover.
+5. Deploy the readers with NIP-05 wallet fallback retired. Safebox Web applies
+   the same rule to wallet messages. There is no automatic social-key cutover.
 
 The payment readers require the published discovery API in the committed lockfiles.
 Verify the installed revision before deploying; source-override testing does not
@@ -123,7 +123,7 @@ Safebox Web advertises wallet messaging; OakGate does not yet provide it.
 
 Both applications default to their existing Acorn key as the NIP-05 identity
 for legacy clients; OakGate can explicitly override its social identity. Migrated cash/Clear readers and Safebox Web wallet messaging
-use `safebox.json`, except for explicitly permitted 404 legacy fallback. Local
+use `safebox.json` without NIP-05 fallback. Local
 lookups use the registered wallet key directly.
 
 Acorn's generic address resolver still uses NIP-05 for `name@domain`; its social
@@ -136,8 +136,10 @@ There is a separate older Acorn `pay_multi()` branch which reads
 expects `pubkey`, `relays` and optional `ecash_relays`, then uses a nonce-bearing
 kind-21401 flow. This is not the version-1 contract below. Do not turn that LNURL
 flag on merely because the new endpoint exists, redirect the old route, or alias
-it to the new response. Preserve existing legacy behaviour where deployed;
-compatibility with that transport requires a separate, explicit adapter and tests.
+it to the new response. The library retains its older API for other callers, but
+these apps never invoke it as a Lightning fallback. Safebox Web obtains and
+validates the invoice, then calls Acorn `pay_multi_invoice` only, ignoring the
+legacy `safebox=true` advertisement.
 
 ## Version-1 HTTP contract
 
@@ -344,17 +346,12 @@ the new Acorn resolver. Update wallet-message destinations and attribution toget
 Preserve Clear guards, public-network restrictions, pending-send protection,
 confirmation binding and existing mint policy. Keep social lookup on NIP-05.
 
-For controlled rollout only, offer an explicit per-domain legacy compatibility
-policy. A 404 from the new endpoint may permit the old NIP-05 wallet lookup only
-for domains known to keep social and wallet keys equal. Record the legacy source
-in the prepared operation. Never enable generic NIP-05 fallback for arbitrary
-domains, and never fallback on malformed data, 410, timeouts or 5xx. Remove existing
-blanket inference that a NIP-05 key plus relays proves wallet support.
-
-Keep old APIs available during this phase; document their legacy address semantics.
-Ship migration tests before tightening defaults in maintained applications. Old
-receivers remain reachable through the deliberate compatibility policy or ordinary
-Lightning, rather than a hidden change to their meaning.
+The initial per-domain NIP-05 compatibility policy is now retired in both apps.
+Old configuration values cannot re-enable it. Older cash receivers remain
+reachable through ordinary Lightning. Clear and wallet messages require v1
+wallet discovery; local recipients use their registered wallet binding.
+The library's older APIs retain their semantics for other callers, but maintained
+application readers do not invoke them with unresolved addresses.
 
 ### Phase 4: enable separate social identities only where safe
 
@@ -364,7 +361,7 @@ Changing `nostr.json` on the same old address while preserving compatibility wit
 all unmodified senders is impossible: they will still use the social key as a
 wallet key. A capability field cannot stop clients that never read it.
 
-For upgraded, controlled peers, remove legacy fallback for the domain and verify
+For upgraded, controlled peers, deploy readers without legacy fallback and verify
 new discovery end to end before enabling opt-in social-key binding. For addresses
 with uncontrolled legacy clients, preserve the old mapping and offer a distinct
 social alias/domain during transition, or establish a documented breaking-change
@@ -395,8 +392,8 @@ Implementation acceptance must cover:
 
 - Same address with deliberately different social and wallet keys: social lookup
   returns only the social key; cash, Clear and wallet messages use only the wallet.
-- Upgraded sender to upgraded receiver, upgraded sender to explicitly supported
-  legacy receiver, and legacy sender to an unchanged equal-key receiver.
+- Upgraded sender to upgraded receiver, upgraded sender to older receiver through
+  Lightning only, and legacy sender to an unchanged equal-key receiver.
 - Missing capabilities, unknown version, invalid keys, duplicate names/JSON keys,
   redirects, private DNS results, rebinding, oversized bodies and bounded timeouts.
 - A wallet-key change between review and confirmation and during crash recovery;
@@ -421,14 +418,16 @@ Implementation acceptance must cover:
 
 ## Payment reader rollout configuration
 
-OakGate uses `OAKGATE_SAFEBOX_DOMAINS`; Safebox Web uses
-`SAFEBOX_LEGACY_DOMAINS`. Both default to `safebox.dev`, accept comma-separated
-exact domains, and allow an explicit empty value to disable legacy compatibility.
-Only list older domains whose NIP-05 names still refer to wallet keys. Remove a
-domain before any social/wallet split. A v1 404 is the sole trigger for legacy
-lookup; malformed responses, unknown versions, timeouts and other HTTP statuses
-stop preparation. A missing capability never triggers a social-key lookup.
-Cash can use ordinary LNURL when no wallet route is advertised; Clear cannot.
+Legacy wallet fallback is disabled in both applications. `OAKGATE_SAFEBOX_DOMAINS`
+and `SAFEBOX_LEGACY_DOMAINS` are ignored, even when present in existing environment
+files. Neither a 404 nor a missing capability can trigger NIP-05 wallet lookup.
+Malformed responses, unsupported versions and network errors stop preparation.
+Cash may use ordinary LNURL when no wallet route is advertised; Clear cannot.
+Safebox Web's Lightning fallback pays only a validated invoice through Acorn.
+
+OakGate rejects previously prepared direct payments whose recorded discovery source
+is neither `safebox-v1` nor `local-wallet`; the user must prepare a new payment.
+It does not resubmit payments that have already started or have uncertain outcomes.
 
 Local recipients resolve from registered wallet bindings, without public HTTP or
 social discovery. OakGate keeps operator relay approval and pins the wallet key,
@@ -446,8 +445,8 @@ OakGate messaging remains later work.
 ## Wallet-message reader rollout
 
 Safebox Web resolves address destinations and claimed-sender attribution through
-the message capability. It uses the existing `SAFEBOX_LEGACY_DOMAINS` policy only
-after 404, never after missing capabilities or errors. Delivery passes an explicit
+the message capability, without NIP-05 fallback after a 404 or any other result.
+Delivery passes an explicit
 wallet npub and relay list to Acorn, retaining Stroma transport and the existing
 `safebox.dm` envelope. Social lookup remains separate; explicit npub destinations
 keep their semantics. Local wallet bindings support private community relays.
@@ -467,9 +466,9 @@ preference does not update the external profile or prove key control. No operato
 flag or additional secret is needed. Invalid input rejects the whole preferences
 save; public-key and handle changes are committed atomically.
 
-Before using distinct keys, remove this domain from known senders' legacy wallet
-fallback lists (`OAKGATE_SAFEBOX_DOMAINS` / `SAFEBOX_LEGACY_DOMAINS`) and verify v1
-wallet discovery. Unmodified clients that infer a wallet key from NIP-05 cannot
+Before using distinct keys, upgrade known senders to readers without NIP-05
+wallet fallback and verify v1 wallet discovery. The retired domain settings are
+ignored by current readers. Unmodified clients that infer a wallet key from NIP-05 cannot
 safely use the split address. No server setting can correct those clients. Keep
 the field blank if those clients must retain the existing equal-key behaviour.
 The preference form explains this limitation. Existing users are not migrated

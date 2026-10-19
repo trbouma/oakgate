@@ -53,7 +53,7 @@ def test_clear_review_send_and_duplicate_protection(tmp_path):
             backend.send_payment.assert_awaited_once()
             sent = backend.send_payment.await_args.args[1]
             assert (sent['route'], sent['mint'], sent['unit'], sent['amount']) == ('clear', MINT, UNIT, 6)
-            assert fetch.await_count == 1  # No LNURL fallback for Clear.
+            assert fetch.await_count == 0  # No LNURL or NIP-05 lookup for Clear.
     asyncio.run(run())
 
 
