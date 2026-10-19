@@ -65,6 +65,18 @@ class AcornBackend:
         return self.wallet(material).public_identity()
 
     @property
+    def messaging_available(self):
+        return all(callable(getattr(Acorn, name, None)) for name in
+                   ('send_wallet_message', 'get_wallet_messages'))
+
+    async def wallet_messages(self, material, resolver):
+        return await self.wallet(material).get_wallet_messages(limit=50, resolver=resolver)
+
+    async def send_wallet_message(self, material, destination, message, sender):
+        return await self.wallet(material).send_wallet_message(
+            destination['pubkey'], message, relays=destination['relays'], sender=sender)
+
+    @property
     def ecash_receiving_available(self):
         return all(callable(getattr(Acorn, method, None)) for method in
                    ('sweep_ecash_transfers', 'reconcile_continuity_receipts'))

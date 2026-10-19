@@ -43,7 +43,7 @@ class EcashReceiver:
 
     @property
     def available(self):
-        return self.cash_available or self.clear_available
+        return self.cash_available or self.clear_available or bool(getattr(self.wallets.backend, 'messaging_available', False))
 
     def wallet_destination(self, name):
         name = name.lower()
@@ -166,7 +166,7 @@ async def safebox_directory(request: Request):
     if len(names) != 1:
         return failure('invalid_name', 400)
     try:
-        from acorn.safebox_discovery import build_safebox_document, normalize_safebox_name
+        from acorn.safebox_discovery import build_safebox_document, normalize_safebox_name, parse_safebox_document
     except ImportError:
         # Allow old locked Acorn installations to retain all existing behaviour.
         return failure('discovery_dependency_unavailable', 503)
@@ -187,9 +187,16 @@ async def safebox_directory(request: Request):
         origin = urlsplit(request.app.state.settings.origin)
         if origin.scheme != 'https' or origin.port is not None:
             return failure('not_found', 404)
-        payload = build_safebox_document(f'{name}@{origin.hostname}', pubkey,
-            [relay], cash=receiver.cash_available,
-            clear=receiver.clear_available)
+        address = f'{name}@{origin.hostname}'
+        if receiver.cash_available or receiver.clear_available:
+            payload = build_safebox_document(address, pubkey, [relay],
+                cash=receiver.cash_available, clear=receiver.clear_available)
+        else:
+            payload = {'version': 1, 'address': address, 'pubkey': pubkey,
+                       'relays': [relay], 'capabilities': {}}
+        if getattr(receiver.wallets.backend, 'messaging_available', False):
+            payload['capabilities']['safebox-wallet-message'] = {'transports': ['nip17'], 'kinds': [14]}
+        payload = parse_safebox_document(payload, address).to_dict()
         return JSONResponse(payload, headers=headers)
     except Exception:
         return failure('unavailable', 503)

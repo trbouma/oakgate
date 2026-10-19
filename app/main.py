@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from redis.exceptions import RedisError
 
+from app.messages import router as message_router
 from app.recovery import router as recovery_router
 from app.auth import current_session, error_page, router
 from app.config import AuthSettings
@@ -69,6 +70,7 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
     app.include_router(router)
     app.include_router(recovery_router)
     app.include_router(wallet_router)
+    app.include_router(message_router)
     app.include_router(record_router)
     app.include_router(payment_router)
     app.include_router(ecash_router)

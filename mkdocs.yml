@@ -53,6 +53,7 @@ nav:
       - Language preferences: 012-localization.md
       - Local currency and rates: 013-local-currency.md
       - Direct Safebox payments: 014-direct-ecash-payments.md
+      - Wallet messages: 019-wallet-messages.md
       - Safebox address discovery: 018-safebox-address-discovery.md
       - Clear payments: 015-clear-payments.md
       - Lightning payments and zaps: 009-lightning-receiving.md

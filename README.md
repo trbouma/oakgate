@@ -112,3 +112,8 @@ Leave blank to retain the Acorn public key as the default NIP-05 identity.
 Payments and wallet discovery remain bound to the Acorn through `safebox.json`.
 Older NIP-05-based wallet clients cannot safely use an address with distinct keys;
 see the [migration and compatibility notes](docs/018-safebox-address-discovery.md#enabling-a-distinct-social-npub-in-oakgate).
+
+### Wallet messages
+
+The Wallet messages page uses Acorn wallet keys and `safebox.json`, independently
+of social NIP-05. See [wallet messaging and dependency rollout](docs/019-wallet-messages.md).

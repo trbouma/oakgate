@@ -317,3 +317,11 @@ form[aria-busy="true"] .confirm-busy { display:block; }
 form[aria-busy="true"] .payment-confirm .confirm-busy { display:inline-flex; align-items:center; justify-content:center; gap:.6rem; }
 .payment-spinner { display:inline-block; flex-shrink:0; width:1em; height:1em; border:2px solid currentColor; border-right-color:transparent; border-radius:50%; animation:oakgate-progress-spin .8s linear infinite; }
 @media (prefers-reduced-motion:reduce) { .payment-spinner { animation:none; } }
+
+/* Wallet messages keep keys and prose within narrow mobile cards. */
+.wallet-message { text-align: left; margin-block: 1rem; }
+.message-content { white-space: pre-wrap; overflow-wrap: anywhere; }
+.preferences-panel textarea { box-sizing: border-box; width: 100%; max-width: 100%; font: inherit; padding: .75rem; background: var(--surface); color: inherit; border: 1px solid currentColor; border-radius: .5rem; }
+
+.account-nav { flex-wrap: wrap; }
+@media(max-width:520px) { .account-nav a { flex: 1 1 40%; } }

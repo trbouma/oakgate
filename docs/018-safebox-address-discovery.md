@@ -2,8 +2,9 @@
 
 Status: payment-reader migration implemented, 2026-10-19. Acorn provides the
 version-1 parser, builder and secure resolver; OakGate and Safebox Web publish
-the directory and use it for cash and Clear payment discovery. Safebox Web wallet-message delivery and attribution now use it too; OakGate
-has no messaging interface and does not advertise that capability. Public NIP-05
+the directory and use it for cash and Clear payment discovery. Both apps now have
+wallet-message delivery and attribution; OakGate requires the new Acorn methods
+before enabling its UI and advertising that capability. Public NIP-05
 responses retain their existing defaults. OakGate users can now set a separate social
 npub in Preferences; Safebox Web now implements the same public preference.
 It is a Mainstay-family application contract, not an established Nostr standard.
@@ -117,7 +118,8 @@ returns a validated version-1 response.
 
 No database migration, new secret, service key or mint policy is introduced.
 Cash/Clear receipt capabilities reflect current implementation/configuration;
-Safebox Web advertises wallet messaging; OakGate does not yet provide it.
+Safebox Web advertises wallet messaging; OakGate advertises it when the required
+Acorn dependency is installed. See [wallet messaging rollout](019-wallet-messages.md).
 
 ## Legacy coupling and remaining compatibility
 
@@ -440,7 +442,8 @@ Deploy the lockfiles containing Acorn's published discovery API. Verify both
 public endpoints for an existing handle before deploying the readers. Controlled
 real cash/Clear delivery checks remain operator acceptance steps; automated tests
 use fake wallets and do not move funds. Safebox Web messaging is migrated;
-OakGate messaging remains later work.
+OakGate messaging is implemented with the Acorn dependency rollout described in
+[Wallet messages](019-wallet-messages.md).
 
 ## Wallet-message reader rollout
 
@@ -451,8 +454,8 @@ wallet npub and relay list to Acorn, retaining Stroma transport and the existing
 `safebox.dm` envelope. Social lookup remains separate; explicit npub destinations
 keep their semantics. Local wallet bindings support private community relays.
 
-Only Safebox Web advertises messaging today. OakGate must not advertise it until
-it has working send, receive and attribution support. The existing published Acorn
+OakGate advertises messaging only when its installed Acorn provides the new
+wallet-specific send and read methods; see [Wallet messages](019-wallet-messages.md). The existing published Acorn
 API suffices for this migration; no legacy/social Acorn APIs are changed.
 Attribution displays current association, leaves the authenticated sender visible,
 and does not hide messages when verification fails. It uses at most ten distinct
