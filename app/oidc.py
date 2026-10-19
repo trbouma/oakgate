@@ -53,6 +53,7 @@ class KeycloakProvider:
             url, _ = client.create_authorization_url(
                 metadata["authorization_endpoint"], state=transaction["state"],
                 nonce=transaction["nonce"], code_verifier=transaction["verifier"],
+                **({'prompt': 'login', 'max_age': 0} if transaction.get('purpose') == 'recovery' else {}),
             )
             return url
 

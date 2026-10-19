@@ -332,6 +332,17 @@ class WalletService:
         balances = await asyncio.wait_for(self.backend.clear_balances(material), timeout=40)
         return await self.clear_labels.resolve(balances)
 
+    def recovery_details(self, material):
+        """Disclose only material that Acorn verifies restores this identity."""
+        relay = self.relay(material['relay'])
+        phrase, legacy = material.get('phrase'), material.get('legacy')
+        if not isinstance(phrase, str) or not phrase.strip() or type(legacy) is not bool:
+            raise ValueError('Recovery material is incomplete')
+        recovered = self.backend.recover(phrase, relay, legacy=legacy)
+        if self.backend.public_identity(recovered) != self.backend.public_identity(material):
+            raise ValueError('Recovery material does not match this Acorn')
+        return {'phrase': ' '.join(phrase.split()), 'relay': relay, 'legacy': legacy}
+
     async def clear_transactions(self, material):
         self.relay(material['relay'])
         return await asyncio.wait_for(self.backend.clear_transactions(material), timeout=40)

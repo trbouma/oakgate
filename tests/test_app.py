@@ -17,7 +17,7 @@ def get(path):
 def test_liveness_does_not_require_keycloak_or_secrets():
     response = get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "service": "oakgate"}
+    assert response.json() == {"status": "ok", "service": "oakgate", "version": "0.1.0"}
 
 
 def test_landing_page_assets_are_available():

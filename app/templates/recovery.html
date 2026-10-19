@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ _('Recovery information') }}</h1>
+<section class="wallet-panel preferences-panel">
+<p>{{ _('Anyone with your recovery phrase can control your Acorn. Keep it private and store a copy somewhere safe.') }}</p>
+<p class="note">{{ _('Viewing this information does not end custody. OakGate keeps its copy and continues processing payments. Go Independent is planned for later.') }}</p>
+{% if details %}
+<div id="recovery-secret">
+<h2>{{ _('Recovery phrase') }}</h2><p class="recovery-phrase breakable" translate="no">{{ details.phrase }}</p>
+<h2>{{ _('Bootstrap relay') }}</h2><p class="breakable" translate="no">{{ details.relay }}</p>
+<h2>{{ _('Recovery mode') }}</h2><p>{{ _('Legacy key derivation — enable legacy recovery when restoring.') if details.legacy else _('Standard key derivation — leave legacy recovery disabled.') }}</p>
+<p class="note">{{ _('Save the phrase, relay and recovery mode together. These restore your Acorn identity; access to records and funds also depends on the relay, storage services and mints.') }}</p>
+</div>
+<p id="recovery-hidden" role="status" hidden>{{ _('Recovery information is hidden. Verify your sign-in again to reveal it.') }}</p>
+<button id="hide-recovery" class="primary-action" type="button">{{ _('Hide recovery information') }}</button>
+<p class="note">{{ _('This view hides after two minutes or when you leave the tab. Avoid screenshots or shared devices.') }}</p>
+<script src="/static/recovery.js" defer></script>
+{% elif ready %}
+<form method="post" action="/account/recovery/reveal" autocomplete="off">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label class="custody-check"><input type="checkbox" name="acknowledge" value="yes" required> {{ _('I am in a private place and understand that this phrase gives access to my Acorn.') }}</label>
+<button class="primary-action" type="submit">{{ _('Reveal recovery information') }}</button>
+</form>
+{% else %}
+<p>{{ _('First verify your sign-in again with your identity provider. Use the same account you are currently signed in with.') }}</p>
+<form method="post" action="/account/recovery/verify"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="primary-action" type="submit">{{ _('Verify sign-in') }}</button></form>
+{% endif %}
+</section>
+<a class="back-link" href="/account/preferences">{{ _('Back to Preferences') }}</a>
+{% endblock %}

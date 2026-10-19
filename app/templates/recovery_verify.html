@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ _('Verify sign-in') }}</h1>
+<section class="wallet-panel preferences-panel">
+<p>{{ _('Continue to your configured identity provider and sign in with the same account. You will return here before any recovery information is shown.') }}</p>
+<a class="primary-action" id="recovery-authorize" href="{{ authorization_url }}" rel="noreferrer">{{ _('Continue to verify sign-in') }}</a>
+</section>
+<a class="back-link" href="/account/recovery">{{ _('Cancel') }}</a>
+{% endblock %}

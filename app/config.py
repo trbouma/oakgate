@@ -31,8 +31,11 @@ class AuthSettings:
     redis_url: str = field(default="", repr=False)
 
     session_ttl_seconds: int = 604800
+    service_management: str = "independent"
 
     def __post_init__(self):
+        if self.service_management not in {"independent", "mainstay-managed"}:
+            raise ValueError("OAKGATE_SERVICE_MANAGEMENT must be independent or mainstay-managed")
         if type(self.session_ttl_seconds) is not int or not 1 <= self.session_ttl_seconds <= 31536000:
             raise ValueError("OAKGATE_SESSION_TTL_SECONDS must be between 1 and 31536000 seconds")
 
@@ -48,6 +51,7 @@ class AuthSettings:
     def from_env(cls):
         settings = cls(
             origin=public_url(),
+            service_management=os.getenv("OAKGATE_SERVICE_MANAGEMENT", "independent").strip(),
             session_ttl_seconds=int(os.getenv("OAKGATE_SESSION_TTL_SECONDS", "604800")),
             issuer=os.getenv("OAKGATE_OIDC_ISSUER", "https://keycloak.safebox.dev/realms/oakgate").rstrip("/"),
             client_id=os.getenv("OAKGATE_OIDC_CLIENT_ID", "oakgate-web"),

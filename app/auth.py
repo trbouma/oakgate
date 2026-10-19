@@ -56,10 +56,15 @@ async def current_session(request):
 
 @router.get("/auth/login", include_in_schema=False)
 async def login(request: Request):
+    return await begin_login(request)
+
+
+async def begin_login(request, extra=None):
     if not request.app.state.settings.enabled:
         return error_page(request, "Sign-in is not configured yet. Please try again after setup is complete.", 503)
     transaction = {"state": secrets.token_urlsafe(32), "nonce": secrets.token_urlsafe(32),
                    "verifier": secrets.token_urlsafe(64)}
+    transaction.update(extra or {})
     try:
         url = await request.app.state.provider.authorize(transaction)
         binding = secrets.token_urlsafe(32)
@@ -91,6 +96,11 @@ async def callback(request: Request):
             claims = await request.app.state.provider.exchange(code, transaction)
             if claims["exp"] <= time.time():
                 raise ValueError("Expired identity")
+            if transaction.get('purpose') == 'recovery':
+                from app.recovery import finish_reauthentication
+                response = await finish_reauthentication(request, transaction, claims)
+                clear_cookie(request, response, "login")
+                return response
             # The validated ID token establishes identity at sign-in. OakGate
             # owns a separate fixed-lifetime session; it does not reuse tokens.
             ttl = request.app.state.settings.session_ttl_seconds

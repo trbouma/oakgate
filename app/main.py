@@ -3,13 +3,16 @@ from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from redis.exceptions import RedisError
 
+from app.recovery import router as recovery_router
 from app.auth import current_session, error_page, router
 from app.config import AuthSettings
+from app.version import APP_VERSION
+from app.service_info import information
 from app.currency_rates import CurrencyRates
 from app.ecash import EcashReceiver, router as ecash_router
 from app.send import SendService, router as send_router
@@ -52,7 +55,7 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
             await store.close()
 
     app = FastAPI(title="OakGate", description="OpenID Access Gate — part of the Mainstay family.",
-                  version="0.1.0", servers=[{"url": settings.origin}], lifespan=lifespan)
+                  version=APP_VERSION, servers=[{"url": settings.origin}], lifespan=lifespan)
     app.state.wallets = wallets if wallets is not None else configured_service()
     app.state.ecash = EcashReceiver(app.state.wallets) if app.state.wallets else None
     app.state.send = SendService(app.state.wallets, settings.origin, app.state.ecash) if app.state.wallets else None
@@ -64,6 +67,7 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
     app.state.templates = Jinja2Templates(directory=APP_DIR / "templates", context_processors=[localization_context])
     app.mount("/static", StaticFiles(directory=APP_DIR / "static"), name="static")
     app.include_router(router)
+    app.include_router(recovery_router)
     app.include_router(wallet_router)
     app.include_router(record_router)
     app.include_router(payment_router)
@@ -81,6 +85,12 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
             response.headers["Referrer-Policy"] = (
                 "strict-origin" if request.url.path.startswith("/account") else "no-referrer"
             )
+        if request.url.path.startswith('/account/recovery'):
+            response.headers['Cache-Control'] = 'no-store, private, max-age=0'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Referrer-Policy'] = 'strict-origin'
+            response.headers['X-Frame-Options'] = 'DENY'
+            response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'none'"
         response.headers["Content-Language"] = getattr(request.state, "language", "en")
         response.headers["X-Content-Type-Options"] = "nosniff"
         return response
@@ -102,7 +112,13 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
     @app.get("/health", tags=["Operations"])
     def health():
         """Application liveness, independent of Keycloak and session storage."""
-        return {"status": "ok", "service": "oakgate"}
+        return JSONResponse({"status": "ok", "service": "oakgate", "version": APP_VERSION},
+                            headers={"Cache-Control": "no-store"})
+
+    @app.get("/info", tags=["Operations"])
+    def info():
+        """Public identity and supported software features, not readiness."""
+        return JSONResponse(information(app), headers={"Cache-Control": "no-store"})
 
     return app
 

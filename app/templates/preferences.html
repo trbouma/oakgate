@@ -20,4 +20,7 @@
 </form>
 {% else %}<p>{{ _("Preferences storage is being configured.") }}</p>{% endif %}
 </section>
+<section class="preferences-panel wallet-panel"><h2>{{ _('Recovery information') }}</h2>
+<p>{{ _('Keep your own recovery copy so you can access your Acorn outside OakGate.') }}</p>
+<a class="secondary-action" href="/account/recovery">{{ _('View recovery information') }}</a></section>
 {% endblock %}

@@ -15,7 +15,7 @@ A user must be able to choose independence at any time. OakGate must not make
 continued custody, a Google account, or an ongoing relationship with one
 operator a prerequisite for using an independently recovered Acorn. This is a
 product requirement, not a claim that the departure workflow is available
-today: recovery disclosure and **Go Independent** remain unimplemented.
+today: recovery disclosure is implemented with fresh authentication; **Go Independent** remains unimplemented. See [Recovery disclosure](016-recovery-disclosure.md).
 
 The provider can use the keys it holds and can see information required to
 operate the account. Encryption at rest protects stored data but does not
@@ -39,8 +39,8 @@ begins and make interrupted handovers resumable.
 An independent recovery path must not require a live OakGate login or Google
 session. Users need a deliberate way to obtain and retain their own recovery
 copy before an operator or identity-provider outage. This is especially
-important for newly created Acorns, whose users currently have no recovery
-reveal interface. A provider-held copy alone does not meet this requirement.
+important for newly created Acorns, whose users can now request disclosure
+from Preferences. They must save their own copy before an outage. A provider-held copy alone does not meet this requirement.
 
 Recovery must be tested against Acorn's actual requirements: keys, phrase and
 derivation mode, bootstrap relay, and any additional state needed for the
@@ -143,10 +143,10 @@ The following gaps remain open:
 | Gap | Required outcome |
 | --- | --- |
 | Cashu protocol execution | Source refactor completed: `acorn.minting.DurableCashuMint` owns quote/prepare/restore/issue, and OakGate retains coordination and encrypted checkpoints. Deployment requires publishing the Acorn API and updating OakGate’s lockfile; see the Lightning receiving upgrade instructions. |
-| Public service information | Add the family information envelope: version, public identity, FIPS address, capabilities, management mode and honest commissioning state; include version in health. |
+| Public service information | Implemented: `/info` reports the public identity envelope and supported capabilities; `/health` includes version. Commissioning remains unimplemented and is reported honestly. See [Public service contract](017-public-service-contract.md). |
 | Deployment verification | Make the app refresh script wait for health with a bounded timeout and useful failure diagnostics. |
-| Recovery and status wording | Do not advertise recovery disclosure as currently available. Keep implemented custody distinct from planned independent recovery and departure. |
-| Independent recovery and departure | Implement and test recovery disclosure, independent restoration, settlement-aware departure, deletion retries and protection against resurrection after restore. |
+| Recovery and status wording | Disclosure is implemented; keep it distinct from independently tested restoration and the planned departure workflow. |
+| Independent recovery and departure | Rehearse independent restoration and implement settlement-aware departure, deletion retries and protection against resurrection after restore. |
 | Provider replacement | Rehearse alternative authentication against the same Keycloak user and update provider-specific presentation. |
 | Operational continuity | Rehearse isolated restoration of custody, identity, keys and pending payments before claiming recoverability. |
 

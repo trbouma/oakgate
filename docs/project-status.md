@@ -12,7 +12,7 @@ OakGate is an early-stage project. This page separates working foundations from 
 | App sign-in | Code flow with PKCE, server-side sessions, account page and logout implemented; application client setup and live verification required |
 | Acorn integration and custody | Create/connect, encrypted recovery storage, and cash and Clear balance display with friendly units implemented; live relay verification pending |
 | Lightning receiving and zaps | Direct-to-Acorn receiving and durable restart recovery implemented; compatibility mode default; live paid settlement and client verification pending |
-| Recovery information | Phrase, nsec, relay, and native creation metadata encrypted at rest; complete independent recovery workflow pending |
+| Recovery information | Encrypted custody; fresh-authenticated phrase, relay and recovery-mode disclosure implemented; independent restoration verification pending |
 | Go Independent | Design note agreed; implementation deferred |
 | Documentation | MkDocs site prepared; publication depends on GitHub Pages deployment |
 
@@ -23,4 +23,4 @@ OakGate is an early-stage project. This page separates working foundations from 
 3. Extend the initial custody inventory and independently verify recovery before adding further capabilities.
 4. Keep Go Independent requirements visible as identity, storage, background jobs, and backups are introduced.
 
-These are development intentions, not a release schedule. The application now stores and operates user Acorns custodially. Recovery disclosure, Go Independent and rehearsed disaster recovery remain incomplete. See the [Mainstay principles review](010-mainstay-principles.md#review-findings-and-follow-up-work) for the alignment gaps and acceptance requirements.
+These are development intentions, not a release schedule. The application now stores and operates user Acorns custodially. Recovery disclosure is implemented. Go Independent and rehearsed disaster recovery remain incomplete. See the [Mainstay principles review](010-mainstay-principles.md#review-findings-and-follow-up-work) for the alignment gaps and acceptance requirements.

@@ -39,6 +39,17 @@ class ServiceIdentity:
             if not row and self.npub:
                 db.execute('INSERT INTO service_identity(id,npub) VALUES(1,?)', (self.npub,))
 
+    def public_info(self, management='independent'):
+        return {
+            'npub': self.npub,
+            'fips_ipv6_address': self.fips_address,
+            'type': 'oakgate',
+            'management': management,
+            'state': 'uncommissioned' if self.npub else 'unconfigured',
+            'descriptor_event_id': None,
+            'operator': None,
+        }
+
     def receipt(self, item):
         if not self._keys or item.get('service_pubkey') != self.pubkey:
             raise ValueError('Zap was not issued by this OakGate service identity')
