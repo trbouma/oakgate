@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ _("Send payment") }}</h1>
+<section class="wallet-panel preferences-panel send-panel">
+{% if message %}<p role="status">{{ _(message) }}</p>{% endif %}
+{% if payment %}
+<p class="cash-balance">₿ {{ '{:,}'.format(payment.amount) }} <span>sats</span></p>
+<p class="breakable">{{ payment.address }}</p>
+<p>{{ _("Direct ecash") if payment.route == 'ecash' else _("Lightning") }}</p>
+{% if payment.state == 'prepared' %}
+<p class="note">{{ _("Review the recipient and amount before sending. Mint or Lightning fees may apply.") }}</p>
+<form method="post" action="/account/send/confirm"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="payment" value="{{ payment.id }}"><button class="primary-action" type="submit">{{ _("Confirm payment") }}</button></form>
+{% elif payment.state == 'sent' %}
+<p role="status">{{ _("Payment sent.") }}</p>
+{% if payment.route == 'ecash' %}<p class="note">{{ _("Delivery does not prove redemption. OakGate recipients can redeem while signed out; other recipients may need to open their wallet.") }}</p>{% endif %}
+{% else %}<p role="status">{{ _("Payment outcome needs review. Do not send it again. Check Acorn transaction history and contact the operator if the result is unclear.") }}</p>{% endif %}
+{% else %}
+<form method="post" action="/account/send">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label for="address">{{ _("Payment address") }}</label><input id="address" name="address" type="email" required maxlength="254" autocomplete="off" autocapitalize="none" placeholder="name@example.com">
+<label for="amount">{{ _("Amount in sats") }}</label><input id="amount" name="amount" type="number" inputmode="numeric" min="1" max="1000000" step="1" required>
+<label for="comment">{{ _("Comment (optional)") }}</label><input id="comment" name="comment" maxlength="255">
+<button class="primary-action" type="submit">{{ _("Review payment") }}</button>
+</form>{% endif %}
+</section>
+<a class="back-link" href="/account/transactions">{{ _("Cash transactions") }}</a> · <a class="back-link" href="/account">{{ _("Back to balances") }}</a>
+{% endblock %}

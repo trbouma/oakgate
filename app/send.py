@@ -1,0 +1,247 @@
+"""Reviewed, one-shot outgoing payments; all wallet operations use Acorn."""
+import asyncio
+import hashlib
+import ipaddress
+import json
+import logging
+import os
+import re
+import secrets
+import socket
+import time
+from contextlib import closing
+from urllib.parse import urlsplit
+
+import bolt11
+import httpx
+from fastapi import APIRouter, Request
+from fastapi.responses import RedirectResponse
+
+from app.auth import current_session, error_page
+from app.custody import Busy, identity_key
+from app.wallet_routes import checked_form
+
+router = APIRouter()
+logger = logging.getLogger(__name__)
+
+
+async def public_json(url, params=None):
+    """Pin a public DNS result to the TLS connection; never follow redirects."""
+    parsed = urlsplit(url)
+    if (parsed.scheme != 'https' or not parsed.hostname or parsed.username is not None
+            or parsed.password is not None or parsed.port not in (None, 443) or parsed.fragment):
+        raise ValueError('Unsupported payment endpoint')
+    hostname = parsed.hostname.encode('idna').decode()
+    async with asyncio.timeout(12):
+        addresses = await asyncio.get_running_loop().getaddrinfo(hostname, 443, type=socket.SOCK_STREAM)
+        ips = list(dict.fromkeys(row[4][0] for row in addresses))
+        if not ips or any(not ipaddress.ip_address(ip).is_global for ip in ips):
+            raise ValueError('Payment endpoint must be public')
+        target = httpx.URL(url).copy_with(host=ips[0])
+        async with httpx.AsyncClient(timeout=10, follow_redirects=False, trust_env=False) as client:
+            async with client.stream('GET', target, params=params, headers={'Host': hostname},
+                                     extensions={'sni_hostname': hostname}) as response:
+                response.raise_for_status()
+                body = bytearray()
+                async for chunk in response.aiter_bytes():
+                    body.extend(chunk)
+                    if len(body) > 65536:
+                        raise ValueError('Payment response too large')
+                data = json.loads(body)
+                if not isinstance(data, dict):
+                    raise ValueError('Invalid payment response')
+                return data
+
+
+class SendService:
+    def __init__(self, wallets, origin, receiver, fetch=public_json):
+        self.wallets, self.origin, self.receiver, self.fetch = wallets, origin, receiver, fetch
+        # Older Safebox Web deployments only advertise NIP-05 plus relays.
+        # Explicit operator opt-in avoids equating every NIP-05 user with Acorn.
+        self.legacy_domains = {v.strip().lower() for v in os.getenv('OAKGATE_SAFEBOX_DOMAINS', 'safebox.dev').split(',') if v.strip()}
+        with closing(wallets.store.connect()) as db, db:
+            db.execute('CREATE TABLE IF NOT EXISTS outgoing_payments (id TEXT PRIMARY KEY, owner TEXT NOT NULL, state TEXT NOT NULL, encrypted BLOB NOT NULL, created REAL NOT NULL)')
+
+    async def prepare(self, owner, address, amount, comment):
+        if not re.fullmatch(r'[1-9][0-9]{0,7}', amount) or not 1 <= int(amount) <= 1000000:
+            raise ValueError('Enter an amount between 1 and 1,000,000 sats.')
+        address = address.strip().lower()
+        if len(address) > 254 or not re.fullmatch(r'[a-z0-9_.+-]+@[a-z0-9.-]+', address):
+            raise ValueError('Enter a payment address such as name@example.com.')
+        if len(comment) > 255:
+            raise ValueError('Keep the comment to 255 characters or fewer.')
+        name, domain = address.split('@')
+        payment = {'id': secrets.token_urlsafe(24), 'owner': owner, 'address': address,
+                   'amount': int(amount), 'comment': comment, 'expires': time.time()+300}
+        local = domain == urlsplit(self.origin).hostname
+        payload = None
+        if local and self.receiver.available:
+            try:
+                payload = self.receiver.discovery(name)
+            except ValueError:
+                pass
+        elif not local:
+            try:
+                payload = await self.fetch(f'https://{domain}/.well-known/nostr.json', {'name': name})
+            except (ValueError, httpx.HTTPError, OSError, TimeoutError):
+                pass
+        if payload:
+            names = payload.get('names', {})
+            pubkey = names.get(name) if isinstance(names, dict) else None
+            descriptors = payload.get('safebox', {})
+            descriptor = descriptors.get(name, {}) if isinstance(descriptors, dict) else {}
+            advertised = (isinstance(descriptor, dict) and isinstance(descriptor.get('protocols'), list)
+                          and 'acorn-ecash-transfer' in descriptor['protocols'])
+            relay_map = payload.get('relays', {})
+            hints = relay_map.get(pubkey, []) if isinstance(relay_map, dict) and isinstance(pubkey, str) else []
+            relay = next((r for r in hints if isinstance(r, str) and r in self.wallets.allowed_relays), None) if isinstance(hints, list) else None
+            if (isinstance(pubkey, str) and re.fullmatch(r'[0-9a-fA-F]{64}', pubkey)
+                    and relay and (advertised or domain in self.legacy_domains)
+                    and getattr(self.wallets.backend, 'direct_sending_available', False)):
+                payment.update(route='ecash', pubkey=pubkey.lower(), relay=relay)
+        if payment.get('route') != 'ecash':
+            metadata = await self.fetch(f'https://{domain}/.well-known/lnurlp/{name}')
+            msat = payment['amount'] * 1000
+            if (metadata.get('tag') != 'payRequest' or not isinstance(metadata.get('metadata'), str)
+                    or not int(metadata.get('minSendable', 0)) <= msat <= int(metadata.get('maxSendable', 0))):
+                raise ValueError('The recipient cannot accept this amount.')
+            if comment and int(metadata.get('commentAllowed', 0)) < len(comment):
+                raise ValueError('This recipient does not support a comment of that length.')
+            callback = metadata.get('callback')
+            if not isinstance(callback, str):
+                raise ValueError('Recipient did not provide a payment endpoint.')
+            # public_json validates and pins the callback independently, even
+            # when the provider uses a different public hostname.
+            params = dict(httpx.URL(callback).params)
+            params['amount'] = str(msat)
+            if comment:
+                params['comment'] = comment
+            response = await self.fetch(callback, params)
+            invoice = response.get('pr', '')
+            if not isinstance(invoice, str) or len(invoice) > 10000:
+                raise ValueError('Invalid invoice')
+            decoded = bolt11.decode(invoice)
+            if decoded.amount_msat != msat or decoded.date + decoded.expiry <= time.time():
+                raise ValueError('Invoice amount or expiry does not match the request.')
+            if decoded.description_hash and decoded.description_hash != hashlib.sha256(metadata['metadata'].encode()).hexdigest():
+                raise ValueError('Invoice does not match the recipient metadata.')
+            payment.update(route='lightning', invoice=invoice,
+                           expires=min(payment['expires'], decoded.date + decoded.expiry))
+        with closing(self.wallets.store.connect()) as db, db:
+            # An unresolved attempt must be investigated before another payment
+            # is prepared; an old confirmation never silently becomes reusable.
+            if db.execute("SELECT 1 FROM outgoing_payments WHERE owner=? AND state IN ('sending','unknown')", (owner,)).fetchone():
+                raise ValueError('A previous payment needs review. Check Acorn transaction history before sending again.')
+            db.execute('INSERT INTO outgoing_payments VALUES(?,?,?,?,?)',
+                       (payment['id'], owner, 'prepared', self.wallets.store.cipher.encrypt(json.dumps(payment).encode()), time.time()))
+        return payment
+
+    def get(self, owner, payment_id):
+        with closing(self.wallets.store.connect()) as db:
+            row = db.execute('SELECT * FROM outgoing_payments WHERE id=? AND owner=?', (payment_id, owner)).fetchone()
+        if not row:
+            raise ValueError('Payment not found')
+        payment = json.loads(self.wallets.store.cipher.decrypt(row['encrypted']))
+        if payment['owner'] != owner or payment['id'] != payment_id:
+            raise ValueError('Payment identity mismatch')
+        return {**payment, 'state': row['state']}
+
+    async def send(self, owner, payment_id):
+        self.get(owner, payment_id)  # Authorize before acquiring a wallet lease.
+        lease = self.wallets.store.acquire(owner)
+        claimed = False
+        try:
+            payment = self.get(owner, payment_id)
+            if payment['state'] != 'prepared':
+                return payment
+            if payment['expires'] <= time.time():
+                raise ValueError('Payment confirmation expired. Start again.')
+            record = self.wallets.store.get(owner)
+            if not record or record['status'] != 'active':
+                raise ValueError('Connect an Acorn first.')
+            self.wallets.relay(record['material']['relay'])
+            with closing(self.wallets.store.connect()) as db, db:
+                db.execute('BEGIN IMMEDIATE')
+                if db.execute("SELECT 1 FROM outgoing_payments WHERE owner=? AND state IN ('sending','unknown')", (owner,)).fetchone():
+                    raise ValueError('A previous payment needs review before another can be sent.')
+                changed = db.execute("UPDATE outgoing_payments SET state='sending' WHERE id=? AND owner=? AND state='prepared'", (payment_id, owner)).rowcount
+            if not changed:
+                return self.get(owner, payment_id)
+            claimed = True
+            async with asyncio.timeout(60):
+                await self.wallets.backend.send_payment(record['material'], payment)
+            state = 'sent'
+        except BaseException as exc:
+            if not claimed:
+                raise
+            state = 'unknown'
+            logger.warning('Outgoing payment needs review error_type=%s', type(exc).__name__)
+            if isinstance(exc, asyncio.CancelledError):
+                raise
+        finally:
+            if claimed:
+                with closing(self.wallets.store.connect()) as db, db:
+                    db.execute("UPDATE outgoing_payments SET state=? WHERE id=? AND owner=?", (locals().get('state', 'unknown'), payment_id, owner))
+            self.wallets.store.release(owner, lease)
+        return self.get(owner, payment_id)
+
+
+def render(request, session, payment=None, message=None, status=200):
+    # Pass only display fields, never invoices or encrypted journal contents.
+    display = {k: payment[k] for k in ('id', 'address', 'amount', 'route', 'state') if k in payment} if payment else None
+    return request.app.state.templates.TemplateResponse(request=request, name='send.html',
+        context={**session, 'active_page': 'balances', 'payment': display, 'message': message}, status_code=status)
+
+
+@router.get('/account/send', include_in_schema=False)
+async def page(request: Request, payment: str = ''):
+    session = await current_session(request)
+    if not session:
+        return RedirectResponse('/auth/login', 303)
+    service = request.app.state.send
+    if not service:
+        return error_page(request, 'Payments are not configured.', 503)
+    try:
+        item = service.get(identity_key(session['user']), payment) if payment else None
+        return render(request, session, item)
+    except ValueError:
+        return error_page(request, 'Payment not found.', 404)
+
+
+@router.post('/account/send', include_in_schema=False)
+async def prepare(request: Request):
+    session = await current_session(request)
+    if not session:
+        return RedirectResponse('/auth/login', 303)
+    form = await checked_form(request, session)
+    service = request.app.state.send
+    if not service:
+        return error_page(request, 'Payments are not configured.', 503)
+    owner = identity_key(session['user'])
+    record = service.wallets.store.get(owner)
+    if not record or record['status'] != 'active':
+        return render(request, session, message='Connect an Acorn first.', status=400)
+    try:
+        async with asyncio.timeout(35):
+            payment = await service.prepare(owner, str(form.get('address', '')), str(form.get('amount', '')), str(form.get('comment', '')))
+        return RedirectResponse('/account/send?payment='+payment['id'], 303)
+    except Exception:
+        return render(request, session, message='Could not prepare this payment. Check the address, amount and comment, or review any unresolved payment.', status=400)
+
+
+@router.post('/account/send/confirm', include_in_schema=False)
+async def confirm(request: Request):
+    session = await current_session(request)
+    if not session:
+        return RedirectResponse('/auth/login', 303)
+    form = await checked_form(request, session)
+    service = request.app.state.send
+    if not service:
+        return error_page(request, 'Payments are not configured.', 503)
+    try:
+        payment = await service.send(identity_key(session['user']), str(form.get('payment', '')))
+        return RedirectResponse('/account/send?payment='+payment['id'], 303)
+    except Busy:
+        return render(request, session, message='Your Acorn is busy. Return to this confirmation shortly.', status=409)
+    except ValueError:
+        return render(request, session, message='This confirmation is unavailable or expired. Check your transactions before starting again.', status=400)

@@ -269,3 +269,11 @@ footer { border-top: 1px solid #e6e7dc; }
 .rate-description,.rate-stale {display:block;font-size:.8rem;font-weight:normal;margin-top:.3rem}
 .rate-stale {color:#8b4d13}
 @media(max-width:480px){.rates-table th,.rates-table td{padding:.65rem .3rem}.rates-table{font-size:.8rem}.rate-description{font-size:.75rem}}
+
+.send-panel input:not([type=hidden]) { display:block; width:100%; box-sizing:border-box; margin:.5rem 0 1rem; padding:12px; border:1px solid #899577; border-radius:5px; font:inherit; color:#293527; background:white; }
+.send-panel .cash-balance { overflow-wrap:anywhere; }
+
+.lightning-qr-pane { margin:1rem auto; max-width:320px; text-align:center; }
+.lightning-qr-pane summary { cursor:pointer; padding:.5rem; }
+.lightning-qr { width:min(100%,280px); margin:1rem auto; background:#fff; }
+.lightning-qr svg { display:block; width:100%; height:auto; aspect-ratio:1; }

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+{% if wallet and wallet.status == "active" %}<p><a class="back-link" href="/account/send">{{ _("Send payment") }}</a></p>{% endif %}
 <p class="eyebrow">{{ _("YOUR OAKGATE") }}</p><h1>{{ _("Hello, %(name)s.") % {"name": user.name} }}</h1>
 {% if user.email %}<p class="intro">{{ user.email }}</p>{% endif %}
 {% if message %}<p class="wallet-message" role="alert">{{ _(message) }}</p>{% endif %}
@@ -14,7 +15,12 @@
 {% else %}<a class="balance-link" href="/account/transactions" aria-label="{{ '{:,}'.format(balance) }} sats. View recent transactions">{% include "cash_balance.html" %}</a><p class="note">{{ _("Cash balance read from your Acorn. Mint spendability has not been checked.") }}</p>{% endif %}
 <section class="receive-payment" aria-labelledby="receive-title">
 <h3 id="receive-title">{{ _("Receive Lightning") }}</h3>
-{% if lightning_address %}<p class="lightning-address">{{ lightning_address }}</p><p class="note">{{ _("Share your address to receive payments and Nostr zaps. OakGate adds paid funds to your Acorn, even when you are signed out. Refresh to see your updated balance.") }}</p>
+{% if lightning_address %}<p class="lightning-address">{{ lightning_address }}</p>
+{% if lightning_qr %}<details class="lightning-qr-pane">
+<summary>{{ _("Show payment QR code") }}</summary>
+<div class="lightning-qr" role="img" aria-label="{{ _('Lightning payment QR code for %(address)s') % {'address': lightning_address} }}">{{ lightning_qr | safe }}</div>
+<p class="note">{{ _("Scan with a Lightning wallet to pay this address.") }}</p>
+</details>{% endif %}<p class="note">{{ _("Share your address to receive payments and Nostr zaps. OakGate adds paid funds to your Acorn, even when you are signed out. Refresh to see your updated balance.") }}</p>
 {% else %}<p class="note">{{ _("Choose a") }} <a href="/account/preferences">{{ _("handle in Preferences") }}</a> {{ _("to receive payments at your OakGate address. Receiving requires this instance’s HTTPS domain.") }}</p>{% endif %}
 </section>
 <section class="clear-balances" aria-labelledby="clear-title">

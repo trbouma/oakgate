@@ -12,6 +12,7 @@ from starlette.exceptions import HTTPException
 from app.auth import current_session, error_page
 from app.custody import AlreadyConnected, Busy, HandleTaken, identity_key
 from app.wallets import WalletInputError
+from app.zaps import encode_lnurl
 
 router = APIRouter()
 
@@ -19,7 +20,7 @@ router = APIRouter()
 async def account_page(request, session, message=None, status=200):
     service = request.app.state.wallets
     context = {**session, 'fiat_estimate': None, 'wallet_enabled': service is not None, 'wallet': None,
-               'lightning_address': None, 'balance': None, 'message': message, 'balance_error': False,
+               'lightning_address': None, 'lightning_qr': None, 'balance': None, 'message': message, 'balance_error': False,
                'clear_balances': [], 'clear_error': False, 'active_page': 'balances',
                'default_relay': service.default_relay if service else ''}
     if service:
@@ -34,6 +35,9 @@ async def account_page(request, session, message=None, status=200):
                 if record['status'] == 'active':
                     if handle and request.app.state.payments:
                         context['lightning_address'] = request.app.state.payments.address(handle)
+                        if context['lightning_address']:
+                            endpoint = f"{request.app.state.payments.origin}/.well-known/lnurlp/{handle.lower()}"
+                            context['lightning_qr'] = previews._qr_svg(encode_lnurl(endpoint))
                     cash, clear = await asyncio.gather(
                         service.balance(record['material']),
                         service.clear_balances(record['material']), return_exceptions=True)

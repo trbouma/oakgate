@@ -63,6 +63,41 @@ class AcornBackend:
     def public_identity(self, material):
         return self.wallet(material).public_identity()
 
+    @property
+    def ecash_receiving_available(self):
+        return all(callable(getattr(Acorn, method, None)) for method in
+                   ('sweep_ecash_transfers', 'reconcile_continuity_receipts'))
+
+    async def receive_ecash(self, material):
+        if not self.ecash_receiving_available:
+            raise RuntimeError('Acorn receiving methods are unavailable')
+        wallet = self.wallet(material)
+        # Persist receipts first, then let Acorn redeem with their issuing mints.
+        # Successful redemption determines acceptance; OakGate adds no mint policy.
+        received = await wallet.sweep_ecash_transfers(
+            relays=[material['relay']], finalize=False, limit=100, max_pages=10)
+        finalized = await wallet.reconcile_continuity_receipts()
+        # Both proof persistence and credit history belong to Acorn. Do not
+        # synthesize a second transaction in OakGate.
+        return {'received': received, 'finalized': finalized}
+
+    @property
+    def direct_sending_available(self):
+        return callable(getattr(Acorn, 'send_ecash_transfer', None))
+
+    async def send_payment(self, material, payment):
+        wallet = self.wallet(material)
+        await wallet.load_data(force_profile_creation=False)
+        if payment['route'] == 'ecash':
+            result = await wallet.send_ecash_transfer(
+                amount=payment['amount'], recipient=payment['pubkey'],
+                relay=payment['relay'], comment=payment['comment'], nonce=payment['id'])
+            if not isinstance(result, dict) or result.get('status') != 'OK':
+                raise RuntimeError('Transfer outcome unresolved')
+            return {'event_id': result.get('event_id')}
+        result = await wallet.pay_multi_invoice(payment['invoice'], comment=payment['comment'])
+        return {'payment_hash': result[2]}
+
     async def payment_proofs(self, material, item, *, prepare=False):
         wallet = self.wallet(material)
         proofs = [Proof(**p) for p in item['proofs']]

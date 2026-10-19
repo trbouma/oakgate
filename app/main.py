@@ -11,6 +11,8 @@ from redis.exceptions import RedisError
 from app.auth import current_session, error_page, router
 from app.config import AuthSettings
 from app.currency_rates import CurrencyRates
+from app.ecash import EcashReceiver, router as ecash_router
+from app.send import SendService, router as send_router
 from app.templating import localization_context
 from app.oidc import KeycloakProvider
 from app.sessions import MemoryStore, RedisStore
@@ -31,6 +33,7 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
     async def lifespan(app):
         worker = asyncio.create_task(app.state.payments.run()) if app.state.payments and app.state.payments.config.enabled else None
         rates_worker = asyncio.create_task(app.state.rates.run()) if app.state.rates and app.state.rates.enabled else None
+        ecash_worker = asyncio.create_task(app.state.ecash.run()) if app.state.ecash and app.state.ecash.enabled else None
         try:
             yield
         finally:
@@ -42,11 +45,17 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
                 rates_worker.cancel()
                 with suppress(asyncio.CancelledError):
                     await rates_worker
+            if ecash_worker:
+                ecash_worker.cancel()
+                with suppress(asyncio.CancelledError):
+                    await ecash_worker
             await store.close()
 
     app = FastAPI(title="OakGate", description="OpenID Access Gate — part of the Mainstay family.",
                   version="0.1.0", servers=[{"url": settings.origin}], lifespan=lifespan)
     app.state.wallets = wallets if wallets is not None else configured_service()
+    app.state.ecash = EcashReceiver(app.state.wallets) if app.state.wallets else None
+    app.state.send = SendService(app.state.wallets, settings.origin, app.state.ecash) if app.state.wallets else None
     app.state.rates = CurrencyRates(app.state.wallets.store) if app.state.wallets else None
     app.state.payments = PaymentService(app.state.wallets, settings.origin) if app.state.wallets else None
     app.state.settings = settings
@@ -58,6 +67,8 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
     app.include_router(wallet_router)
     app.include_router(record_router)
     app.include_router(payment_router)
+    app.include_router(ecash_router)
+    app.include_router(send_router)
 
     @app.middleware("http")
     async def private_responses(request, call_next):

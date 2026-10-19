@@ -50,6 +50,7 @@ nav:
       - Records and sharing: 011-record-workflows.md
       - Language preferences: 012-localization.md
       - Local currency and rates: 013-local-currency.md
+      - Direct Safebox payments: 014-direct-ecash-payments.md
       - Lightning payments and zaps: 009-lightning-receiving.md
       - Identity storage and backups: 008-identity-storage-backups.md
       - Keycloak on Beelink: 002-keycloak-beelink.md

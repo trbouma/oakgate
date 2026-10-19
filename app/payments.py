@@ -112,10 +112,12 @@ class PaymentService:
         except PaymentBusy:
             return
         item = None
+        owner_lease = None
         try:
             item = self.store.get(payment_id)
             if item['state'] not in ('waiting', 'credited', 'complete') or (item['state'] == 'complete' and item.get('history_written')):
                 return
+            owner_lease = self.wallets.store.acquire(item['owner'])
             async with asyncio.timeout(60):
                 await self.settle(item, token)
         except Exception as exc:
@@ -125,6 +127,8 @@ class PaymentService:
             if item:
                 self.store.save(item, token, delay=30)
         finally:
+            if owner_lease:
+                self.wallets.store.release(item['owner'], owner_lease)
             self.store.release(payment_id, token)
 
     async def settle(self, item, token):
