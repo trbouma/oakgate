@@ -66,5 +66,6 @@ Automated tests use fake mint/relay responses and do not move real funds.
 
 Existing custody database and encryption-key backup requirements still apply.
 Incoming receipts, proofs and Clear history remain in Acorn's relay-backed state;
-Redis is not their durable store. A dedicated Clear history or pending-receipt
-page is not included in this change.
+Redis is not their durable store. Each Clear balance opens its native Acorn transaction history, showing the latest
+10 entries for that exact mint and unit. The balance links back home. A pending-receipt
+page is not included.

@@ -359,3 +359,47 @@ async def rates_page(request: Request):
                  'home_url': '/account' if session else '/'})
     response.headers['Cache-Control'] = 'no-store'
     return response
+
+
+@router.get('/account/clear-transactions', include_in_schema=False)
+async def clear_transactions_page(request: Request, asset: str = ''):
+    from app.transactions import clear_transaction_cards
+    session = await current_session(request)
+    if not session:
+        return RedirectResponse('/auth/login', status_code=303)
+    service = request.app.state.wallets
+    record = service.store.get(identity_key(session['user'])) if service else None
+    if not record or record['status'] != 'active':
+        return RedirectResponse('/account', status_code=303)
+    if len(asset) != 64 or any(c not in '0123456789abcdef' for c in asset):
+        return error_page(request, 'Clear asset not found.', 404)
+    try:
+        balances, history = await asyncio.gather(
+            service.clear_balances(record['material']),
+            service.clear_transactions(record['material']), return_exceptions=True)
+        balance_error, history_error = isinstance(balances, Exception), isinstance(history, Exception)
+        balances = [] if balance_error else balances
+        history = [] if history_error else history
+        matching = lambda row: (isinstance(row, dict) and isinstance(row.get('mint'), str)
+                                and isinstance(row.get('unit'), str)
+                                and asset_id(row['mint'], row['unit']) == asset)
+        rows = [row for row in balances if matching(row)]
+        entries = [row for row in history if matching(row)]
+        if not rows and not entries:
+            if balance_error or history_error:
+                return error_page(request, 'Clear transactions are unavailable right now. Please try again shortly.', 503)
+            return error_page(request, 'Clear asset not found.', 404)
+        source = (rows or entries)[0]
+        if not rows:
+            rows = await service.clear_labels.resolve([{'mint': source['mint'], 'unit': source['unit'], 'amount': 0}])
+        display = dict(rows[0])
+        for field in ('display_name', 'display_unit'):
+            if any(row[field] != display[field] for row in rows):
+                display[field] = source['unit']
+        display['amount'] = sum(row['amount'] for row in rows)
+        context = {**session, 'active_page': 'balances', 'asset': asset, 'item': display,
+                   'balance_error': balance_error, 'history_error': history_error,
+                   'transactions': clear_transaction_cards(entries)}
+        return request.app.state.templates.TemplateResponse(request=request, name='clear_transactions.html', context=context)
+    except Exception:
+        return error_page(request, 'Clear transactions are unavailable right now. Please try again shortly.', 503)

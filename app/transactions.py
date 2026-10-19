@@ -34,3 +34,15 @@ def transaction_cards(history):
                       'amount': amount, 'fees': fees, 'balance': number('current_balance'),
                       'comment': str(row.get('comment') or '')})
     return sorted(cards, key=lambda card: card['timestamp'], reverse=True)[:10]
+
+
+def clear_transaction_cards(history):
+    """Use only Acorn's native Clear entries, never the local outgoing journal."""
+    rows = []
+    for entry in history:
+        if not isinstance(entry, dict):
+            continue
+        rows.append({'create_time': entry.get('timestamp'),
+                     'tx_type': {'in': 'C', 'out': 'D'}.get(entry.get('direction'), ''),
+                     'amount': entry.get('amount'), 'comment': entry.get('memo', '')})
+    return transaction_cards(rows)
