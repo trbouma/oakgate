@@ -24,7 +24,7 @@
 {% else %}<p class="note">{{ _("Choose a") }} <a href="/account/preferences">{{ _("handle in Preferences") }}</a> {{ _("to receive payments at your OakGate address. Receiving requires this instance’s HTTPS domain.") }}</p>{% endif %}
 </section>
 <section class="clear-balances" aria-labelledby="clear-title">
-<h3 id="clear-title" class="balance-heading">{{ _("Clear balances") }}</h3>
+<h3 id="clear-title" class="balance-heading">{{ _("Clear Balances") }}</h3>
 {% if clear_error %}<p role="status">{{ _("Clear balances unavailable right now. Try refreshing in a moment.") }}</p>
 {% elif clear_balances %}
 {% for item in clear_balances %}

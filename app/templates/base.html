@@ -1,16 +1,21 @@
 <!doctype html>
 <html lang="{{ language }}" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="/static/theme.js?v=20261018-theme-1"></script><meta name="theme-color" content="#171914"><title>{{ _("OakGate · Mainstay") }}</title><link rel="icon" href="/logo.png"><link rel="stylesheet" href="/static/style.css?v=20261019-balance-headings-1"><script src="/static/forms.js?v=20261019-confirm-busy-1" defer></script></head>
-<body{% if active_page %} class="account-shell"{% endif %}><header><a class="family" href="/">MAINSTAY <span>/ OAKGATE</span></a><div class="header-tools"><span class="tag">{{ _("OpenID Access Gate") }}</span><button class="theme-toggle" type="button" data-theme-toggle data-light-label="{{ _('Use light mode') }}" data-dark-label="{{ _('Use dark mode') }}" aria-label="{{ _('Use light mode') }}" title="{{ _('Use light mode') }}">
+<script src="/static/theme.js?v=20261018-theme-1"></script><meta name="theme-color" content="#171914"><title>{{ _("OakGate · Mainstay") }}</title><link rel="icon" href="/logo.png"><link rel="stylesheet" href="/static/style.css?v=20261019-centered-brand-1"><script src="/static/forms.js?v=20261019-confirm-busy-1" defer></script></head>
+<body{% if active_page %} class="account-shell"{% endif %}><header class="app-header"><div class="header-brand-group">
+<details class="brand-disclosure">
+<summary class="brand-icon" aria-label="{{ _('About OakGate') }}" title="{{ _('About OakGate') }}"><img src="/logo.png" alt="" width="32" height="32"></summary>
+<div class="brand-information" role="note"><strong>OakGate</strong><p>{{ _('A custodial home for your Acorn funds, records, and messages. OakGate keeps your recovery information on your behalf.') }}</p><p>{{ _('Part of the Mainstay family.') }}</p><a href="https://trbouma.github.io/oakgate/">{{ _('Learn about OakGate') }}</a></div>
+</details></div>
+<a class="family" href="/">MAINSTAY <span>/ OAKGATE</span></a><div class="header-tools"><span class="tag">{{ _("OpenID Access Gate") }}</span><button class="theme-toggle" type="button" data-theme-toggle data-light-label="{{ _('Use light mode') }}" data-dark-label="{{ _('Use dark mode') }}" aria-label="{{ _('Use light mode') }}" title="{{ _('Use light mode') }}">
 <svg class="theme-icon" data-theme-icon="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg>
 <svg class="theme-icon" data-theme-icon="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.2A8 8 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7Z"></path></svg>
 </button></div></header>
 {% if active_page %}<nav class="account-nav" aria-label="Account navigation">
 <a href="/account"{% if active_page == 'balances' %} aria-current="page"{% endif %}>{{ _("Funds") }}</a>
 <a href="/account/records"{% if active_page == 'records' %} aria-current="page"{% endif %}>{{ _("Records") }}</a>
-<a href="/account/messages"{% if active_page == 'messages' %} aria-current="page"{% endif %}>{{ _("Wallet messages") }}</a>
+<a href="/account/messages"{% if active_page == 'messages' %} aria-current="page"{% endif %}>{{ _("Messages") }}</a>
 <a href="/account/preferences"{% if active_page == 'preferences' %} aria-current="page"{% endif %}>{{ _("Preferences") }}</a>
 </nav>{% endif %}
 <p id="page-progress" class="page-progress" role="status" aria-live="polite" aria-atomic="true" data-working="{{ _('Working. Please wait…') }}" data-opening="{{ _('Opening…') }}" hidden></p>
-<main><img class="logo" src="/logo.png" alt="OakGate" width="180" height="180">{% block content %}{% endblock %}</main>
+<main>{% block content %}{% endblock %}</main>
 <footer>OakGate <span>{{ _("Part of the Mainstay family.") }}</span></footer></body></html>

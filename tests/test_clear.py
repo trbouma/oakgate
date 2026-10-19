@@ -107,3 +107,24 @@ def test_adapter_uses_acorn_clear_reader():
         assert await backend.clear_balances({}) == balances()
         wallet.get_clear_balances.assert_awaited_once_with()
     asyncio.run(run())
+
+
+def test_aliases_survive_temporary_metadata_outage(monkeypatch):
+    async def run():
+        clock = [0]
+        monkeypatch.setattr('app.clear_balances.time.monotonic', lambda: clock[0])
+        fetch = AsyncMock(side_effect=[
+            [{'id':'old','unit':'cmu-original','friendly_alias':'Satellite Shares','friendly_unit_alias':'shares'}],
+            TimeoutError(),
+            [{'id':'old','unit':'cmu-original','friendly_alias':'Updated Shares','friendly_unit_alias':'shares'}],
+        ])
+        labels = ClearLabels(fetch)
+        initial = await labels.resolve(balances())
+        clock[0] = 301
+        offline = await labels.resolve(balances())
+        assert offline == initial
+        assert next(r for r in offline if r['keyset_id'] == 'old')['display_name'] == 'Satellite Shares'
+        clock[0] = 332
+        refreshed = await labels.resolve(balances())
+        assert next(r for r in refreshed if r['keyset_id'] == 'old')['display_name'] == 'Updated Shares'
+    asyncio.run(run())

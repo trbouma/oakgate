@@ -326,3 +326,23 @@ form[aria-busy="true"] .payment-confirm .confirm-busy { display:inline-flex; ali
 
 .account-nav { flex-wrap: wrap; }
 @media(max-width:520px) { .account-nav a { flex: 1 1 40%; } }
+
+/* Compact header with the same native disclosure pattern as Safebox Web. */
+body:not(.landing) > header { padding-block: 12px; gap: 12px; }
+.header-brand-group { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand-disclosure { position: relative; flex: 0 0 auto; }
+.brand-icon { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 8px; cursor: pointer; list-style: none; }
+.brand-icon::-webkit-details-marker { display: none; }
+.brand-icon img { display: block; width: 32px; height: 32px; object-fit: contain; }
+.brand-icon:hover, .brand-disclosure[open] .brand-icon { background: var(--surface-soft); }
+.brand-icon:focus-visible { outline: 3px solid var(--link); outline-offset: 2px; }
+.brand-information { position: absolute; top: calc(100% + 8px); left: 0; z-index: 20; width: min(320px, 84vw); padding: 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); box-shadow: 0 8px 28px #0003; font-size: 14px; line-height: 1.5; text-align: left; }
+.brand-information p { margin: 8px 0; }
+.brand-information a { text-decoration: underline; color: var(--link); }
+.account-shell > main { padding-top: 20px; }
+@media(max-width:520px) { .app-header > .family { font-size: 10px; letter-spacing: .08em; } .app-header > .family span { margin-left: 4px; } }
+
+.app-header { display: grid; grid-template-columns: minmax(44px, 1fr) auto minmax(44px, 1fr); }
+.app-header > .family { text-align: center; }
+.app-header > .header-tools { justify-self: end; }
+@media(max-width:760px) { .app-header .tag { display: none; } }

@@ -86,8 +86,9 @@ class ClearLabels:
             rows = await asyncio.wait_for(self.fetcher(mint), timeout=4)
             ttl = 300
         except Exception:
-            rows, ttl = [], 30
-        if len(self.cache) >= 128:
+            # Keep known labels through a transient metadata outage.
+            rows, ttl = (cached[1] if cached else []), 30
+        if mint not in self.cache and len(self.cache) >= 128:
             self.cache.pop(next(iter(self.cache)))
         self.cache[mint] = (time.monotonic() + ttl, rows)
         return rows

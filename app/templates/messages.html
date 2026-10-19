@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>{{ _('Wallet messages') }}</h1>
+<h2>{{ _('Your Messages') }}</h2>
 <p class="note">{{ _('Private messages between Acorn wallets. Your wallet key is used, not your social NIP-05 identity.') }}</p>
 {% if notice %}<p role="status">{{ _(notice) }}</p>{% endif %}
 {% if not connected %}<p>{{ _('Connect or create an Acorn first.') }}</p><a href="/account">{{ _('Balances') }}</a>
