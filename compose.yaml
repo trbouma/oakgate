@@ -71,7 +71,20 @@ services:
       KC_HOSTNAME: ${KC_HOSTNAME:-https://keycloak.safebox.dev}
       KC_HOSTNAME_STRICT: "true"
       KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+      KC_HTTP_MANAGEMENT_SCHEME: http
       KC_PROXY_HEADERS: xforwarded
+    # Internal management port only; do not publish port 9000 through Nginx.
+    healthcheck:
+      test:
+        - CMD
+        - bash
+        - -ec
+        - "{ printf 'HEAD /health/ready HTTP/1.0\\r\\n\\r\\n' >&0; grep -q 'HTTP/1.0 200'; } 0<>/dev/tcp/127.0.0.1/9000"
+      interval: 5s
+      timeout: 3s
+      start_period: 300s
+      retries: 12
     ports:
       - "${KEYCLOAK_BIND_ADDRESS:-0.0.0.0}:${KEYCLOAK_PORT:-8800}:8080"
     volumes:

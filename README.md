@@ -53,7 +53,7 @@ For subsequent updates, use the same workflow as Mainstay:
 ./refresh-containers.sh
 ```
 
-This refuses tracked working-tree changes, pulls fast-forward updates, and calls `start-oakgate.sh --force-recreate`. The startup script validates Compose configuration, builds the FastAPI image on Beelink from the Poetry lockfile, and starts containers. It preserves the existing `.env` and storage directory. It reports container status; use the setup guide to verify readiness.
+This refuses tracked working-tree changes, pulls fast-forward updates, and calls `start-oakgate.sh --force-recreate`. The startup script validates Compose configuration, builds the FastAPI image on Beelink from the Poetry lockfile, and starts containers. It preserves the existing `.env` and storage directory. It waits for app, Redis and Keycloak health checks, with a 300-second startup timeout. Use `./refresh-containers.sh --timeout 600` (or `./start-oakgate.sh --timeout 600`) for a longer wait. Build time is separate from the health wait. Failure exits nonzero and prints service status, health-check output and recent logs; containers are left available for diagnosis, without rollback. Requires Docker Compose with `--wait` and `--wait-timeout` support. Keycloak readiness is checked internally on port 9000, which is not published to the host. Public HTTPS, login and payment checks remain separate acceptance steps.
 
 You can also use `./start-oakgate.sh` for routine startup, or continue to run `docker compose up -d --build` directly.
 

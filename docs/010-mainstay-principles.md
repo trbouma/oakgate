@@ -138,24 +138,27 @@ separate service identity, encrypted custody, issuer/subject ownership,
 ephemeral Redis sessions, Acorn-native transaction history and separation of
 Clear balances from cash.
 
-The following gaps remain open:
+Current status after the follow-up review and deployment-script fixes:
 
-| Gap | Required outcome |
+| Area | Status and remaining acceptance work |
 | --- | --- |
-| Cashu protocol execution | Source refactor completed: `acorn.minting.DurableCashuMint` owns quote/prepare/restore/issue, and OakGate retains coordination and encrypted checkpoints. Deployment requires publishing the Acorn API and updating OakGate’s lockfile; see the Lightning receiving upgrade instructions. |
+| Cashu protocol execution | Implemented and dependency synchronized: `acorn.minting.DurableCashuMint` owns quote/prepare/restore/issue, and OakGate retains coordination and encrypted checkpoints. The installed Acorn revision matches the lockfile and includes this API; see the Lightning receiving upgrade instructions. |
 | Public service information | Implemented: `/info` reports the public identity envelope and supported capabilities; `/health` includes version. Commissioning remains unimplemented and is reported honestly. See [Public service contract](017-public-service-contract.md). |
-| Deployment verification | App-only refresh now waits for Docker health with a bounded timeout and app diagnostics on failure. This confirms liveness; end-to-end login, payment and recovery checks remain operator acceptance steps. |
+| Deployment verification | App-only refresh waits for Docker health with a bounded timeout and app diagnostics on failure, leaving Keycloak and Redis running. Full-stack startup and refresh also wait for app, Redis and Keycloak health with a bounded timeout and diagnostics. This confirms liveness; end-to-end login, payment and recovery checks remain operator acceptance steps. |
 | Recovery and status wording | Disclosure is implemented; keep it distinct from independently tested restoration and the planned departure workflow. |
 | Independent recovery and departure | Rehearse independent restoration and implement settlement-aware departure, deletion retries and protection against resurrection after restore. |
 | Provider replacement | Rehearse alternative authentication against the same Keycloak user and update provider-specific presentation. |
 | Operational continuity | Rehearse isolated restoration of custody, identity, keys and pending payments before claiming recoverability. |
 
-All 100 application tests passed using the clean Acorn source revision matching
-the lockfile during this review. The local installed environment still had an
-older Acorn revision and failed 31 tests without that source override. This is
-an environment synchronization issue to resolve with `poetry install`, not
-proof that the deployed container is broken. These checks did not establish a
-successful disaster recovery, provider migration or independent handover.
+The follow-up review passed all 261 application tests and five recovery UI
+concealment checks against the installed dependencies, without a source override.
+Installed Acorn (`c09b269a0790430e957329187c2fe5749faf78d0`) and Stroma
+(`83037cc8285ab5b2f2b88aaa40c103837ff4a2e6`) matched the lockfile. This supersedes
+the earlier 100-test source-override result and the stale local-environment warning.
+Additional full-stack script tests cover bounded Compose health waiting and
+failure diagnostics without starting real containers. These checks do not
+establish a successful disaster recovery, provider migration, independent
+handover or live deployment health. Those remain operator acceptance work.
 
 ## Acceptance rule for future changes
 
