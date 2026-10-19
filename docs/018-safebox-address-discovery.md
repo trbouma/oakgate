@@ -2,8 +2,9 @@
 
 Status: payment-reader migration implemented, 2026-10-19. Acorn provides the
 version-1 parser, builder and secure resolver; OakGate and Safebox Web publish
-the directory and use it for cash and Clear payment discovery. Message attribution
-and public NIP-05 responses remain unchanged. Separate social keys are not enabled.
+the directory and use it for cash and Clear payment discovery. Safebox Web wallet-message delivery and attribution now use it too; OakGate
+has no messaging interface and does not advertise that capability. Public NIP-05
+responses remain unchanged. Separate social keys are not enabled.
 It is a Mainstay-family application contract, not an established Nostr standard.
 
 ## Purpose and boundaries
@@ -33,8 +34,8 @@ restrictions and asset identity `(mint, unit)` remain in force.
 
 ## Deployment and rollout
 
-Phases 1 and 2 and the cash/Clear reader portion of phase 3 are implemented.
-Wallet-message migration and phase 4 social-key separation remain follow-up work.
+Phases 1 and 2, cash/Clear readers, and Safebox Web wallet-message delivery and
+attribution are implemented. Phase 4 social-key separation remains follow-up work.
 Acorn's resolver has no legacy fallback: it returns a distinct not-found error
 only for HTTP 404 and never queries `nostr.json`. Applications own the explicit
 legacy-domain policy described below.
@@ -49,7 +50,7 @@ legacy-domain policy described below.
    it returns 404 rather than exposing an internal home relay. OakGate uses the
    existing approved Acorn bootstrap relay. Invalid public routing returns 503.
 5. Deploy the payment readers with the correct legacy-domain configuration.
-   Wallet-message attribution remains later work. There is no automatic social-key cutover.
+   Safebox Web also applies it to wallet messages. There is no automatic social-key cutover.
 
 The payment readers require the published discovery API in the committed lockfiles.
 Verify the installed revision before deploying; source-override testing does not
@@ -58,23 +59,19 @@ returns a validated version-1 response.
 
 No database migration, new secret, service key or mint policy is introduced.
 Cash/Clear receipt capabilities reflect current implementation/configuration;
-wallet messaging is deliberately not advertised by this first release.
+Safebox Web advertises wallet messaging; OakGate does not yet provide it.
 
-## Existing coupling (retained during this release)
+## Legacy coupling and remaining compatibility
 
-Safebox Web resolves external cash and Clear recipients through `nostr.json`.
-Its cash resolver accepts a valid NIP-05 key with usable routing without requiring
-an explicit wallet capability; Clear requires a Clear descriptor. Local lookup
-uses the claimed handle's Acorn key directly.
+Both applications still publish their existing Acorn key as the NIP-05 identity
+for legacy clients. Migrated cash/Clear readers and Safebox Web wallet messaging
+use `safebox.json`, except for explicitly permitted 404 legacy fallback. Local
+lookups use the registered wallet key directly.
 
-OakGate also resolves through `nostr.json`; cash additionally requires an
-`acorn-ecash-transfer` descriptor or an operator-configured legacy domain. Both
-applications currently publish the Acorn key as the NIP-05 identity.
-
-Acorn's generic address resolver uses NIP-05 for `name@domain`. Wallet transfers
-and social/message operations share it. Safebox Web's message presentation also
-checks claimed sender addresses against NIP-05. Changing only the public mapping
-would redirect some transfers and invalidate wallet-message attribution.
+Acorn's generic address resolver still uses NIP-05 for `name@domain`; its social
+and legacy APIs retain their semantics. Migrated applications pass explicit wallet
+keys and routes into those APIs. Changing public NIP-05 mappings can still redirect
+unmodified clients, so social-key separation requires the controlled cutover below.
 
 There is a separate older Acorn `pay_multi()` branch which reads
 `/.well-known/safebox.json/<name>` after a Safebox flag in LNURL metadata. It
@@ -147,7 +144,7 @@ paths. The initial registry is:
 | --- | --- | --- |
 | `acorn-ecash-transfer` | `nip59`, inner kind 7378 | Current Acorn cash transfer; `units` must include `sat` |
 | `clear-token-transfer` | `nip59`, inner kind 7379 | Current Clear transfer; omitted `units` means no advertised unit restriction; a present list must be nonempty |
-| `safebox-wallet-message` | `nip17`, inner kind 14 | Proposed opt-in wallet messaging using the existing version-1 `safebox.dm` content envelope; only advertise after send, receive and attribution support are implemented |
+| `safebox-wallet-message` | `nip17`, inner kind 14 | Wallet messaging using the existing version-1 `safebox.dm` content envelope; only advertise after send, receive and attribution support are implemented |
 
 A client must understand the selected capability and its required transport and
 kind before using it. Unknown capabilities or additive fields are ignored; they
@@ -373,5 +370,21 @@ user-key ownership or uncertain-send retry behaviour changes in this rollout.
 Deploy the lockfiles containing Acorn's published discovery API. Verify both
 public endpoints for an existing handle before deploying the readers. Controlled
 real cash/Clear delivery checks remain operator acceptance steps; automated tests
-use fake wallets and do not move funds. Messaging migration and social-key
-preferences remain later work.
+use fake wallets and do not move funds. Safebox Web messaging is migrated;
+OakGate messaging and social-key preferences remain later work.
+
+## Wallet-message reader rollout
+
+Safebox Web resolves address destinations and claimed-sender attribution through
+the message capability. It uses the existing `SAFEBOX_LEGACY_DOMAINS` policy only
+after 404, never after missing capabilities or errors. Delivery passes an explicit
+wallet npub and relay list to Acorn, retaining Stroma transport and the existing
+`safebox.dm` envelope. Social lookup remains separate; explicit npub destinations
+keep their semantics. Local wallet bindings support private community relays.
+
+Only Safebox Web advertises messaging today. OakGate must not advertise it until
+it has working send, receive and attribution support. The existing published Acorn
+API suffices for this migration; no legacy/social Acorn APIs are changed.
+Attribution displays current association, leaves the authenticated sender visible,
+and does not hide messages when verification fails. It uses at most ten distinct
+bounded lookups per page without reusing the social-identity cache.
