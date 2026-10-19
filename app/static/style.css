@@ -309,3 +309,11 @@ html[data-theme="dark"] .hero-mark { mix-blend-mode:normal; }
 .theme-toggle:hover { color:var(--link); border-color:var(--link); }
 .theme-icon { display:block; width:24px; height:24px; flex-shrink:0; }
 html:not([data-theme="light"]) [data-theme-icon="moon"],html[data-theme="light"] [data-theme-icon="sun"] { display:none; }
+
+/* Keep confirmation progress beside the action, including on small screens. */
+.confirm-busy { display:none; }
+form[aria-busy="true"] .confirm-idle { display:none; }
+form[aria-busy="true"] .confirm-busy { display:block; }
+form[aria-busy="true"] .payment-confirm .confirm-busy { display:inline-flex; align-items:center; justify-content:center; gap:.6rem; }
+.payment-spinner { display:inline-block; flex-shrink:0; width:1em; height:1em; border:2px solid currentColor; border-right-color:transparent; border-radius:50%; animation:oakgate-progress-spin .8s linear infinite; }
+@media (prefers-reduced-motion:reduce) { .payment-spinner { animation:none; } }
