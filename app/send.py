@@ -20,6 +20,7 @@ from fastapi.responses import RedirectResponse
 from app.auth import current_session, error_page
 from app.custody import Busy, identity_key
 from app.wallet_routes import checked_form
+from app.clear_balances import payment_assets
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -62,8 +63,23 @@ class SendService:
         with closing(wallets.store.connect()) as db, db:
             db.execute('CREATE TABLE IF NOT EXISTS outgoing_payments (id TEXT PRIMARY KEY, owner TEXT NOT NULL, state TEXT NOT NULL, encrypted BLOB NOT NULL, created REAL NOT NULL)')
 
-    async def prepare(self, owner, address, amount, comment):
-        if not re.fullmatch(r'[1-9][0-9]{0,7}', amount) or not 1 <= int(amount) <= 1000000:
+    async def clear_assets(self, owner):
+        record = self.wallets.store.get(owner)
+        if not record or record['status'] != 'active':
+            return []
+        return payment_assets(await self.wallets.clear_balances(record['material']))
+
+    async def prepare(self, owner, address, amount, comment, asset=''):
+        if not re.fullmatch(r'[1-9][0-9]{0,15}', amount):
+            raise ValueError('Enter a positive whole-number amount.')
+        selected = None
+        if asset:
+            if not getattr(self.wallets.backend, 'clear_sending_available', False):
+                raise ValueError('Clear sending is unavailable.')
+            selected = next((row for row in await self.clear_assets(owner) if row['id'] == asset), None)
+            if selected is None or int(amount) > selected['amount']:
+                raise ValueError('The selected Clear balance is unavailable or insufficient.')
+        elif int(amount) > 1000000:
             raise ValueError('Enter an amount between 1 and 1,000,000 sats.')
         address = address.strip().lower()
         if len(address) > 254 or not re.fullmatch(r'[a-z0-9_.+-]+@[a-z0-9.-]+', address):
@@ -85,7 +101,9 @@ class SendService:
                 payload = await self.fetch(f'https://{domain}/.well-known/nostr.json', {'name': name})
             except (ValueError, httpx.HTTPError, OSError, TimeoutError):
                 pass
-        if payload:
+        if selected:
+            payment.update(self.clear_destination(payload, name, selected))
+        if payload and not selected:
             names = payload.get('names', {})
             pubkey = names.get(name) if isinstance(names, dict) else None
             descriptors = payload.get('safebox', {})
@@ -99,7 +117,7 @@ class SendService:
                     and relay and (advertised or domain in self.legacy_domains)
                     and getattr(self.wallets.backend, 'direct_sending_available', False)):
                 payment.update(route='ecash', pubkey=pubkey.lower(), relay=relay)
-        if payment.get('route') != 'ecash':
+        if payment.get('route') not in {'ecash', 'clear'}:
             metadata = await self.fetch(f'https://{domain}/.well-known/lnurlp/{name}')
             msat = payment['amount'] * 1000
             if (metadata.get('tag') != 'payRequest' or not isinstance(metadata.get('metadata'), str)
@@ -136,6 +154,29 @@ class SendService:
                        (payment['id'], owner, 'prepared', self.wallets.store.cipher.encrypt(json.dumps(payment).encode()), time.time()))
         return payment
 
+    def clear_destination(self, payload, name, asset):
+        if not isinstance(payload, dict):
+            raise ValueError('Recipient does not advertise Clear support.')
+        names, descriptors, relay_map = (payload.get(k, {}) for k in ('names', 'clear', 'relays'))
+        if not all(isinstance(v, dict) for v in (names, descriptors, relay_map)):
+            raise ValueError('Invalid Clear recipient')
+        pubkey, descriptor = names.get(name), descriptors.get(name)
+        if not isinstance(pubkey, str) or not re.fullmatch(r'[0-9a-fA-F]{64}', pubkey) or not isinstance(descriptor, dict):
+            raise ValueError('Invalid Clear recipient')
+        for field, value in (('protocols', 'clear-token-transfer'), ('transports', 'nip59'), ('kinds', 7379)):
+            if not isinstance(descriptor.get(field), list) or value not in descriptor[field]:
+                raise ValueError('Incompatible Clear recipient')
+        units = descriptor.get('units', [])
+        if not isinstance(units, list) or (units and asset['unit'] not in units):
+            raise ValueError('Recipient does not support this Clear unit')
+        hints = relay_map.get(pubkey, [])
+        relay = next((v for v in hints if isinstance(v, str) and v in self.wallets.allowed_relays), None) if isinstance(hints, list) else None
+        if not relay:
+            raise ValueError('No approved relay for this Clear recipient')
+        return {'route': 'clear', 'pubkey': pubkey.lower(), 'relay': relay,
+                'asset': asset['id'], 'mint': asset['mint'], 'unit': asset['unit'],
+                'display_name': asset['display_name'], 'display_unit': asset['display_unit']}
+
     def get(self, owner, payment_id):
         with closing(self.wallets.store.connect()) as db:
             row = db.execute('SELECT * FROM outgoing_payments WHERE id=? AND owner=?', (payment_id, owner)).fetchone()
@@ -171,6 +212,12 @@ class SendService:
             async with asyncio.timeout(60):
                 await self.wallets.backend.send_payment(record['material'], payment)
             state = 'sent'
+            # A local recipient need not wait for its next regular inbox poll.
+            if self.receiver and payment['route'] in {'clear', 'ecash'} and payment['address'].split('@')[1] == urlsplit(self.origin).hostname:
+                try:
+                    self.receiver.wake(payment['address'].split('@')[0])
+                except Exception:
+                    logger.warning('Recipient inbox wake deferred to regular polling')
         except BaseException as exc:
             if not claimed:
                 raise
@@ -186,15 +233,15 @@ class SendService:
         return self.get(owner, payment_id)
 
 
-def render(request, session, payment=None, message=None, status=200):
+def render(request, session, payment=None, message=None, status=200, assets=None, selected_asset=""):
     # Pass only display fields, never invoices or encrypted journal contents.
-    display = {k: payment[k] for k in ('id', 'address', 'amount', 'route', 'state') if k in payment} if payment else None
+    display = {k: payment[k] for k in ('id', 'address', 'amount', 'route', 'state', 'mint', 'unit', 'display_name', 'display_unit') if k in payment} if payment else None
     return request.app.state.templates.TemplateResponse(request=request, name='send.html',
-        context={**session, 'active_page': 'balances', 'payment': display, 'message': message}, status_code=status)
+        context={**session, 'active_page': 'balances', 'payment': display, 'message': message, 'assets': assets or [], 'selected_asset': selected_asset}, status_code=status)
 
 
 @router.get('/account/send', include_in_schema=False)
-async def page(request: Request, payment: str = ''):
+async def page(request: Request, payment: str = '', asset: str = ''):
     session = await current_session(request)
     if not session:
         return RedirectResponse('/auth/login', 303)
@@ -203,9 +250,16 @@ async def page(request: Request, payment: str = ''):
         return error_page(request, 'Payments are not configured.', 503)
     try:
         item = service.get(identity_key(session['user']), payment) if payment else None
-        return render(request, session, item)
+        assets = await service.clear_assets(identity_key(session['user'])) if not item else []
+        if asset and not item and not any(row['id'] == asset for row in assets):
+            return error_page(request, 'This Clear balance is no longer available. Return to Balances and choose an asset again.', 409)
+        return render(request, session, item, assets=assets, selected_asset=asset)
     except ValueError:
         return error_page(request, 'Payment not found.', 404)
+    except Exception:
+        if asset:
+            return error_page(request, 'Clear balances are unavailable. Return to Balances and try again.', 503)
+        return render(request, session, message='Clear balances are unavailable. Refresh to try again.')
 
 
 @router.post('/account/send', include_in_schema=False)
@@ -223,10 +277,10 @@ async def prepare(request: Request):
         return render(request, session, message='Connect an Acorn first.', status=400)
     try:
         async with asyncio.timeout(35):
-            payment = await service.prepare(owner, str(form.get('address', '')), str(form.get('amount', '')), str(form.get('comment', '')))
+            payment = await service.prepare(owner, str(form.get('address', '')), str(form.get('amount', '')), str(form.get('comment', '')), asset=str(form.get('asset', '')))
         return RedirectResponse('/account/send?payment='+payment['id'], 303)
     except Exception:
-        return render(request, session, message='Could not prepare this payment. Check the address, amount and comment, or review any unresolved payment.', status=400)
+        return error_page(request, 'Could not prepare this payment. Return to Balances, check the selected asset, address and amount, or review any unresolved payment.', 400)
 
 
 @router.post('/account/send/confirm', include_in_schema=False)

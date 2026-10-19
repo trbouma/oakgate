@@ -4,6 +4,7 @@ import hashlib
 import json
 import logging
 import os
+import time
 from urllib.parse import urlsplit
 
 import bolt11
@@ -82,11 +83,52 @@ class AcornBackend:
         return {'received': received, 'finalized': finalized}
 
     @property
+    def clear_receiving_available(self):
+        return all(callable(getattr(Acorn, method, None)) for method in
+                   ('sweep_clear_transfers', 'get_clear_receipts', 'accept_pending_clear_receipt'))
+
+    async def receive_clear(self, material):
+        wallet = self.wallet(material)
+        try:
+            async with asyncio.timeout(5):
+                await wallet.sweep_clear_transfers(relays=[material['relay']], limit=100, max_pages=10)
+        except Exception as exc:
+            logging.getLogger(__name__).warning('Clear discovery pending error_type=%s', type(exc).__name__)
+        pending = await wallet.get_clear_receipts(status='pending')
+        # Rotate a bounded batch so an unavailable mint cannot permanently
+        # prevent other receipts being attempted. Acorn owns durable retry state.
+        pending = sorted(pending, key=lambda row: str(row['event_id']))
+        offset = (int(time.time()) // 30 * 2) % len(pending) if pending else 0
+        batch = (pending[offset:] + pending[:offset])[:2]
+        accepted = 0
+        for receipt in batch:
+            try:
+                async with asyncio.timeout(20):
+                    result = await wallet.accept_pending_clear_receipt(receipt['event_id'])
+                if result.get('accepted'):
+                    accepted += 1
+            except Exception as exc:
+                logging.getLogger(__name__).warning('Clear receipt pending error_type=%s', type(exc).__name__)
+        return {'accepted_count': accepted}
+
+    @property
+    def clear_sending_available(self):
+        return callable(getattr(Acorn, 'send_clear_transfer', None))
+
+    @property
     def direct_sending_available(self):
         return callable(getattr(Acorn, 'send_ecash_transfer', None))
 
     async def send_payment(self, material, payment):
         wallet = self.wallet(material)
+        if payment['route'] == 'clear':
+            result = await wallet.send_clear_transfer(
+                amount=payment['amount'], recipient=payment['pubkey'],
+                mint=payment['mint'], unit=payment['unit'],
+                relay=payment['relay'], comment=payment['comment'])
+            if not isinstance(result, dict) or result.get('status') != 'OK':
+                raise RuntimeError('Clear transfer outcome unresolved')
+            return {'event_id': result.get('event_id')}
         await wallet.load_data(force_profile_creation=False)
         if payment['route'] == 'ecash':
             result = await wallet.send_ecash_transfer(

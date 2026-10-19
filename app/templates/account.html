@@ -25,11 +25,13 @@
 </section>
 <section class="clear-balances" aria-labelledby="clear-title">
 <h3 id="clear-title">{{ _("Clear balances") }}</h3>
+{% if clear_receiving %}<p class="note">{{ _("Incoming Clear payments are processed automatically, even when you are signed out. Refresh to see settled balances.") }}</p>{% endif %}
 {% if clear_error %}<p role="status">{{ _("Clear balances unavailable right now. Try refreshing in a moment.") }}</p>
 {% elif clear_balances %}
 {% for item in clear_balances %}
 <article class="clear-balance-row">
 <h4>{{ item.display_name }}</h4>
+<a class="back-link" href="/account/send?asset={{ item.asset_id }}">{{ _("Send") }}</a>
 <p class="clear-amount">{{ '{:,}'.format(item.amount) }} <span>{{ item.display_unit }}</span></p>
 <p class="note">{{ item.mint }}</p>
 <details><summary>{{ _("Asset details") }}</summary><p>{{ _("Unit:") }} {{ item.unit }}</p>{% if item.keyset_id %}<p>{{ _("Keyset:") }} {{ item.keyset_id }}</p>{% endif %}</details>

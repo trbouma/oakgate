@@ -4,24 +4,27 @@
 <section class="wallet-panel preferences-panel send-panel">
 {% if message %}<p role="status">{{ _(message) }}</p>{% endif %}
 {% if payment %}
-<p class="cash-balance">₿ {{ '{:,}'.format(payment.amount) }} <span>sats</span></p>
+<p class="cash-balance">{% if payment.route != 'clear' %}₿ {% endif %}{{ '{:,}'.format(payment.amount) }} <span>{{ payment.display_unit if payment.route == 'clear' else 'sats' }}</span></p>
 <p class="breakable">{{ payment.address }}</p>
-<p>{{ _("Direct ecash") if payment.route == 'ecash' else _("Lightning") }}</p>
+<p>{% if payment.route == 'clear' %}{{ _('Clear payment') }} · {{ payment.display_name }}{% else %}{{ _('Direct ecash') if payment.route == 'ecash' else _('Lightning') }}{% endif %}</p>
+{% if payment.route == 'clear' %}<details><summary>{{ _('Asset details') }}</summary><p class="breakable">{{ payment.mint }}</p><p class="breakable">{{ payment.unit }}</p></details>{% endif %}
 {% if payment.state == 'prepared' %}
-<p class="note">{{ _("Review the recipient and amount before sending. Mint or Lightning fees may apply.") }}</p>
+<p class="note">{% if payment.route == 'clear' %}{{ _("Review the recipient, asset and amount before sending. Mint fees may apply.") }}{% else %}{{ _("Review the recipient and amount before sending. Mint or Lightning fees may apply.") }}{% endif %}</p>
 <form method="post" action="/account/send/confirm" data-progress-message="{{ _('Sending payment. Please wait and do not submit again.') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="payment" value="{{ payment.id }}"><button class="primary-action" type="submit">{{ _("Confirm payment") }}</button></form>
 {% elif payment.state == 'sent' %}
 <p role="status">{{ _("Payment sent.") }}</p>
-{% if payment.route == 'ecash' %}<p class="note">{{ _("Delivery does not prove redemption. OakGate recipients can redeem while signed out; other recipients may need to open their wallet.") }}</p>{% endif %}
+{% if payment.route in ['ecash', 'clear'] %}<p class="note">{{ _("Delivery does not prove redemption. OakGate recipients can redeem while signed out; other recipients may need to open their wallet.") }}</p>{% endif %}
 {% else %}<p role="status">{{ _("Payment outcome needs review. Do not send it again. Check Acorn transaction history and contact the operator if the result is unclear.") }}</p>{% endif %}
 {% else %}
 <form method="post" action="/account/send" data-progress-message="{{ _('Preparing your payment. Please wait…') }}">
 <input type="hidden" name="csrf" value="{{ csrf }}">
+<label for="asset">{{ _('Balance to send') }}</label>
+<select id="asset" name="asset"><option value="">{{ _('Cash (sats)') }}</option>{% for asset in assets %}<option value="{{ asset.id }}"{% if selected_asset == asset.id %} selected{% endif %}>{{ asset.display_name }} — {{ '{:,}'.format(asset.amount) }} {{ asset.display_unit }} · {{ asset.mint }}</option>{% endfor %}</select>
 <label for="address">{{ _("Payment address") }}</label><input id="address" name="address" type="email" required maxlength="254" autocomplete="off" autocapitalize="none" placeholder="name@example.com">
-<label for="amount">{{ _("Amount in sats") }}</label><input id="amount" name="amount" type="number" inputmode="numeric" min="1" max="1000000" step="1" required>
+<label for="amount">{{ _("Amount (whole units)") }}</label><input id="amount" name="amount" type="number" inputmode="numeric" min="1" step="1" required>
 <label for="comment">{{ _("Comment (optional)") }}</label><input id="comment" name="comment" maxlength="255">
 <button class="primary-action" type="submit">{{ _("Review payment") }}</button>
 </form>{% endif %}
 </section>
-<a class="back-link" href="/account/transactions">{{ _("Cash transactions") }}</a> · <a class="back-link" href="/account">{{ _("Back to balances") }}</a>
+{% if not payment or payment.route != 'clear' %}<a class="back-link" href="/account/transactions">{{ _("Cash transactions") }}</a> · {% endif %}<a class="back-link" href="/account">{{ _("Back to balances") }}</a>
 {% endblock %}

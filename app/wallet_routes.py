@@ -13,6 +13,7 @@ from app.auth import current_session, error_page
 from app.custody import AlreadyConnected, Busy, HandleTaken, identity_key
 from app.wallets import WalletInputError
 from app.zaps import encode_lnurl
+from app.clear_balances import asset_id
 
 router = APIRouter()
 
@@ -21,7 +22,8 @@ async def account_page(request, session, message=None, status=200):
     service = request.app.state.wallets
     context = {**session, 'fiat_estimate': None, 'wallet_enabled': service is not None, 'wallet': None,
                'lightning_address': None, 'lightning_qr': None, 'balance': None, 'message': message, 'balance_error': False,
-               'clear_balances': [], 'clear_error': False, 'active_page': 'balances',
+               'clear_balances': [], 'clear_error': False,
+               'clear_receiving': bool(request.app.state.ecash and request.app.state.ecash.clear_available), 'active_page': 'balances',
                'default_relay': service.default_relay if service else ''}
     if service:
         try:
@@ -49,7 +51,7 @@ async def account_page(request, session, message=None, status=200):
                     if isinstance(clear, Exception):
                         context['clear_error'] = True
                     else:
-                        context['clear_balances'] = clear
+                        context['clear_balances'] = [{**row, 'asset_id': asset_id(row['mint'], row['unit'])} for row in clear]
         except Exception:
             return error_page(request, 'Safebox storage is unavailable. Please try again shortly.', 503)
     return request.app.state.templates.TemplateResponse(

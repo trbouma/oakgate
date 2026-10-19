@@ -49,7 +49,7 @@ def test_language_is_account_owned_not_cookie_or_session_owned(tmp_path):
             alice = await login(client, sessions)
             # Language can be selected before connecting an Acorn and with no handle.
             saved = await client.post('/account/preferences', data=form(handle='', language='fr'))
-            assert saved.status_code == 200 and '<html lang="fr">' in saved.text
+            assert saved.status_code == 200 and '<html lang="fr"' in saved.text
             assert 'Préférences enregistrées.' in saved.text and saved.headers['content-language'] == 'fr'
             assert 'set-cookie' not in saved.headers
             assert service.store.language(alice) == 'fr'
@@ -57,7 +57,7 @@ def test_language_is_account_owned_not_cookie_or_session_owned(tmp_path):
             await login(client, sessions)  # new sign-in reads persistent settings
             client.cookies.set('language','de')
             records = await client.get('/account/records')
-            assert '<html lang="fr">' in records.text and '>Documents</a>' in records.text
+            assert '<html lang="fr"' in records.text and '>Documents</a>' in records.text
             assert '>Records ' in records.text  # user label is not translated
             detail = await client.get('/account/records/'+'a'*64)
             assert '<pre class="record-contents">Preferences</pre>' in detail.text
@@ -67,7 +67,7 @@ def test_language_is_account_owned_not_cookie_or_session_owned(tmp_path):
             assert invalid.status_code == 400 and service.store.language(alice) == 'fr'
             await login(client, sessions, sub='another-user')
             page = await client.get('/account/preferences')
-            assert '<html lang="en">' in page.text and '>Preferences</a>' in page.text
+            assert '<html lang="en"' in page.text and '>Preferences</a>' in page.text
             await login(client, sessions, issuer='https://another-issuer.example')
             assert (await client.get('/account/preferences')).headers['content-language'] == 'en'
             await login(client, sessions)

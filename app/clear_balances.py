@@ -1,5 +1,7 @@
 """Clear display labels from mint keyset metadata; never change asset identity."""
 import asyncio
+import hashlib
+import json
 import ipaddress
 import time
 from urllib.parse import urlsplit
@@ -110,3 +112,23 @@ class ClearLabels:
                 if isinstance(value, str) and 0 < len(value.strip()) <= limit:
                     row[field] = value.strip()
         return rows
+
+
+def asset_id(mint, unit):
+    return hashlib.sha256(json.dumps([mint.rstrip('/'), unit], separators=(',', ':')).encode()).hexdigest()
+
+
+def payment_assets(rows):
+    """Aggregate keysets by exact issuer/unit; friendly labels never identify value."""
+    grouped = {}
+    for row in rows:
+        key = asset_id(row['mint'], row['unit'])
+        if key not in grouped:
+            grouped[key] = {**row, 'id': key, 'amount': 0}
+        asset = grouped[key]
+        asset['amount'] += row['amount']
+        if asset['display_name'] != row['display_name']:
+            asset['display_name'] = row['unit']
+        if asset['display_unit'] != row['display_unit']:
+            asset['display_unit'] = row['unit']
+    return [row for row in grouped.values() if row['amount'] > 0]

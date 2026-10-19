@@ -23,6 +23,10 @@ class EcashReceiver:
         if value not in {'true', 'false'}:
             raise ValueError('OAKGATE_ECASH_RECEIVE_ENABLED must be true or false')
         self.enabled = value == 'true'
+        clear = os.getenv('OAKGATE_CLEAR_RECEIVE_ENABLED', 'true').strip().lower()
+        if clear not in {'true', 'false'}:
+            raise ValueError('OAKGATE_CLEAR_RECEIVE_ENABLED must be true or false')
+        self.clear_enabled = clear == 'true'
         self.interval = int(os.getenv('OAKGATE_ECASH_POLL_SECONDS', '30'))
         if not 10 <= self.interval <= 3600:
             raise ValueError('Ecash polling interval must be 10–3600 seconds')
@@ -30,8 +34,16 @@ class EcashReceiver:
             db.execute('CREATE TABLE IF NOT EXISTS ecash_inboxes (owner TEXT PRIMARY KEY, next_poll REAL NOT NULL DEFAULT 0)')
 
     @property
-    def available(self):
+    def cash_available(self):
         return self.enabled and bool(getattr(self.wallets.backend, 'ecash_receiving_available', False))
+
+    @property
+    def clear_available(self):
+        return self.enabled and self.clear_enabled and bool(getattr(self.wallets.backend, 'clear_receiving_available', False))
+
+    @property
+    def available(self):
+        return self.cash_available or self.clear_available
 
     def discovery(self, name):
         name = name.lower()
@@ -43,9 +55,22 @@ class EcashReceiver:
             raise ValueError('Address unavailable')
         relay = self.wallets.relay(record['material']['relay'])
         pubkey = self.wallets.backend.public_identity(record['material'])['hex']
-        return {'names': {name: pubkey}, 'relays': {pubkey: [relay]},
-                'safebox': {name: {'protocols': ['acorn-ecash-transfer'],
-                    'transports': ['nip59'], 'kinds': [7378], 'units': ['sat']}}}
+        payload = {'names': {name: pubkey}, 'relays': {pubkey: [relay]}}
+        if self.cash_available:
+            payload['safebox'] = {name: {'protocols': ['acorn-ecash-transfer'],
+                'transports': ['nip59'], 'kinds': [7378], 'units': ['sat']}}
+        if self.clear_available:
+            # No issuer/unit allowlist: successful Acorn redemption is the policy.
+            payload['clear'] = {name: {'protocols': ['clear-token-transfer'],
+                'transports': ['nip59'], 'kinds': [7379]}}
+        return payload
+
+    def wake(self, handle):
+        owner = self.wallets.store.address_owner(handle)
+        if owner:
+            with closing(self.wallets.store.connect()) as db, db:
+                db.execute('INSERT INTO ecash_inboxes(owner,next_poll) VALUES(?,0) '
+                           'ON CONFLICT(owner) DO UPDATE SET next_poll=0', (owner,))
 
     def due(self):
         with closing(self.wallets.store.connect()) as db, db:
@@ -73,8 +98,17 @@ class EcashReceiver:
             if not record or record['status'] != 'active':
                 return
             self.wallets.relay(record['material']['relay'])
-            async with asyncio.timeout(60):
-                await self.wallets.backend.receive_ecash(record['material'])
+            for enabled, method, timeout in (
+                (self.cash_available, 'receive_ecash', 30),
+                (self.clear_available, 'receive_clear', 45),
+            ):
+                if not enabled:
+                    continue
+                try:
+                    async with asyncio.timeout(timeout):
+                        await getattr(self.wallets.backend, method)(record['material'])
+                except Exception as exc:
+                    logger.warning('Acorn inbox phase=%s retry error_type=%s', method, type(exc).__name__)
         except Exception as exc:
             # Never log bearer tokens, decrypted events, keys or provider text.
             logger.warning('Acorn inbox retry error_type=%s', type(exc).__name__)
