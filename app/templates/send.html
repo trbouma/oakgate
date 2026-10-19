@@ -20,9 +20,9 @@
 <input type="hidden" name="csrf" value="{{ csrf }}">
 <label for="asset">{{ _('Balance to send') }}</label>
 <select id="asset" name="asset"><option value="">{{ _('Cash (sats)') }}</option>{% for asset in assets %}<option value="{{ asset.id }}"{% if selected_asset == asset.id %} selected{% endif %}>{{ asset.display_name }} — {{ '{:,}'.format(asset.amount) }} {{ asset.display_unit }} · {{ asset.mint }}</option>{% endfor %}</select>
-<label for="address">{{ _("Payment address") }}</label><input id="address" name="address" type="email" required maxlength="254" autocomplete="off" autocapitalize="none" placeholder="name@example.com">
-<label for="amount">{{ _("Amount (whole units)") }}</label><input id="amount" name="amount" type="number" inputmode="numeric" min="1" step="1" required>
-<label for="comment">{{ _("Comment (optional)") }}</label><input id="comment" name="comment" maxlength="255">
+<label for="address">{{ _("Payment address") }}</label><input id="address" name="address" type="email" required maxlength="254" autocomplete="off" autocapitalize="none" placeholder="name@example.com" value="{{ values.address | default('') }}">
+<label for="amount">{{ _("Amount (whole units)") }}</label><input id="amount" name="amount" type="number" inputmode="numeric" min="1" step="1" required value="{{ values.amount | default('') }}">
+<label for="comment">{{ _("Comment (optional)") }}</label><input id="comment" name="comment" maxlength="255" value="{{ values.comment | default('') }}">
 <button class="primary-action" type="submit">{{ _("Review payment") }}</button>
 </form>{% endif %}
 </section>

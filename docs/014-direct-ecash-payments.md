@@ -34,8 +34,14 @@ mint. The bootstrap mint is the default for creating Lightning receiving
 invoices, not a list of trusted issuers.
 
 When no usable direct route is found, OakGate resolves LNURL and obtains a
-Lightning invoice before showing confirmation. It checks the amount, expiry,
-and description hash when present. Discovery and callback requests require
+Lightning invoice before showing confirmation. It checks the mainnet currency, amount and expiry. Description hashes do not
+block outgoing invoice preparation, matching the receiving compatibility policy.
+Preparation failures stay on the signed-in Send page with the entered values and
+selected asset preserved; no payment is submitted until confirmation. The address
+field accepts Lightning addresses (`name@domain`), not payment website URLs.
+When the provider omits `commentAllowed` or sets it to zero/null, OakGate omits
+the comment from the invoice request instead of blocking payment. Providers that
+support comments still receive them within their advertised length limit. Discovery and callback requests require
 HTTPS, pin a public DNS result to the TLS connection, limit response size, and
 never follow redirects. No payment is sent during review.
 

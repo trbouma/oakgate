@@ -1,6 +1,5 @@
 """Reviewed, one-shot outgoing payments; all wallet operations use Acorn."""
 import asyncio
-import hashlib
 import ipaddress
 import json
 import logging
@@ -55,6 +54,10 @@ async def public_json(url, params=None):
                 return data
 
 
+class PaymentInputError(ValueError):
+    """Safe, application-authored payment guidance for display."""
+
+
 class SendService:
     def __init__(self, wallets, origin, receiver, fetch=public_json):
         self.wallets, self.origin, self.receiver, self.fetch = wallets, origin, receiver, fetch
@@ -72,21 +75,21 @@ class SendService:
 
     async def prepare(self, owner, address, amount, comment, asset=''):
         if not re.fullmatch(r'[1-9][0-9]{0,15}', amount):
-            raise ValueError('Enter a positive whole-number amount.')
+            raise PaymentInputError('Enter a positive whole-number amount.')
         selected = None
         if asset:
             if not getattr(self.wallets.backend, 'clear_sending_available', False):
-                raise ValueError('Clear sending is unavailable.')
+                raise PaymentInputError('Clear sending is unavailable.')
             selected = next((row for row in await self.clear_assets(owner) if row['id'] == asset), None)
             if selected is None or int(amount) > selected['amount']:
-                raise ValueError('The selected Clear balance is unavailable or insufficient.')
+                raise PaymentInputError('The selected Clear balance is unavailable or insufficient.')
         elif int(amount) > 1000000:
-            raise ValueError('Enter an amount between 1 and 1,000,000 sats.')
+            raise PaymentInputError('Enter an amount between 1 and 1,000,000 sats.')
         address = address.strip().lower()
         if len(address) > 254 or not re.fullmatch(r'[a-z0-9_.+-]+@[a-z0-9.-]+', address):
-            raise ValueError('Enter a payment address such as name@example.com.')
+            raise PaymentInputError('Enter a Lightning address such as name@example.com. Website addresses are not supported here.')
         if len(comment) > 255:
-            raise ValueError('Keep the comment to 255 characters or fewer.')
+            raise PaymentInputError('Keep the comment to 255 characters or fewer.')
         name, domain = address.split('@')
         payment = {'id': secrets.token_urlsafe(24), 'owner': owner, 'address': address,
                    'amount': int(amount), 'comment': comment, 'expires': time.time()+300}
@@ -126,34 +129,35 @@ class SendService:
             msat = payment['amount'] * 1000
             if (metadata.get('tag') != 'payRequest' or not isinstance(metadata.get('metadata'), str)
                     or not int(metadata.get('minSendable', 0)) <= msat <= int(metadata.get('maxSendable', 0))):
-                raise ValueError('The recipient cannot accept this amount.')
-            if comment and int(metadata.get('commentAllowed', 0)) < len(comment):
-                raise ValueError('This recipient does not support a comment of that length.')
+                raise PaymentInputError('The recipient cannot accept this amount.')
+            comment_limit = int(metadata.get('commentAllowed') or 0)
+            provider_comment = comment if comment_limit > 0 else ''
+            if provider_comment and comment_limit < len(provider_comment):
+                raise PaymentInputError('This recipient does not support a comment of that length.')
             callback = metadata.get('callback')
             if not isinstance(callback, str):
-                raise ValueError('Recipient did not provide a payment endpoint.')
+                raise PaymentInputError('Recipient did not provide a payment endpoint.')
             # public_json validates and pins the callback independently, even
             # when the provider uses a different public hostname.
             params = dict(httpx.URL(callback).params)
             params['amount'] = str(msat)
-            if comment:
-                params['comment'] = comment
+            params.pop('comment', None)
+            if provider_comment:
+                params['comment'] = provider_comment
             response = await self.fetch(callback, params)
             invoice = response.get('pr', '')
             if not isinstance(invoice, str) or len(invoice) > 10000:
-                raise ValueError('Invalid invoice')
+                raise PaymentInputError('Invalid invoice')
             decoded = bolt11.decode(invoice)
-            if decoded.amount_msat != msat or decoded.date + decoded.expiry <= time.time():
-                raise ValueError('Invoice amount or expiry does not match the request.')
-            if decoded.description_hash and decoded.description_hash != hashlib.sha256(metadata['metadata'].encode()).hexdigest():
-                raise ValueError('Invoice does not match the recipient metadata.')
+            if decoded.currency != 'bc' or decoded.amount_msat != msat or decoded.date + decoded.expiry <= time.time():
+                raise PaymentInputError('Invoice network, amount or expiry does not match the request.')
             payment.update(route='lightning', invoice=invoice,
                            expires=min(payment['expires'], decoded.date + decoded.expiry))
         with closing(self.wallets.store.connect()) as db, db:
             # An unresolved attempt must be investigated before another payment
             # is prepared; an old confirmation never silently becomes reusable.
             if db.execute("SELECT 1 FROM outgoing_payments WHERE owner=? AND state IN ('sending','unknown')", (owner,)).fetchone():
-                raise ValueError('A previous payment needs review. Check Acorn transaction history before sending again.')
+                raise PaymentInputError('A previous payment needs review. Check Acorn transaction history before sending again.')
             db.execute('INSERT INTO outgoing_payments VALUES(?,?,?,?,?)',
                        (payment['id'], owner, 'prepared', self.wallets.store.cipher.encrypt(json.dumps(payment).encode()), time.time()))
         return payment
@@ -256,11 +260,11 @@ class SendService:
         return self.get(owner, payment_id)
 
 
-def render(request, session, payment=None, message=None, status=200, assets=None, selected_asset=""):
+def render(request, session, payment=None, message=None, status=200, assets=None, selected_asset="", values=None):
     # Pass only display fields, never invoices or encrypted journal contents.
     display = {k: payment[k] for k in ('id', 'address', 'amount', 'route', 'state', 'mint', 'unit', 'display_name', 'display_unit') if k in payment} if payment else None
     return request.app.state.templates.TemplateResponse(request=request, name='send.html',
-        context={**session, 'active_page': 'balances', 'payment': display, 'message': message, 'assets': assets or [], 'selected_asset': selected_asset}, status_code=status)
+        context={**session, 'active_page': 'balances', 'payment': display, 'message': message, 'assets': assets or [], 'selected_asset': selected_asset, 'values': values or {}}, status_code=status)
 
 
 @router.get('/account/send', include_in_schema=False)
@@ -302,10 +306,28 @@ async def prepare(request: Request):
         async with asyncio.timeout(35):
             payment = await service.prepare(owner, str(form.get('address', '')), str(form.get('amount', '')), str(form.get('comment', '')), asset=str(form.get('asset', '')))
         return RedirectResponse('/account/send?payment='+payment['id'], 303)
-    except ClearRouteError as exc:
-        return error_page(request, str(exc), 422)
-    except Exception:
-        return error_page(request, 'Could not prepare this payment. Return to Balances, check the selected asset, address and amount, or review any unresolved payment.', 400)
+    except Exception as exc:
+        # Preparation has not submitted a payment. Keep the authenticated shell
+        # and selected asset; never expose provider responses or decoder errors.
+        if isinstance(exc, (PaymentInputError, ClearRouteError)):
+            message = str(exc)
+            status = 422 if isinstance(exc, ClearRouteError) else 400
+        else:
+            logger.warning('Payment preparation failed error_type=%s', type(exc).__name__)
+            message = 'Could not prepare this payment. No payment was sent. Check the Lightning address and amount, or try again shortly.'
+            status = 400
+        asset = str(form.get('asset', ''))
+        try:
+            async with asyncio.timeout(5):
+                assets = await service.clear_assets(owner)
+        except Exception:
+            assets = []
+        if asset and not any(row['id'] == asset for row in assets):
+            assets.append({'id': asset, 'display_name': 'Selected Clear balance unavailable',
+                           'amount': 0, 'display_unit': '', 'mint': ''})
+        return render(request, session, message=message, status=status,
+                      assets=assets, selected_asset=asset,
+                      values={k: str(form.get(k, '')) for k in ('address', 'amount', 'comment')})
 
 
 @router.post('/account/send/confirm', include_in_schema=False)
