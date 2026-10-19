@@ -48,6 +48,7 @@ On the current Beelink deployment, the host directory `/mnt/bitcoin/oakgate` is 
 | Table | Contents | Protection and constraints |
 | --- | --- | --- |
 | `wallets` | Owner index, Acorn public-key hash, encrypted custody material, setup status, and a short setup lease | One row per owner and one owner per Acorn public key; custody material encrypted with Fernet |
+| `user_social_preferences` | Owner index and optional public social npub | NIP-05 association only; no private key or change to Acorn ownership |
 | `user_preferences` | Owner index, display handle, and normalized handle | Unique normalized handle across the instance; handles stored as ordinary text |
 | `lightning_handles` | Handles advertised for payments and their owners | Prevents reassignment of an advertised address to another user |
 | `incoming_payments` | Receiving progress and encrypted quote, blinding secrets, proofs and signed delivery events | Durable mint and publication recovery; short processing leases; unique zap request IDs |

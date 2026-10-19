@@ -102,3 +102,13 @@ The included GitHub Pages workflow publishes on pushes to `main` once **Settings
 ### Receiving payments
 
 Choose a handle in Preferences to receive Lightning payments and zaps directly into your connected Acorn. The app processes payments while you are signed out and resumes pending work after a restart. The default mint is `https://mint.safebox.dev`; public zap relays and receiving limits are configurable. Invoice compatibility mode matches Safebox Web, with optional strict description-hash validation. See [Lightning payments and zaps](docs/009-lightning-receiving.md) for configuration, client compatibility and backup requirements.
+
+### Social identity
+
+Preferences accepts an optional public social npub for your handle's NIP-05
+address. Set the same address in your signed Nostr profile so clients can verify
+the association. OakGate does not request proof of control or a social private key.
+Leave blank to retain the Acorn public key as the default NIP-05 identity.
+Payments and wallet discovery remain bound to the Acorn through `safebox.json`.
+Older NIP-05-based wallet clients cannot safely use an address with distinct keys;
+see the [migration and compatibility notes](docs/018-safebox-address-discovery.md#enabling-a-distinct-social-npub-in-oakgate).

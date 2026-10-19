@@ -4,7 +4,8 @@ Status: payment-reader migration implemented, 2026-10-19. Acorn provides the
 version-1 parser, builder and secure resolver; OakGate and Safebox Web publish
 the directory and use it for cash and Clear payment discovery. Safebox Web wallet-message delivery and attribution now use it too; OakGate
 has no messaging interface and does not advertise that capability. Public NIP-05
-responses remain unchanged. Separate social keys are not enabled.
+responses retain their existing defaults. OakGate users can now set a separate social
+npub in Preferences; Safebox Web social-key preferences remain future work.
 It is a Mainstay-family application contract, not an established Nostr standard.
 
 ## Purpose and boundaries
@@ -35,7 +36,8 @@ restrictions and asset identity `(mint, unit)` remain in force.
 ## Deployment and rollout
 
 Phases 1 and 2, cash/Clear readers, and Safebox Web wallet-message delivery and
-attribution are implemented. Phase 4 social-key separation remains follow-up work.
+attribution are implemented. OakGate also implements the optional social-key
+preference from phase 4; deployment compatibility restrictions still apply.
 Acorn's resolver has no legacy fallback: it returns a distinct not-found error
 only for HTTP 404 and never queries `nostr.json`. Applications own the explicit
 legacy-domain policy described below.
@@ -63,8 +65,8 @@ Safebox Web advertises wallet messaging; OakGate does not yet provide it.
 
 ## Legacy coupling and remaining compatibility
 
-Both applications still publish their existing Acorn key as the NIP-05 identity
-for legacy clients. Migrated cash/Clear readers and Safebox Web wallet messaging
+Both applications default to their existing Acorn key as the NIP-05 identity
+for legacy clients; OakGate can explicitly override its social identity. Migrated cash/Clear readers and Safebox Web wallet messaging
 use `safebox.json`, except for explicitly permitted 404 legacy fallback. Local
 lookups use the registered wallet key directly.
 
@@ -210,11 +212,23 @@ cross-origin access. A social profile must publish the matching `nip05` value fo
 clients to show the association. The wallet directory must not overwrite social
 profile data or require OakGate to hold a social private key.
 
-For a future custom social-key setting, require authenticated handle ownership
-and a fresh challenge signed by the proposed social key, verified with Stroma.
-Store the public association separately from the wallet binding. This proves key
-control at registration, not enduring legal identity. Losing or changing the
-social key must not change Acorn ownership, issuer/subject login mapping or funds.
+OakGate users can save a social npub in Preferences while authenticated. Stroma
+validates its public-key encoding and curve point. Per the product decision, this
+setting does not require a proof-of-control challenge. Nostr clients verify the
+association by comparing the signed kind-0 profile's `nip05` value with the public
+NIP-05 response. OakGate does not claim to have verified social-key control and
+never requests or stores that key's secret.
+
+The public association is stored separately in SQLite `user_social_preferences`,
+keyed by the existing issuer/subject owner. Changing it does not modify custody,
+Acorn ownership, payment routes or wallet-message destinations. Clearing it restores
+the existing Acorn-key NIP-05 response. The preference follows the account when its
+handle changes; removed/inactive handles are not published. A connected active
+Acorn is still required for the existing public address lifecycle.
+
+When a social npub is set, `nostr.json` publishes only its social key, without
+wallet capability extensions or wallet relay hints. `safebox.json` and local wallet
+routing always use the Acorn binding. No social relay preference is introduced.
 
 Wallet-message address resolution and claimed-sender attribution use
 `safebox.json`; social messaging and social attribution continue using NIP-05.
@@ -371,7 +385,7 @@ Deploy the lockfiles containing Acorn's published discovery API. Verify both
 public endpoints for an existing handle before deploying the readers. Controlled
 real cash/Clear delivery checks remain operator acceptance steps; automated tests
 use fake wallets and do not move funds. Safebox Web messaging is migrated;
-OakGate messaging and social-key preferences remain later work.
+OakGate messaging and Safebox Web social-key preferences remain later work.
 
 ## Wallet-message reader rollout
 
@@ -388,3 +402,25 @@ API suffices for this migration; no legacy/social Acorn APIs are changed.
 Attribution displays current association, leaves the authenticated sender visible,
 and does not hide messages when verification fails. It uses at most ten distinct
 bounded lookups per page without reusing the social-identity cache.
+
+## Enabling a distinct social npub in OakGate
+
+Save the public npub in **Preferences → Social npub**, then set the matching
+`handle@domain` as `nip05` in the signed Nostr profile. Saving only the OakGate
+preference does not update the external profile or prove key control. No operator
+flag or additional secret is needed. Invalid input rejects the whole preferences
+save; public-key and handle changes are committed atomically.
+
+Before using distinct keys, remove this domain from known senders' legacy wallet
+fallback lists (`OAKGATE_SAFEBOX_DOMAINS` / `SAFEBOX_LEGACY_DOMAINS`) and verify v1
+wallet discovery. Unmodified clients that infer a wallet key from NIP-05 cannot
+safely use the split address. No server setting can correct those clients. Keep
+the field blank if those clients must retain the existing equal-key behaviour.
+The preference form explains this limitation. Existing users are not migrated
+automatically, and neither Acorn nor Safebox Web is changed by this release.
+
+Back up `user_social_preferences` with the rest of `custody.sqlite3`. It contains
+only public npubs and owner indexes. Restoring an older backup can restore an older
+social association, so check both directories after restoration. Disabling or
+rolling back this feature must not silently restore wallet keys as social identities
+for users who have selected a distinct key.

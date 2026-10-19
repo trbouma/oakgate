@@ -16,6 +16,11 @@
 <input id="handle" name="handle" type="text" value="{{ handle }}" maxlength="32" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="handle-help">
 <p id="handle-help" class="note">{{ _("Unique to this OakGate instance. Use 3–32 letters, numbers, hyphens or underscores, starting with a letter or number. Uppercase and lowercase count as the same name.") }}</p>
 <p class="note">{{ _("Your handle becomes your Lightning address when an Acorn is connected. Leave blank to disable the address. Once a handle is connected to an active Acorn, it stays reserved to you. This does not change your Acorn identity.") }}</p>
+<label for="social-npub">{{ _("Social npub (optional)") }}</label>
+<input id="social-npub" name="social_npub" type="text" value="{{ social_npub }}" maxlength="63" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="social-help">
+<p id="social-help" class="note">{{ _("Use your public Nostr npub for your handle’s NIP-05 identity. Never enter a private key. Leave blank to use your Acorn public key.") }}</p>
+<p class="note">{{ _("Set the same address in your Nostr profile. Nostr clients verify that the signed profile and this address agree. OakGate does not verify control of this social key.") }}</p>
+<p class="note">{{ _("Your payments and wallet messages keep using your Acorn key through safebox.json. Older wallets that use NIP-05 for payments may no longer work with this address when the keys differ.") }}</p>
 <button class="primary-action" type="submit">{{ _("Save preferences") }}</button>
 </form>
 {% else %}<p>{{ _("Preferences storage is being configured.") }}</p>{% endif %}

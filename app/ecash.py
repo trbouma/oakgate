@@ -58,6 +58,15 @@ class EcashReceiver:
         return name, pubkey, relay
 
     def discovery(self, name):
+        name = name.lower()
+        if not re.fullmatch(r'[a-z0-9][a-z0-9_-]{2,31}', name):
+            raise ValueError('Address unavailable')
+        owner = self.wallets.store.address_owner(name)
+        social = self.wallets.store.social_npub(owner) if owner else ''
+        if social:
+            from app.identity import social_public_identity
+            # Social NIP-05 must not advertise wallet capabilities or relays.
+            return {'names': {name: social_public_identity(social)['hex']}}
         name, pubkey, relay = self.wallet_destination(name)
         payload = {'names': {name: pubkey}, 'relays': {pubkey: [relay]}}
         if self.cash_available:
@@ -148,7 +157,7 @@ async def nip05(request: Request, name: str = ''):
 
 @router.get('/.well-known/safebox.json', include_in_schema=False)
 async def safebox_directory(request: Request):
-    """Additive wallet directory. NIP-05 and its legacy extensions stay intact."""
+    """Wallet directory always uses the Acorn binding, never the social preference."""
     from urllib.parse import urlsplit
     headers = {**HEADERS, 'X-Content-Type-Options': 'nosniff'}
     def failure(code, status):

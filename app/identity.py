@@ -1,4 +1,4 @@
-"""Operator-owned Mainstay service identity. Never accepts user custody keys."""
+"""Operator service identity and public-only social key validation. No custody keys."""
 import asyncio
 import os
 import ipaddress
@@ -81,3 +81,17 @@ class ServiceIdentity:
             result = await RelayClient(relay, timeout=8, session_factory=session_factory,
                                        max_msg_size=262144).publish(event)
         return result.accepted
+
+
+def social_public_identity(value):
+    """Validate a user-supplied public npub only; never accept or derive a secret."""
+    value = value.strip()
+    if value == value.upper():
+        value = value.lower()
+    if len(value) != 63 or not value.startswith('npub1'):
+        raise ValueError('Enter a valid public npub, not a private key.')
+    try:
+        key = Keys(pub_k=value)
+        return {'npub': key.public_key_bech32(), 'hex': key.public_key_hex()}
+    except Exception:
+        raise ValueError('Enter a valid public npub, not a private key.') from None

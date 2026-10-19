@@ -181,6 +181,7 @@ async def preferences_page(request, session, message=None, status=200):
     return request.app.state.templates.TemplateResponse(
         request=request, name='preferences.html', status_code=status,
         context={**session, 'active_page': 'preferences', 'handle': handle,
+                 'social_npub': service.store.social_npub(identity_key(session['user'])) if service else '',
                  'currency': service.store.currency(identity_key(session['user']), request.app.state.rates.default_currency) if service else 'USD',
                  'currency_options': request.app.state.rates.rows() if service else [],
                  'preferences_enabled': service is not None, 'message': message})
@@ -206,7 +207,8 @@ async def save_preferences(request: Request):
     try:
         language = str(form.get('language', service.store.language(identity_key(session['user']))))
         currency = str(form.get('currency', service.store.currency(identity_key(session['user']), request.app.state.rates.default_currency))).strip().upper()
-        service.store.save_handle(identity_key(session['user']), str(form.get('handle', '')), language=language, currency=currency)
+        service.store.save_handle(identity_key(session['user']), str(form.get('handle', '')), language=language, currency=currency,
+                                  social_npub=str(form['social_npub']) if 'social_npub' in form else None)
         request.state.language = language
     except HandleTaken:
         return await preferences_page(request, session, N_('That handle is already taken. Please choose another.'), 409)
