@@ -4,7 +4,7 @@
 <section class="preferences-panel wallet-panel">
 {% if message %}<p role="status">{{ _(message) }}</p>{% endif %}
 {% if preferences_enabled %}
-<form method="post" action="/account/preferences">
+<form method="post" action="/account/preferences" data-progress-message="{{ _('Saving preferences. Please wait…') }}">
 <input type="hidden" name="csrf" value="{{ csrf }}">
 <label for="currency">{{ _("Local currency") }}</label>
 <select id="currency" name="currency" required>{% for option in currency_options %}<option value="{{ option.code }}"{% if option.code == currency %} selected{% endif %}>{{ option.code }} — {{ _(option.description) }}</option>{% endfor %}</select>

@@ -41,7 +41,7 @@
 <a class="secondary-action" href="/account">{{ _("Refresh balances") }}</a>
 {% else %}
 <p>{{ _("Your new Acorn setup is pending.") }}</p><p class="note">{{ _("Your recovery information is saved. Retry to finish setting up the same Acorn.") }}</p>
-<form method="post" action="/account/acorn/retry"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="primary-action" type="submit">{{ _("Retry setup") }}</button></form>
+<form method="post" action="/account/acorn/retry" data-progress-message="{{ _('Finishing Acorn setup. Please wait…') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="primary-action" type="submit">{{ _("Retry setup") }}</button></form>
 {% endif %}
 <p class="wallet-identity"><span>{{ _("Acorn public identity") }}</span><br>{{ wallet.npub }}</p>
 </section>
@@ -50,13 +50,13 @@
 <p class="custody-explanation">{{ _("OakGate will store your secret key and recovery phrase on your behalf. Keep your own recovery copy too.") }}</p>
 <div class="wallet-options">
 <section class="wallet-panel"><h2>{{ _("Create a new Acorn") }}</h2><p>{{ _("Start with an empty safebox. OakGate will keep its recovery information for you.") }}</p><p class="note">{{ _("Bootstrap relay:") }} <span class="relay-address">{{ default_relay }}</span></p>
-<form method="post" action="/account/acorn/create">
+<form method="post" action="/account/acorn/create" data-progress-message="{{ _('Creating your Acorn. Please wait…') }}">
 <input type="hidden" name="csrf" value="{{ csrf }}">
 <label class="custody-check"><input type="checkbox" name="custody" value="accept" required> {{ _("I trust OakGate to hold my safebox secrets.") }}</label>
 <button class="primary-action" type="submit">{{ _("Create my Acorn") }}</button>
 </form></section>
 <section class="wallet-panel"><h2>{{ _("Connect an existing Acorn") }}</h2><p>{{ _("Use the recovery phrase and bootstrap relay for your existing safebox.") }}</p>
-<form method="post" action="/account/acorn/connect" autocomplete="off">
+<form method="post" action="/account/acorn/connect" data-progress-message="{{ _('Connecting your Acorn. Please wait…') }}" autocomplete="off">
 <input type="hidden" name="csrf" value="{{ csrf }}">
 <label for="phrase">{{ _("Recovery phrase") }}</label><textarea id="phrase" name="phrase" rows="3" maxlength="512" required autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Enter your recovery words in order"></textarea>
 <label for="relay">{{ _("Bootstrap relay") }}</label><input id="relay" name="relay" type="url" value="{{ default_relay }}" maxlength="512" required spellcheck="false">

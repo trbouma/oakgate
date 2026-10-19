@@ -4,7 +4,7 @@
 <a class="back-link" href="{% if reference %}/account/records/{{ reference }}{% else %}/account/records{% endif %}">← {% if reference %}{{ _("Record") }}{% else %}{{ _("Records") }}{% endif %}</a>
 {% if action in ['edit', 'present', 'share', 'check'] %}
 <h1>{{ {"edit": _("Edit record"), "present": _("Present record"), "share": _("Share record"), "check": _("Check record")}[action] }}</h1><p>{{ record.label }}</p>
-<form method="post" class="record-form" {% if action == 'edit' %}enctype="multipart/form-data"{% endif %}>
+<form method="post" class="record-form" data-progress-message="{{ _('Processing your record. Please wait…') }}" {% if action == 'edit' %}enctype="multipart/form-data"{% endif %}>
 <input type="hidden" name="csrf" value="{{ csrf }}">
 {% if action == 'edit' %}
 <label for="record-format">{{ _("Format") }}</label><select id="record-format" name="format"><option value="text" {% if record.payload is string %}selected{% endif %}>{{ _("Text") }}</option><option value="json" {% if record.payload is not string %}selected{% endif %}>{{ _("JSON") }}</option></select>
