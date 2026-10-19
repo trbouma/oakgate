@@ -65,9 +65,14 @@ class SendService:
         self.wallets, self.origin, self.receiver, self.fetch = wallets, origin, receiver, fetch
         self.discover = discover
         with closing(wallets.store.connect()) as db, db:
+            db.execute('BEGIN IMMEDIATE')
             db.execute('CREATE TABLE IF NOT EXISTS outgoing_payments (id TEXT PRIMARY KEY, owner TEXT NOT NULL, state TEXT NOT NULL, encrypted BLOB NOT NULL, created REAL NOT NULL)')
             if 'request_key' not in {row['name'] for row in db.execute('PRAGMA table_info(outgoing_payments)')}:
                 db.execute('ALTER TABLE outgoing_payments ADD COLUMN request_key TEXT')
+            if 'started_at' not in {row['name'] for row in db.execute('PRAGMA table_info(outgoing_payments)')}:
+                db.execute('ALTER TABLE outgoing_payments ADD COLUMN started_at REAL')
+            # Legacy interrupted attempts receive a conservative grace period.
+            db.execute("UPDATE outgoing_payments SET started_at=? WHERE state='sending' AND started_at IS NULL", (time.time(),))
             db.execute('CREATE UNIQUE INDEX IF NOT EXISTS outgoing_request ON outgoing_payments(owner,request_key) WHERE request_key IS NOT NULL')
 
     async def clear_assets(self, owner):
@@ -184,6 +189,7 @@ class SendService:
                     # Old tabs must not authorize changed terms; sent/unknown
                     # requests always retain their deduplication reservation.
                     db.execute("UPDATE outgoing_payments SET request_key=NULL WHERE id=? AND state='prepared'", (row['id'],))
+            self.check_reviewed_intents(db, owner, payment)
             # An unresolved attempt must be investigated before another payment
             # is prepared; an old confirmation never silently becomes reusable.
             if db.execute("SELECT 1 FROM outgoing_payments WHERE owner=? AND state IN ('sending','unknown')", (owner,)).fetchone():
@@ -299,7 +305,103 @@ class SendService:
         payment = json.loads(self.wallets.store.cipher.decrypt(row['encrypted']))
         if payment['owner'] != owner or payment['id'] != payment_id:
             raise ValueError('Payment identity mismatch')
-        return {**payment, 'state': row['state']}
+        return {**payment, 'state': row['state'], 'started_at': row['started_at'], 'created': row['created']}
+
+    def review_items(self, owner):
+        with closing(self.wallets.store.connect()) as db:
+            ids = [r['id'] for r in db.execute("SELECT id FROM outgoing_payments WHERE owner=? AND state IN ('sending','unknown','reviewed') ORDER BY created DESC", (owner,))]
+        return [self.get(owner, ident) for ident in ids]
+
+    @staticmethod
+    def payment_intents(payment):
+        """Conservative duplicate guards, independent of regenerated request IDs."""
+        keys = set()
+        amount = int(payment['amount'])
+        family = 'clear' if payment['route'] in {'clear','clear-request'} else 'cash'
+        asset = (payment.get('mint','').rstrip('/'), payment.get('unit','')) if family == 'clear' else ()
+        address = str(payment.get('address','')).strip().lower()
+        if '@' in address:
+            keys.add((family, 'address', address, amount, *asset))
+        pubkey = payment.get('pubkey') or payment.get('review',{}).get('recipient_pubkey')
+        if pubkey:
+            keys.add((family, 'wallet', pubkey.lower(), amount, *asset))
+        if payment.get('request_key'):
+            keys.add(('request', payment['request_key']))
+        if payment.get('invoice'):
+            try:
+                invoice = bolt11.decode(payment['invoice'])
+                payment_hash = invoice.payment_hash
+            except Exception:
+                payment_hash = hashlib.sha256(payment['invoice'].lower().encode()).hexdigest()
+            keys.add(('invoice', payment_hash))
+        return keys
+
+    def check_reviewed_intents(self, db, owner, payment):
+        requested = self.payment_intents(payment)
+        rows = db.execute("SELECT id FROM outgoing_payments WHERE owner=? AND state='reviewed'", (owner,)).fetchall()
+        for row in rows:
+            if requested & self.payment_intents(self.get(owner, row['id'])):
+                raise PaymentInputError('This matches a payment already set aside for review. It cannot be sent again. Open Payment review.')
+
+    def reviewable(self, payment):
+        if payment['state'] not in {'sending','unknown'}:
+            raise PaymentInputError('This payment is no longer awaiting review.')
+        if payment['state'] == 'sending' and (not payment['started_at'] or time.time() < payment['started_at'] + 120):
+            raise Busy
+
+    def save_review(self, db, payment, state):
+        changed = db.execute("UPDATE outgoing_payments SET state=?,encrypted=? WHERE id=? AND owner=? AND state=?",
+            (state, self.wallets.store.cipher.encrypt(json.dumps(payment).encode()), payment['id'], payment['owner'], payment['state'])).rowcount
+        if changed != 1:
+            raise Busy
+
+    async def check_payment(self, owner, ident):
+        self.get(owner, ident)
+        lease = self.wallets.store.acquire(owner)
+        try:
+            payment = self.get(owner, ident)
+            self.reviewable(payment)
+            record = self.wallets.store.get(owner)
+            if not record or record['status'] != 'active':
+                raise PaymentInputError('Connect an Acorn first.')
+            cards, available = [], False
+            try:
+                from app.transactions import transaction_cards, clear_transaction_cards
+                if payment['route'] in {'clear','clear-request'}:
+                    history = await self.wallets.clear_transactions(record['material'])
+                    history = [r for r in history if str(r.get('mint','')).rstrip('/') == payment['mint'].rstrip('/') and r.get('unit') == payment['unit']]
+                    cards = clear_transaction_cards(history)
+                else:
+                    cards = transaction_cards(await self.wallets.transactions(record['material']))
+                available = True
+            except Exception:
+                pass  # Missing/unavailable history never proves failure or success.
+            payment.update(review_checked_at=time.time(), review_history_available=available)
+            with closing(self.wallets.store.connect()) as db, db:
+                self.save_review(db, payment, payment['state'])
+            return payment, cards, available
+        finally:
+            self.wallets.store.release(owner, lease)
+
+    def resolve_payment(self, owner, ident, outcome):
+        if outcome not in {'received','not-received','uncertain'}:
+            raise PaymentInputError('Choose what you learned about the payment.')
+        self.get(owner, ident)
+        lease = self.wallets.store.acquire(owner)
+        try:
+            with closing(self.wallets.store.connect()) as db, db:
+                db.execute('BEGIN IMMEDIATE')
+                payment = self.get(owner, ident)
+                if payment['state'] == 'reviewed':
+                    return payment
+                self.reviewable(payment)
+                if not payment.get('review_checked_at'):
+                    raise PaymentInputError('Check Acorn history before setting this payment aside.')
+                payment.update(reviewed_at=time.time(), review_outcome=outcome)
+                self.save_review(db, payment, 'reviewed')
+            return self.get(owner, ident)
+        finally:
+            self.wallets.store.release(owner, lease)
 
     async def send(self, owner, payment_id):
         self.get(owner, payment_id)  # Authorize before acquiring a wallet lease.
@@ -324,7 +426,8 @@ class SendService:
                 db.execute('BEGIN IMMEDIATE')
                 if db.execute("SELECT 1 FROM outgoing_payments WHERE owner=? AND state IN ('sending','unknown')", (owner,)).fetchone():
                     raise ValueError('A previous payment needs review before another can be sent.')
-                changed = db.execute("UPDATE outgoing_payments SET state='sending' WHERE id=? AND owner=? AND state='prepared'", (payment_id, owner)).rowcount
+                self.check_reviewed_intents(db, owner, payment)
+                changed = db.execute("UPDATE outgoing_payments SET state='sending',started_at=? WHERE id=? AND owner=? AND state='prepared'", (time.time(), payment_id, owner)).rowcount
             if not changed:
                 return self.get(owner, payment_id)
             claimed = True
@@ -347,7 +450,7 @@ class SendService:
         finally:
             if claimed:
                 with closing(self.wallets.store.connect()) as db, db:
-                    db.execute("UPDATE outgoing_payments SET state=? WHERE id=? AND owner=?", (locals().get('state', 'unknown'), payment_id, owner))
+                    db.execute("UPDATE outgoing_payments SET state=? WHERE id=? AND owner=? AND state='sending'", (locals().get('state', 'unknown'), payment_id, owner))
             self.wallets.store.release(owner, lease)
         return self.get(owner, payment_id)
 

@@ -79,3 +79,35 @@ following the existing backup procedure. New `wallet_requests` records contain
 encrypted bearer codes and request references; outgoing payments add a nullable
 request-deduplication key and index. Both migrations are additive. Redis remains
 session storage and is not the durable request journal.
+
+
+## Reviewing interrupted outgoing payments
+
+Funds, Send and scanned-payment errors link to **Payment review**. This is an
+application activity log, separate from the user's Acorn transaction history.
+Checking history calls the existing Acorn read methods; it never sends, redeems,
+refunds or retries a payment. The recent history view is bounded and may be
+incomplete. A missing entry or matching amount is not proof of payment failure or
+receipt. History lookup failures remain explicitly uncertain.
+
+After attempting a history check, the user can record a recipient report or an
+uncertain outcome and acknowledge that the original payment must not be resent.
+**Set aside and allow other payments** changes the local journal to `reviewed`;
+it does not claim independently verified success or failure. A timestamp, the
+user's report and history-check availability are retained in encrypted SQLite.
+The original confirmation is permanently non-sendable, and its request identity
+remains reserved. Matching reviewed payment intents (wallet/address, amount and
+Clear mint/unit, or invoice identity) are also rejected, including previously
+prepared confirmations and requests with regenerated IDs. This conservative
+policy may block a legitimate later payment of the same amount to that recipient;
+operator investigation is required rather than bypassing it in the UI. It cannot
+identify a deliberately different replacement invoice or recipient alias as the
+same real-world purchase: the user must not arrange a replacement for an
+uncertain payment without establishing its outcome.
+
+A currently held Acorn lease prevents review and resolution. Interrupted `sending`
+rows additionally require a 120-second grace period from attempt start; legacy
+rows get this timestamp at migration. A conditional final write prevents a late
+sender from overwriting a reviewed state. Clearing one hold does not clear any
+other unresolved payments. No operation changes the Acorn's history or deletes
+payment records. The custody SQLite backup includes these recovery records.

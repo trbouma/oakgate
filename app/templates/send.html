@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+<p><a class="back-link" href="/account/payment-review">{{ _('Payment review') }}</a></p>
 <h1>{{ _("Send payment") }}</h1>
 <section class="wallet-panel preferences-panel send-panel">
 {% if message %}<p role="status">{{ _(message) }}</p>{% endif %}
@@ -15,6 +16,7 @@
 {% elif payment.state == 'sent' %}
 <p role="status">{{ _("Payment sent.") }}</p>
 {% if payment.route in ['ecash', 'clear'] %}<p class="note">{{ _("Delivery does not prove redemption. OakGate recipients can redeem while signed out; other recipients may need to open their wallet.") }}</p>{% endif %}
+{% elif payment.state == 'reviewed' %}<p role="status">{{ _('This payment was set aside after review. Its outcome has not been verified by OakGate. This confirmation cannot send it again.') }}</p>
 {% else %}<p role="status">{{ _("Payment outcome needs review. Do not send it again. Check Acorn transaction history and contact the operator if the result is unclear.") }}</p>{% endif %}
 {% else %}
 <form method="post" action="/account/send" data-progress-message="{{ _('Preparing your payment. Please wait…') }}">

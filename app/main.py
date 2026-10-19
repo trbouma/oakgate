@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from redis.exceptions import RedisError
 
+from app.payment_review import router as payment_review_router
 from app.scan import router as scan_router
 from app.receive import router as receive_router
 from app.messages import router as message_router
@@ -77,6 +78,7 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
     app.include_router(payment_router)
     app.include_router(ecash_router)
     app.include_router(send_router)
+    app.include_router(payment_review_router)
     app.include_router(scan_router)
     app.include_router(receive_router)
 

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}<h1 class="account-page-title">{{ _('Payment review') }}</h1>
+<section class="wallet-panel preferences-panel send-panel">
+<p>{{ _('Review an interrupted payment without sending it again. This activity log is separate from your Acorn transaction history.') }}</p>
+{% if message %}<p role="alert">{{ _(message) }}</p>{% endif %}
+{% if available is sameas false %}<p role="alert">{{ _('Acorn history is unavailable. The outcome remains uncertain. Contact the recipient or operator before making a replacement payment.') }}</p>{% endif %}
+{% if cards is not none %}<h2>{{ _('Recent Acorn transactions') }}</h2>
+{% for card in cards %}<article><p>{{ card.created }} · {{ _(card.direction) }} · {{ card.amount }}</p><p>{{ card.comment }}</p></article>{% else %}<p>{{ _('No recent entries were returned. This does not prove that the payment failed.') }}</p>{% endfor %}
+<p>{{ _('History can be incomplete or delayed. Matching amounts alone do not prove a payment outcome. Check with the recipient if needed.') }}</p>{% endif %}
+{% for item in items %}<article class="payment-review-item"><h2>{{ item.display_name or _('Cash') }} · {{ item.amount }} {{ item.display_unit or 'sats' }}</h2>
+<p>{{ item.date }}</p><p class="breakable">{{ item.address }}</p>
+<details><summary>{{ _('Payment reference') }}</summary><p class="breakable">{{ item.id }}</p>{% if item.mint %}<p class="breakable">{{ item.mint }} · {{ item.unit }}</p>{% endif %}</details>
+{% if item.state == 'reviewed' %}<p>{{ _('Set aside after review. The original payment cannot be sent again.') }}</p><p>{{ _('Your report (not independently verified):') }} {{ item.review_outcome }}</p>
+{% else %}
+<p>{{ _('This payment is holding further outgoing payments until reviewed.') }}</p>
+<form method="post" action="/account/payment-review/{{ item.id }}/check" data-progress-message="{{ _('Checking Acorn history. No funds will be sent.') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit" class="primary-action">{{ _('Check Acorn history') }}</button></form>
+{% if item.review_checked_at %}<form method="post" action="/account/payment-review/{{ item.id }}/resolve">
+<input type="hidden" name="csrf" value="{{ csrf }}"><label for="outcome-{{ item.id }}">{{ _('What did you learn?') }}</label>
+<select id="outcome-{{ item.id }}" name="outcome" required><option value="">{{ _('Choose an outcome') }}</option><option value="received">{{ _('Recipient confirms receipt') }}</option><option value="not-received">{{ _('Recipient reports no receipt') }}</option><option value="uncertain">{{ _('Outcome is still uncertain') }}</option></select>
+<label class="review-ack"><input type="checkbox" name="acknowledge" value="yes" required> {{ _('I understand this payment may already have completed or may complete later. I will not send it again. Setting it aside does not cancel, refund or retry it.') }}</label>
+<button type="submit" class="primary-action">{{ _('Set aside and allow other payments') }}</button></form>{% endif %}
+{% endif %}</article>{% else %}<p>{{ _('No payments need review.') }}</p>{% endfor %}
+</section><p><a href="/account">{{ _('Your Funds') }}</a></p>{% endblock %}
