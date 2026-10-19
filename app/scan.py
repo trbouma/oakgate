@@ -67,8 +67,15 @@ async def scan(request: Request):
     service.relay(material['relay'])
     form = await checked_form(request, session, max_bytes=200000)
     raw = ''
+    recognized_payment = False
     try:
         raw = payload(form)
+        code = raw.strip()
+        recognized_payment = code.lower().startswith(('lnbc', 'lightning:lnbc', 'creqa', 'creqb1', 'bitcoin:'))
+        if recognized_payment:
+            async with asyncio.timeout(40):
+                payment = await request.app.state.send.prepare_code(owner, code)
+            return RedirectResponse('/account/send?payment='+payment['id'], 303)
         symbology = str(form.get('symbology', ''))[:32]
         mode = str(form.get('acquisition_mode', 'auto'))
         product = acquire_product(raw, mode, symbology) if len(raw) <= 2048 else None
@@ -84,10 +91,6 @@ async def scan(request: Request):
         if re.fullmatch(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9.-]+', address) and len(address) <= 254:
             assets = await request.app.state.send.clear_assets(owner)
             return payment_form(request, session, assets=assets, values={'address': address})
-        if code.lower().startswith(('lnbc', 'lightning:lnbc', 'creqa', 'creqb1', 'bitcoin:')):
-            async with asyncio.timeout(40):
-                payment = await request.app.state.send.prepare_code(owner, code)
-            return RedirectResponse('/account/send?payment='+payment['id'], 303)
         purpose = ('presentation' if code.startswith('acorn:record-presentation:') else
                    'transfer' if code.startswith('acorn:record-transfer:') else
                    'token' if code.startswith(('cashuA', 'cashuB', 'cashu:')) else None)
@@ -110,6 +113,9 @@ async def scan(request: Request):
         message = 'Choose how to interpret this code.'
     except Exception as exc:
         message = str(exc) if isinstance(exc, PaymentInputError) else 'This code could not be reviewed. No payment was sent. Check the code and interpretation, or try again shortly.'
+    if recognized_payment:
+        return render(request, session, 'scan_payment_error.html', error=message,
+            acquired_payload=base64.b64encode(raw.encode()).decode(), status=400)
     return render(request, session, 'scan_review.html', error=message, payload=raw,
         acquired_payload=base64.b64encode(raw.encode()).decode(), symbology=str(form.get('symbology', ''))[:32], acquisition_mode=str(form.get('acquisition_mode','auto')), status=400)
 

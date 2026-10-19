@@ -136,9 +136,12 @@ class AcornBackend:
 
     async def create_clear_request(self, material, amount, asset, description):
         wallet = self.wallet(material)
+        import inspect
+        if 'encoding' not in inspect.signature(wallet.create_payment_request).parameters:
+            raise WalletInputError('Clear request creation needs the updated safebox-acorn dependency with CREQB support.')
         # Advertise exactly the inbox polled by OakGate's durable receiver.
         return wallet.create_payment_request(amount, unit=asset['unit'], mint=asset['mint'],
-            description=description or 'Clear payment', single_use=True, relays=[material['relay']])
+            description=description or 'Clear payment', single_use=True, relays=[material['relay']], encoding='B')
 
     async def clear_request_status(self, material, item):
         wallet = self.wallet(material)

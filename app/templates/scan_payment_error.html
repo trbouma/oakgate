@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block content %}<section class="scan-content"><h1 class="account-page-title">{{ _('Payment request') }}</h1>
+<p>{{ _('The payment request was recognized, but could not be prepared.') }}</p><p role="alert">{{ _(error) }}</p>
+<form class="scan-form" method="post" action="/account/scan"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="acquired_payload" value="{{ acquired_payload }}"><button type="submit">{{ _('Review payment again') }}</button></form>
+<a href="/account">{{ _('Your Funds') }}</a> · <a href="/account/scan">{{ _('Scan another code') }}</a></section>{% endblock %}

@@ -208,7 +208,18 @@ class SendService:
                 request_key='invoice:' + hashlib.sha256(code.lower().encode()).hexdigest(),
                 address='Scanned cash invoice', expires=min(payment['expires'], decoded.date+decoded.expiry))
         else:
-            review = await self.wallets.backend.inspect_clear_request(record['material'], code)
+            try:
+                review = await self.wallets.backend.inspect_clear_request(record['material'], code)
+            except ValueError as exc:
+                # Translate known Acorn validation outcomes without exposing provider text.
+                reason = str(exc)
+                if reason.startswith(('Your wallet has no matching Clear balance', 'No single Clear keyset')):
+                    message = 'This Clear request requires enough of the same mint and unit, including fees. Check your Clear balances.'
+                elif reason.startswith('Payment request does not offer'):
+                    message = 'This Clear request does not offer a supported wallet delivery method.'
+                else:
+                    message = 'The Clear request could not be validated. Check its format, amount, mint and delivery route.'
+                raise PaymentInputError(message) from None
             # Explicit request keys are wallet destinations, never NIP-05 lookups.
             relays = review.get('relays') or []
             if not relays or any(r not in self.wallets.allowed_relays for r in relays):

@@ -59,8 +59,17 @@ recent requests available. Receipt checking does not initiate a payment.
 
 ## Deployment and backups
 
-No Acorn API change or dependency update is required for this implementation.
-It uses APIs in OakGate's existing locked dependency. Existing receiving-worker
+New Clear requests use uppercase NUT-26 `CREQB1…`; legacy `creqA` requests
+remain readable. Recognized payment prefixes bypass GS1 interpretation even when
+camera metadata reports DataMatrix or the last selected interpretation was GS1.
+A payment-preparation failure stays in payment review instead of asking users to
+reinterpret the code.
+
+CREQB creation requires Acorn's optional `encoding="B"` creation API. Its default
+remains `A` for existing callers such as Safebox Web. After pushing the Acorn
+change, run `poetry update safebox-acorn` in OakGate and commit `poetry.lock`
+before rebuilding. An older locked dependency displays an explicit update-required
+message rather than silently generating creqA. Existing receiving-worker
 settings must remain enabled; public HTTPS enables mobile camera access.
 `OAKGATE_OPENETR_RELAYS`, `OAKGATE_BLOSSOM_SERVER` and
 `OAKGATE_TRANSFER_SERVER` select record infrastructure.

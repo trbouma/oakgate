@@ -2,6 +2,7 @@
 import asyncio
 import re
 import time
+from app.wallets import WalletInputError
 from app.custody import Busy
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import RedirectResponse, JSONResponse
@@ -81,6 +82,8 @@ async def create(request: Request):
                     'amount': int(amount), 'display_name': 'Cash', 'display_unit': 'sats'}
         ident = RequestStore(service.store).save(owner, item)
         return RedirectResponse('/account/receive?ticket='+ident, 303)
+    except WalletInputError as exc:
+        return render(request, session, message=str(exc), status=503)
     except Exception:
         return render(request, session, message='Could not create this request. Check the amount and receiving configuration, then try again.', status=400)
     finally:

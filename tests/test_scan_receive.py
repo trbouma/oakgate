@@ -132,6 +132,8 @@ def test_clear_requests_advertise_polled_inbox_and_status_requires_history(monke
     async def run():
         backend = AcornBackend()
         create = __import__('unittest.mock', fromlist=['Mock']).Mock(return_value='creqA-test')
+        import inspect
+        create.__signature__ = inspect.Signature([inspect.Parameter('encoding', inspect.Parameter.KEYWORD_ONLY)])
         wallet = SimpleNamespace(create_payment_request=create,
             get_clear_receipts=AsyncMock(return_value=[{'event_id':'evt','payment_request_id':'req','status':'accepted','mint':'https://mint.example','unit':'cmu-test'}]),
             get_clear_transaction_history=AsyncMock(return_value=[]))
@@ -254,4 +256,49 @@ def test_expired_unused_review_can_refresh_without_reviving_old_confirmation(tmp
                 await service.send(owner,first['id'])
             await service.send(owner,second['id'])
             backend.send_payment.assert_awaited_once()
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize('prefix',['creqA','CREQB1','creqb1'])
+@pytest.mark.parametrize('symbology',['qr_code','data_matrix','code_128'])
+def test_payment_codes_bypass_barcode_interpretation(tmp_path,prefix,symbology):
+    async def run():
+        client,sessions,wallets,backend=setup(tmp_path)
+        async with aclosing(client):
+            await login(client,sessions)
+            await client.post('/account/acorn/create',data=form())
+            sender=client._transport.app.state.send
+            sender.prepare_code=AsyncMock(return_value={'id':'review-ticket'})
+            code=prefix+'test'
+            response=await client.post('/account/scan',data=form(acquired_payload=base64.b64encode(code.encode()).decode(),symbology=symbology,acquisition_mode='gs1'))
+            assert response.status_code == 303
+            assert response.headers['location']=='/account/send?payment=review-ticket'
+            assert sender.prepare_code.await_args.args[1]==code
+            sender.prepare_code.side_effect=PaymentInputError('This Clear request needs a matching balance.')
+            response=await client.post('/account/scan',data=form(lightning_payment=code,symbology=symbology))
+            assert response.status_code==400
+            assert 'payment request was recognized' in response.text
+            assert 'Code interpretation' not in response.text
+            assert 'matching balance' in response.text
+    asyncio.run(run())
+
+
+def test_clear_creation_uses_b_or_explicit_dependency_message():
+    import inspect
+    from acorn.acorn import Acorn
+    from acorn.payment_request import decode_payment_request
+    from app.wallets import WalletInputError
+    async def run():
+        backend=AcornBackend()
+        material={**Acorn.generate_recovery_material(),'relay':'wss://spurline.safebox.dev'}
+        asset={'mint':'https://clear.safebox.dev','unit':'cmu-shares'}
+        if 'encoding' not in inspect.signature(Acorn.create_payment_request).parameters:
+            with pytest.raises(WalletInputError,match='updated safebox-acorn'):
+                await backend.create_clear_request(material,12,asset,'Satellite Shares')
+        else:
+            code=await backend.create_clear_request(material,12,asset,'Satellite Shares')
+            assert code.startswith('CREQB1')
+            request=decode_payment_request(code)
+            assert request.amount==12 and request.unit=='cmu-shares'
+            assert request.mints==('https://clear.safebox.dev',)
     asyncio.run(run())
