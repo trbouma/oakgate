@@ -85,7 +85,7 @@ The included GitHub Pages workflow publishes on pushes to `main` once **Settings
 
 ## Design
 
-- [Proposed Safebox discovery contract and migration](docs/018-safebox-address-discovery.md)
+- [Safebox discovery contract and migration](docs/018-safebox-address-discovery.md)
 
 - [Connect Keycloak sign-in](docs/005-keycloak-sign-in.md)
 - [Authentication design](docs/001-authentication-design.md)

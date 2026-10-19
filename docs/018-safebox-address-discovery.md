@@ -1,7 +1,9 @@
 # Safebox address discovery and social identity
 
-Status: proposed contract and migration plan, 2026-10-19. This note does not
-implement an endpoint, change address resolution, or enable separate social keys.
+Status: first additive implementation, 2026-10-19. Acorn now provides the version-1
+parser, builder and secure resolver; OakGate and Safebox Web publish the directory
+when that Acorn API is installed. Existing senders, message attribution and NIP-05
+responses remain unchanged. Separate social keys are not enabled.
 It is a Mainstay-family application contract, not an established Nostr standard.
 
 ## Purpose and boundaries
@@ -29,7 +31,36 @@ The mint policy remains unchanged: trust any mint from which Acorn can successfu
 receive. Discovery must not introduce an issuer allowlist. Existing Clear routing
 restrictions and asset identity `(mint, unit)` remain in force.
 
-## Current coupling
+## First-release deployment
+
+This release implements phases 1 and 2 below. Phase 3 reader migration and phase 4
+social-key separation remain follow-up work. No legacy fallback policy is added
+to the new resolver: it returns a distinct not-found error only for HTTP 404 and
+never queries `nostr.json`. Existing application senders keep their current paths.
+
+1. Publish the Acorn commit containing `acorn.safebox_discovery`.
+2. In each app, run `poetry update safebox-acorn`, inspect and commit its lockfile,
+   then run its tests against installed dependencies. Keep the Git branch on `main`.
+3. Deploy the apps and verify both directories for a claimed handle. Do not change
+   its NIP-05 key. OakGate's endpoint uses the canonical `OAKGATE_PUBLIC_URL` domain.
+4. Safebox Web uses `SAFEBOX_NIP05_EXTERNAL_RELAYS` as the explicitly configured
+   public wallet relay list during dual publication. With no public relay list,
+   it returns 404 rather than exposing an internal home relay. OakGate uses the
+   existing approved Acorn bootstrap relay. Invalid public routing returns 503.
+5. Only then plan the reader switch, including controlled legacy domains and
+   wallet-message attribution. There is no automatic social-key cutover.
+
+An old installed Acorn dependency leaves the apps running with existing behaviour;
+only the new endpoint returns 503 `discovery_dependency_unavailable`. The endpoint
+must not be treated as deployed until it returns a validated version-1 response.
+Source-override testing does not establish locked-container deployability. No
+lockfile can reference this new API until its Acorn commit has been published.
+
+No database migration, new secret, service key or mint policy is introduced.
+Cash/Clear receipt capabilities reflect current implementation/configuration;
+wallet messaging is deliberately not advertised by this first release.
+
+## Existing coupling (retained during this release)
 
 Safebox Web resolves external cash and Clear recipients through `nostr.json`.
 Its cash resolver accepts a valid NIP-05 key with usable routing without requiring

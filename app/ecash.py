@@ -45,7 +45,7 @@ class EcashReceiver:
     def available(self):
         return self.cash_available or self.clear_available
 
-    def discovery(self, name):
+    def wallet_destination(self, name):
         name = name.lower()
         if not self.available or not re.fullmatch(r'[a-z0-9][a-z0-9_-]{2,31}', name):
             raise ValueError('Address unavailable')
@@ -55,6 +55,10 @@ class EcashReceiver:
             raise ValueError('Address unavailable')
         relay = self.wallets.relay(record['material']['relay'])
         pubkey = self.wallets.backend.public_identity(record['material'])['hex']
+        return name, pubkey, relay
+
+    def discovery(self, name):
+        name, pubkey, relay = self.wallet_destination(name)
         payload = {'names': {name: pubkey}, 'relays': {pubkey: [relay]}}
         if self.cash_available:
             payload['safebox'] = {name: {'protocols': ['acorn-ecash-transfer'],
@@ -140,3 +144,43 @@ async def nip05(request: Request, name: str = ''):
         return JSONResponse({'names': {}}, status_code=404, headers=HEADERS)
     except Exception:
         return JSONResponse({'names': {}}, status_code=503, headers=HEADERS)
+
+
+@router.get('/.well-known/safebox.json', include_in_schema=False)
+async def safebox_directory(request: Request):
+    """Additive wallet directory. NIP-05 and its legacy extensions stay intact."""
+    from urllib.parse import urlsplit
+    headers = {**HEADERS, 'X-Content-Type-Options': 'nosniff'}
+    def failure(code, status):
+        return JSONResponse({'error': code}, status_code=status, headers=headers)
+    names = request.query_params.getlist('name')
+    if len(names) != 1:
+        return failure('invalid_name', 400)
+    try:
+        from acorn.safebox_discovery import build_safebox_document, normalize_safebox_name
+    except ImportError:
+        # Allow old locked Acorn installations to retain all existing behaviour.
+        return failure('discovery_dependency_unavailable', 503)
+    try:
+        name = normalize_safebox_name(names[0])
+    except ValueError:
+        return failure('invalid_name', 400)
+    receiver = request.app.state.ecash
+    if receiver is None or not receiver.available:
+        return failure('not_found', 404)
+    try:
+        name, pubkey, relay = receiver.wallet_destination(name)
+    except ValueError:
+        return failure('not_found', 404)
+    except Exception:
+        return failure('unavailable', 503)
+    try:
+        origin = urlsplit(request.app.state.settings.origin)
+        if origin.scheme != 'https' or origin.port is not None:
+            return failure('not_found', 404)
+        payload = build_safebox_document(f'{name}@{origin.hostname}', pubkey,
+            [relay], cash=receiver.cash_available,
+            clear=receiver.clear_available)
+        return JSONResponse(payload, headers=headers)
+    except Exception:
+        return failure('unavailable', 503)
