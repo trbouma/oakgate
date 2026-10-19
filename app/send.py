@@ -1,5 +1,6 @@
 """Reviewed, one-shot outgoing payments; all wallet operations use Acorn."""
 import asyncio
+import hashlib
 import ipaddress
 import json
 import logging
@@ -65,6 +66,9 @@ class SendService:
         self.discover = discover
         with closing(wallets.store.connect()) as db, db:
             db.execute('CREATE TABLE IF NOT EXISTS outgoing_payments (id TEXT PRIMARY KEY, owner TEXT NOT NULL, state TEXT NOT NULL, encrypted BLOB NOT NULL, created REAL NOT NULL)')
+            if 'request_key' not in {row['name'] for row in db.execute('PRAGMA table_info(outgoing_payments)')}:
+                db.execute('ALTER TABLE outgoing_payments ADD COLUMN request_key TEXT')
+            db.execute('CREATE UNIQUE INDEX IF NOT EXISTS outgoing_request ON outgoing_payments(owner,request_key) WHERE request_key IS NOT NULL')
 
     async def clear_assets(self, owner):
         record = self.wallets.store.get(owner)
@@ -164,14 +168,66 @@ class SendService:
                 raise PaymentInputError('Invoice network, amount or expiry does not match the request.')
             payment.update(route='lightning', invoice=invoice,
                            expires=min(payment['expires'], decoded.date + decoded.expiry))
+        return self.save_prepared(payment)
+
+    def save_prepared(self, payment):
+        owner = payment['owner']
         with closing(self.wallets.store.connect()) as db, db:
+            db.execute('BEGIN IMMEDIATE')
+            if payment.get('request_key'):
+                row = db.execute('SELECT id FROM outgoing_payments WHERE owner=? AND request_key=?', (owner, payment['request_key'])).fetchone()
+                if row:
+                    previous = self.get(owner, row['id'])
+                    if previous['state'] != 'prepared' or previous['expires'] > time.time():
+                        return previous
+                    # Refresh an unused expired review with a NEW confirmation ID.
+                    # Old tabs must not authorize changed terms; sent/unknown
+                    # requests always retain their deduplication reservation.
+                    db.execute("UPDATE outgoing_payments SET request_key=NULL WHERE id=? AND state='prepared'", (row['id'],))
             # An unresolved attempt must be investigated before another payment
             # is prepared; an old confirmation never silently becomes reusable.
             if db.execute("SELECT 1 FROM outgoing_payments WHERE owner=? AND state IN ('sending','unknown')", (owner,)).fetchone():
                 raise PaymentInputError('A previous payment needs review. Check Acorn transaction history before sending again.')
-            db.execute('INSERT INTO outgoing_payments VALUES(?,?,?,?,?)',
-                       (payment['id'], owner, 'prepared', self.wallets.store.cipher.encrypt(json.dumps(payment).encode()), time.time()))
+            db.execute('INSERT INTO outgoing_payments(id,owner,state,encrypted,created,request_key) VALUES(?,?,?,?,?,?)',
+                       (payment['id'], owner, 'prepared', self.wallets.store.cipher.encrypt(json.dumps(payment).encode()), time.time(), payment.get('request_key')))
         return payment
+
+    async def prepare_code(self, owner, code):
+        record = self.wallets.store.get(owner)
+        if not record or record['status'] != 'active':
+            raise PaymentInputError('Connect an Acorn first.')
+        payment = {'id': secrets.token_urlsafe(24), 'owner': owner, 'comment': '', 'expires': time.time()+300}
+        if code.lower().startswith('lightning:'):
+            code = code[10:]
+        if code.lower().startswith('lnbc'):
+            decoded = bolt11.decode(code)
+            msat = int(decoded.amount_msat or 0)
+            if decoded.currency != 'bc' or not 0 < msat <= 1000000000 or msat % 1000 or decoded.date + decoded.expiry <= time.time():
+                raise PaymentInputError('Use an unexpired, fixed whole-satoshi mainnet invoice up to 1,000,000 sats.')
+            payment.update(route='lightning', invoice=code, amount=msat//1000,
+                request_key='invoice:' + hashlib.sha256(code.lower().encode()).hexdigest(),
+                address='Scanned cash invoice', expires=min(payment['expires'], decoded.date+decoded.expiry))
+        else:
+            review = await self.wallets.backend.inspect_clear_request(record['material'], code)
+            # Explicit request keys are wallet destinations, never NIP-05 lookups.
+            relays = review.get('relays') or []
+            if not relays or any(r not in self.wallets.allowed_relays for r in relays):
+                raise PaymentInputError('This request has no approved inbox route.')
+            if clear_availability(review['mint']) == 'instance':
+                # There is no address binding in a NUT-18 code. Fail closed for
+                # Docker/instance mints rather than guessing recipient locality.
+                raise PaymentInputError('Use a local receipt address for this instance-only Clear balance.')
+            if review.get('single_use'):
+                identity = [review['recipient_pubkey'], review.get('payment_request_id') or code]
+                payment['request_key'] = 'clear:' + hashlib.sha256(json.dumps(identity).encode()).hexdigest()
+            assets = await self.clear_assets(owner)
+            label = next((a for a in assets if a['mint'].rstrip('/') == review['mint'].rstrip('/') and a['unit'] == review['unit']), {})
+            payment.update(route='clear-request', request=code, review=review,
+                amount=review['requested_amount'], mint=review['mint'], unit=review['unit'],
+                address=review['recipient_pubkey'], display_name=label.get('display_name', review['unit']),
+                display_unit=label.get('display_unit', review['unit']),
+                proof_amount=review['proof_amount'], receiver_input_fee=review['receiver_input_fee'])
+        return self.save_prepared(payment)
 
     def local_directory(self, name):
         name, pubkey, relay = self.receiver.wallet_destination(name)
@@ -287,7 +343,7 @@ class SendService:
 
 def render(request, session, payment=None, message=None, status=200, assets=None, selected_asset="", values=None):
     # Pass only display fields, never invoices or encrypted journal contents.
-    display = {k: payment[k] for k in ('id', 'address', 'amount', 'route', 'state', 'mint', 'unit', 'display_name', 'display_unit') if k in payment} if payment else None
+    display = {k: payment[k] for k in ('id', 'address', 'amount', 'route', 'state', 'mint', 'unit', 'display_name', 'display_unit', 'proof_amount', 'receiver_input_fee') if k in payment} if payment else None
     return request.app.state.templates.TemplateResponse(request=request, name='send.html',
         context={**session, 'active_page': 'balances', 'payment': display, 'message': message, 'assets': assets or [], 'selected_asset': selected_asset, 'values': values or {}}, status_code=status)
 

@@ -1,13 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
+<h2 id="wallet-title">{{ _("Your Funds") }}</h2>
 {% if wallet and wallet.status == "active" %}<p><a class="back-link" href="/account/send">{{ _("Send payment") }}</a></p>{% endif %}
-<p class="eyebrow">{{ _("YOUR OAKGATE") }}</p><h1>{{ _("Hello, %(name)s.") % {"name": user.name} }}</h1>
-{% if user.email %}<p class="intro">{{ user.email }}</p>{% endif %}
 {% if message %}<p class="wallet-message" role="alert">{{ _(message) }}</p>{% endif %}
 {% if not wallet_enabled %}
 <p class="note">{{ _("Your account is ready. Safebox storage is being configured.") }}</p>
 {% elif wallet %}
-<h2 id="wallet-title">{{ _("Your Funds") }}</h2>
 <section class="wallet-panel" aria-labelledby="wallet-title">
 {% if wallet.status == 'active' %}
 <h3 class="balance-heading">{{ _("Cash Balance") }}</h3>

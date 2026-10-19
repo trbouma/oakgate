@@ -103,7 +103,8 @@ def test_login_account_and_logout(signing_key):
             assert me.json()['sub'] == 'stable-user-id'
             assert me.json()['iss'] == identity.issuer
             page = await client.get('/account')
-            assert '&lt;script&gt;Example&lt;/script&gt;' in page.text
+            assert 'Your Funds' in page.text
+            assert 'Example' not in page.text  # Funds no longer displays the greeting or identity.
             assert page.headers['referrer-policy'] == 'strict-origin'
             csrf = re.search(r'name="csrf" value="([^"]+)"', page.text)[1]
             assert (await client.post('/auth/logout', data={'csrf': 'bad'})).status_code == 403

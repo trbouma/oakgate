@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="account-page-title">{{ _('Receive') }}</h1>
+<section class="wallet-panel preferences-panel send-panel">
+{% if message %}<p role="alert">{{ _(message) }}</p>{% endif %}
+{% if item %}
+<h2>{{ item.display_name }}</h2><p class="cash-balance">{{ '{:,}'.format(item.amount) }} <span>{{ item.display_unit }}</span></p>
+<p role="status" data-receive-status data-status-url="/account/receive/status/{{ item.id }}" data-complete="{{ _('Received') }}" data-pending="{{ _('Waiting for payment…') }}" data-unavailable="{{ _('Status unavailable. Retrying…') }}" data-review="{{ _('Receipt needs review. Check transactions.') }}" data-expired="{{ _('Request expired') }}">{{ _(receipt_state|capitalize) }}</p>
+{% if receipt_state != 'complete' %}
+<div data-receive-pending><div class="receive-code">{{ qr | safe }}<label for="request-code">{{ _('Payment request') }}</label><textarea id="request-code" readonly onclick="this.select()">{{ item.code }}</textarea></div>
+{% if item.scope and item.scope != 'across-networks' %}<p class="note">{{ _('This Clear request is limited to wallets that can reach its mint. Use a receipt address for an instance-only balance.') }}</p>{% endif %}
+<a class="primary-action" href="/account/receive?ticket={{ item.id }}">{{ _('Check receipt') }}</a></div>
+{% endif %}
+<script src="/static/receive-status.js" defer></script>
+<p><a href="/account/receive">{{ _('New request') }}</a></p>
+{% else %}
+<form method="post" action="/account/receive" data-progress-message="{{ _('Creating your request. Please wait…') }}">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label for="asset">{{ _('Balance to receive') }}</label><select id="asset" name="asset"><option value="">{{ _('Cash (sats)') }}</option>{% for asset in assets %}<option value="{{ asset.id }}">{{ asset.display_name }} — {{ asset.display_unit }}</option>{% endfor %}</select>
+<label for="amount">{{ _('Amount') }}</label><input id="amount" name="amount" type="number" min="1" step="1" required inputmode="numeric">
+<label for="description">{{ _('Description (Clear requests)') }}</label><input id="description" name="description" maxlength="200">
+<button class="primary-action" type="submit">{{ _('Create request') }}</button>
+</form>
+{% if recent %}<details><summary>{{ _('Recent requests') }}</summary>{% for entry in recent %}<p><a href="/account/receive?ticket={{ entry.id }}">{{ entry.display_name }} · {{ entry.amount }} {{ entry.display_unit }}</a></p>{% endfor %}</details>{% endif %}
+{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="account-page-title">{{ _('Review code') }}</h1><section class="wallet-panel scan-content">
+{% if message %}<p role="status">{{ _(message) }}</p>{% endif %}
+{% if destination %}<p>{{ _('This code opens an external website. Check the address before continuing.') }}</p><p class="breakable">{{ destination }}</p><a class="primary-action" href="{{ destination }}" rel="noopener noreferrer" target="_blank">{{ _('Open website') }}</a>{% endif %}
+{% if detail %}<h2>{{ detail.label }}</h2><p>{{ detail.record_type }}</p>{% endif %}
+{% if purpose == 'presentation' %}<pre>{{ detail.payload | tojson(indent=2) }}</pre>{% if preview and preview.has_blob %}
+{% with label=preview.label, has_blob=preview.has_blob, blob_type=preview.blob_type,
+blob_preview=preview.blob_preview, blob_fingerprint=preview.blob_fingerprint,
+pkpass_preview=preview.pkpass_preview, json_credential_preview=preview.json_credential_preview,
+mdoc_preview=preview.mdoc_preview, blob_url=preview.blob_url, blob_inline_url=preview.blob_inline_url %}{% include 'record_preview.html' %}{% endwith %}
+<p><a href="{{ preview.blob_url }}">{{ _('Download record file') }}</a></p>{% endif %}
+{% if history %}<details><summary>{{ _('OpenETR evidence') }}</summary>{% if history.error %}<p>{{ _('Lookup unavailable; this does not mean no anchor exists.') }}</p>{% endif %}{% for graph in history.candidate_graphs %}{% with graph_number=loop.index %}{% include '_openetr_candidate_graph.html' %}{% endwith %}{% endfor %}</details>{% endif %}{% endif %}
+{% if purpose in ['transfer', 'token'] %}
+<p>{{ _('Accept this record into your Acorn?') if purpose == 'transfer' else _('Accept this token into your Acorn? Successful redemption determines mint acceptance.') }}</p>
+<form method="post" action="/account/scan/accept" data-progress-message="{{ _('Accepting. Please wait and do not submit again.') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="ticket" value="{{ ticket }}"><input type="hidden" name="confirmed" value="yes"><button class="primary-action" type="submit">{{ _('Accept') }}</button></form>
+{% endif %}
+<p><a href="/account/scan">{{ _('Scan another code') }}</a></p></section>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="scan-content"><h1 class="account-page-title">Scan</h1>
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+<section class="scanner" data-lightning-scanner>
+  <video class="scanner-video" data-scanner-video playsinline muted></video>
+  <p class="scanner-status" data-scanner-status role="status" aria-live="polite">
+    Requesting camera access…
+  </p>
+  <button type="button" data-scanner-start hidden>Start camera</button>
+  <button type="button" data-scanner-stop hidden>Stop camera</button>
+</section>
+
+<form class="scan-form" method="post" action="/account/scan" autocomplete="off"
+      data-scanner-form>
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <input type="hidden" name="symbology" value="" data-scanner-symbology>
+  <input type="hidden" name="acquired_payload" value="" data-scanner-payload>
+  <label for="lightning_payment">Scan or paste a code or payment request</label>
+  <input id="lightning_payment" name="lightning_payment" type="text"
+         value="{{ lightning_address }}" placeholder="alice@example.com" required
+         spellcheck="false" autocapitalize="none" autocomplete="off"
+         data-scanner-result>
+  <button type="submit">Review Code</button>
+</form>
+<details class="general-advisories scanner-advisories">
+  <summary>Advisories</summary>
+  <div class="general-advisories-content">
+    <p>Valid raw GTINs open product information automatically. Eight-digit codes require EAN-8 or UPC-E decoder metadata, or an explicit choice on the interpretation page.</p>
+    <p>Point the camera at a OakGate record-sharing or presentation code,
+    Clear token, NUT-18 Clear payment request, Lightning address or invoice, or
+    GS1 Digital Link, or HTTPS website address. Scanning only acquires the request; OakGate determines the
+    capability from the code before showing the next action.</p>
+    <p>The camera starts automatically. If access is unavailable, check the
+    browser's camera permission or enter the code manually. Camera access from
+    another device requires OakGate to be served over HTTPS.</p>
+    <p>Once text is acquired, the camera stops. Recognized GS1 Digital Links open OakGate’s independent product verification page, without visiting the printed website. Other HTTPS websites require a warning and confirmation before opening. Lightning/NIP-05 addresses, valid LNURLs encoding supported Lightning-address endpoints, and Clear payment requests open payment review automatically; payment still requires confirmation. Other codes go to a separate interpretation page. EAN, UPC and DataMatrix camera decoding depends on browser support. Preserve ASCII group separators when pasting GS1 element strings.</p>
+    <noscript><p>Camera scanning requires JavaScript. You can still enter the
+    code manually.</p></noscript>
+  </div>
+</details>
+<script type="module" src="/static/lightning-scan.js"></script>
+</div>{% endblock %}

@@ -131,8 +131,57 @@ class AcornBackend:
     def direct_sending_available(self):
         return callable(getattr(Acorn, 'send_ecash_transfer', None))
 
+    async def inspect_clear_request(self, material, code):
+        return await self.wallet(material).inspect_payment_request(code)
+
+    async def create_clear_request(self, material, amount, asset, description):
+        wallet = self.wallet(material)
+        # Advertise exactly the inbox polled by OakGate's durable receiver.
+        return wallet.create_payment_request(amount, unit=asset['unit'], mint=asset['mint'],
+            description=description or 'Clear payment', single_use=True, relays=[material['relay']])
+
+    async def clear_request_status(self, material, item):
+        wallet = self.wallet(material)
+        receipts = await wallet.get_clear_receipts()
+        accepted = {r['event_id'] for r in receipts if r.get('status') == 'accepted'
+            and r.get('payment_request_id') == item['request_id']
+            and (r.get('mint') or ((r.get('mints') or [''])[0])).rstrip('/') == item['mint'].rstrip('/')
+            and r.get('unit') == item['unit']}
+        if not accepted:
+            return 'pending'
+        history = await wallet.get_clear_transaction_history()
+        credits = {row['source_event']: int(row.get('amount') or 0) for row in history
+            if row.get('source_event') in accepted and row.get('direction') == 'in'
+            and row.get('operation') == 'accept' and row.get('unit') == item['unit']
+            and str(row.get('mint') or '').rstrip('/') == item['mint'].rstrip('/')}
+        amount = sum(credits.values())
+        return 'complete' if amount >= item['amount'] else 'review'
+
+    async def inspect_scanned_record(self, material, code, presentation=False):
+        wallet = self.wallet(material)
+        method = wallet.inspect_record_presentation if presentation else wallet.inspect_record_transfer
+        return await method(code, allowed_servers=[self.record_settings.blossom, self.record_settings.transfer_server])
+
+    async def accept_scanned_record(self, material, code):
+        return await self.wallet(material).accept_record_transfer(code,
+            allowed_servers=[self.record_settings.blossom, self.record_settings.transfer_server])
+
+    async def accept_scanned_token(self, material, code):
+        wallet = self.wallet(material)
+        receipt = await wallet.stage_pasted_clear_token(code)
+        return await wallet.accept_pending_clear_receipt(receipt['event_id'])
+
     async def send_payment(self, material, payment):
         wallet = self.wallet(material)
+        if payment['route'] == 'clear-request':
+            fresh = await wallet.inspect_payment_request(payment['request'])
+            for key in ('mint', 'unit', 'keyset', 'requested_amount', 'proof_amount', 'recipient_pubkey', 'relays'):
+                if fresh.get(key) != payment['review'].get(key):
+                    raise ValueError('Clear request terms changed; payment was not sent')
+            result = await wallet.send_payment_request(payment['request'], memo='Paid from OakGate')
+            if not isinstance(result, dict) or result.get('status') != 'OK':
+                raise RuntimeError('Clear request outcome unresolved')
+            return {'event_id': result.get('event_id')}
         if payment['route'] == 'clear':
             result = await wallet.send_clear_transfer(
                 amount=payment['amount'], recipient=payment['pubkey'],

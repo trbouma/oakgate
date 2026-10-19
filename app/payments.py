@@ -92,6 +92,23 @@ class PaymentService:
             if item.get('invoice') and item.get('expiry', 0) > time.time() and item['state'] == 'waiting' and not item.get('paid_at'):
                 return item['invoice']
             raise ValueError('Zap already submitted or invoice unavailable; create a new zap request')
+        await self.create_quote(item)
+        return item['invoice']
+
+    async def request_invoice(self, owner, amount):
+        if not self.config.enabled or not self.config.min_sat <= amount <= self.config.max_sat:
+            raise ValueError('Amount is outside the configured receiving limits')
+        wallet = self.wallets.store.get(owner)
+        if not wallet or wallet['status'] != 'active':
+            raise ValueError('Connect an Acorn first')
+        self.wallets.relay(wallet['material']['relay'])
+        item, _ = self.store.reserve(owner, {'service_pubkey': self.identity.pubkey,
+            'amount': amount, 'mint': self.config.mint, 'zap': None, 'comment': None,
+            'description': 'OakGate cash request', 'relays': []})
+        await self.create_quote(item)
+        return item
+
+    async def create_quote(self, item):
         try:
             async with asyncio.timeout(45):
                 item.update(await self.mint.quote(item['mint'], item['amount'], item['description']))

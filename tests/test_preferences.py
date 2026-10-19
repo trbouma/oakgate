@@ -50,7 +50,8 @@ def test_preferences_and_detail_authorization(tmp_path):
             assert (await client.post('/account/preferences',data=form(handle='Tim'),headers={'origin':'https://evil.example'})).status_code==403
             assert (await client.post('/account/preferences',data=form(handle='Tim'))).status_code==200
             assert service.store.preference(owner)=='Tim'
-            assert 'Hello, Tim.' in (await client.get('/account')).text
+            assert 'Hello, Tim.' not in (await client.get('/account')).text
+            assert 'Your Funds' in (await client.get('/account')).text
             await client.post('/account/acorn/create',data=form())
             page=await client.get('/account/records/'+reference)
             assert page.status_code==200 and page.headers['cache-control']=='no-store'

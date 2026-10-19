@@ -56,6 +56,7 @@ nav:
       - Wallet messages: 019-wallet-messages.md
       - Safebox address discovery: 018-safebox-address-discovery.md
       - Clear payments: 015-clear-payments.md
+      - Scan and Receive: 020-scan-and-receive.md
       - Lightning payments and zaps: 009-lightning-receiving.md
       - Identity storage and backups: 008-identity-storage-backups.md
       - Keycloak on Beelink: 002-keycloak-beelink.md

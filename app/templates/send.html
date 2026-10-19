@@ -4,12 +4,13 @@
 <section class="wallet-panel preferences-panel send-panel">
 {% if message %}<p role="status">{{ _(message) }}</p>{% endif %}
 {% if payment %}
-<p class="cash-balance">{% if payment.route != 'clear' %}₿ {% endif %}{{ '{:,}'.format(payment.amount) }} <span>{{ payment.display_unit if payment.route == 'clear' else 'sats' }}</span></p>
+<p class="cash-balance">{% if payment.route not in ['clear', 'clear-request'] %}₿ {% endif %}{{ '{:,}'.format(payment.amount) }} <span>{{ payment.display_unit if payment.route in ['clear', 'clear-request'] else 'sats' }}</span></p>
 <p class="breakable">{{ payment.address }}</p>
-<p>{% if payment.route == 'clear' %}{{ _('Clear payment') }} · {{ payment.display_name }}{% else %}{{ _('Direct ecash') if payment.route == 'ecash' else _('Lightning') }}{% endif %}</p>
-{% if payment.route == 'clear' %}<details><summary>{{ _('Asset details') }}</summary><p class="breakable">{{ payment.mint }}</p><p class="breakable">{{ payment.unit }}</p></details>{% endif %}
+<p>{% if payment.route in ['clear', 'clear-request'] %}{{ _('Clear payment') }} · {{ payment.display_name }}{% else %}{{ _('Direct ecash') if payment.route == 'ecash' else _('Lightning') }}{% endif %}</p>
+{% if payment.route in ['clear', 'clear-request'] %}<details><summary>{{ _('Asset details') }}</summary><p class="breakable">{{ payment.mint }}</p><p class="breakable">{{ payment.unit }}</p></details>{% endif %}
+{% if payment.route == 'clear-request' %}<p>{{ _('Total with receiver fee') }}: {{ payment.proof_amount }} {{ payment.display_unit }} ({{ _('fee') }}: {{ payment.receiver_input_fee }})</p>{% endif %}
 {% if payment.state == 'prepared' %}
-<p class="note">{% if payment.route == 'clear' %}{{ _("Review the recipient, asset and amount before sending. Mint fees may apply.") }}{% else %}{{ _("Review the recipient and amount before sending. Mint or Lightning fees may apply.") }}{% endif %}</p>
+<p class="note">{% if payment.route in ['clear', 'clear-request'] %}{{ _("Review the recipient, asset and amount before sending. Mint fees may apply.") }}{% else %}{{ _("Review the recipient and amount before sending. Mint or Lightning fees may apply.") }}{% endif %}</p>
 <form method="post" action="/account/send/confirm" data-progress-message="{{ _('Sending payment. Please wait and do not submit again.') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="payment" value="{{ payment.id }}"><button class="primary-action payment-confirm" type="submit"><span class="confirm-idle">{{ _("Confirm payment") }}</span><span class="confirm-busy"><span class="payment-spinner" aria-hidden="true"></span>{{ _("Sending payment…") }}</span></button><p class="confirm-busy note" role="status" aria-live="polite">{{ _('Sending payment. Please wait and do not submit again.') }}</p></form>
 {% elif payment.state == 'sent' %}
 <p role="status">{{ _("Payment sent.") }}</p>
@@ -26,5 +27,5 @@
 <button class="primary-action" type="submit">{{ _("Review payment") }}</button>
 </form>{% endif %}
 </section>
-{% if not payment or payment.route != 'clear' %}<a class="back-link" href="/account/transactions">{{ _("Cash transactions") }}</a> · {% endif %}<a class="back-link" href="/account">{{ _("Back to balances") }}</a>
+{% if not payment or payment.route not in ['clear', 'clear-request'] %}<a class="back-link" href="/account/transactions">{{ _("Cash transactions") }}</a> · {% endif %}<a class="back-link" href="/account">{{ _("Back to balances") }}</a>
 {% endblock %}

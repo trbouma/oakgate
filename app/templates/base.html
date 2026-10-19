@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="{{ language }}" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="/static/theme.js?v=20261018-theme-1"></script><meta name="theme-color" content="#171914"><title>{{ _("OakGate · Mainstay") }}</title><link rel="icon" href="/logo.png"><link rel="stylesheet" href="/static/style.css?v=20261019-centered-brand-1"><script src="/static/forms.js?v=20261019-confirm-busy-1" defer></script></head>
+<script src="/static/theme.js?v=20261018-theme-1"></script><meta name="theme-color" content="#171914"><title>{{ _("OakGate · Mainstay") }}</title><link rel="icon" href="/logo.png"><link rel="stylesheet" href="/static/style.css?v=20261019-scan-receive-1"><script src="/static/forms.js?v=20261019-confirm-busy-1" defer></script></head>
 <body{% if active_page %} class="account-shell"{% endif %}><header class="app-header"><div class="header-brand-group">
 <details class="brand-disclosure">
 <summary class="brand-icon" aria-label="{{ _('About OakGate') }}" title="{{ _('About OakGate') }}"><img src="/logo.png" alt="" width="32" height="32"></summary>
@@ -15,7 +15,7 @@
 <a href="/account/records"{% if active_page == 'records' %} aria-current="page"{% endif %}>{{ _("Records") }}</a>
 <a href="/account/messages"{% if active_page == 'messages' %} aria-current="page"{% endif %}>{{ _("Messages") }}</a>
 <a href="/account/preferences"{% if active_page == 'preferences' %} aria-current="page"{% endif %}>{{ _("Preferences") }}</a>
-</nav>{% endif %}
+</nav><div class="wallet-actions" aria-label="{{ _('Wallet actions') }}"><a class="primary-action" href="/account/scan"{% if active_page == 'scan' %} aria-current="page"{% endif %}>{{ _('Scan') }}</a><a class="primary-action" href="/account/receive"{% if active_page == 'receive' %} aria-current="page"{% endif %}>{{ _('Receive') }}</a></div>{% endif %}
 <p id="page-progress" class="page-progress" role="status" aria-live="polite" aria-atomic="true" data-working="{{ _('Working. Please wait…') }}" data-opening="{{ _('Opening…') }}" hidden></p>
 <main>{% block content %}{% endblock %}</main>
 <footer>OakGate <span>{{ _("Part of the Mainstay family.") }}</span></footer></body></html>
