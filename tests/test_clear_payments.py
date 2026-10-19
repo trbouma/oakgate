@@ -151,3 +151,28 @@ def test_asset_labels_cannot_merge_different_issuers():
             for mint in (MINT, 'https://other.example')]
     assets = payment_assets(rows)
     assert len(assets) == 2 and assets[0]['id'] != assets[1]['id']
+
+
+@pytest.mark.parametrize("supported", [True, False])
+def test_clear_uses_wallet_directory_without_social_lookup(tmp_path, supported):
+    from acorn.safebox_discovery import build_safebox_document, parse_safebox_document
+    from stroma import Keys
+    async def run():
+        client, wallets, backend, owner, service, fetch = await clear_setup(tmp_path)
+        async with aclosing(client):
+            address = "alice@other.example"
+            pubkey = Keys(priv_k="01" * 32).public_key_hex()
+            destination = parse_safebox_document(build_safebox_document(address, pubkey, [wallets.default_relay], clear=True, clear_units=[UNIT if supported else "other-unit"]), address)
+            service.discover = AsyncMock(return_value=destination)
+            if supported:
+                payment = await service.prepare(owner, address, "6", "", asset=asset_id(MINT, UNIT))
+                assert payment["pubkey"] == pubkey
+                assert payment["route"] == "clear"
+                await service.send(owner, payment["id"])
+                backend.send_payment.assert_awaited_once()
+            else:
+                with pytest.raises(ValueError):
+                    await service.prepare(owner, address, "6", "", asset=asset_id(MINT, UNIT))
+                backend.send_payment.assert_not_awaited()
+            fetch.assert_not_awaited()
+    asyncio.run(run())

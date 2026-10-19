@@ -1,9 +1,9 @@
 # Safebox address discovery and social identity
 
-Status: first additive implementation, 2026-10-19. Acorn now provides the version-1
-parser, builder and secure resolver; OakGate and Safebox Web publish the directory
-when that Acorn API is installed. Existing senders, message attribution and NIP-05
-responses remain unchanged. Separate social keys are not enabled.
+Status: payment-reader migration implemented, 2026-10-19. Acorn provides the
+version-1 parser, builder and secure resolver; OakGate and Safebox Web publish
+the directory and use it for cash and Clear payment discovery. Message attribution
+and public NIP-05 responses remain unchanged. Separate social keys are not enabled.
 It is a Mainstay-family application contract, not an established Nostr standard.
 
 ## Purpose and boundaries
@@ -31,12 +31,13 @@ The mint policy remains unchanged: trust any mint from which Acorn can successfu
 receive. Discovery must not introduce an issuer allowlist. Existing Clear routing
 restrictions and asset identity `(mint, unit)` remain in force.
 
-## First-release deployment
+## Deployment and rollout
 
-This release implements phases 1 and 2 below. Phase 3 reader migration and phase 4
-social-key separation remain follow-up work. No legacy fallback policy is added
-to the new resolver: it returns a distinct not-found error only for HTTP 404 and
-never queries `nostr.json`. Existing application senders keep their current paths.
+Phases 1 and 2 and the cash/Clear reader portion of phase 3 are implemented.
+Wallet-message migration and phase 4 social-key separation remain follow-up work.
+Acorn's resolver has no legacy fallback: it returns a distinct not-found error
+only for HTTP 404 and never queries `nostr.json`. Applications own the explicit
+legacy-domain policy described below.
 
 1. Publish the Acorn commit containing `acorn.safebox_discovery`.
 2. In each app, run `poetry update safebox-acorn`, inspect and commit its lockfile,
@@ -47,14 +48,13 @@ never queries `nostr.json`. Existing application senders keep their current path
    public wallet relay list during dual publication. With no public relay list,
    it returns 404 rather than exposing an internal home relay. OakGate uses the
    existing approved Acorn bootstrap relay. Invalid public routing returns 503.
-5. Only then plan the reader switch, including controlled legacy domains and
-   wallet-message attribution. There is no automatic social-key cutover.
+5. Deploy the payment readers with the correct legacy-domain configuration.
+   Wallet-message attribution remains later work. There is no automatic social-key cutover.
 
-An old installed Acorn dependency leaves the apps running with existing behaviour;
-only the new endpoint returns 503 `discovery_dependency_unavailable`. The endpoint
-must not be treated as deployed until it returns a validated version-1 response.
-Source-override testing does not establish locked-container deployability. No
-lockfile can reference this new API until its Acorn commit has been published.
+The payment readers require the published discovery API in the committed lockfiles.
+Verify the installed revision before deploying; source-override testing does not
+establish container deployability. A directory is ready only when a real handle
+returns a validated version-1 response.
 
 No database migration, new secret, service key or mint policy is introduced.
 Cash/Clear receipt capabilities reflect current implementation/configuration;
@@ -351,3 +351,27 @@ Implementation acceptance must cover:
 - [Lightning receiving and zaps](009-lightning-receiving.md)
 - [Mainstay principles](010-mainstay-principles.md)
 - [Identity mapping and backups](008-identity-storage-backups.md)
+
+## Payment reader rollout configuration
+
+OakGate uses `OAKGATE_SAFEBOX_DOMAINS`; Safebox Web uses
+`SAFEBOX_LEGACY_DOMAINS`. Both default to `safebox.dev`, accept comma-separated
+exact domains, and allow an explicit empty value to disable legacy compatibility.
+Only list older domains whose NIP-05 names still refer to wallet keys. Remove a
+domain before any social/wallet split. A v1 404 is the sole trigger for legacy
+lookup; malformed responses, unknown versions, timeouts and other HTTP statuses
+stop preparation. A missing capability never triggers a social-key lookup.
+Cash can use ordinary LNURL when no wallet route is advertised; Clear cannot.
+
+Local recipients resolve from registered wallet bindings, without public HTTP or
+social discovery. OakGate keeps operator relay approval and pins the wallet key,
+relay and discovery source in its encrypted review journal. Confirmation does
+not resolve the address again. Safebox Web passes explicit wallet keys and relay
+hints to Acorn, including its persisted Clear jobs. No mint acceptance policy,
+user-key ownership or uncertain-send retry behaviour changes in this rollout.
+
+Deploy the lockfiles containing Acorn's published discovery API. Verify both
+public endpoints for an existing handle before deploying the readers. Controlled
+real cash/Clear delivery checks remain operator acceptance steps; automated tests
+use fake wallets and do not move funds. Messaging migration and social-key
+preferences remain later work.

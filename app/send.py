@@ -16,6 +16,8 @@ import httpx
 from fastapi import APIRouter, Request
 from fastapi.responses import RedirectResponse
 
+from acorn.safebox_discovery import resolve_safebox_address, SafeboxNotFound, SafeboxDiscoveryError, CASH, CLEAR
+
 from app.auth import current_session, error_page
 from app.custody import Busy, identity_key
 from app.wallet_routes import checked_form
@@ -59,10 +61,11 @@ class PaymentInputError(ValueError):
 
 
 class SendService:
-    def __init__(self, wallets, origin, receiver, fetch=public_json):
+    def __init__(self, wallets, origin, receiver, fetch=public_json, discover=resolve_safebox_address):
         self.wallets, self.origin, self.receiver, self.fetch = wallets, origin, receiver, fetch
-        # Older Safebox Web deployments only advertise NIP-05 plus relays.
-        # Explicit operator opt-in avoids equating every NIP-05 user with Acorn.
+        self.discover = discover
+        # Legacy-domain opt-in applies only after safebox.json returns 404.
+        # Never list domains whose social and wallet identities have split.
         self.legacy_domains = {v.strip().lower() for v in os.getenv('OAKGATE_SAFEBOX_DOMAINS', 'safebox.dev').split(',') if v.strip()}
         with closing(wallets.store.connect()) as db, db:
             db.execute('CREATE TABLE IF NOT EXISTS outgoing_payments (id TEXT PRIMARY KEY, owner TEXT NOT NULL, state TEXT NOT NULL, encrypted BLOB NOT NULL, created REAL NOT NULL)')
@@ -99,14 +102,43 @@ class SendService:
         payload = None
         if local and self.receiver and self.receiver.available:
             try:
-                payload = self.receiver.discovery(name)
+                payload = self.local_directory(name)
+                payment['discovery_source'] = 'local-wallet'
             except ValueError:
                 pass
         elif not local:
             try:
-                payload = await self.fetch(f'https://{domain}/.well-known/nostr.json', {'name': name})
-            except (ValueError, httpx.HTTPError, OSError, TimeoutError):
-                pass
+                destination = await self.discover(address)
+                capability = CLEAR if selected else CASH
+                unit = selected['unit'] if selected else 'sat'
+                if destination.supports(capability, unit):
+                    descriptor = destination.capabilities[capability]
+                    payload = {'names': {name: destination.pubkey},
+                               'relays': {destination.pubkey: list(destination.relays)},
+                               ('clear' if selected else 'safebox'): {
+                                   name: {**descriptor, 'protocols': [capability]}}}
+                payment['discovery_source'] = destination.source
+            except SafeboxNotFound:
+                if domain in self.legacy_domains:
+                    try:
+                        payload = await self.fetch(f'https://{domain}/.well-known/nostr.json', {'name': name})
+                        if (not isinstance(payload, dict) or not isinstance(payload.get('names'), dict)
+                                or not isinstance(payload.get('relays', {}), dict)):
+                            raise ValueError('Invalid legacy wallet directory')
+                        legacy_key = payload['names'].get(name)
+                        if legacy_key is not None and (
+                                not isinstance(legacy_key, str) or not re.fullmatch(r'[0-9a-fA-F]{64}', legacy_key)):
+                            raise ValueError('Invalid legacy wallet key')
+                        if legacy_key and not isinstance(payload.get('relays', {}).get(legacy_key, []), list):
+                            raise ValueError('Invalid legacy relay hints')
+                        payment['discovery_source'] = 'legacy-nip05'
+                    except httpx.HTTPStatusError as exc:
+                        if exc.response.status_code != 404:
+                            raise PaymentInputError('Legacy wallet discovery is unavailable. No payment was sent.') from None
+                    except (ValueError, httpx.HTTPError, OSError, TimeoutError):
+                        raise PaymentInputError('Legacy wallet discovery is unavailable. No payment was sent.') from None
+            except SafeboxDiscoveryError:
+                raise PaymentInputError('Wallet discovery is unavailable or invalid. No payment was sent. Try again later.') from None
         if selected:
             payment.update(self.clear_destination(payload, name, selected))
             self.check_clear_route(payment)
@@ -162,6 +194,17 @@ class SendService:
                        (payment['id'], owner, 'prepared', self.wallets.store.cipher.encrypt(json.dumps(payment).encode()), time.time()))
         return payment
 
+    def local_directory(self, name):
+        name, pubkey, relay = self.receiver.wallet_destination(name)
+        payload = {'names': {name: pubkey}, 'relays': {pubkey: [relay]}}
+        for enabled, field, protocol, kind in (
+            (self.receiver.cash_available, 'safebox', CASH, 7378),
+            (self.receiver.clear_available, 'clear', CLEAR, 7379),
+        ):
+            if enabled:
+                payload[field] = {name: {'protocols': [protocol], 'transports': ['nip59'], 'kinds': [kind]}}
+        return payload
+
     def clear_destination(self, payload, name, asset):
         if not isinstance(payload, dict):
             raise ValueError('Recipient does not advertise Clear support.')
@@ -196,7 +239,7 @@ class SendService:
         try:
             if not self.receiver or not self.receiver.clear_available:
                 raise ValueError('Receiving unavailable')
-            destination = self.clear_destination(self.receiver.discovery(name), name, {**payment, 'id': payment['asset']})
+            destination = self.clear_destination(self.local_directory(name), name, {**payment, 'id': payment['asset']})
             if destination['pubkey'] != payment['pubkey'] or destination['relay'] != payment['relay']:
                 raise ValueError('Recipient changed')
         except ValueError:

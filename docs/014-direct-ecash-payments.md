@@ -1,10 +1,8 @@
 # Direct Safebox payments
 
-This page describes the current NIP-05-based implementation. The
-[Safebox discovery contract](018-safebox-address-discovery.md) separates
-wallet delivery from social identity through an additive, staged migration.
-The version-1 directory is now additive; outgoing readers still use the path
-described here. Do not change existing NIP-05 wallet mappings during this stage.
+Payment readers now use the [Safebox discovery contract](018-safebox-address-discovery.md).
+Public NIP-05 responses remain available for older senders and social lookups.
+Do not change existing NIP-05 wallet mappings until those consumers migrate.
 
 OakGate can receive encrypted Acorn ecash transfers without an active browser or
 Redis session. A Send payment page also lets a user review an address and amount,
@@ -18,13 +16,12 @@ user's Acorn public key and approved bootstrap relay. It also advertises the
 LNURL discovery: the `nostrPubkey` used for zap receipts remains OakGate's service
 identity, not the user's Acorn identity.
 
-Safebox Web already resolves NIP-05 names and relay hints before choosing its
-Acorn direct-transfer path. It can use OakGate's directory response without
-needing the recipient to open OakGate. NIP-05 alone is a public-key directory,
-not proof of wallet capabilities. For outgoing payments OakGate requires an
-Acorn capability descriptor or an operator-recognized legacy Safebox Web domain.
-The default legacy domain is `safebox.dev`; configure the actual Safebox Web
-hostname if different.
+OakGate and Safebox Web prefer `/.well-known/safebox.json?name=handle` for
+cash and Clear payment delivery. Its explicit wallet key and capabilities take
+precedence over social NIP-05. Only a 404 permits legacy NIP-05 lookup, and only
+on configured older wallet domains. OakGate uses `OAKGATE_SAFEBOX_DOMAINS`,
+defaulting to `safebox.dev`; an empty value disables this fallback. Invalid
+responses and network failures stop preparation rather than downgrading.
 
 Direct delivery uses a relay in `OAKGATE_ALLOWED_RELAYS`. New receiving relays
 must be approved by the operator. Mint selection and redemption use Acorn's

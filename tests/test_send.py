@@ -8,6 +8,7 @@ import httpx
 import pytest
 
 from app.send import SendService, public_json
+from acorn.safebox_discovery import SafeboxNotFound
 from test_wallets import setup, login, form
 from test_ecash import ready
 
@@ -22,7 +23,9 @@ async def prepared(tmp_path):
     await client.post('/account/acorn/create', data=form())
     payload = {'names': {'alice': 'ab'*32}, 'relays': {'ab'*32: [wallets.default_relay]}}
     fetch = AsyncMock(return_value=payload)
-    service = SendService(wallets, 'https://oakgate.example', None, fetch)
+    service = SendService(wallets, 'https://oakgate.example', None, fetch,
+                          discover=AsyncMock(side_effect=SafeboxNotFound('legacy test instance')))
+    service.legacy_domains.update({'other.example', 'another-safebox.example', 'primal.net'})
     return client, sessions, wallets, backend, owner, service, fetch
 
 
@@ -90,7 +93,8 @@ def test_generic_nip05_is_not_proof_of_acorn_support(tmp_path):
         async with aclosing(client):
             with pytest.raises(ValueError):
                 await service.prepare(owner, 'alice@ordinary.example', '42', '')
-            assert fetch.await_count == 2  # Went to LNURL rather than assuming ecash support.
+            assert fetch.await_count == 1  # Only LNURL; unlisted NIP-05 is never consulted.
+            assert '/.well-known/lnurlp/' in fetch.await_args.args[0]
             backend.send_payment.assert_not_awaited()
     asyncio.run(run())
 
@@ -241,5 +245,40 @@ def test_provider_comments_follow_advertised_support(tmp_path, monkeypatch, adve
                 assert params['comment'] == 'hello'
             else:
                 assert 'comment' not in params
+            backend.send_payment.assert_not_awaited()
+    asyncio.run(run())
+
+
+def test_wallet_directory_pins_recipient_for_confirmation(tmp_path):
+    from acorn.safebox_discovery import build_safebox_document, parse_safebox_document
+    from stroma import Keys
+    async def run():
+        client, sessions, wallets, backend, owner, service, fetch = await prepared(tmp_path)
+        async with aclosing(client):
+            key = Keys(priv_k="01" * 32).public_key_hex()
+            address = "alice@safebox.dev"
+            destination = parse_safebox_document(build_safebox_document(address, key, [wallets.default_relay]), address)
+            service.discover = AsyncMock(return_value=destination)
+            payment = await service.prepare(owner, address, "42", "")
+            assert payment["pubkey"] == key
+            assert payment["discovery_source"] == "safebox-v1"
+            fetch.assert_not_awaited()
+            service.discover.side_effect = AssertionError("Confirmation must use the prepared recipient")
+            await service.send(owner, payment["id"])
+            assert backend.send_payment.await_args.args[1]["pubkey"] == key
+            service.discover.assert_awaited_once()
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize("reason", ["invalid schema", "unknown version", "timeout", "HTTP 410", "HTTP 429", "HTTP 503"])
+def test_wallet_directory_errors_stop_before_payment(tmp_path, reason):
+    from acorn.safebox_discovery import SafeboxDiscoveryError
+    async def run():
+        client, sessions, wallets, backend, owner, service, fetch = await prepared(tmp_path)
+        async with aclosing(client):
+            service.discover = AsyncMock(side_effect=SafeboxDiscoveryError(reason))
+            with pytest.raises(ValueError, match="No payment was sent"):
+                await service.prepare(owner, "alice@safebox.dev", "42", "")
+            fetch.assert_not_awaited()
             backend.send_payment.assert_not_awaited()
     asyncio.run(run())
