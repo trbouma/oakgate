@@ -10,11 +10,11 @@ then confirm a direct ecash or Lightning payment.
 
 ## Address discovery and routing
 
-`/.well-known/nostr.json?name=handle` maps the current, active OakGate handle to the
-user's Acorn public key and approved bootstrap relay. It also advertises the
-`acorn-ecash-transfer` protocol without restricting mint issuers. This is separate from
-LNURL discovery: the `nostrPubkey` used for zap receipts remains OakGate's service
-identity, not the user's Acorn identity.
+`/.well-known/nostr.json?name=handle` publishes the chosen social npub. With no
+social preference it retains the existing Acorn-key mapping and legacy wallet
+extensions. A social override omits wallet relays and capabilities. Wallet routing
+always uses the Acorn binding through `safebox.json` or local registration.
+LNURL's `nostrPubkey` remains OakGate's receipt-signing service identity.
 
 OakGate and Safebox Web prefer `/.well-known/safebox.json?name=handle` for
 cash and Clear payment delivery. Its explicit wallet key and capabilities take
@@ -119,3 +119,8 @@ Back up `custody.sqlite3` and the separate custody encryption key as already
 documented. The database now also contains the encrypted outgoing journal and
 inbox scheduling state. Incoming receipts and native transaction history remain
 in the Acorn's relay-backed state. Redis is not the durable payment journal.
+
+For the complete distinction between social identity, direct cash, Lightning,
+wallet messages and descriptor-based record sharing, see
+[which lookup serves which purpose](018-safebox-address-discovery.md#which-lookup-serves-which-purpose).
+The migrated cash reader uses the wallet capability, not LNURL `safebox=true`.

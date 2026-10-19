@@ -5,8 +5,64 @@ version-1 parser, builder and secure resolver; OakGate and Safebox Web publish
 the directory and use it for cash and Clear payment discovery. Safebox Web wallet-message delivery and attribution now use it too; OakGate
 has no messaging interface and does not advertise that capability. Public NIP-05
 responses retain their existing defaults. OakGate users can now set a separate social
-npub in Preferences; Safebox Web social-key preferences remain future work.
+npub in Preferences; Safebox Web now implements the same public preference.
 It is a Mainstay-family application contract, not an established Nostr standard.
+
+## Which lookup serves which purpose?
+
+**NIP-05 identifies a social identity. Safebox discovery identifies the Acorn for
+wallet operations. Record transfer descriptors carry their own transfer information.**
+
+| Purpose | Resolution | Meaning |
+| --- | --- | --- |
+| Social identity | `/.well-known/nostr.json?name=handle` | Chosen social key; defaults to the Acorn public key when no social preference is set |
+| Direct cash payment | `/.well-known/safebox.json?name=handle` with `acorn-ecash-transfer` | Acorn destination key and wallet relay hints |
+| Clear payment | The same wallet directory with `clear-token-transfer` and a compatible unit | Acorn destination, subject to the existing Clear routing restrictions |
+| Ordinary Lightning payment | `/.well-known/lnurlp/handle` and its invoice callback | Lightning invoice; no social-key resolution is needed |
+| Wallet message addressed by name | Wallet directory with `safebox-wallet-message` | Acorn key and message relays; sender-address claims are checked against the wallet directory too |
+| Current record sharing or presentation | Acorn-generated transfer descriptor, carried in a QR code or link | Transfer-specific retrieval information; no recipient-address directory lookup |
+
+Safebox Web implements wallet-message delivery and attribution. OakGate does not
+yet have a messaging interface and does not advertise that capability. Explicit
+npub/public-key message destinations retain their meaning. Local wallet recipients
+resolve from the instance's Acorn registration, preserving private community relay
+routes without consulting social NIP-05.
+
+### Cash routing and fallback
+
+The migrated application readers look for the explicit `acorn-ecash-transfer`
+capability in `safebox.json`. They **do not use the older LNURL `safebox=true`
+flag** to select this direct-transfer path. The older Acorn transport associated
+with that flag is a separate legacy flow, not this version-1 directory contract.
+
+If the directory advertises a usable direct route and local routing policy permits
+it, cash is delivered as ecash through Acorn. When no usable direct route is
+advertised, an ordinary cash payment may use LNURL and Lightning instead. An
+ordinary external Lightning address does not need Safebox or NIP-05 support.
+Clear payments, continuity-only transfers and wallet messages do not fall back
+to Lightning.
+
+A 404 permits legacy NIP-05 wallet lookup only for explicitly configured older
+wallet domains. A successful response lacking the requested capability never
+triggers a social-key lookup. Malformed data, unsupported versions, timeouts and
+non-404 HTTP errors stop preparation rather than silently switching to Lightning
+or a social key. Once a send has begun, an uncertain outcome never triggers an
+automatic second payment by another route.
+
+### Record sharing is not address discovery
+
+Reading one's own records uses the connected Acorn. Current sharing and
+presentation create an Acorn transfer descriptor and display its QR code or link;
+the recipient imports or presents that descriptor through the corresponding Acorn
+methods. These flows do not look up a social address or call `safebox.json` to
+choose a recipient. OpenETR checks and record-signature verification are separate
+from wallet address resolution.
+
+Future record delivery addressed to `handle@domain` should resolve the wallet
+through `safebox.json`, with an explicitly defined supported delivery capability.
+It must not infer record-delivery support from a cash capability or use the social
+npub as the Acorn destination. This is a design rule, not an implemented
+address-based record delivery feature.
 
 ## Purpose and boundaries
 
@@ -385,7 +441,7 @@ Deploy the lockfiles containing Acorn's published discovery API. Verify both
 public endpoints for an existing handle before deploying the readers. Controlled
 real cash/Clear delivery checks remain operator acceptance steps; automated tests
 use fake wallets and do not move funds. Safebox Web messaging is migrated;
-OakGate messaging and Safebox Web social-key preferences remain later work.
+OakGate messaging remains later work.
 
 ## Wallet-message reader rollout
 

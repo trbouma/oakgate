@@ -96,3 +96,12 @@ On the deployed machine, use `./refresh-app.sh`; Keycloak does not need a restar
 Before testing against valuable records, exercise editing an attached disposable
 record and presenting/sharing it with another Safebox, then confirm Stop behavior
 against the selected Blossom service.
+
+## Record transfers and address discovery
+
+Sharing and presentation use Acorn-generated transfer descriptors carried in
+QR codes or links. They do not resolve a recipient through NIP-05 or the wallet
+directory. Future address-based record delivery must use explicit wallet
+capabilities in `safebox.json`, not a social key. See the
+[resolution contract](018-safebox-address-discovery.md#which-lookup-serves-which-purpose)
+for how this differs from payments and wallet messages.
