@@ -12,6 +12,8 @@ def violations(source, name):
         if isinstance(node, (ast.Import, ast.ImportFrom)):
             modules = ([node.module or ''] if isinstance(node, ast.ImportFrom)
                        else [alias.name for alias in node.names])
+            if any(module in {'acorn.b_dhke', 'acorn.secp'} for module in modules):
+                found.append('Cashu protocol primitive outside Acorn')
             if any(module.split('.')[0] in {'monstr', 'nostr', 'nostr_sdk', 'pynostr'} for module in modules):
                 found.append('alternate Nostr implementation')
         if isinstance(node, ast.ImportFrom):
@@ -56,3 +58,12 @@ def test_nostr_uses_explicit_stroma_dependency():
     assert config['tool']['poetry']['dependencies']['stroma-nostr']['git'] == 'https://github.com/trbouma/stroma.git'
     for source in ('from monstr.event.event import Event', 'import nostr_sdk'):
         assert violations(source, 'zaps.py')
+
+
+def test_mint_protocol_is_owned_by_acorn():
+    from acorn.minting import DurableCashuMint, MintCompatibilityError
+    from app.payment_mint import CashuMint, MintCompatibilityError as LegacyError
+    assert CashuMint is DurableCashuMint
+    assert LegacyError is MintCompatibilityError
+    for source in ('from acorn.b_dhke import step1_alice', 'from acorn.secp import PrivateKey'):
+        assert violations(source, 'payment_mint.py')

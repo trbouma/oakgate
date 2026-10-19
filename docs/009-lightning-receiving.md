@@ -134,3 +134,30 @@ is the recipient and receipt `P` is the payer. This follows
 The signer is saved with each invoice and callback so an old request cannot
 silently switch signer. Fresh instances without a key allow ordinary payments
 but advertise `allowsNostr: false` and reject zap requests.
+
+
+## Acorn-owned durable issuance
+
+Cashu quote validation, blinding, restoration and proof construction now live in
+`acorn.minting.DurableCashuMint`. OakGate's `app/payment_mint.py` only re-exports
+that API and its compatibility exception. OakGate still saves encrypted
+checkpoints, claims leases and coordinates settlement. Proof and transaction
+history publication still go through Acorn with persisted event identities.
+
+Existing checkpoints retain exactly the same `outputs`, `secrets`, and `keys`
+format. Do not clear pending jobs or generate new prepared outputs during this
+upgrade. Restoration runs before issuance and reuses the original outputs after
+a lost response. Mint acceptance and optional description-hash policy are
+unchanged. Safebox Web's existing Acorn methods remain unchanged.
+
+Deploy in this order:
+
+1. Commit and publish the safebox-acorn change to `main`.
+2. In OakGate, run `poetry update safebox-acorn` and verify the resolved revision
+   includes `acorn.minting`. Commit the resulting lockfile with this change.
+3. Run the tests against that installed dependency, then push and deploy OakGate
+   with `./refresh-app.sh`.
+
+A local source override is useful for cross-repository tests but does not update
+the container dependency. The old locked Acorn revision does not contain this
+API; do not deploy OakGate with that lockfile. No database migration is needed.

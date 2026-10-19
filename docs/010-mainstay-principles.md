@@ -142,7 +142,7 @@ The following gaps remain open:
 
 | Gap | Required outcome |
 | --- | --- |
-| Cashu protocol execution in `app/payment_mint.py` | Move durable prepare/restore/issue operations behind an Acorn API. OakGate retains coordination and encrypted checkpoints. The current implementation does not use the user's private key directly, but exceeds the desired portable-protocol boundary. |
+| Cashu protocol execution | Source refactor completed: `acorn.minting.DurableCashuMint` owns quote/prepare/restore/issue, and OakGate retains coordination and encrypted checkpoints. Deployment requires publishing the Acorn API and updating OakGate’s lockfile; see the Lightning receiving upgrade instructions. |
 | Public service information | Add the family information envelope: version, public identity, FIPS address, capabilities, management mode and honest commissioning state; include version in health. |
 | Deployment verification | Make the app refresh script wait for health with a bounded timeout and useful failure diagnostics. |
 | Recovery and status wording | Do not advertise recovery disclosure as currently available. Keep implemented custody distinct from planned independent recovery and departure. |
