@@ -27,7 +27,7 @@ The worker runs in the FastAPI app container; no new container or Redis queue is
 
 ## Invoice compatibility
 
-The default matches Safebox Web's compatibility approach: request an ordinary mint invoice and accept a plain BOLT11 description. OakGate still validates its amount, mainnet currency and expiry. It stores the payment context and signed zap request separately. If an invoice contains a description hash, it must match the expected context.
+The default matches Safebox Web's compatibility approach: request an ordinary mint invoice and accept a plain BOLT11 description. OakGate still validates its amount, mainnet currency and expiry. It stores the payment context and signed zap request separately. Compatibility mode does not reject missing or mismatched description hashes; binding is recorded for information only.
 
 A plain BOLT11 invoice is valid without a description hash. The current LUD-06 LNURL-pay specification also no longer requires a metadata hash check. NIP-57 still describes hash-bound zap invoices, however, so some Nostr clients or older LNURL wallets may reject invoices or receipts without that binding. Compatibility mode does not claim universal client support or strict NIP-57 compliance.
 
@@ -39,7 +39,7 @@ On 2026-10-18, a public capability check showed that `mint.safebox.dev` advertis
 
 1. A payer resolves `/.well-known/lnurlp/{handle}`. OakGate requires an active Acorn, returns limits and metadata, and advertises that Acorn's public key as the zap receipt signer.
 2. The callback contains an encrypted, 15-minute snapshot of the recipient and metadata. A handle change cannot redirect that callback to another owner. Once a handle belongs to an active Acorn, it remains reserved to that owner; clearing or renaming the handle disables discovery at the old address.
-3. OakGate validates the amount and any signed kind-9734 request, including its recipient, optional amount, event tags and LNURL. Amounts must be whole sats within the configured limits. Callback comments of up to 255 characters are advertised and accepted. They are stored inside the encrypted payment journal and never appended to invoice metadata or the signed zap request. A zap's signed content is retained unchanged.
+3. OakGate validates the amount and any signed kind-9734 request, including its recipient-key format, optional amount, event tags and LNURL. The signed social recipient may be any public key; the encrypted callback determines which Acorn is credited. Amounts must be whole sats within the configured limits. Callback comments of up to 255 characters are advertised and accepted. They are stored inside the encrypted payment journal and never appended to invoice metadata or the signed zap request. A zap's signed content is retained unchanged.
 4. It reserves a payment row, requests the mint quote, and saves the invoice, quote, mint keys and generated blinding secrets encrypted in SQLite **before returning the invoice**. Repeated identical zap requests reuse the unpaid invoice. A changed serialization of the same zap event is rejected so the description binding cannot silently change.
 5. The background worker polls the mint, normally every five seconds for unexpired invoices. Once payment is confirmed, it requests Cashu signatures for the saved outputs and unblinds them using Acorn's primitives.
 6. OakGate calls Acorn’s `add_proofs_obj()` to prepare a native encrypted proof write, saves the opaque prepared result, then calls the same Acorn method to deliver and verify it on the home relay. Funds are credited directly to the user's Acorn.
@@ -127,7 +127,7 @@ in that table. Back up the service secret securely alongside the custody key
 and retain the database binding. Do not delete the binding to rotate identity.
 
 LNURL discovery advertises this service's hex key as `nostrPubkey`; the zap
-request's `p` tag still identifies the recipient Acorn. An optional request `P`
+request's `p` tag identifies the social recipient, which need not be the Acorn key. An optional request `P`
 tag must match the service signer. Receipt author is the service; receipt `p`
 is the recipient and receipt `P` is the payer. This follows
 [NIP-57](https://github.com/nostr-protocol/nips/blob/master/57.md).

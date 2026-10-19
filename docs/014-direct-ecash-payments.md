@@ -1,5 +1,11 @@
 # Direct Safebox payments
 
+This page describes the current NIP-05-based implementation. The
+[proposed Safebox discovery contract](018-safebox-address-discovery.md) separates
+wallet delivery from social identity through an additive, staged migration.
+It is not implemented yet; do not change existing NIP-05 wallet mappings as part
+of this documentation proposal.
+
 OakGate can receive encrypted Acorn ecash transfers without an active browser or
 Redis session. A Send payment page also lets a user review an address and amount,
 then confirm a direct ecash or Lightning payment.

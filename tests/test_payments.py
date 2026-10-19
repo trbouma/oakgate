@@ -239,8 +239,6 @@ def test_bad_zaps_never_request_invoices(tmp_path):
         signed = json.loads(zap(f))
         with pytest.raises(ValueError):
             validate_zap(json.dumps(signed), 14000, f.keys.public_key_hex(), '')
-        with pytest.raises(ValueError):
-            validate_zap(json.dumps(signed), 13000, Keys().public_key_hex(), '')
         assert not f.mint.calls
     asyncio.run(run())
 
@@ -589,3 +587,42 @@ def test_old_callback_cannot_change_zap_signer(tmp_path):
         with pytest.raises(ValueError, match='identity'):
             await f.service.invoice(old_token, '13000', zap(f))
     asyncio.run(run())
+
+
+@pytest.mark.parametrize('hashed', [False, True])
+def test_social_zap_compatibility_credits_callback_wallet(tmp_path, hashed):
+    async def run():
+        f = setup(tmp_path)
+        f.mint.require_description_hash = False
+        f.mint.hashed = hashed
+        sender, social = Keys(), Keys()
+        event = Event(kind=9734, pub_key=sender.public_key_hex(), content='Social zap', tags=[
+            ['p', social.public_key_hex()], ['amount', '13000'],
+            ['relays', 'wss://relay.damus.io']])
+        event.sign(sender)
+        raw = json.dumps(event.data(), separators=(',', ':'))
+        pr = await f.service.invoice(f.token, '13000', raw)
+        assert bool(bolt11.decode(pr).description_hash) == hashed
+        pid = f.service.store.due()[0]
+        item = f.service.store.get(pid)
+        assert item['owner'] == 'owner' and item['description_hash_bound'] is False
+        f.mint.rows[item['quote']]['state'] = 'PAID'
+        await f.service.process(pid)
+        await f.service.process(pid)
+        result = f.service.store.get(pid)
+        assert result['state'] == 'complete' and result['history_written']
+        assert f.mint.issued == 1
+        assert ['p', social.public_key_hex()] in result['receipt']['tags']
+        assert ['description', raw] in result['receipt']['tags']
+        assert result['receipt']['pubkey'] == f.service.identity.pubkey
+        assert social.public_key_hex() != f.keys.public_key_hex()
+    asyncio.run(run())
+
+
+def test_malformed_social_zap_key_rejected():
+    sender = Keys()
+    event = Event(kind=9734, pub_key=sender.public_key_hex(), content='',
+                  tags=[['p', 'not-a-public-key'], ['relays', 'wss://relay.damus.io']])
+    event.sign(sender)
+    with pytest.raises(ValueError, match='recipient public key'):
+        validate_zap(json.dumps(event.data()), 1000, '', '')

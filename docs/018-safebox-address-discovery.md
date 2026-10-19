@@ -1,0 +1,322 @@
+# Safebox address discovery and social identity
+
+Status: proposed contract and migration plan, 2026-10-19. This note does not
+implement an endpoint, change address resolution, or enable separate social keys.
+It is a Mainstay-family application contract, not an established Nostr standard.
+
+## Purpose and boundaries
+
+One address, such as `alice@example.com`, should support three independent uses:
+
+| Use | Lookup | Meaning |
+| --- | --- | --- |
+| Social identity | `/.well-known/nostr.json?name=alice` | Social Nostr public key and social relay hints, following NIP-05 |
+| Wallet delivery | `/.well-known/safebox.json?name=alice` | Acorn public key, wallet relay hints and explicit delivery capabilities |
+| Lightning | `/.well-known/lnurlp/alice` | Existing LNURL-pay service |
+
+The social key and Acorn key may be equal, but clients must never assume they are.
+The operator service identity is a third key: it signs service zap receipts and
+must not become either user's identity. An address is a mutable domain-controlled
+alias; it is not the durable Acorn identity or proof of a person's real identity.
+
+Acorn owns portable discovery semantics, user-key operations and wallet protocols.
+Stroma owns Nostr validation, signing, encryption and relay transport. Applications
+own handle registration, public HTTP directory responses, consent, presentation,
+workflow coordination and deployment policy. DNS/HTTPS directory assertions do not
+prove a recipient is online, that a mint will redeem, or that a payment settled.
+
+The mint policy remains unchanged: trust any mint from which Acorn can successfully
+receive. Discovery must not introduce an issuer allowlist. Existing Clear routing
+restrictions and asset identity `(mint, unit)` remain in force.
+
+## Current coupling
+
+Safebox Web resolves external cash and Clear recipients through `nostr.json`.
+Its cash resolver accepts a valid NIP-05 key with usable routing without requiring
+an explicit wallet capability; Clear requires a Clear descriptor. Local lookup
+uses the claimed handle's Acorn key directly.
+
+OakGate also resolves through `nostr.json`; cash additionally requires an
+`acorn-ecash-transfer` descriptor or an operator-configured legacy domain. Both
+applications currently publish the Acorn key as the NIP-05 identity.
+
+Acorn's generic address resolver uses NIP-05 for `name@domain`. Wallet transfers
+and social/message operations share it. Safebox Web's message presentation also
+checks claimed sender addresses against NIP-05. Changing only the public mapping
+would redirect some transfers and invalidate wallet-message attribution.
+
+There is a separate older Acorn `pay_multi()` branch which reads
+`/.well-known/safebox.json/<name>` after a Safebox flag in LNURL metadata. It
+expects `pubkey`, `relays` and optional `ecash_relays`, then uses a nonce-bearing
+kind-21401 flow. This is not the version-1 contract below. Do not turn that LNURL
+flag on merely because the new endpoint exists, redirect the old route, or alias
+it to the new response. Preserve existing legacy behaviour where deployed;
+compatibility with that transport requires a separate, explicit adapter and tests.
+
+## Version-1 HTTP contract
+
+Canonical request:
+
+```http
+GET /.well-known/safebox.json?name=alice
+```
+
+Exactly one `name` parameter is required. Version 1 accepts ASCII local parts
+matching `[a-z0-9_.-]{1,64}` after lowercasing. Providers may impose stricter
+registration rules; discovery does not expand existing handle eligibility.
+Trim surrounding address whitespace before splitting, normalize the domain to
+lowercase IDNA, and encode query parameters with a URL library. Reject credentials,
+fragments, ports and malformed address inputs. Do not enumerate all registrations
+when `name` is missing. One response describes exactly one address.
+
+Successful response (the sample key is illustrative):
+
+```json
+{
+  "version": 1,
+  "address": "alice@example.com",
+  "pubkey": "b0635d6a9851d3aed0cd6c495b282167acf761729078d975fc341b22650b07b9",
+  "relays": ["wss://spurline.safebox.dev"],
+  "capabilities": {
+    "acorn-ecash-transfer": {
+      "transports": ["nip59"],
+      "kinds": [7378],
+      "units": ["sat"]
+    },
+    "clear-token-transfer": {
+      "transports": ["nip59"],
+      "kinds": [7379]
+    }
+  }
+}
+```
+
+| Field | Requirement |
+| --- | --- |
+| `version` | Required integer, exactly `1` for this version; booleans are invalid |
+| `address` | Required canonical address, matching the requested name and domain |
+| `pubkey` | Required valid Nostr public key encoded as 64 lowercase hex characters; Acorn destination, never social or service key |
+| `relays` | Required array of 1–8 unique absolute `wss://` URLs; no credentials or fragments; each at most 2,048 characters |
+| `capabilities` | Required nonempty object containing explicit supported protocol descriptors |
+
+Relay hints are public wallet delivery routes, not social relays or a promise of
+availability. Passing validation does not bypass the caller's relay policy.
+Acorn keeps responsibility for selecting/reaching delivery routes, including its
+existing inbox discovery. Such discovery must remain bound to the resolved wallet
+key and cannot substitute another key. Private standalone deployments may use
+explicit local configuration; version-1 public discovery does not authorize
+arbitrary private-network requests or insecure WebSocket endpoints.
+
+Protocol descriptors use arrays of known transport names and integer inner-event
+kinds. `nip59` denotes the existing gift-wrap transport; the outer kind is 1059,
+not the listed inner kind. Receivers advertise only implemented, enabled receipt
+paths. The initial registry is:
+
+| Capability | Required transport/kind | Scope |
+| --- | --- | --- |
+| `acorn-ecash-transfer` | `nip59`, inner kind 7378 | Current Acorn cash transfer; `units` must include `sat` |
+| `clear-token-transfer` | `nip59`, inner kind 7379 | Current Clear transfer; omitted `units` means no advertised unit restriction; a present list must be nonempty |
+| `safebox-wallet-message` | `nip17`, inner kind 14 | Proposed opt-in wallet messaging using the existing version-1 `safebox.dm` content envelope; only advertise after send, receive and attribution support are implemented |
+
+A client must understand the selected capability and its required transport and
+kind before using it. Unknown capabilities or additive fields are ignored; they
+never authorize a send. Malformed required fields, malformed selected descriptors
+and unknown top-level versions are errors. Do not infer capabilities from a key,
+relay hint, domain name, social profile or LNURL `allowsNostr` field. Payment-request
+formats such as NUT-18 keep their own explicit destination contracts.
+
+Responses use `Content-Type: application/json`, `Access-Control-Allow-Origin: *`,
+`X-Content-Type-Options: nosniff` and `Cache-Control: no-store` initially. Requests
+need no authentication or cookies and must not change state. Return no secrets,
+account identifiers, email addresses, balances or recovery material.
+
+| HTTP status | Meaning |
+| --- | --- |
+| 200 | Valid, active wallet directory entry |
+| 400 | Missing, duplicate or malformed name |
+| 404 | No active/advertised wallet under that name, or endpoint absent on an older server |
+| 410 | Optional deliberate retirement of a formerly served wallet address; never a legacy-fallback signal |
+| 429 | Rate limited; client must back off |
+| 503 | Directory temporarily unavailable |
+
+Error bodies use `{"error":"not_found"}` or another stable code, with no keys or
+capabilities. A client must not interpret an error as a successful directory
+response. Missing endpoint and missing handle are not reliably distinguishable
+from a 404 alone.
+
+Fetches require HTTPS with certificate verification, bounded time and response
+size (proposed defaults: 5 seconds total, 64 KiB), and no redirects. Server-side
+clients must reject nonpublic destination addresses and pin a validated DNS result
+to the TLS request to prevent DNS rebinding. Do not use ambient HTTP proxies.
+Validate JSON types, reject duplicate object keys, and validate public keys through
+Stroma. Share contract fixtures and parsing semantics across products; retain
+explicit application policies without weakening these network guards.
+
+## Resolution and payment safety
+
+1. Resolve an address through version-1 Safebox discovery, or the equivalent
+   validated local directory entry. Check the requested capability before export,
+   minting, signing or publication.
+2. Bind the canonical address, wallet key, selected protocol and relay policy to
+   the prepared operation. Confirmation must not silently replace them. If a fresh
+   lookup changes the destination or capability, require a new review; persist the
+   selected identity for durable retry rather than resolving it again on restart.
+3. If the endpoint returns 404 or a valid response lacks cash support, an ordinary
+   cash payment may prepare an LNURL route and show it for confirmation. Clear,
+   continuity-only transfers and wallet messages report unsupported delivery.
+4. Malformed responses, unsupported versions, retirement, timeouts and temporary
+   failures stop wallet discovery. They do not trigger implicit NIP-05 fallback.
+   A user may explicitly choose a separately reviewed Lightning payment when safe.
+5. After any direct send starts, an uncertain outcome must never cause automatic
+   Lightning fallback, a changed recipient, or a second export. Existing durable
+   journals, reconciliation and Acorn-native history remain authoritative.
+
+Delivery acknowledgement and recipient redemption remain separate outcomes.
+OakGate may redeem in the background; Safebox Web may require an online user.
+No new discovery flag claims immediate settlement.
+
+## Social identity, messages and zaps
+
+Keep standard NIP-05 responses for social clients, including their required
+cross-origin access. A social profile must publish the matching `nip05` value for
+clients to show the association. The wallet directory must not overwrite social
+profile data or require OakGate to hold a social private key.
+
+For a future custom social-key setting, require authenticated handle ownership
+and a fresh challenge signed by the proposed social key, verified with Stroma.
+Store the public association separately from the wallet binding. This proves key
+control at registration, not enduring legal identity. Losing or changing the
+social key must not change Acorn ownership, issuer/subject login mapping or funds.
+
+Wallet-message address resolution and claimed-sender attribution use
+`safebox.json`; social messaging and social attribution continue using NIP-05.
+The UI must distinguish these purposes. Authenticated event signatures establish
+the sender key; directory lookup establishes only the current address association.
+A renamed/reassigned address must not rewrite historical counterparties or turn an
+old message into a claim about its new owner. Already explicit npub destinations
+retain their existing meaning and do not undergo address reinterpretation.
+
+Keep LNURL `nostrPubkey` as the receipt-signing service key. A signed zap request
+may name any social recipient in its `p` tag; it need not match the Acorn key or
+have a registered social-to-wallet association. The authenticated encrypted
+callback determines the credited Acorn. Preserve the original signed request and
+its social recipient in the receipt, without rewriting its `p` tag. Validate the
+signature, recipient-key format, optional amount, LNURL and service `P` tag.
+Default invoice compatibility mode does not enforce description-hash binding.
+This zap behaviour is independent of NIP-05 wallet discovery migration.
+
+## Migration without silent breakage
+
+A new endpoint alone cannot make old NIP-05-based senders safe after a social-key
+change. Public servers cannot prove that every third-party sender has upgraded.
+Compatibility therefore requires a staged rollout and a constrained final cutover.
+
+### Phase 1: additive Acorn API and contract fixtures
+
+Add an explicitly named wallet-address discovery API returning a typed result with
+canonical address, wallet key, capabilities, relay hints and discovery source.
+Do not change the generic NIP-05 resolver, social APIs, existing transfer signatures
+or explicit-key behaviour. Initially applications call the new resolver and pass
+its explicit wallet key and relay hints to existing Acorn transfer methods.
+Existing callers continue to work unchanged. New named APIs or explicit opt-in
+parameters can later provide wallet-aware address convenience; do not silently
+change ambiguous `name@domain` semantics in existing APIs.
+
+Publish Acorn with shared version-1 success/error/security fixtures. Run existing
+Safebox Web and OakGate tests against the installed release/locked revision, not
+only a source override. Keep Acorn and Stroma dependency declarations on `main`
+where already configured; update and commit resolved lock revisions deliberately.
+No Stroma change is required unless validation or transport support is missing.
+
+### Phase 2: dual publication, identical keys
+
+Safebox Web and OakGate publish `safebox.json` from their existing handle-to-Acorn
+binding. Keep `nostr.json` and its existing extensions unchanged, with the same
+Acorn key. Local and external directory results must agree. Do not enable a
+separate social key yet. Discovery must not need a recipient login session.
+
+Publish only enabled capabilities, using bounded public lookups; do not expose
+custody secrets to build the response. OakGate obtains user public identity through
+Acorn. Safebox Web continues storing only its public registration data.
+
+### Phase 3: upgrade all maintained senders and message consumers
+
+Move Safebox Web cash/Clear address routing and OakGate cash/Clear preparation to
+the new Acorn resolver. Update wallet-message destinations and attribution together.
+Preserve Clear guards, public-network restrictions, pending-send protection,
+confirmation binding and existing mint policy. Keep social lookup on NIP-05.
+
+For controlled rollout only, offer an explicit per-domain legacy compatibility
+policy. A 404 from the new endpoint may permit the old NIP-05 wallet lookup only
+for domains known to keep social and wallet keys equal. Record the legacy source
+in the prepared operation. Never enable generic NIP-05 fallback for arbitrary
+domains, and never fallback on malformed data, 410, timeouts or 5xx. Remove existing
+blanket inference that a NIP-05 key plus relays proves wallet support.
+
+Keep old APIs available during this phase; document their legacy address semantics.
+Ship migration tests before tightening defaults in maintained applications. Old
+receivers remain reachable through the deliberate compatibility policy or ordinary
+Lightning, rather than a hidden change to their meaning.
+
+### Phase 4: enable separate social identities only where safe
+
+Keep existing public handles in equal-key compatibility mode while any supported
+legacy sender relies on their NIP-05 mapping. Do not automatically rewrite them.
+Changing `nostr.json` on the same old address while preserving compatibility with
+all unmodified senders is impossible: they will still use the social key as a
+wallet key. A capability field cannot stop clients that never read it.
+
+For upgraded, controlled peers, remove legacy fallback for the domain and verify
+new discovery end to end before enabling opt-in social-key binding. For addresses
+with uncontrolled legacy clients, preserve the old mapping and offer a distinct
+social alias/domain during transition, or establish a documented breaking-change
+cutover outside this nonbreaking rollout. New deployments can start with the split
+contract, but must still disclose that old NIP-05-based wallet clients are unsupported.
+The same-address social/wallet experience is the target, not a promise that old
+clients can automatically interpret it correctly.
+
+### Rollback and retirement
+
+Before any split, endpoint and reader changes can roll back while equal-key legacy
+responses remain valid. After a split, rolling senders back to NIP-05 wallet lookup
+is unsafe. Preserve the new endpoint, disable new sends if necessary, and restore
+only software that understands the split. Keep in-flight recipients pinned and
+reconcile outcomes before retry. Do not delete old endpoints or APIs until their
+consumers and pending operations have migrated under an explicit version policy.
+
+## Persistence, continuity and acceptance
+
+Back up provider handle-to-wallet and optional social-key associations alongside
+existing registration/custody data and keys. A restore must preserve opt-in migration
+state and retirement records so it cannot resurrect an obsolete destination or
+legacy fallback. Discovery is a directory, not portable wallet state: independent
+Acorn recovery continues using the user's recovery phrase and bootstrap relay.
+A domain address may be lost when leaving a provider without losing the Acorn.
+
+Implementation acceptance must cover:
+
+- Same address with deliberately different social and wallet keys: social lookup
+  returns only the social key; cash, Clear and wallet messages use only the wallet.
+- Upgraded sender to upgraded receiver, upgraded sender to explicitly supported
+  legacy receiver, and legacy sender to an unchanged equal-key receiver.
+- Missing capabilities, unknown version, invalid keys, duplicate names/JSON keys,
+  redirects, private DNS results, rebinding, oversized bodies and bounded timeouts.
+- A wallet-key change between review and confirmation and during crash recovery;
+  no silent retargeting, second export or Lightning retry after an uncertain send.
+- Disabled/retired recipients, handle changes, local/external parity, preserved
+  mint acceptance and Clear routing rules, and Acorn-only transaction history.
+- Wallet-message attribution distinct from social attribution, plus mismatched
+  social zap recipients accepted and preserved while the callback wallet is credited.
+- Existing Acorn APIs and Safebox Web tests passing unchanged, app tests against
+  the installed locked dependencies, and boundary tests for Acorn/Stroma ownership.
+- Small controlled cash/Clear/message deliveries across both applications,
+  OakGate background redemption, and offline Safebox Web receipt on return.
+
+## References
+
+- [NIP-05: social key/address association](https://github.com/nostr-protocol/nips/blob/master/05.md)
+- [Direct Safebox payments: current implementation](014-direct-ecash-payments.md)
+- [Clear payments and routing guards](015-clear-payments.md)
+- [Lightning receiving and zaps](009-lightning-receiving.md)
+- [Mainstay principles](010-mainstay-principles.md)
+- [Identity mapping and backups](008-identity-storage-backups.md)

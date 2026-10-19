@@ -46,8 +46,9 @@ def validate_zap(raw, amount_msat, recipient, lnurl, *, provider=None):
         if len(values) > 1 or (required and not values) or (values and len(values[0]) < 2):
             raise ValueError('Invalid zap tag')
         return values[0] if values else None
-    if tag('p', True)[1] != recipient:
-        raise ValueError('Zap recipient does not match this Acorn')
+    # The callback selects the credited wallet; p identifies the social target.
+    if not re.fullmatch(r'[0-9a-fA-F]{64}', tag('p', True)[1]):
+        raise ValueError('Invalid zap recipient public key')
     if tag('P') and tag('P')[1] != (provider or recipient):
         raise ValueError('Zap provider does not match this service')
     if tag('amount') and tag('amount')[1] != str(amount_msat):
