@@ -7,10 +7,10 @@
 {% if not wallet_enabled %}
 <p class="note">{{ _("Your account is ready. Safebox storage is being configured.") }}</p>
 {% elif wallet %}
+<h2 id="wallet-title">{{ _("Your Balances") }}</h2>
 <section class="wallet-panel" aria-labelledby="wallet-title">
-<h2 id="wallet-title">{{ _("Your Acorn") }}</h2>
 {% if wallet.status == 'active' %}
-<p class="eyebrow">{{ _("CASH BALANCE") }}</p>
+<h3 class="balance-heading">{{ _("Cash Balance") }}</h3>
 {% if balance_error %}<p role="status">{{ _("Balance unavailable right now.") }}</p><p class="note">{{ _("Your Acorn is still connected. Try refreshing in a moment.") }}</p>
 {% else %}<a class="balance-link" href="/account/transactions" aria-label="{{ '{:,}'.format(balance) }} sats. View recent transactions">{% include "cash_balance.html" %}</a><p class="note">{{ _("Cash balance read from your Acorn. Mint spendability has not been checked.") }}</p>{% endif %}
 <section class="receive-payment" aria-labelledby="receive-title">
@@ -24,20 +24,17 @@
 {% else %}<p class="note">{{ _("Choose a") }} <a href="/account/preferences">{{ _("handle in Preferences") }}</a> {{ _("to receive payments at your OakGate address. Receiving requires this instance’s HTTPS domain.") }}</p>{% endif %}
 </section>
 <section class="clear-balances" aria-labelledby="clear-title">
-<h3 id="clear-title">{{ _("Clear balances") }}</h3>
-{% if clear_receiving %}<p class="note">{{ _("Incoming Clear payments are processed automatically, even when you are signed out. Refresh to see settled balances.") }}</p>{% endif %}
+<h3 id="clear-title" class="balance-heading">{{ _("Clear balances") }}</h3>
 {% if clear_error %}<p role="status">{{ _("Clear balances unavailable right now. Try refreshing in a moment.") }}</p>
 {% elif clear_balances %}
 {% for item in clear_balances %}
 <article class="clear-balance-row">
 <h4>{{ item.display_name }}</h4>
-<a class="back-link" href="/account/send?asset={{ item.asset_id }}">{{ _("Send") }}</a>
 <a class="balance-link" href="/account/clear-transactions?asset={{ item.asset_id }}" aria-label="{{ _('View recent transactions') }}"><p class="clear-amount">{{ '{:,}'.format(item.amount) }} <span>{{ item.display_unit }}</span></p></a>
-<p class="note">{{ item.mint }}</p>
-<details><summary>{{ _("Asset details") }}</summary><p>{{ _("Unit:") }} {{ item.unit }}</p>{% if item.keyset_id %}<p>{{ _("Keyset:") }} {{ item.keyset_id }}</p>{% endif %}</details>
+<a class="back-link clear-send" href="/account/send?asset={{ item.asset_id }}">{{ _("Send") }} {{ item.display_unit }}</a>
+<details><summary>{{ _("Asset details") }}</summary><p>{{ item.mint }}</p><p>{{ _("Unit:") }} {{ item.unit }}</p>{% if item.keyset_id %}<p>{{ _("Keyset:") }} {{ item.keyset_id }}</p>{% endif %}</details>
 </article>
 {% endfor %}
-<p class="note">{{ _("Balances held in your Acorn. Pending receipts are not included.") }}</p>
 {% else %}<p class="note">{{ _("No Clear balances yet.") }}</p>{% endif %}
 </section>
 <a class="secondary-action" href="/account">{{ _("Refresh balances") }}</a>
