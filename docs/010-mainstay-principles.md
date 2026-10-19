@@ -144,7 +144,7 @@ The following gaps remain open:
 | --- | --- |
 | Cashu protocol execution | Source refactor completed: `acorn.minting.DurableCashuMint` owns quote/prepare/restore/issue, and OakGate retains coordination and encrypted checkpoints. Deployment requires publishing the Acorn API and updating OakGate’s lockfile; see the Lightning receiving upgrade instructions. |
 | Public service information | Implemented: `/info` reports the public identity envelope and supported capabilities; `/health` includes version. Commissioning remains unimplemented and is reported honestly. See [Public service contract](017-public-service-contract.md). |
-| Deployment verification | Make the app refresh script wait for health with a bounded timeout and useful failure diagnostics. |
+| Deployment verification | App-only refresh now waits for Docker health with a bounded timeout and app diagnostics on failure. This confirms liveness; end-to-end login, payment and recovery checks remain operator acceptance steps. |
 | Recovery and status wording | Disclosure is implemented; keep it distinct from independently tested restoration and the planned departure workflow. |
 | Independent recovery and departure | Rehearse independent restoration and implement settlement-aware departure, deletion retries and protection against resurrection after restore. |
 | Provider replacement | Rehearse alternative authentication against the same Keycloak user and update provider-specific presentation. |
