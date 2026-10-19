@@ -21,6 +21,7 @@ from app.auth import current_session, error_page
 from app.custody import Busy, identity_key
 from app.wallet_routes import checked_form
 from app.clear_balances import payment_assets
+from app.clear_routing import ClearRouteError, clear_availability
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -90,8 +91,10 @@ class SendService:
         payment = {'id': secrets.token_urlsafe(24), 'owner': owner, 'address': address,
                    'amount': int(amount), 'comment': comment, 'expires': time.time()+300}
         local = domain == urlsplit(self.origin).hostname
+        if selected and not local and clear_availability(selected['mint']) == 'instance':
+            raise ClearRouteError('This Clear balance is available only within this OakGate instance and cannot be sent outside it. No value was sent.')
         payload = None
-        if local and self.receiver.available:
+        if local and self.receiver and self.receiver.available:
             try:
                 payload = self.receiver.discovery(name)
             except ValueError:
@@ -103,6 +106,7 @@ class SendService:
                 pass
         if selected:
             payment.update(self.clear_destination(payload, name, selected))
+            self.check_clear_route(payment)
         if payload and not selected:
             names = payload.get('names', {})
             pubkey = names.get(name) if isinstance(names, dict) else None
@@ -177,6 +181,23 @@ class SendService:
                 'asset': asset['id'], 'mint': asset['mint'], 'unit': asset['unit'],
                 'display_name': asset['display_name'], 'display_unit': asset['display_unit']}
 
+    def check_clear_route(self, payment):
+        if clear_availability(payment['mint']) != 'instance':
+            return
+        name, domain = payment['address'].split('@')
+        if domain != urlsplit(self.origin).hostname:
+            raise ClearRouteError('This Clear balance is available only within this OakGate instance and cannot be sent outside it. No value was sent.')
+        # An address on our domain is insufficient: it must still resolve to
+        # the active local Acorn shown at review. Never silently retarget it.
+        try:
+            if not self.receiver or not self.receiver.clear_available:
+                raise ValueError('Receiving unavailable')
+            destination = self.clear_destination(self.receiver.discovery(name), name, {**payment, 'id': payment['asset']})
+            if destination['pubkey'] != payment['pubkey'] or destination['relay'] != payment['relay']:
+                raise ValueError('Recipient changed')
+        except ValueError:
+            raise ClearRouteError('The local Clear recipient is no longer available as reviewed. No value was sent. Please start again.') from None
+
     def get(self, owner, payment_id):
         with closing(self.wallets.store.connect()) as db:
             row = db.execute('SELECT * FROM outgoing_payments WHERE id=? AND owner=?', (payment_id, owner)).fetchone()
@@ -201,6 +222,8 @@ class SendService:
             if not record or record['status'] != 'active':
                 raise ValueError('Connect an Acorn first.')
             self.wallets.relay(record['material']['relay'])
+            if payment['route'] == 'clear':
+                self.check_clear_route(payment)
             with closing(self.wallets.store.connect()) as db, db:
                 db.execute('BEGIN IMMEDIATE')
                 if db.execute("SELECT 1 FROM outgoing_payments WHERE owner=? AND state IN ('sending','unknown')", (owner,)).fetchone():
@@ -279,6 +302,8 @@ async def prepare(request: Request):
         async with asyncio.timeout(35):
             payment = await service.prepare(owner, str(form.get('address', '')), str(form.get('amount', '')), str(form.get('comment', '')), asset=str(form.get('asset', '')))
         return RedirectResponse('/account/send?payment='+payment['id'], 303)
+    except ClearRouteError as exc:
+        return error_page(request, str(exc), 422)
     except Exception:
         return error_page(request, 'Could not prepare this payment. Return to Balances, check the selected asset, address and amount, or review any unresolved payment.', 400)
 
@@ -295,6 +320,8 @@ async def confirm(request: Request):
     try:
         payment = await service.send(identity_key(session['user']), str(form.get('payment', '')))
         return RedirectResponse('/account/send?payment='+payment['id'], 303)
+    except ClearRouteError as exc:
+        return error_page(request, str(exc), 422)
     except Busy:
         return render(request, session, message='Your Acorn is busy. Return to this confirmation shortly.', status=409)
     except ValueError:

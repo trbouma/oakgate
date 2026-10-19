@@ -69,3 +69,26 @@ Incoming receipts, proofs and Clear history remain in Acorn's relay-backed state
 Redis is not their durable store. Each Clear balance opens its native Acorn transaction history, showing the latest
 10 entries for that exact mint and unit. The balance links back home. A pending-receipt
 page is not included.
+
+## Route scope guard
+
+OakGate follows Safebox Web's advisory route classification. Loopback,
+localhost, single-label container names, malformed URLs, and ordinary public
+HTTP routes are instance-only. Private/link-local IPs and `.local`, `.lan`,
+`.internal`, or `.home.arpa` names are local-network routes. Other well-formed
+HTTPS routes are classified across-networks. This is not a DNS lookup or proof
+that a recipient can reach or redeem at the mint.
+
+Instance-only Clear balances can be sent only to a connected, active recipient
+in this OakGate instance. External sends are rejected before review, without
+exporting value or falling back to Lightning. Confirmation repeats the check,
+including for older prepared payments, and verifies that the local handle still
+maps to the reviewed Acorn and relay. A shared domain suffix or relay does not
+establish shared-instance membership. OakGate does not yet consume Mainstay's
+cross-service deployment context.
+
+Like Safebox Web, local-network routes remain eligible for external transfers;
+the classification alone cannot establish shared-network access. Capability,
+unit, relay and amount checks continue to apply. Receiving and redemption retain
+the existing Acorn policy: accept any mint from which Acorn can successfully
+receive. No mint allowlist is added.
