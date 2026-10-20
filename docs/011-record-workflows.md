@@ -71,6 +71,44 @@ reported as a clean check. Bounded discovery cannot establish completeness,
 recognition, legal validity or ownership. This integration does not publish
 OpenETR events or expose a user's private key to the evaluator.
 
+## Nginx upload limits
+
+Add this directive inside the existing HTTPS `server` block for **each** host:
+`oakgate.safebox.dev` and `grove.safebox.dev`. Keep their existing TLS and upstream
+settings.
+
+```nginx
+client_max_body_size 110M;
+```
+
+The upload passes through two proxies: browser → OakGate, then Acorn → Grove
+for encrypted storage. Temporary sharing copies also use the configured transfer
+server. A limit at either proxy can cause **413 Request Entity Too Large**.
+A successful browser preview does not test either upload: the preview is local.
+In the deployed setup, raising this Nginx limit resolved attachment-save failures.
+
+This is the proxy request-body limit, not the application file allowance.
+OakGate continues to limit attachments to **25 MiB**, form requests to **26 MiB**,
+and record text to **256 KiB**. Grove may enforce its own application limits.
+The larger proxy allowance provides room for request and encryption overhead;
+it does not enable 110 MiB attachments in OakGate.
+
+After editing the Nginx configuration, validate and reload on each proxy host:
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+For container-managed Nginx, run the equivalent validation and reload in that
+Nginx container. Rebuilding OakGate or restarting Keycloak is not necessary for
+an Nginx-only change.
+
+If a 413 persists, inspect the effective configuration with `sudo nginx -T`:
+check both hostnames and any matching upload `location` blocks for a smaller
+`client_max_body_size` override. Check the access/error logs on both proxies to
+identify which rejected the upload. Check Records before retrying an uncertain
+save, then verify that the saved attachment opens correctly.
+
 ## Storage and backups
 
 Records remain in the Acorn, not a new OakGate content database. Temporary bearer

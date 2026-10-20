@@ -54,6 +54,8 @@ The app reads `OAKGATE_PUBLIC_URL` for its OpenAPI server address, login callbac
 In Nginx's HTTPS server block for `oakgate.safebox.dev`, retain your certificate directives and proxy to the app:
 
 ```nginx
+client_max_body_size 110M;
+
 location / {
     proxy_pass http://127.0.0.1:8801;
     proxy_set_header Host $host;
@@ -63,6 +65,14 @@ location / {
     proxy_set_header X-Forwarded-For $remote_addr;
 }
 ```
+
+Set `client_max_body_size 110M;` in the HTTPS server block for **both**
+`oakgate.safebox.dev` and `grove.safebox.dev`. The browser uploads to OakGate;
+Acorn then uploads the encrypted attachment to Grove. Either proxy can reject
+the request with HTTP 413. Check for smaller overrides in upload `location`
+blocks. See [record upload limits and troubleshooting](011-record-workflows.md#nginx-upload-limits)
+for validation and reload instructions. OakGate still enforces its own 25 MiB
+attachment limit.
 
 This upstream assumes Nginx runs directly on Beelink. If it runs in another container or on another machine, use the reachable Beelink address instead. Keycloak's server block continues forwarding to port 8800. If Nginx is on the host, each bind address can independently be narrowed to `127.0.0.1`. Otherwise restrict host ports to the proxy through network controls, particularly Keycloak's trusted-header endpoint.
 
