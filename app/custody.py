@@ -73,16 +73,15 @@ class CustodyStore:
             row = db.execute('SELECT npub FROM user_social_preferences WHERE owner=?', (owner,)).fetchone()
         return row['npub'] if row else ''
 
-    def ensure_default_handle(self, owner, pubkey_hex):
+    def ensure_default_handle(self, owner, candidate):
         """Allocate once, atomically, without replacing a user's chosen handle."""
-        from app.handles import default_handle_from_pubkey
         with closing(self.connect()) as db, db:
             db.execute('BEGIN IMMEDIATE')
             existing = db.execute('SELECT handle FROM user_preferences WHERE owner=?', (owner,)).fetchone()
             if existing:
                 return existing['handle']
             for attempt in range(1000):
-                handle = default_handle_from_pubkey(pubkey_hex, attempt=attempt)
+                handle = candidate(attempt=attempt)
                 reserved = db.execute('SELECT owner FROM lightning_handles WHERE normalized_handle=?', (handle,)).fetchone()
                 if reserved and reserved['owner'] != owner:
                     continue

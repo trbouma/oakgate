@@ -94,7 +94,8 @@ The reader uses Acorn's configured record query limit and does not paginate olde
 ## Preferences and unique handles
 
 When a user creates a new Acorn, OakGate assigns a default handle if no handle
-has already been chosen. It uses the same public-key derivation as Safebox Web:
+has already been chosen. It calls `Acorn.default_handle(attempt=...)` through the wallet adapter, using
+the same public-key derivation as Safebox Web:
 two BIP39 words concatenated with a number from 0 to 999. These words are a public
 label, not recovery words. If the name is taken or reserved, allocation advances
 the number within the same transaction until an available name is found. The
@@ -138,3 +139,9 @@ or placed in a shared application cache.
 This requires the Acorn revision introducing `public_only`; publish that change
 and update OakGate's lockfile before deploying. Previews do not add sharing,
 editing, deletion or credential-verification workflows.
+
+The instance method requires the updated safebox-acorn package. After pushing
+the Acorn change to main, run `poetry update safebox-acorn` in OakGate and commit
+the refreshed `poetry.lock` before deployment. The container build checks for
+this API. OakGate keeps uniqueness and address reservations in SQLite; it no
+longer imports Acorn’s word-list utility or implements the naming algorithm.

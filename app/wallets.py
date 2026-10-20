@@ -61,6 +61,13 @@ class AcornBackend:
         wallet.user_records = []
         return wallet
 
+    def default_handle(self, material, *, attempt=0):
+        wallet = self.wallet(material)
+        method = getattr(wallet, 'default_handle', None)
+        if not callable(method):
+            raise WalletInputError('Default handles need the updated safebox-acorn dependency. Update Acorn and retry setup.')
+        return method(attempt=attempt)
+
     def public_identity(self, material):
         return self.wallet(material).public_identity()
 
@@ -443,7 +450,8 @@ class WalletService:
                 return
             # Persist the public-key-derived handle before relay setup so a
             # retry keeps the same preference and never replaces a custom one.
-            self.store.ensure_default_handle(owner, self.backend.public_identity(record['material'])['hex'])
+            self.store.ensure_default_handle(owner,
+                lambda *, attempt: self.backend.default_handle(record['material'], attempt=attempt))
             await asyncio.wait_for(self.backend.initialize(record['material']), timeout=40)
             active = True
         finally:

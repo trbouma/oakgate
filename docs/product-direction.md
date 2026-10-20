@@ -2,6 +2,8 @@
 
 OakGate is a custodial application around safebox-acorn. Its purpose is to make a user's safebox more forgiving to use: familiar sign-in, retained recovery information, and less day-to-day key management.
 
+OakGate is positioned as the primary Mainstay client for everyday use, with Safebox Web as the experimental non-custodial client. Both retain the shared Acorn architecture and the commitment to user independence. See [Mainstay client roles](021-mainstay-client-roles.md) for the product responsibilities and implementation boundaries.
+
 ## What OakGate takes responsibility for
 
 The intended service associates an authenticated user with their safebox and retains the material needed to use and recover it. The expected recovery inventory includes the `nsec`, recovery phrase, bootstrap relay, and any additional state needed by Acorn. That inventory still needs to be verified against Acorn's implementation.

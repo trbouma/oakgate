@@ -21,6 +21,9 @@ class Backend:
         self.down = False
         self.amount = 1234
 
+    def default_handle(self, material, *, attempt=0):
+        return f'producefront{(939 + attempt) % 1000}'
+
     def public_identity(self, material):
         return {'hex': 'ab' * 32, 'npub': material['npub']}
 
@@ -210,14 +213,13 @@ def test_real_acorn_offline_generation_and_recovery():
 
 
 def test_default_handle_survives_setup_retry_and_can_be_changed(tmp_path):
-    from app.handles import default_handle_from_pubkey
     async def run():
         client, sessions, service, backend = setup(tmp_path)
         async with client:
             owner = await login(client, sessions)
             backend.down = True
             await client.post('/account/acorn/create', data=form())
-            expected = default_handle_from_pubkey('ab' * 32)
+            expected = backend.default_handle({})
             assert service.store.preference(owner) == expected
             backend.down = False
             await client.post('/account/acorn/retry', data=form())
@@ -230,23 +232,33 @@ def test_default_handle_survives_setup_retry_and_can_be_changed(tmp_path):
 
 
 def test_default_handle_collision_reservation_and_existing_preference(tmp_path):
-    from app.handles import default_handle_from_pubkey
     store = CustodyStore(tmp_path, Fernet.generate_key())
-    pubkey = 'ab' * 32
-    preferred = default_handle_from_pubkey(pubkey)
+    candidate = lambda *, attempt=0: f'producefront{(939 + attempt) % 1000}'
+    preferred = candidate()
     store.insert('first', {'npub': 'first'}, 'active')
     store.save_handle('first', preferred)
     store.save_handle('first', 'renamed')
     # The old receipt address remains reserved even though no longer displayed.
-    assert store.ensure_default_handle('second', pubkey) == default_handle_from_pubkey(pubkey, attempt=1)
-    assert store.ensure_default_handle('third', pubkey) == default_handle_from_pubkey(pubkey, attempt=2)
+    assert store.ensure_default_handle('second', candidate) == candidate(attempt=1)
+    assert store.ensure_default_handle('third', candidate) == candidate(attempt=2)
     store.save_handle('custom', 'ChosenName')
-    assert store.ensure_default_handle('custom', pubkey) == 'ChosenName'
+    assert store.ensure_default_handle('custom', candidate) == 'ChosenName'
 
 
-def test_default_handle_matches_safebox_word_derivation():
-    from acorn.func_utils import generate_name_from_hex
-    from app.handles import default_handle_from_pubkey
-    for pubkey in ('00' * 32, 'ab' * 32, 'ff' * 32):
-        first, second, suffix = generate_name_from_hex(pubkey).split('-')
-        assert default_handle_from_pubkey(pubkey) == f'{first}{second}{int(suffix) % 1000}'
+
+def test_default_handle_adapter_delegates_to_acorn(monkeypatch):
+    from types import SimpleNamespace
+    from unittest.mock import Mock
+    backend = AcornBackend()
+    method = Mock(return_value='producefront940')
+    monkeypatch.setattr(backend, 'wallet', lambda material: SimpleNamespace(default_handle=method))
+    assert backend.default_handle({}, attempt=1) == 'producefront940'
+    method.assert_called_once_with(attempt=1)
+
+
+def test_default_handle_missing_acorn_api_gives_upgrade_instruction(monkeypatch):
+    from types import SimpleNamespace
+    backend = AcornBackend()
+    monkeypatch.setattr(backend, 'wallet', lambda material: SimpleNamespace())
+    with pytest.raises(WalletInputError, match='updated safebox-acorn'):
+        backend.default_handle({})

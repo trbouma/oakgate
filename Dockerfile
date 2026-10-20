@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install --yes --no-install-recommends git build-es
 RUN pip install --no-cache-dir "poetry==${POETRY_VERSION}"
 COPY pyproject.toml poetry.lock ./
 RUN poetry install --only main --no-root --no-ansi
-RUN .venv/bin/python -c "from acorn.acorn import Acorn"
+RUN .venv/bin/python -c "from acorn.acorn import Acorn; assert callable(getattr(Acorn, 'default_handle', None)), 'Update safebox-acorn and poetry.lock: default_handle is required'"
 
 FROM python:3.12-slim AS runtime
 ENV PATH="/app/.venv/bin:$PATH" \
