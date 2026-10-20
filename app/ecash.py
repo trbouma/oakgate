@@ -104,9 +104,11 @@ class EcashReceiver:
             lease = self.wallets.store.acquire(owner)
         except Busy:
             return
-        marker = time.time() + self.interval
+        # Cover both bounded phases and their gap, including a worker crash.
+        marker = time.time() + 90 + self.interval
         claimed = False
         failed = False
+        deferred = False
         try:
             # Recheck after claiming to prevent two processes sweeping a stale
             # due list. The owner lease also serializes other custody mutations.
@@ -126,12 +128,28 @@ class EcashReceiver:
             ):
                 if not enabled:
                     continue
+                if lease is None:
+                    # Give foreground requests a chance between inbox phases.
+                    # Never queue behind a user payment or steal its lease.
+                    await asyncio.sleep(1)
+                    try:
+                        lease = self.wallets.store.acquire(owner)
+                    except Busy:
+                        deferred = True
+                        break
+                    record = self.wallets.store.get(owner)
+                    if not record or record['status'] != 'active':
+                        break
+                    self.wallets.relay(record['material']['relay'])
                 try:
                     async with asyncio.timeout(timeout):
                         await getattr(self.wallets.backend, method)(record['material'])
                 except Exception as exc:
                     failed = True
                     logger.warning('Acorn inbox phase=%s retry error_type=%s', method, type(exc).__name__)
+                finally:
+                    self.wallets.store.release(owner, lease)
+                    lease = None
         except Exception as exc:
             failed = True
             # Never log bearer tokens, decrypted events, keys or provider text.
@@ -144,22 +162,38 @@ class EcashReceiver:
                     with closing(self.wallets.store.connect()) as db, db:
                         row = db.execute('SELECT failures FROM ecash_inboxes WHERE owner=?', (owner,)).fetchone()
                         failures = min(row['failures'] + 1, 5) if failed else 0
-                        delay = max(self.interval, min(self.interval * 2 ** failures, 300))
+                        delay = 5 if deferred and not failed else max(self.interval, min(self.interval * 2 ** failures, 300))
                         db.execute('UPDATE ecash_inboxes SET next_poll=?,failures=? WHERE owner=? AND next_poll=?',
                                    (time.time() + delay, failures, owner, marker))
             finally:
-                self.wallets.store.release(owner, lease)
+                if lease is not None:
+                    self.wallets.store.release(owner, lease)
 
     async def run(self):
         if not self.available:
             logger.warning('Direct ecash receiving unavailable; required Acorn methods are missing')
             return
-        while True:
-            try:
-                await asyncio.gather(*(self.process(owner) for owner in self.due()))
-            except Exception as exc:
-                logger.warning('Acorn inbox scheduler retry error_type=%s', type(exc).__name__)
-            await asyncio.sleep(1)
+        tasks = {}
+        try:
+            while True:
+                try:
+                    for owner, task in list(tasks.items()):
+                        if task.done():
+                            del tasks[owner]
+                            await task
+                    for owner in self.due():
+                        if len(tasks) >= 4:
+                            break
+                        if owner not in tasks:
+                            tasks[owner] = asyncio.create_task(self.process(owner))
+                except Exception as exc:
+                    logger.warning('Acorn inbox scheduler retry error_type=%s', type(exc).__name__)
+                await asyncio.sleep(1)
+        finally:
+            # Finish cancellation cleanup before shutdown releases application state.
+            for task in tasks.values():
+                task.cancel()
+            await asyncio.gather(*tasks.values(), return_exceptions=True)
 
 
 @router.get('/.well-known/nostr.json', include_in_schema=False)

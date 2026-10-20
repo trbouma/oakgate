@@ -186,3 +186,24 @@ Consecutive failed runs back off to five minutes (or the configured interval if
 longer). Schedule and failure count survive restart; an explicit inbox wake during
 a run is preserved. Worker timeouts and lease durations are unchanged, and no
 pending payment is deleted or declared failed merely to free a wallet lock.
+
+
+Cash and Clear inbox phases now use separate wallet leases, with a one-second
+foreground opportunity between them. If a foreground operation claims the wallet,
+the next phase is deferred; ordinary contention retries after five seconds without
+increasing the failure count. Each network phase retains its existing timeout.
+The scheduler keeps at most four owners in flight and replaces completed work
+without waiting for the slowest owner. Shutdown cancels and awaits those workers
+so their lease cleanup completes. The persisted schedule reservation covers the
+whole pass; after a crash it becomes eligible again automatically.
+
+Acorn must include the cancellation cleanup fix in `acquire_lock`: a cancelled
+acquisition releases its process-local lock, but leaves any unverified published
+relay lease to expire normally. This can still cause a temporary busy response,
+but avoids a permanent local lock leak without bypassing distributed protection.
+No pending receipt, prepared proof, outgoing hold, or transaction history is
+removed by this change. Receipt redemption and recovery still go through Acorn.
+
+Deploy the Acorn fix first to its Git main branch, then run
+`poetry update safebox-acorn` in OakGate and commit the resulting lockfile before
+rebuilding the app. Local source-override tests alone do not update the container.

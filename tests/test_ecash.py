@@ -143,3 +143,97 @@ def test_inbox_failure_backoff_and_wake_survive_completion(tmp_path):
             await receiver.process(owner)
             assert EcashReceiver(service).due() == [owner]
     asyncio.run(run())
+
+
+def test_foreground_can_claim_between_inbox_phases(tmp_path, monkeypatch):
+    async def run():
+        client, sessions, service, backend = setup(tmp_path)
+        ready(backend)
+        backend.clear_receiving_available = True
+        backend.receive_clear = AsyncMock()
+        async with client:
+            owner = await login(client, sessions)
+            await client.post('/account/acorn/create', data=form())
+            receiver = EcashReceiver(service)
+            receiver.due()
+            foreground = []
+            async def foreground_claim(seconds):
+                # Cash phase must have released the lease. A foreground send
+                # wins; Clear is deferred without executing or losing its inbox.
+                foreground.append(service.store.acquire(owner))
+            monkeypatch.setattr('app.ecash.asyncio.sleep', foreground_claim)
+            await receiver.process(owner)
+            backend.receive_ecash.assert_awaited_once()
+            backend.receive_clear.assert_not_awaited()
+            from app.custody import Busy
+            import pytest
+            with pytest.raises(Busy):
+                service.store.acquire(owner)
+            service.store.release(owner, foreground[0])
+            with service.store.connect() as db:
+                assert db.execute('SELECT failures FROM ecash_inboxes').fetchone()['failures'] == 0
+    asyncio.run(run())
+
+
+def test_cancelled_inbox_releases_lease(tmp_path):
+    async def run():
+        client, sessions, service, backend = setup(tmp_path)
+        ready(backend)
+        async with client:
+            owner = await login(client, sessions)
+            await client.post('/account/acorn/create', data=form())
+            receiver = EcashReceiver(service)
+            receiver.due()
+            entered = asyncio.Event()
+            async def blocked(material):
+                entered.set()
+                await asyncio.Event().wait()
+            backend.receive_ecash.side_effect = blocked
+            task = asyncio.create_task(receiver.process(owner))
+            await asyncio.wait_for(entered.wait(), 1)
+            task.cancel()
+            import pytest
+            with pytest.raises(asyncio.CancelledError):
+                await task
+            lease = service.store.acquire(owner)
+            service.store.release(owner, lease)
+            with service.store.connect() as db:
+                db.execute('UPDATE ecash_inboxes SET next_poll=0')
+            backend.receive_ecash.side_effect = None
+            await EcashReceiver(service).process(owner)
+            assert backend.receive_ecash.await_count == 2
+    asyncio.run(run())
+
+
+def test_scheduler_replaces_finished_work_without_waiting_for_slow_owner():
+    async def run():
+        from types import SimpleNamespace
+        receiver = object.__new__(EcashReceiver)
+        receiver.enabled = True
+        receiver.clear_enabled = False
+        receiver.wallets = SimpleNamespace(backend=SimpleNamespace(ecash_receiving_available=True))
+        started = set()
+        fifth = asyncio.Event()
+        cancelled = asyncio.Event()
+        async def process(owner):
+            started.add(owner)
+            if owner == 0:
+                try:
+                    await asyncio.Event().wait()
+                finally:
+                    cancelled.set()
+            if owner == 4:
+                fifth.set()
+        receiver.process = process
+        receiver.due = lambda: [owner for owner in range(5) if owner not in started][:4]
+        task = asyncio.create_task(receiver.run())
+        try:
+            await asyncio.wait_for(fifth.wait(), 3)
+            assert not cancelled.is_set()
+        finally:
+            task.cancel()
+            import pytest
+            with pytest.raises(asyncio.CancelledError):
+                await task
+        assert cancelled.is_set()
+    asyncio.run(run())
