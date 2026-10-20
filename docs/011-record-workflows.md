@@ -7,6 +7,17 @@ and signature-checked through the explicit `stroma-nostr` dependency.
 
 ## User experience
 
+Scan, Receive and Add Record are stacked full-width actions beneath navigation,
+with a minimum 56-pixel target height for access from either side of the screen.
+
+- **Add Record** creates a labelled text or JSON record with an optional attachment.
+  Labels are limited to 200 characters, text to 256 KiB and files to 25 MiB.
+  Under the OakGate wallet lease, Acorn checks whether the label already exists;
+  an existing label is rejected rather than overwritten. Acorn performs publication
+  and verification. An uncertain save directs the user to check Records before
+  retrying. This check does not provide atomic exclusion against another independent
+  client writing to the same Acorn at the same time.
+
 - **List** shows records newest first. **Folders** groups existing labels by `/`,
   with breadcrumbs. Folder names sort alphabetically; records retain timestamp
   order. These are label groups, not a separate folder database.

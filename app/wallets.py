@@ -346,6 +346,15 @@ class AcornBackend:
     def record_workflows_available(self):
         return getattr(Acorn, 'record_workflows_version', 0) >= 1
 
+    async def create_record(self, material, label, payload, attachment=None, media_type=None):
+        wallet = self.wallet(material)
+        if not callable(getattr(wallet, 'record_exists', None)):
+            raise WalletInputError('Record creation needs the updated Acorn dependency.')
+        if await wallet.record_exists(label, record_kind=37375):
+            raise WalletInputError('A record with this label already exists. Choose another label or edit the existing record.')
+        return await wallet.put_record(label, payload, record_type='generic',
+            record_kind=37375, return_result=True, blob_data=attachment, blob_type=media_type)
+
     async def update_record(self, material, reference, payload, attachment=None, media_type=None):
         detail = await self.record_detail(material, reference)
         if detail is None:
@@ -436,7 +445,7 @@ class WalletService:
 
     async def record_action(self, material, action, *args):
         self.relay(material['relay'])
-        if action not in {'update_record', 'create_record_capability', 'stop_record_capability'}:
+        if action not in {'create_record', 'update_record', 'create_record_capability', 'stop_record_capability'}:
             raise ValueError('Unknown record action')
         return await asyncio.wait_for(getattr(self.backend, action)(material, *args), timeout=60)
 

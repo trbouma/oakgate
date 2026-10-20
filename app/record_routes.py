@@ -12,6 +12,7 @@ from starlette.datastructures import UploadFile
 
 from app.auth import current_session, error_page
 from app.custody import Busy, identity_key
+from app.wallets import WalletInputError
 from app.wallet_routes import checked_form
 from app.record_capabilities import RecordCapabilities
 from app.record_settings import RecordSettings
@@ -43,6 +44,65 @@ async def selected(request, reference):
 def render(request, session, **context):
     return request.app.state.templates.TemplateResponse(request=request, name='record_action.html',
         context={**session, 'active_page': 'records', **context})
+
+def render_new(request, session, **context):
+    return request.app.state.templates.TemplateResponse(request=request, name='record_new.html',
+        context={**session, 'active_page': 'add-record', **context})
+
+
+@router.get('/account/add-record', include_in_schema=False)
+async def new_record_form(request: Request):
+    session, service, owner, material = await account(request)
+    return render_new(request, session)
+
+
+@router.post('/account/add-record', include_in_schema=False)
+async def new_record(request: Request):
+    session, service, owner, material = await account(request)
+    form, token = None, None
+    try:
+        form = await checked_form(request, session, max_bytes=26 * 1024 * 1024, multipart=True)
+        label = form.get('label', '')
+        if not isinstance(label, str) or not label.strip() or len(label.strip()) > 200 or any(ord(c) < 32 for c in label):
+            raise HTTPException(400, 'Enter a record label of 1–200 characters.')
+        label = label.strip()
+        payload = form.get('payload', '')
+        if not isinstance(payload, str) or len(payload.encode()) > 262144:
+            raise HTTPException(400, 'Record text must be at most 256 KiB.')
+        format = form.get('format', 'text')
+        if format not in {'text', 'json'}:
+            raise HTTPException(400, 'Choose text or JSON.')
+        if format == 'json':
+            try:
+                payload = json.loads(payload, parse_constant=lambda value: (_ for _ in ()).throw(ValueError()))
+            except (ValueError, RecursionError):
+                raise HTTPException(400, 'Enter valid JSON.') from None
+        data, mime = None, None
+        upload = form.get('attachment')
+        if isinstance(upload, UploadFile) and upload.filename:
+            data = await upload.read(25 * 1024 * 1024 + 1)
+            if not data or len(data) > 25 * 1024 * 1024:
+                raise HTTPException(400, 'Choose a nonempty file up to 25 MiB.')
+            mime = upload.content_type or 'application/octet-stream'
+        token = service.store.acquire(owner)
+        result = await service.record_action(material, 'create_record', label, payload, data, mime)
+        if not isinstance(result, dict) or result.get('verified') is not True:
+            raise RuntimeError('Save not verified')
+        return RedirectResponse('/account/records', status_code=303)
+    except HTTPException:
+        raise
+    except WalletInputError as exc:
+        return error_page(request, str(exc), 409)
+    except Busy:
+        return error_page(request, 'Another Acorn operation is in progress. Please wait and reload.', 409)
+    except Exception:
+        return error_page(request, 'The record could not be confirmed. Check Records before trying again.', 503)
+    finally:
+        if token:
+            service.store.release(owner, token)
+        if form is not None:
+            await form.close()
+
 
 @router.get('/account/records/{reference}/{action}', include_in_schema=False)
 async def record_form(request: Request, reference: str, action: str):
