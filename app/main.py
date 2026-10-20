@@ -118,7 +118,7 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
         return FileResponse(LOGO, media_type="image/png")
 
     @app.get("/health", tags=["Operations"])
-    def health():
+    async def health():
         """Application liveness, independent of Keycloak and session storage."""
         return JSONResponse({"status": "ok", "service": "oakgate", "version": APP_VERSION},
                             headers={"Cache-Control": "no-store"})

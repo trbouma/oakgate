@@ -357,3 +357,63 @@ def test_lost_lease_stops_work_and_waits_for_cleanup(monkeypatch):
             await receiver.phase('owner', 'lease', 'settle_clear', {})
         assert cleaned.is_set()
     asyncio.run(run())
+
+
+def test_health_responds_while_inbox_database_waits(tmp_path):
+    async def run():
+        client, sessions, service, backend = setup(tmp_path)
+        ready(backend)
+        async with client:
+            owner = await login(client, sessions)
+            await client.post('/account/acorn/create', data=form())
+            receiver = EcashReceiver(service)
+            blocker = service.store.connect()
+            blocker.execute('BEGIN IMMEDIATE')
+            task = asyncio.create_task(receiver.database(receiver.due))
+            try:
+                await asyncio.sleep(0.05)
+                assert not task.done()
+                response = await asyncio.wait_for(client.get('/health'), 0.5)
+                assert response.status_code == 200
+                assert not task.done()
+            finally:
+                blocker.rollback()
+                blocker.close()
+                await task
+    asyncio.run(run())
+
+
+def test_cancel_during_threaded_acquire_releases_late_lease(tmp_path, monkeypatch):
+    async def run():
+        import threading
+        import pytest
+        client, sessions, service, backend = setup(tmp_path)
+        ready(backend)
+        async with client:
+            owner = await login(client, sessions)
+            await client.post('/account/acorn/create', data=form())
+            receiver = EcashReceiver(service)
+            receiver.due()
+            entered = threading.Event()
+            finish = threading.Event()
+            acquire = service.store.acquire
+            def delayed(owner):
+                entered.set()
+                assert finish.wait(3)
+                return acquire(owner)
+            monkeypatch.setattr(service.store, 'acquire', delayed)
+            task = asyncio.create_task(receiver.process(owner))
+            try:
+                while not entered.is_set():
+                    await asyncio.sleep(0.001)
+                task.cancel()
+                await asyncio.sleep(0)
+                assert not task.done()
+            finally:
+                finish.set()
+            with pytest.raises(asyncio.CancelledError):
+                await task
+            token = acquire(owner)
+            service.store.release(owner, token)
+            backend.receive_ecash.assert_awaited_once()
+    asyncio.run(run())

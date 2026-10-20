@@ -36,3 +36,11 @@ def test_api_schema_documents_health():
     schema = get("/openapi.json").json()
     assert schema["info"]["title"] == "OakGate"
     assert "/health" in schema["paths"]
+
+
+def test_container_explicitly_uses_asyncio_loop():
+    import json
+    from pathlib import Path
+    dockerfile = (Path(__file__).resolve().parents[1] / 'Dockerfile').read_text()
+    command = json.loads(next(line[4:] for line in dockerfile.splitlines() if line.startswith('CMD ')))
+    assert command[command.index('--loop') + 1] == 'asyncio'

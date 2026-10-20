@@ -240,3 +240,31 @@ Long-running phases report progress every 15 seconds. No bearer tokens, keys,
 receipt content, or raw provider errors are included. Use these timings to identify
 which phase stalls before changing relay or mint configuration. This OakGate
 change uses existing Acorn APIs and requires no additional Acorn dependency update.
+
+
+### HTTP responsiveness and SSL transport
+
+The container explicitly starts Uvicorn with `--loop asyncio`. This avoids the
+uvloop SSL closed-transport failure observed in production without disabling TLS
+verification or retrying a payment. It is a transport workaround, not proof that
+all network timeouts have been eliminated. For comparable local testing, include
+`--loop asyncio` in the Uvicorn command.
+
+Inbox scheduling, custody lease operations, and material reads run SQLite work
+in threads so its five-second lock wait and disk commits do not block the HTTP
+event loop. Acorn operations remain on the original event loop; its process-local
+locks are not shared across event loops or threads. `/health` is async and does
+not wait for a synchronous endpoint thread slot. Slow inbox database operations
+log their method name and elapsed time, without arguments or custody material.
+
+Graceful shutdown drains the protected inbox pass, including any SQLite work
+already dispatched. A late lease acquisition therefore reaches its matching
+release rather than running unnoticed after cancellation. This can lengthen
+shutdown when infrastructure is slow. A forced stop still relies on durable
+recovery journals and expiring leases; do not erase them or resend payments.
+
+After rebuilding with `./refresh-app.sh`, check direct `/health` latency during
+inbox work and inspect `database=... elapsed=...` and phase timing logs. The test
+suite covers HTTP health during a real SQLite write-lock wait and cancellation
+during lease acquisition. Production SSL failure reproduction and server latency
+verification still require deployment; tests do not send real payments.

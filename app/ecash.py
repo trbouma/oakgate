@@ -97,6 +97,28 @@ class EcashReceiver:
                 "SELECT e.owner FROM ecash_inboxes e JOIN wallets w ON w.owner=e.owner WHERE w.status='active' AND e.next_poll<=? AND w.lease_until<? ORDER BY e.next_poll,e.owner LIMIT 4",
                 (time.time(), time.time()))]
 
+    def claim_poll(self, owner, marker):
+        with closing(self.wallets.store.connect()) as db, db:
+            return db.execute('UPDATE ecash_inboxes SET next_poll=? WHERE owner=? AND next_poll<=?',
+                              (marker, owner, time.time())).rowcount
+
+    def finish_poll(self, owner, marker, failed, deferred):
+        with closing(self.wallets.store.connect()) as db, db:
+            row = db.execute('SELECT failures FROM ecash_inboxes WHERE owner=?', (owner,)).fetchone()
+            failures = min(row['failures'] + 1, 5) if failed else 0
+            delay = 5 if deferred and not failed else max(self.interval, min(self.interval * 2 ** failures, 300))
+            db.execute('UPDATE ecash_inboxes SET next_poll=?,failures=? WHERE owner=? AND next_poll=?',
+                       (time.time() + delay, failures, owner, marker))
+
+    async def database(self, method, *args):
+        started = time.monotonic()
+        try:
+            return await asyncio.to_thread(method, *args)
+        finally:
+            elapsed = time.monotonic() - started
+            if elapsed >= 0.25:
+                logger.warning('Acorn inbox database=%s elapsed=%.3fs', method.__name__, elapsed)
+
     async def phase(self, owner, lease, method, material):
         """Drain writes on shutdown while retaining exclusive custody ownership."""
         task = asyncio.create_task(getattr(self.wallets.backend, method)(material))
@@ -110,7 +132,7 @@ class EcashReceiver:
                 except asyncio.CancelledError:
                     # Do not interrupt a receipt/proof write during graceful shutdown.
                     cancelled = True
-                self.wallets.store.renew(owner, lease)
+                await self.database(self.wallets.store.renew, owner, lease)
                 if not task.done():
                     logger.warning('Acorn inbox phase=%s status=running elapsed=%.3fs',
                                    method, time.monotonic() - started)
@@ -130,10 +152,30 @@ class EcashReceiver:
                 raise asyncio.CancelledError
 
     async def process(self, owner):
+        # Threaded SQLite commits cannot be cancelled. Drain the pass so a lease
+        # acquired by a completing thread always reaches its matching release.
+        task = asyncio.create_task(self._process(owner))
+        cancelled = False
+        while True:
+            try:
+                await asyncio.shield(task)
+                break
+            except asyncio.CancelledError:
+                if task.done():
+                    raise
+                cancelled = True
+            except Exception:
+                if cancelled:
+                    raise asyncio.CancelledError
+                raise
+        if cancelled:
+            raise asyncio.CancelledError
+
+    async def _process(self, owner):
         if not self.available:
             return
         try:
-            lease = self.wallets.store.acquire(owner)
+            lease = await self.database(self.wallets.store.acquire, owner)
         except Busy:
             return
         # Reserve a retry after crashes; active work is protected by renewed leases.
@@ -144,13 +186,11 @@ class EcashReceiver:
         try:
             # Recheck after claiming to prevent two processes sweeping a stale
             # due list. The owner lease also serializes other custody mutations.
-            with closing(self.wallets.store.connect()) as db, db:
-                changed = db.execute('UPDATE ecash_inboxes SET next_poll=? WHERE owner=? AND next_poll<=?',
-                                     (marker, owner, time.time())).rowcount
+            changed = await self.database(self.claim_poll, owner, marker)
             if not changed:
                 return
             claimed = True
-            record = self.wallets.store.get(owner)
+            record = await self.database(self.wallets.store.get, owner)
             if not record or record['status'] != 'active':
                 return
             self.wallets.relay(record['material']['relay'])
@@ -170,11 +210,11 @@ class EcashReceiver:
                     # Never queue behind a user payment or steal its lease.
                     await asyncio.sleep(1)
                     try:
-                        lease = self.wallets.store.acquire(owner)
+                        lease = await self.database(self.wallets.store.acquire, owner)
                     except Busy:
                         deferred = True
                         break
-                    record = self.wallets.store.get(owner)
+                    record = await self.database(self.wallets.store.get, owner)
                     if not record or record['status'] != 'active':
                         break
                     self.wallets.relay(record['material']['relay'])
@@ -186,7 +226,7 @@ class EcashReceiver:
                     failed = True
                     logger.warning('Acorn inbox phase=%s retry error_type=%s', method, type(exc).__name__)
                 finally:
-                    self.wallets.store.release(owner, lease)
+                    await self.database(self.wallets.store.release, owner, lease)
                     lease = None
         except Exception as exc:
             failed = True
@@ -197,15 +237,10 @@ class EcashReceiver:
                 if claimed:
                     # Start cooldown after work finishes, not before network
                     # waits. Conditional update preserves wake() during a run.
-                    with closing(self.wallets.store.connect()) as db, db:
-                        row = db.execute('SELECT failures FROM ecash_inboxes WHERE owner=?', (owner,)).fetchone()
-                        failures = min(row['failures'] + 1, 5) if failed else 0
-                        delay = 5 if deferred and not failed else max(self.interval, min(self.interval * 2 ** failures, 300))
-                        db.execute('UPDATE ecash_inboxes SET next_poll=?,failures=? WHERE owner=? AND next_poll=?',
-                                   (time.time() + delay, failures, owner, marker))
+                    await self.database(self.finish_poll, owner, marker, failed, deferred)
             finally:
                 if lease is not None:
-                    self.wallets.store.release(owner, lease)
+                    await self.database(self.wallets.store.release, owner, lease)
 
     async def run(self):
         if not self.available:
@@ -219,7 +254,7 @@ class EcashReceiver:
                         if task.done():
                             del tasks[owner]
                             await task
-                    for owner in self.due():
+                    for owner in await self.database(self.due):
                         if len(tasks) >= 4:
                             break
                         if owner not in tasks:
