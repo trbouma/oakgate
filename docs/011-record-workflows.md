@@ -7,8 +7,9 @@ and signature-checked through the explicit `stroma-nostr` dependency.
 
 ## User experience
 
-Scan, Receive and Add Record are stacked full-width actions beneath navigation,
-with a minimum 56-pixel target height for access from either side of the screen.
+Scan and Receive are stacked full-width actions beneath navigation. Add Record
+appears only on the Records page for connected Acorns. All three use a minimum
+56-pixel target height for access from either side of the screen.
 
 - **Add Record** creates a labelled text or JSON record with an optional attachment.
   Labels are limited to 200 characters, text to 256 KiB and files to 25 MiB.

@@ -47,7 +47,7 @@ def render(request, session, **context):
 
 def render_new(request, session, **context):
     return request.app.state.templates.TemplateResponse(request=request, name='record_new.html',
-        context={**session, 'active_page': 'add-record', **context})
+        context={**session, 'active_page': 'records', **context})
 
 
 @router.get('/account/add-record', include_in_schema=False)

@@ -370,3 +370,10 @@ body:not(.landing) > header { padding-block: 12px; gap: 12px; }
 .payment-review-item { border-top:1px solid var(--border,#899577); margin-top:24px; padding-top:16px; }
 .send-panel .review-ack { display:flex; align-items:flex-start; gap:12px; margin-top:20px; }
 .send-panel .review-ack input[type=checkbox] { width:22px; height:22px; flex-shrink:0; margin:0; }
+
+.wallet-actions.record-create-actions { padding:0; margin:12px 0; }
+
+.attachment-preview { min-width:0; }
+.attachment-preview img, .attachment-preview canvas { display:block; max-width:100%; height:auto; margin:12px auto; }
+.attachment-preview pre { white-space:pre-wrap; overflow-wrap:anywhere; max-height:24rem; overflow:auto; }
+.attachment-preview p { overflow-wrap:anywhere; }

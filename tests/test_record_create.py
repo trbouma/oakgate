@@ -37,7 +37,11 @@ def test_new_record_form_save_and_guards(tmp_path):
             page = await client.get('/account/add-record')
             assert page.status_code == 200
             assert 'data-progress-message=' in page.text
-            assert 'href="/account/add-record" aria-current="page"' in page.text
+            assert 'href="/account/records" aria-current="page"' in page.text
+            assert 'href="/account/add-record"' not in page.text
+            backend.records = AsyncMock(return_value=[])
+            assert 'href="/account/add-record"' in (await client.get('/account/records')).text
+            assert 'href="/account/add-record"' not in (await client.get('/account')).text
             assert 'href="/account/scan"' in page.text and 'href="/account/receive"' in page.text
             response = await client.post('/account/add-record', data=form(label=' Notes ', format='json', payload='{"text":"hello"}'),
                 files={'attachment': ('note.txt', b'hello', 'text/plain')})
