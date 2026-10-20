@@ -93,9 +93,18 @@ The reader uses Acorn's configured record query limit and does not paginate olde
 
 ## Preferences and unique handles
 
-Preferences lets a signed-in user set, change, or clear a custom OakGate handle. A saved handle is used in the account greeting. It does not change the Acorn public identity or Keycloak account.
+When a user creates a new Acorn, OakGate assigns a default handle if no handle
+has already been chosen. It uses the same public-key derivation as Safebox Web:
+two BIP39 words concatenated with a number from 0 to 999. These words are a public
+label, not recovery words. If the name is taken or reserved, allocation advances
+the number within the same transaction until an available name is found. The
+preference is persisted before relay initialization and preserved on setup retries.
+Users can change it in Preferences. Existing active wallets and imported Acorns
+are not automatically renamed by this change.
 
-Handles use 3–32 ASCII letters, numbers, hyphens, or underscores, beginning with a letter or number. Surrounding whitespace is removed. Display capitalization is preserved, while lowercase normalization makes `Tim` and `tim` the same claim. Clearing or changing a handle releases the old name for reuse; these are display preferences, not immutable identifiers or login credentials.
+Preferences lets a signed-in user set, change, or clear a custom OakGate handle. A saved handle supplies the user’s receipt address. It does not change the Acorn public identity or Keycloak account.
+
+Handles use 3–32 ASCII letters, numbers, hyphens, or underscores, beginning with a letter or number. Surrounding whitespace is removed. Display capitalization is preserved, while lowercase normalization makes `Tim` and `tim` the same claim. An address reserved while an Acorn is active cannot be reassigned to another user after a rename or removal. Handles are not login credentials.
 
 The existing persistent SQLite database (`/mnt/bitcoin/oakgate/custody.sqlite3` on Beelink) contains a separate `user_preferences` table, created automatically at startup. Each row is keyed by the hash of the exact Keycloak issuer/subject pair. A UNIQUE constraint on `normalized_handle` enforces uniqueness across all users sharing this database, including simultaneous requests. Failed claims preserve the user's previous handle. Multiple independent database copies do not share a handle namespace.
 

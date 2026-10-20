@@ -73,6 +73,27 @@ class CustodyStore:
             row = db.execute('SELECT npub FROM user_social_preferences WHERE owner=?', (owner,)).fetchone()
         return row['npub'] if row else ''
 
+    def ensure_default_handle(self, owner, pubkey_hex):
+        """Allocate once, atomically, without replacing a user's chosen handle."""
+        from app.handles import default_handle_from_pubkey
+        with closing(self.connect()) as db, db:
+            db.execute('BEGIN IMMEDIATE')
+            existing = db.execute('SELECT handle FROM user_preferences WHERE owner=?', (owner,)).fetchone()
+            if existing:
+                return existing['handle']
+            for attempt in range(1000):
+                handle = default_handle_from_pubkey(pubkey_hex, attempt=attempt)
+                reserved = db.execute('SELECT owner FROM lightning_handles WHERE normalized_handle=?', (handle,)).fetchone()
+                if reserved and reserved['owner'] != owner:
+                    continue
+                if db.execute('SELECT 1 FROM user_preferences WHERE normalized_handle=?', (handle,)).fetchone():
+                    continue
+                db.execute('INSERT INTO user_preferences(owner,handle,normalized_handle) VALUES(?,?,?)',
+                           (owner, handle, handle))
+                db.execute("INSERT OR IGNORE INTO lightning_handles(normalized_handle,owner) SELECT ?,owner FROM wallets WHERE owner=? AND status='active'", (handle, owner))
+                return handle
+            raise HandleTaken
+
     def save_handle(self, owner, handle, *, language=None, currency=None, social_npub=None):
         if social_npub is not None:
             from app.identity import social_public_identity

@@ -14,6 +14,9 @@ def test_address_qr_encodes_lnurl_and_tracks_handle(tmp_path):
         async with client:
             owner = await login(client, sessions)
             await client.post('/account/acorn/create', data=form())
+            assert 'lightning-qr-pane' in (await client.get('/account')).text
+            assert service.store.preference(owner)
+            service.store.save_handle(owner, '')
             assert 'lightning-qr-pane' not in (await client.get('/account')).text
             service.store.save_handle(owner, 'Alice')
             with patch('app.wallet_routes.previews._qr_svg', wraps=record_previews._qr_svg) as qr:

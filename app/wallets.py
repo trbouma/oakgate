@@ -441,6 +441,9 @@ class WalletService:
             self.relay(record['material']['relay'])
             if record['status'] == 'active':
                 return
+            # Persist the public-key-derived handle before relay setup so a
+            # retry keeps the same preference and never replaces a custom one.
+            self.store.ensure_default_handle(owner, self.backend.public_identity(record['material'])['hex'])
             await asyncio.wait_for(self.backend.initialize(record['material']), timeout=40)
             active = True
         finally:
