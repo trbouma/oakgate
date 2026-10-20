@@ -88,17 +88,19 @@ class AcornBackend:
         return all(callable(getattr(Acorn, method, None)) for method in
                    ('sweep_ecash_transfers', 'reconcile_continuity_receipts'))
 
-    async def receive_ecash(self, material):
-        if not self.ecash_receiving_available:
-            raise RuntimeError('Acorn receiving methods are unavailable')
-        wallet = self.wallet(material)
-        # Persist receipts first, then let Acorn redeem with their issuing mints.
-        # Successful redemption determines acceptance; OakGate adds no mint policy.
-        received = await wallet.sweep_ecash_transfers(
+    inbox_phases = True
+
+    async def discover_ecash(self, material):
+        return await self.wallet(material).sweep_ecash_transfers(
             relays=[material['relay']], finalize=False, limit=100, max_pages=10)
-        finalized = await wallet.reconcile_continuity_receipts()
-        # Both proof persistence and credit history belong to Acorn. Do not
-        # synthesize a second transaction in OakGate.
+
+    async def settle_ecash(self, material):
+        return await self.wallet(material).reconcile_continuity_receipts()
+
+    async def receive_ecash(self, material):
+        # Compatibility wrapper; background jobs run these phases separately.
+        received = await self.discover_ecash(material)
+        finalized = await self.settle_ecash(material)
         return {'received': received, 'finalized': finalized}
 
     @property
@@ -106,29 +108,43 @@ class AcornBackend:
         return all(callable(getattr(Acorn, method, None)) for method in
                    ('sweep_clear_transfers', 'get_clear_receipts', 'accept_pending_clear_receipt'))
 
-    async def receive_clear(self, material):
+    async def discover_clear(self, material):
+        # This call persists receipts: never wrap it in a short read timeout.
+        result = await self.wallet(material).sweep_clear_transfers(
+            relays=[material['relay']], limit=100, max_pages=10)
+        if isinstance(result, dict) and result.get('failed'):
+            raise RuntimeError('Clear discovery has pending failures')
+        return result
+
+    async def settle_clear(self, material, batch_size=1):
         wallet = self.wallet(material)
-        try:
-            async with asyncio.timeout(5):
-                await wallet.sweep_clear_transfers(relays=[material['relay']], limit=100, max_pages=10)
-        except Exception as exc:
-            logging.getLogger(__name__).warning('Clear discovery pending error_type=%s', type(exc).__name__)
         pending = await wallet.get_clear_receipts(status='pending')
-        # Rotate a bounded batch so an unavailable mint cannot permanently
-        # prevent other receipts being attempted. Acorn owns durable retry state.
         pending = sorted(pending, key=lambda row: str(row['event_id']))
-        offset = (int(time.time()) // 30 * 2) % len(pending) if pending else 0
-        batch = (pending[offset:] + pending[:offset])[:2]
+        offset = (int(time.time()) // 30 * batch_size) % len(pending) if pending else 0
+        batch = (pending[offset:] + pending[:offset])[:batch_size]
         accepted = 0
+        failed = False
         for receipt in batch:
+            started = time.monotonic()
+            status = 'error'
             try:
-                async with asyncio.timeout(20):
-                    result = await wallet.accept_pending_clear_receipt(receipt['event_id'])
+                result = await wallet.accept_pending_clear_receipt(receipt['event_id'])
                 if result.get('accepted'):
                     accepted += 1
+                status = 'complete'
             except Exception as exc:
-                logging.getLogger(__name__).warning('Clear receipt pending error_type=%s', type(exc).__name__)
-        return {'accepted_count': accepted}
+                failed = True
+                logging.getLogger(__name__).warning(
+                    'Clear receipt pending error_type=%s', type(exc).__name__)
+            finally:
+                logging.getLogger(__name__).warning(
+                    'Acorn inbox phase=clear_receipt status=%s elapsed=%.3fs',
+                    status, time.monotonic() - started)
+        return {'accepted_count': accepted, 'retry_pending': failed}
+
+    async def receive_clear(self, material):
+        await self.discover_clear(material)
+        return await self.settle_clear(material, batch_size=2)
 
     @property
     def clear_sending_available(self):

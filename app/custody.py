@@ -186,6 +186,16 @@ class CustodyStore:
             raise Busy
         return token
 
+    def renew(self, owner, token):
+        """Extend only our unexpired lease; never resurrect or steal ownership."""
+        now = time.time()
+        with closing(self.connect()) as db, db:
+            changed = db.execute(
+                'UPDATE wallets SET lease_until=? WHERE owner=? AND lease=? AND lease_until>?',
+                (now + 90, owner, token, now)).rowcount
+        if not changed:
+            raise Busy
+
     def release(self, owner, token, active=False):
         with closing(self.connect()) as db, db:
             db.execute("UPDATE wallets SET lease=NULL,lease_until=0,status=CASE WHEN ? THEN 'active' ELSE status END WHERE owner=? AND lease=?",

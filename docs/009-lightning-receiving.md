@@ -184,18 +184,20 @@ Inbox polling starts its cooldown after processing finishes, so a slow run canno
 immediately reacquire the wallet just because its original interval elapsed.
 Consecutive failed runs back off to five minutes (or the configured interval if
 longer). Schedule and failure count survive restart; an explicit inbox wake during
-a run is preserved. Worker timeouts and lease durations are unchanged, and no
-pending payment is deleted or declared failed merely to free a wallet lock.
+a run is preserved. No pending payment is deleted or declared failed merely to
+free a wallet lock. Inbox lease renewal and cancellation behavior are described
+below.
 
 
 Cash and Clear inbox phases now use separate wallet leases, with a one-second
 foreground opportunity between them. If a foreground operation claims the wallet,
 the next phase is deferred; ordinary contention retries after five seconds without
-increasing the failure count. Each network phase retains its existing timeout.
+increasing the failure count. Discovery and settlement run as separate phases,
+with write-safe cancellation behavior described below.
 The scheduler keeps at most four owners in flight and replaces completed work
 without waiting for the slowest owner. Shutdown cancels and awaits those workers
-so their lease cleanup completes. The persisted schedule reservation covers the
-whole pass; after a crash it becomes eligible again automatically.
+so their lease cleanup completes. Active work is protected by renewed custody leases; after a crash the persisted
+schedule reservation and custody lease expire automatically.
 
 Acorn must include the cancellation cleanup fix in `acquire_lock`: a cancelled
 acquisition releases its process-local lock, but leaves any unverified published
@@ -207,3 +209,34 @@ removed by this change. Receipt redemption and recovery still go through Acorn.
 Deploy the Acorn fix first to its Git main branch, then run
 `poetry update safebox-acorn` in OakGate and commit the resulting lockfile before
 rebuilding the app. Local source-override tests alone do not update the container.
+
+
+### Discovery and settlement phases
+
+The inbox worker now runs `discover_ecash`, `discover_clear`, `settle_ecash`, and
+`settle_clear` separately, releasing custody ownership between phases. Discovery
+includes durable receipt writes; it is not a read-only lookup. The former 5-second
+Clear discovery, 20-second receipt, and 30/45-second whole-phase cancellation
+deadlines have been removed. Acorn's underlying network operations retain their
+own failure handling. A phase can therefore take longer when infrastructure is
+slow; this change avoids repeatedly interrupting successful-but-slow writes.
+
+Clear settlement processes one pending receipt per pass with rotation. Discovery
+failure does not suppress settlement of already stored receipts. Failed Clear
+acceptance is reported back to the scheduler for backoff, without deleting the
+receipt or replacing its proofs. No outgoing payment is automatically resent.
+
+During active work the worker renews its own unexpired SQLite custody lease every
+15 seconds. It cannot renew another worker's lease or resurrect an expired lease.
+Graceful cancellation drains the active phase while retaining custody ownership;
+lease loss stops the phase. A hard container/process termination still relies on
+Acorn's persisted receipts, swap recovery state and proof/history recovery. Do not
+clear those journals or resend an uncertain payment to recover a slow receipt.
+The Acorn distributed relay lease is separate and is not extended by this local
+lease renewal; this does not authorize concurrent independent wallet writers.
+
+Safe logs include `phase`, `status`, and `elapsed`, plus exception type on failure.
+Long-running phases report progress every 15 seconds. No bearer tokens, keys,
+receipt content, or raw provider errors are included. Use these timings to identify
+which phase stalls before changing relay or mint configuration. This OakGate
+change uses existing Acorn APIs and requires no additional Acorn dependency update.

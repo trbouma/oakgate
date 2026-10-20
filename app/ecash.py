@@ -97,6 +97,38 @@ class EcashReceiver:
                 "SELECT e.owner FROM ecash_inboxes e JOIN wallets w ON w.owner=e.owner WHERE w.status='active' AND e.next_poll<=? AND w.lease_until<? ORDER BY e.next_poll,e.owner LIMIT 4",
                 (time.time(), time.time()))]
 
+    async def phase(self, owner, lease, method, material):
+        """Drain writes on shutdown while retaining exclusive custody ownership."""
+        task = asyncio.create_task(getattr(self.wallets.backend, method)(material))
+        started = time.monotonic()
+        status = 'error'
+        cancelled = False
+        try:
+            while not task.done():
+                try:
+                    await asyncio.wait({task}, timeout=15)
+                except asyncio.CancelledError:
+                    # Do not interrupt a receipt/proof write during graceful shutdown.
+                    cancelled = True
+                self.wallets.store.renew(owner, lease)
+                if not task.done():
+                    logger.warning('Acorn inbox phase=%s status=running elapsed=%.3fs',
+                                   method, time.monotonic() - started)
+            result = task.result()
+            status = 'retry' if isinstance(result, dict) and result.get('retry_pending') else 'complete'
+            if cancelled:
+                raise asyncio.CancelledError
+            return result
+        finally:
+            if not task.done():
+                # Lease loss is exceptional: stop work rather than permit overlap.
+                task.cancel()
+                await asyncio.gather(task, return_exceptions=True)
+            logger.warning('Acorn inbox phase=%s status=%s elapsed=%.3fs',
+                           method, status, time.monotonic() - started)
+            if cancelled:
+                raise asyncio.CancelledError
+
     async def process(self, owner):
         if not self.available:
             return
@@ -104,7 +136,7 @@ class EcashReceiver:
             lease = self.wallets.store.acquire(owner)
         except Busy:
             return
-        # Cover both bounded phases and their gap, including a worker crash.
+        # Reserve a retry after crashes; active work is protected by renewed leases.
         marker = time.time() + 90 + self.interval
         claimed = False
         failed = False
@@ -122,10 +154,15 @@ class EcashReceiver:
             if not record or record['status'] != 'active':
                 return
             self.wallets.relay(record['material']['relay'])
-            for enabled, method, timeout in (
-                (self.cash_available, 'receive_ecash', 30),
-                (self.clear_available, 'receive_clear', 45),
-            ):
+            if getattr(self.wallets.backend, 'inbox_phases', False):
+                phases = ((self.cash_available, 'discover_ecash'),
+                          (self.clear_available, 'discover_clear'),
+                          (self.cash_available, 'settle_ecash'),
+                          (self.clear_available, 'settle_clear'))
+            else:
+                phases = ((self.cash_available, 'receive_ecash'),
+                          (self.clear_available, 'receive_clear'))
+            for enabled, method in phases:
                 if not enabled:
                     continue
                 if lease is None:
@@ -142,8 +179,9 @@ class EcashReceiver:
                         break
                     self.wallets.relay(record['material']['relay'])
                 try:
-                    async with asyncio.timeout(timeout):
-                        await getattr(self.wallets.backend, method)(record['material'])
+                    result = await self.phase(owner, lease, method, record['material'])
+                    if isinstance(result, dict) and result.get('retry_pending'):
+                        failed = True
                 except Exception as exc:
                     failed = True
                     logger.warning('Acorn inbox phase=%s retry error_type=%s', method, type(exc).__name__)
