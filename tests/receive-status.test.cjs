@@ -9,7 +9,8 @@ function setup(fetcher) {
   const status = {dataset: {state:'pending', statusUrl:'/status', pending:'Waiting', complete:'Received', unavailable:'Checking', expired:'Expired', review:'Review'}};
   const pending = {hidden:false}, complete = {hidden:true};
   const note = {hidden:false, dataset:{paused:'Stopped'}};
-  const nodes = {'[data-receive-status]':status, '[data-receive-pending]':pending, '[data-receive-complete]':complete, '[data-receive-poll-note]':note};
+  const progress = {hidden:true}, bar = {value:0}, countdown = {textContent:''};
+  const nodes = {'[data-receive-progress]':progress, '[data-receive-progress-bar]':bar, '[data-receive-countdown]':countdown, '[data-receive-status]':status, '[data-receive-pending]':pending, '[data-receive-complete]':complete, '[data-receive-poll-note]':note};
   let calls = 0, lastSignal, onHide;
   vm.runInNewContext(source, {
     document:{querySelector:s=>nodes[s]}, performance:{now:()=>now}, AbortController,
@@ -26,7 +27,7 @@ function setup(fetcher) {
     }
     now=to;
   }
-  return {status,pending,complete,note,advance,hide:()=>onHide(),calls:()=>calls,signal:()=>lastSignal};
+  return {status,pending,complete,note,progress,bar,countdown,advance,hide:()=>onHide(),calls:()=>calls,signal:()=>lastSignal};
 }
 const response=state=>({ok:true,status:200,json:async()=>({state})});
 test('confirmed credit shows received and stops polling',async()=>{
@@ -34,28 +35,54 @@ test('confirmed credit shows received and stops polling',async()=>{
   await h.advance(1000);
   assert.equal(h.status.textContent,'Received');
   assert.equal(h.pending.hidden,true); assert.equal(h.complete.hidden,false);
+  assert.equal(h.progress.hidden,true);
   await h.advance(120000); assert.equal(h.calls(),1); assert.equal(h.note.hidden,true);
 });
-test('pending stops after 60 seconds without expiring request',async()=>{
+test('pending stops after 120 seconds without expiring request',async()=>{
   const h=setup(()=>response('pending'));
-  await h.advance(60000); const calls=h.calls();
+  await h.advance(120000); const calls=h.calls();
   assert.equal(h.status.textContent,'Waiting'); assert.equal(h.note.textContent,'Stopped');
   assert.equal(h.pending.hidden,false);
   await h.advance(180000); assert.equal(h.calls(),calls);
 });
 test('failed lookup remains checking and stops after deadline',async()=>{
   const h=setup(()=>{throw Error('offline');});
-  await h.advance(60000);
+  await h.advance(120000);
   assert.equal(h.status.textContent,'Checking'); assert.equal(h.note.textContent,'Stopped');
 });
 test('deadline aborts an in-flight lookup and ignores late results',async()=>{
   let resolve;
   const h=setup(()=>new Promise(r=>{resolve=r;}));
-  await h.advance(60000); assert.equal(h.signal().aborted,true);
+  await h.advance(120000); assert.equal(h.signal().aborted,true);
   resolve(response('complete')); for(let i=0;i<12;i++) await Promise.resolve();
   assert.equal(h.complete.hidden,true); assert.equal(h.note.textContent,'Stopped');
 });
 test('leaving the page stops polling',async()=>{
   const h=setup(()=>response('pending')); await h.advance(1000); h.hide();
   await h.advance(120000); assert.equal(h.calls(),1);
+});
+
+test('review keeps checking until credit history is confirmed',async()=>{
+  let count=0;
+  const h=setup(()=>response(++count===1 ? 'review' : 'complete'));
+  await h.advance(1000); assert.equal(h.status.textContent,'Review');
+  await h.advance(6000); assert.equal(h.status.textContent,'Received');
+  assert.equal(h.pending.hidden,true);
+});
+test('payment confirmed in the second minute is shown',async()=>{
+  let paid=false;
+  const h=setup(()=>response(paid ? 'complete' : 'pending'));
+  await h.advance(65000); paid=true;
+  await h.advance(71000); assert.equal(h.status.textContent,'Received');
+});
+
+test('checking countdown advances and disappears when polling stops',async()=>{
+  const h=setup(()=>response('pending'));
+  assert.equal(h.countdown.textContent,'2:00');
+  assert.equal(h.progress.hidden,false);
+  await h.advance(30000);
+  assert.equal(h.countdown.textContent,'1:30'); assert.equal(h.bar.value,30);
+  await h.advance(120000); assert.equal(h.progress.hidden,true);
+  const last=h.countdown.textContent;
+  await h.advance(180000); assert.equal(h.countdown.textContent,last);
 });

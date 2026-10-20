@@ -5,13 +5,19 @@
   if (!status || !pending) return;
   const note = document.querySelector('[data-receive-poll-note]');
   const received = document.querySelector('[data-receive-complete]');
+  const progress = document.querySelector('[data-receive-progress]');
+  const bar = document.querySelector('[data-receive-progress-bar]');
+  const countdown = document.querySelector('[data-receive-countdown]');
+  let progressTimer;
   let stopped = false;
   let timer;
   let controller;
-  const deadline = performance.now() + 60000;
+  const deadline = performance.now() + 120000;
   let deadlineTimer;
   function stop(paused = false) {
     stopped = true;
+    clearTimeout(progressTimer);
+    if (progress) progress.hidden = true;
     clearTimeout(timer);
     clearTimeout(deadlineTimer);
     if (controller) controller.abort();
@@ -19,6 +25,14 @@
       note.hidden = !paused;
       if (paused) note.textContent = note.dataset.paused;
     }
+  }
+  function updateProgress() {
+    if (stopped) return;
+    const remaining = Math.max(0, Math.ceil((deadline - performance.now()) / 1000));
+    if (bar) bar.value = 120 - remaining;
+    if (countdown) countdown.textContent = `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`;
+    if (progress) progress.hidden = false;
+    if (remaining > 0) progressTimer = setTimeout(updateProgress, 1000);
   }
   async function poll() {
     if (stopped) return;
@@ -47,7 +61,7 @@
         stop();
         return;
       }
-      if (['review', 'expired'].includes(state)) { stop(); return; }
+      if (state === 'expired') { stop(); return; }
     } catch (_) {
       if (!stopped) status.textContent = status.dataset.unavailable;
     } finally {
@@ -55,8 +69,9 @@
     }
     if (!stopped) timer = setTimeout(poll, 5000);
   }
-  if (['complete', 'review', 'expired'].includes(status.dataset.state)) return;
-  deadlineTimer = setTimeout(() => stop(true), 60000);
+  if (['complete', 'expired'].includes(status.dataset.state)) return;
+  updateProgress();
+  deadlineTimer = setTimeout(() => stop(true), 120000);
   timer = setTimeout(poll, 1000);
   window.addEventListener('pagehide', () => stop(), {once: true});
 })();

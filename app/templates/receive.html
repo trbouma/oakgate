@@ -11,10 +11,14 @@
 {% if receipt_state != 'complete' %}
 <div data-receive-pending><div class="receive-code">{{ qr | safe }}<label for="request-code">{{ _('Payment request') }}</label><textarea id="request-code" readonly onclick="this.select()">{{ item.code }}</textarea></div>
 {% if item.scope and item.scope != 'across-networks' %}<p class="note">{{ _('This Clear request is limited to wallets that can reach its mint. Use a receipt address for an instance-only balance.') }}</p>{% endif %}
-<p class="note" data-receive-poll-note data-paused="{{ _('Automatic checking has stopped. Check receipt to check again.') }}"{% if receipt_state in ['review', 'expired'] %} hidden{% endif %}>{{ _('Checking automatically for 60 seconds.') }}</p>
+<p class="note" data-receive-poll-note data-paused="{{ _('Automatic checking has stopped. Check receipt to check again.') }}"{% if receipt_state == 'expired' %} hidden{% endif %}>{{ _('Checking automatically for 2 minutes.') }}</p>
+<div class="receive-poll-progress" data-receive-progress hidden>
+<progress data-receive-progress-bar max="120" value="0" aria-label="{{ _('Automatic checking time elapsed') }}"></progress>
+<p class="note"><span>{{ _('Checking time remaining:') }}</span> <span data-receive-countdown>2:00</span></p>
+</div>
 <a class="primary-action" href="/account/receive?ticket={{ item.id }}">{{ _('Check receipt') }}</a></div>
 {% endif %}
-<script src="/static/receive-status.js?v=3" defer></script>
+<script src="/static/receive-status.js?v=5" defer></script>
 <p><a href="/account/receive">{{ _('New request') }}</a></p>
 {% else %}
 <form method="post" action="/account/receive" data-progress-message="{{ _('Creating your request. Please wait…') }}">

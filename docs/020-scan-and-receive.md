@@ -56,12 +56,15 @@ includes ID, mint and unit. No second user transaction entry is written by OakGa
 
 The centered request display includes the amount, QR and selectable request code.
 It starts a status lookup after one second, then checks every five seconds after
-completion of the previous lookup, for at most 60 seconds. Requests do not overlap.
+completion of the previous lookup, for at most two minutes. Requests do not overlap. A progress bar and countdown show the checking window,
+not payment completion or an estimated arrival time. They disappear when checking
+stops or receipt is confirmed.
 Confirmed Cash or Clear credit shows **Received**, hides the code and offers
 **View funds**. Failed lookups show **Checking payment status**; they never imply
-successful receipt. Expired requests and receipts needing review stop polling.
+successful receipt. Expired requests stop polling. Receipts needing review continue checking within
+the same window so delayed Acorn history confirmation can still show Received.
 
-After 60 seconds, automatic checking stops and any in-flight browser lookup is
+After two minutes, automatic checking stops and any in-flight browser lookup is
 cancelled. The request itself remains valid and background receipt processing
 continues. **Check receipt** reloads the request and starts a fresh checking window.
 Leaving the page also stops polling. Recent requests remain available. Receipt
