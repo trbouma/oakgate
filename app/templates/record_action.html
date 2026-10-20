@@ -2,7 +2,18 @@
 {% block content %}
 <section class="record-detail">
 <a class="back-link" href="{% if reference %}/account/records/{{ reference }}{% else %}/account/records{% endif %}">← {% if reference %}{{ _("Record") }}{% else %}{{ _("Records") }}{% endif %}</a>
-{% if action in ['edit', 'present', 'share', 'check'] %}
+{% if action == 'delete' %}
+<h1>{{ _('Delete record') }}</h1>
+<p>{{ record.label }}</p>
+<p>{{ _('Delete this record from your Acorn? OakGate cannot undo this action.') }}</p>
+<p class="note">{{ _('Shared copies and separately stored attachments are not deleted. Relays may retain historical copies.') }}</p>
+<form method="post" class="record-form" data-progress-message="{{ _('Deleting your record. Please wait…') }}">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label class="record-confirm"><input type="checkbox" name="confirmed" value="yes" required> {{ _('I confirm that I want to delete this record') }}</label>
+<button type="submit" class="primary-action">{{ _('Delete record') }}</button>
+<a class="secondary-action" href="/account/records/{{ reference }}">{{ _('Cancel') }}</a>
+</form>
+{% elif action in ['edit', 'present', 'share', 'check'] %}
 <h1>{{ {"edit": _("Edit record"), "present": _("Present record"), "share": _("Share record"), "check": _("Check record")}[action] }}</h1><p>{{ record.label }}</p>
 <form method="post" class="record-form" data-progress-message="{{ _('Processing your record. Please wait…') }}" {% if action == 'edit' %}enctype="multipart/form-data"{% endif %}>
 <input type="hidden" name="csrf" value="{{ csrf }}">

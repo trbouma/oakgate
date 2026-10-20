@@ -382,6 +382,20 @@ class AcornBackend:
             record_kind=37375, preserve_existing_blob=True, return_result=True,
             blob_data=attachment, blob_type=media_type)
 
+    async def delete_record(self, material, reference):
+        # Reauthorize the exact record under the caller's wallet lease.
+        detail = await self.record_detail(material, reference)
+        if detail is None:
+            raise WalletInputError('This record changed. Reload Records before deleting.')
+        relays = [material['relay']]
+        result = await self.wallet(material).delete_record(
+            label=detail['label'], record_kind=37375, relays=relays, delete_blob=False)
+        # NIP-09 is advisory. Only confirm removal from the requested relay,
+        # never claim erasure of all copies or delete shared attachment blobs.
+        verified = (isinstance(result, dict) and result.get('status') == 'DELETE_REQUESTED'
+                    and set(relays).issubset(set(result.get('hidden_on') or [])))
+        return {'verified': verified}
+
     async def create_record_capability(self, material, reference, purpose):
         detail = await self.record_detail(material, reference)
         if detail is None:
@@ -463,7 +477,7 @@ class WalletService:
 
     async def record_action(self, material, action, *args):
         self.relay(material['relay'])
-        if action not in {'create_record', 'update_record', 'create_record_capability', 'stop_record_capability'}:
+        if action not in {'create_record', 'update_record', 'delete_record', 'create_record_capability', 'stop_record_capability'}:
             raise ValueError('Unknown record action')
         return await asyncio.wait_for(getattr(self.backend, action)(material, *args), timeout=60)
 

@@ -27,6 +27,14 @@ appears only on the Records page for connected Acorns. All three use a minimum
   file replaces the attachment; leaving it blank preserves the existing file.
   Text is limited to 256 KiB and files to 25 MiB. Acorn must confirm the published
   record before OakGate reports success. Reload after an uncertain save.
+- **Delete** opens a separate confirmation page showing the record label, a
+  required confirmation checkbox and Cancel. Only a CSRF-protected POST can
+  delete. OakGate takes the wallet lease, rechecks the record reference against
+  the user's Acorn and calls `Acorn.delete_record` for kind 37375. Success requires
+  Acorn to report that the configured relay no longer returns the record. An
+  uncertain outcome asks the user to reload Records before retrying. NIP-09 is
+  advisory: historical relay copies may remain. Separately stored attachments
+  and sharing copies are retained; this action does not claim complete erasure.
 - **Present** creates a view-only presentation code for a compatible Safebox.
 - **Share** creates a code that a compatible Safebox can import.
 - **Check** computes the original file's SHA-256 locally and queries configured
@@ -47,7 +55,7 @@ can leave an untracked copy; OakGate reports the outcome as uncertain and does n
 automatically retry. There is no background expiry/deletion worker yet.
 
 This iteration supports sending codes to compatible Safebox clients. It does not
-add an OakGate scanner/import flow, record renaming, folder moves or record deletion.
+add an OakGate scanner/import flow, record renaming or folder moves.
 
 ## Infrastructure configuration
 

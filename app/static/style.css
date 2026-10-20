@@ -377,3 +377,10 @@ body:not(.landing) > header { padding-block: 12px; gap: 12px; }
 .attachment-preview img, .attachment-preview canvas { display:block; max-width:100%; height:auto; margin:12px auto; }
 .attachment-preview pre { white-space:pre-wrap; overflow-wrap:anywhere; max-height:24rem; overflow:auto; }
 .attachment-preview p { overflow-wrap:anywhere; }
+
+.receive-panel { text-align:center; }
+.receive-panel input:not([type=hidden]), .receive-panel select, .receive-panel textarea { text-align:center; box-sizing:border-box; max-width:100%; }
+.receive-code { display:flex; flex-direction:column; align-items:center; gap:12px; }
+.receive-code svg { box-sizing:border-box; }
+.receive-status { font-weight:600; }
+.receive-status[data-state=complete] { font-size:1.5rem; }

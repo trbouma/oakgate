@@ -138,3 +138,62 @@ def test_old_dependency_cannot_write_or_share(tmp_path):
             backend.update_record.assert_not_awaited()
             backend.create_record_capability.assert_not_awaited()
     asyncio.run(run())
+
+
+def test_record_delete_requires_confirmation_and_verified_result(tmp_path):
+    async def run():
+        client, sessions, service, backend = setup(tmp_path)
+        backend.record_detail = AsyncMock(return_value=DETAIL)
+        backend.delete_record = AsyncMock(return_value={'verified': True})
+        async with client:
+            url = f'/account/records/{REF}/delete'
+            assert (await client.get(url)).status_code == 401
+            owner = await login(client, sessions)
+            await client.post('/account/acorn/create', data=form())
+            page = await client.get(url)
+            assert page.status_code == 200
+            assert 'name="confirmed"' in page.text and 'Cancel' in page.text
+            backend.delete_record.assert_not_awaited()
+            assert (await client.post(url, data=form())).status_code == 400
+            assert (await client.post(url, data={'confirmed': 'yes', 'csrf': 'wrong'})).status_code == 403
+            backend.delete_record.assert_not_awaited()
+            lease = service.store.acquire(owner)
+            assert (await client.post(url, data=form(confirmed='yes'))).status_code == 409
+            service.store.release(owner, lease)
+            backend.delete_record.assert_not_awaited()
+            backend.record_detail.return_value = None
+            assert (await client.post(url, data=form(confirmed='yes'))).status_code == 404
+            backend.delete_record.assert_not_awaited()
+            backend.record_detail.return_value = DETAIL
+            backend.delete_record.return_value = {'verified': False}
+            response = await client.post(url, data=form(confirmed='yes'))
+            assert response.status_code == 503 and 'Deletion could not be confirmed' in response.text
+            backend.delete_record.return_value = {'verified': True}
+            response = await client.post(url, data=form(confirmed='yes'))
+            assert response.status_code == 303 and response.headers['location'] == '/account/records'
+            assert backend.delete_record.await_args.args[1:] == (REF,)
+            lease = service.store.acquire(owner)
+            service.store.release(owner, lease)
+    asyncio.run(run())
+
+
+def test_delete_adapter_uses_acorn_and_checks_relay_confirmation():
+    from types import SimpleNamespace
+    from app.wallets import WalletInputError
+    async def run():
+        backend = AcornBackend()
+        backend.record_detail = AsyncMock(return_value=DETAIL)
+        wallet = SimpleNamespace(delete_record=AsyncMock(return_value={
+            'status': 'DELETE_REQUESTED', 'hidden_on': ['wss://home.example']}))
+        backend.wallet = lambda material: wallet
+        material = {'relay': 'wss://home.example'}
+        assert await backend.delete_record(material, REF) == {'verified': True}
+        wallet.delete_record.assert_awaited_once_with(label=DETAIL['label'], record_kind=37375,
+            relays=['wss://home.example'], delete_blob=False)
+        wallet.delete_record.return_value = {'status': 'DELETE_REQUESTED', 'hidden_on': []}
+        assert await backend.delete_record(material, REF) == {'verified': False}
+        backend.record_detail.return_value = None
+        with pytest.raises(WalletInputError):
+            await backend.delete_record(material, REF)
+        assert wallet.delete_record.await_count == 2
+    asyncio.run(run())

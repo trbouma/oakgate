@@ -54,8 +54,18 @@ That receiver also supports NUT-18 payment envelopes. Only Acorn receipt and
 transaction history evidence can mark a Clear request received; request matching
 includes ID, mint and unit. No second user transaction entry is written by OakGate.
 
-The page displays a QR and selectable request code, polls for status, and keeps
-recent requests available. Receipt checking does not initiate a payment.
+The centered request display includes the amount, QR and selectable request code.
+It starts a status lookup after one second, then checks every five seconds after
+completion of the previous lookup, for at most 60 seconds. Requests do not overlap.
+Confirmed Cash or Clear credit shows **Received**, hides the code and offers
+**View funds**. Failed lookups show **Checking payment status**; they never imply
+successful receipt. Expired requests and receipts needing review stop polling.
+
+After 60 seconds, automatic checking stops and any in-flight browser lookup is
+cancelled. The request itself remains valid and background receipt processing
+continues. **Check receipt** reloads the request and starts a fresh checking window.
+Leaving the page also stops polling. Recent requests remain available. Receipt
+checking does not initiate a payment or write another transaction.
 
 ## Deployment and backups
 

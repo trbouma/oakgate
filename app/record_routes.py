@@ -108,7 +108,7 @@ async def new_record(request: Request):
 
 @router.get('/account/records/{reference}/{action}', include_in_schema=False)
 async def record_form(request: Request, reference: str, action: str):
-    if action not in {'edit', 'present', 'share', 'check'}:
+    if action not in {'edit', 'present', 'share', 'check', 'delete'}:
         raise HTTPException(404)
     try:
         session, service, owner, material, detail = await selected(request, reference)
@@ -122,7 +122,7 @@ async def record_form(request: Request, reference: str, action: str):
 
 @router.post('/account/records/{reference}/{action}', include_in_schema=False)
 async def record_action(request: Request, reference: str, action: str):
-    if action not in {'edit', 'present', 'share', 'check'}:
+    if action not in {'edit', 'present', 'share', 'check', 'delete'}:
         raise HTTPException(404)
     form = None
     token = None
@@ -144,6 +144,11 @@ async def record_action(request: Request, reference: str, action: str):
         if not getattr(service.backend, 'record_workflows_available', True):
             raise HTTPException(503, 'The operator must update the Acorn dependency before enabling record changes and sharing.')
         token = service.store.acquire(owner)
+        if action == 'delete':
+            result = await service.record_action(material, 'delete_record', reference)
+            if not isinstance(result, dict) or result.get('verified') is not True:
+                return error_page(request, 'Deletion could not be confirmed. Reload Records before trying again.', 503)
+            return RedirectResponse('/account/records', status_code=303)
         if action == 'edit':
             payload = form.get('payload', '')
             if not isinstance(payload, str) or len(payload.encode()) > 262144:
@@ -175,6 +180,8 @@ async def record_action(request: Request, reference: str, action: str):
     except Busy:
         return error_page(request, 'Another Acorn operation is in progress. Please wait and reload.', 409)
     except Exception:
+        if action == 'delete':
+            return error_page(request, 'Deletion could not be confirmed. Reload Records before trying again.', 503)
         return error_page(request, 'The operation could not be confirmed. Its outcome may be uncertain. '
             'Reload Records or Active shares before trying again. An unconfirmed sharing copy may remain on the storage server.', 503)
     finally:
