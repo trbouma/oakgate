@@ -52,8 +52,8 @@ add an OakGate scanner/import flow, record renaming, folder moves or record dele
 ## Infrastructure configuration
 
 ```dotenv
-OAKGATE_BLOSSOM_SERVER=https://blossom.getsafebox.app
-OAKGATE_TRANSFER_SERVER=https://blossom.getsafebox.app
+OAKGATE_BLOSSOM_SERVER=https://blossom.safebox.dev
+OAKGATE_TRANSFER_SERVER=https://blossom.safebox.dev
 OAKGATE_OPENETR_RELAYS=wss://relay.openetr.org
 ```
 

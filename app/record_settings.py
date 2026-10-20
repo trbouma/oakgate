@@ -5,7 +5,7 @@ from app.zaps import public_relay
 
 class RecordSettings:
     def __init__(self):
-        self.blossom = secure_url(os.getenv('OAKGATE_BLOSSOM_SERVER', 'https://blossom.getsafebox.app'), 'https')
+        self.blossom = secure_url(os.getenv('OAKGATE_BLOSSOM_SERVER', 'https://blossom.safebox.dev'), 'https')
         self.transfer_server = secure_url(os.getenv('OAKGATE_TRANSFER_SERVER', self.blossom), 'https')
         self.openetr_relays = tuple(public_relay(value.strip()) for value in
             os.getenv('OAKGATE_OPENETR_RELAYS', 'wss://relay.openetr.org').split(',') if value.strip())

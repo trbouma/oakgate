@@ -2,6 +2,7 @@
 import asyncio
 import hashlib
 import json
+import logging
 import re
 from datetime import datetime, timezone
 
@@ -95,7 +96,8 @@ async def new_record(request: Request):
         return error_page(request, str(exc), 409)
     except Busy:
         return error_page(request, 'Another Acorn operation is in progress. Please wait and reload.', 409)
-    except Exception:
+    except Exception as exc:
+        logging.getLogger(__name__).warning('Record creation unconfirmed error_type=%s', type(exc).__name__)
         return error_page(request, 'The record could not be confirmed. Check Records before trying again.', 503)
     finally:
         if token:

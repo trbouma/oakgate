@@ -350,10 +350,28 @@ class AcornBackend:
         wallet = self.wallet(material)
         if not callable(getattr(wallet, 'record_exists', None)):
             raise WalletInputError('Record creation needs the updated Acorn dependency.')
-        if await wallet.record_exists(label, record_kind=37375):
-            raise WalletInputError('A record with this label already exists. Choose another label or edit the existing record.')
-        return await wallet.put_record(label, payload, record_type='generic',
-            record_kind=37375, return_result=True, blob_data=attachment, blob_type=media_type)
+        phase = 'label_lookup'
+        started = time.monotonic()
+        try:
+            if await wallet.record_exists(label, record_kind=37375):
+                raise WalletInputError('A record with this label already exists. Choose another label or edit the existing record.')
+            phase = 'attachment_and_record_save' if attachment else 'record_save'
+            return await wallet.put_record(label, payload, record_type='generic',
+                record_kind=37375, return_result=True, blob_data=attachment, blob_type=media_type)
+        except WalletInputError:
+            raise
+        except Exception as exc:
+            response = getattr(exc, 'response', None)
+            status = getattr(response, 'status_code', None)
+            logging.getLogger(__name__).warning(
+                'Record creation failed phase=%s elapsed=%.1fs error_type=%s http_status=%s',
+                phase, time.monotonic() - started, type(exc).__name__,
+                status if isinstance(status, int) else 'unknown')
+            raise
+        except asyncio.CancelledError:
+            logging.getLogger(__name__).warning('Record creation interrupted phase=%s elapsed=%.1fs',
+                phase, time.monotonic() - started)
+            raise
 
     async def update_record(self, material, reference, payload, attachment=None, media_type=None):
         detail = await self.record_detail(material, reference)
