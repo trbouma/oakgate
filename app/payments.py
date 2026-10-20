@@ -10,6 +10,7 @@ from cryptography.fernet import InvalidToken
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, Response
 
+from app.custody import Busy
 from app.identity import ServiceIdentity
 from app.payment_config import PaymentSettings
 from app.payment_mint import CashuMint, MintCompatibilityError
@@ -130,23 +131,57 @@ class PaymentService:
             return
         item = None
         owner_lease = None
+        phase = 'quote_status'
+        started = time.monotonic()
         try:
             item = self.store.get(payment_id)
             if item['state'] not in ('waiting', 'credited', 'complete') or (item['state'] == 'complete' and item.get('history_written')):
                 return
-            owner_lease = self.wallets.store.acquire(item['owner'])
+            # The payment lease protects quote checkpoints. Unpaid checks do
+            # not touch wallet funds and must not monopolize the owner lease.
             async with asyncio.timeout(60):
-                await self.settle(item, token)
+                if not await self.check_paid(item, token):
+                    return
+                if not item.get('history_written'):
+                    phase = 'acorn_credit'
+                    owner_lease = self.wallets.store.acquire(item['owner'])
+                    try:
+                        await self.settle(item, token)
+                    finally:
+                        self.wallets.store.release(item['owner'], owner_lease)
+                        owner_lease = None
+                # Public receipts use the service identity, not the user key.
+                phase = 'zap_receipt'
+                await self.finish(item, token)
+        except Busy:
+            if item:
+                self.store.save(item, token, delay=5)
         except Exception as exc:
             # Never log exception text: mint errors may contain quote secrets,
             # invoices or bearer proofs. The opaque journal id supports diagnosis.
-            logger.warning('Payment retry id=%s error_type=%s', payment_id, type(exc).__name__)
+            logger.warning('Payment retry id=%s phase=%s elapsed=%.1fs error_type=%s',
+                           payment_id, phase, time.monotonic() - started, type(exc).__name__)
             if item:
-                self.store.save(item, token, delay=30)
+                item['retry_count'] = min(int(item.get('retry_count', 0)) + 1, 5)
+                self.store.save(item, token, delay=min(30 * 2 ** (item['retry_count'] - 1), 300))
         finally:
             if owner_lease:
                 self.wallets.store.release(item['owner'], owner_lease)
             self.store.release(payment_id, token)
+
+    async def check_paid(self, item, token):
+        if item['state'] != 'waiting' or item.get('paid_at'):
+            return True
+        state = await self.mint.state(item)
+        item['retry_count'] = 0
+        if state.get('state') not in ('PAID', 'ISSUED') and state.get('paid') is not True:
+            # Expired quotes remain recoverable, with a much slower poll.
+            delay = self.config.poll_seconds if item['expiry'] > time.time() else 3600
+            self.store.save(item, token, delay=delay)
+            return False
+        item['paid_at'] = int(time.time())
+        self.store.save(item, token)
+        return True
 
     async def settle(self, item, token):
         wallet_record = self.wallets.store.get(item['owner'])
@@ -155,15 +190,6 @@ class PaymentService:
         material = wallet_record['material']
         self.wallets.relay(material['relay'])
         if item['state'] == 'waiting':
-            if not item.get('paid_at'):
-                state = await self.mint.state(item)
-                if state.get('state') not in ('PAID', 'ISSUED') and state.get('paid') is not True:
-                    # Keep old unpaid invoices recoverable, but stop hot polling.
-                    delay = self.config.poll_seconds if item['expiry'] > time.time() else 3600
-                    self.store.save(item, token, delay=delay)
-                    return
-                item['paid_at'] = int(time.time())
-                self.store.save(item, token)
             if 'proofs' not in item:
                 item['proofs'] = await self.mint.issue(item)
                 self.store.save(item, token)
@@ -183,6 +209,8 @@ class PaymentService:
                 raise RuntimeError('Acorn history delivery not confirmed')
             item['history_written'] = True
             self.store.save(item, token)
+
+    async def finish(self, item, token):
         if item['state'] == 'complete':
             return  # History-only backfill must not republish an old receipt.
         if item['zap']:

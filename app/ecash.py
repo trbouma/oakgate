@@ -31,7 +31,12 @@ class EcashReceiver:
         if not 10 <= self.interval <= 3600:
             raise ValueError('Ecash polling interval must be 10–3600 seconds')
         with closing(wallets.store.connect()) as db, db:
+            db.execute('BEGIN IMMEDIATE')
             db.execute('CREATE TABLE IF NOT EXISTS ecash_inboxes (owner TEXT PRIMARY KEY, next_poll REAL NOT NULL DEFAULT 0)')
+
+            columns = {row['name'] for row in db.execute('PRAGMA table_info(ecash_inboxes)')}
+            if 'failures' not in columns:
+                db.execute('ALTER TABLE ecash_inboxes ADD COLUMN failures INTEGER NOT NULL DEFAULT 0')
 
     @property
     def cash_available(self):
@@ -99,14 +104,18 @@ class EcashReceiver:
             lease = self.wallets.store.acquire(owner)
         except Busy:
             return
+        marker = time.time() + self.interval
+        claimed = False
+        failed = False
         try:
             # Recheck after claiming to prevent two processes sweeping a stale
             # due list. The owner lease also serializes other custody mutations.
             with closing(self.wallets.store.connect()) as db, db:
                 changed = db.execute('UPDATE ecash_inboxes SET next_poll=? WHERE owner=? AND next_poll<=?',
-                                     (time.time() + self.interval, owner, time.time())).rowcount
+                                     (marker, owner, time.time())).rowcount
             if not changed:
                 return
+            claimed = True
             record = self.wallets.store.get(owner)
             if not record or record['status'] != 'active':
                 return
@@ -121,12 +130,25 @@ class EcashReceiver:
                     async with asyncio.timeout(timeout):
                         await getattr(self.wallets.backend, method)(record['material'])
                 except Exception as exc:
+                    failed = True
                     logger.warning('Acorn inbox phase=%s retry error_type=%s', method, type(exc).__name__)
         except Exception as exc:
+            failed = True
             # Never log bearer tokens, decrypted events, keys or provider text.
             logger.warning('Acorn inbox retry error_type=%s', type(exc).__name__)
         finally:
-            self.wallets.store.release(owner, lease)
+            try:
+                if claimed:
+                    # Start cooldown after work finishes, not before network
+                    # waits. Conditional update preserves wake() during a run.
+                    with closing(self.wallets.store.connect()) as db, db:
+                        row = db.execute('SELECT failures FROM ecash_inboxes WHERE owner=?', (owner,)).fetchone()
+                        failures = min(row['failures'] + 1, 5) if failed else 0
+                        delay = max(self.interval, min(self.interval * 2 ** failures, 300))
+                        db.execute('UPDATE ecash_inboxes SET next_poll=?,failures=? WHERE owner=? AND next_poll=?',
+                                   (time.time() + delay, failures, owner, marker))
+            finally:
+                self.wallets.store.release(owner, lease)
 
     async def run(self):
         if not self.available:

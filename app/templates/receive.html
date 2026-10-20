@@ -5,13 +5,14 @@
 {% if message %}<p role="alert">{{ _(message) }}</p>{% endif %}
 {% if item %}
 <h2>{{ item.display_name }}</h2><p class="cash-balance">{{ '{:,}'.format(item.amount) }} <span>{{ item.display_unit }}</span></p>
-<p role="status" data-receive-status data-status-url="/account/receive/status/{{ item.id }}" data-complete="{{ _('Received') }}" data-pending="{{ _('Waiting for payment…') }}" data-unavailable="{{ _('Status unavailable. Retrying…') }}" data-review="{{ _('Receipt needs review. Check transactions.') }}" data-expired="{{ _('Request expired') }}">{{ _(receipt_state|capitalize) }}</p>
+{% set receipt_labels = {'pending': _('Waiting for payment'), 'unavailable': _('Checking payment status'), 'complete': _('Received'), 'review': _('Receipt needs review. Check transactions.'), 'expired': _('Request expired')} %}
+<p role="status" data-receive-status data-status-url="/account/receive/status/{{ item.id }}" data-complete="{{ receipt_labels.complete }}" data-pending="{{ receipt_labels.pending }}" data-unavailable="{{ receipt_labels.unavailable }}" data-review="{{ receipt_labels.review }}" data-expired="{{ receipt_labels.expired }}">{{ receipt_labels.get(receipt_state, receipt_labels.unavailable) }}</p>
 {% if receipt_state != 'complete' %}
 <div data-receive-pending><div class="receive-code">{{ qr | safe }}<label for="request-code">{{ _('Payment request') }}</label><textarea id="request-code" readonly onclick="this.select()">{{ item.code }}</textarea></div>
 {% if item.scope and item.scope != 'across-networks' %}<p class="note">{{ _('This Clear request is limited to wallets that can reach its mint. Use a receipt address for an instance-only balance.') }}</p>{% endif %}
 <a class="primary-action" href="/account/receive?ticket={{ item.id }}">{{ _('Check receipt') }}</a></div>
 {% endif %}
-<script src="/static/receive-status.js" defer></script>
+<script src="/static/receive-status.js?v=2" defer></script>
 <p><a href="/account/receive">{{ _('New request') }}</a></p>
 {% else %}
 <form method="post" action="/account/receive" data-progress-message="{{ _('Creating your request. Please wait…') }}">

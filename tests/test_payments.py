@@ -626,3 +626,75 @@ def test_malformed_social_zap_key_rejected():
     event.sign(sender)
     with pytest.raises(ValueError, match='recipient public key'):
         validate_zap(json.dumps(event.data()), 1000, '', '')
+
+
+def test_unpaid_poll_does_not_require_wallet_lease(tmp_path):
+    async def run():
+        f = setup(tmp_path)
+        await f.service.invoice(f.token, '13000')
+        pid = f.service.store.due()[0]
+        lease = f.custody.acquire('owner')
+        try:
+            await f.service.process(pid)
+            item = f.service.store.get(pid)
+            assert item['state'] == 'waiting' and not item.get('paid_at')
+            assert not item.get('retry_count')
+            assert pid not in f.service.store.due()
+            f.mint.rows[item['quote']]['state'] = 'PAID'
+            await f.service.process(pid)
+            assert f.service.store.get(pid)['paid_at']
+            assert f.mint.issued == 0
+        finally:
+            f.custody.release('owner', lease)
+        await f.service.process(pid)
+        assert f.service.store.get(pid)['state'] == 'complete'
+        assert f.mint.issued == 1
+    asyncio.run(run())
+
+
+def test_zap_retry_does_not_hold_wallet_lease(tmp_path):
+    async def run():
+        f = setup(tmp_path)
+        await f.service.invoice(f.token, '13000', zap(f))
+        pid = f.service.store.due()[0]
+        item = f.service.store.get(pid)
+        f.mint.rows[item['quote']]['state'] = 'PAID'
+        unlocked = []
+        async def publish(item, relay):
+            lease = f.custody.acquire('owner')
+            unlocked.append(relay)
+            f.custody.release('owner', lease)
+            return False
+        f.service.identity.publish_receipt = publish
+        await f.service.process(pid)
+        assert f.service.store.get(pid)['history_written']
+        assert unlocked
+        from unittest.mock import AsyncMock
+        f.service.identity.publish_receipt = AsyncMock(return_value=True)
+        lease = f.custody.acquire('owner')
+        try:
+            await f.service.process(pid)
+            assert f.mint.issued == 1
+            assert f.service.store.get(pid)['state'] == 'complete'
+            f.service.identity.publish_receipt.assert_awaited()
+        finally:
+            f.custody.release('owner', lease)
+    asyncio.run(run())
+
+
+def test_payment_failure_backoff_survives_restart(tmp_path):
+    from unittest.mock import AsyncMock
+    async def run():
+        f = setup(tmp_path)
+        await f.service.invoice(f.token, '13000')
+        pid = f.service.store.due()[0]
+        f.mint.state = AsyncMock(side_effect=TimeoutError())
+        await f.service.process(pid)
+        restarted = PaymentService(f.wallets, 'https://oakgate.example', mint=f.mint)
+        await restarted.process(pid)
+        assert restarted.store.get(pid)['retry_count'] == 2
+        with f.custody.connect() as db:
+            next_check = db.execute('SELECT next_check FROM incoming_payments WHERE id=?', (pid,)).fetchone()[0]
+        assert 55 < next_check - time.time() <= 60
+        assert f.mint.issued == 0
+    asyncio.run(run())

@@ -161,3 +161,28 @@ Deploy in this order:
 A local source override is useful for cross-repository tests but does not update
 the container dependency. The old locked Acorn revision does not contain this
 API; do not deploy OakGate with that lockfile. No database migration is needed.
+
+
+### Background contention and retry scheduling
+
+Incoming invoice status checks hold only the payment journal lease, not the
+wallet lease. An unpaid invoice or unreachable mint therefore does not lock the
+recipient's Acorn. Confirmed payment status is checkpointed before acquiring the
+wallet lease for issuance and Acorn proof/history delivery. Those mutations remain
+serialized; stored blinding material and exact prepared events are reused after
+a crash. Public zap publication runs after releasing the wallet lease, while
+retaining the payment lease and durable relay acknowledgments.
+
+A busy wallet defers settlement for five seconds without treating ordinary
+contention as a warning. Other payment failures back off from 30 seconds to five
+minutes, with the retry count persisted in the encrypted payment journal. A
+successful quote lookup resets that count. Expired unpaid quotes remain eligible
+for the existing hourly recovery check. Failure logs include the phase and elapsed
+time, but omit provider error text and wallet secrets.
+
+Inbox polling starts its cooldown after processing finishes, so a slow run cannot
+immediately reacquire the wallet just because its original interval elapsed.
+Consecutive failed runs back off to five minutes (or the configured interval if
+longer). Schedule and failure count survive restart; an explicit inbox wake during
+a run is preserved. Worker timeouts and lease durations are unchanged, and no
+pending payment is deleted or declared failed merely to free a wallet lock.

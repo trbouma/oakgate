@@ -94,3 +94,52 @@ def test_adapter_stages_then_reconciles_through_acorn(monkeypatch):
             relays=['wss://relay.example'], finalize=False, limit=100, max_pages=10)
         wallet.reconcile_continuity_receipts.assert_awaited_once_with()
     asyncio.run(run())
+
+
+def test_slow_inbox_gets_cooldown_after_completion(tmp_path, monkeypatch):
+    async def run():
+        client, sessions, service, backend = setup(tmp_path)
+        ready(backend)
+        async with client:
+            owner = await login(client, sessions)
+            await client.post('/account/acorn/create', data=form())
+            receiver = EcashReceiver(service)
+            receiver.due()
+            import time
+            clock = [time.time()]
+            monkeypatch.setattr('app.ecash.time.time', lambda: clock[0])
+            async def slow(material):
+                clock[0] += 40
+            backend.receive_ecash.side_effect = slow
+            await receiver.process(owner)
+            with service.store.connect() as db:
+                row = db.execute('SELECT next_poll FROM ecash_inboxes WHERE owner=?', (owner,)).fetchone()
+            assert row['next_poll'] == clock[0] + receiver.interval
+            assert receiver.due() == []
+    asyncio.run(run())
+
+
+def test_inbox_failure_backoff_and_wake_survive_completion(tmp_path):
+    async def run():
+        client, sessions, service, backend = setup(tmp_path)
+        ready(backend)
+        async with client:
+            owner = await login(client, sessions)
+            await client.post('/account/acorn/create', data=form())
+            service.store.save_handle(owner, 'alice')
+            receiver = EcashReceiver(service)
+            receiver.due()
+            backend.receive_ecash.side_effect = TimeoutError()
+            await receiver.process(owner)
+            import time
+            with service.store.connect() as db:
+                row = db.execute('SELECT next_poll,failures FROM ecash_inboxes WHERE owner=?', (owner,)).fetchone()
+            assert row['failures'] == 1
+            assert row['next_poll'] > time.time() + receiver.interval
+            receiver.wake('alice')
+            async def wake_during_run(material):
+                receiver.wake('alice')
+            backend.receive_ecash.side_effect = wake_during_run
+            await receiver.process(owner)
+            assert EcashReceiver(service).due() == [owner]
+    asyncio.run(run())

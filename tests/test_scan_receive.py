@@ -163,7 +163,7 @@ def test_receive_invoice_uses_durable_journal_and_clear_receipt_tickets(tmp_path
             assert stored['owner'] == owner and stored['state'] == 'waiting'
             assert stored['prepared'] and stored['invoice'] == item['code']
             response = await client.get(response.headers['location'])
-            assert response.status_code == 200 and 'Pending' in response.text
+            assert response.status_code == 200 and '>Waiting for payment</p>' in response.text
             assert 'SECRET-NSEC' not in response.text and 'SECRET-PHRASE' not in response.text
             other = await login(client,sessions,sub='other')
             await client.post('/account/acorn/create',data=form())
@@ -194,10 +194,18 @@ def test_receive_clear_request_and_status(tmp_path):
             page = await client.get(response.headers['location'])
             assert 'Satellite Shares' in page.text and 'shares' in page.text
             assert 'receive-status.js' in page.text
+            assert '>Waiting for payment</p>' in page.text
+            backend.clear_request_status.side_effect = RuntimeError('Lookup failed')
+            page = await client.get(response.headers['location'])
+            assert '>Checking payment status</p>' in page.text
+            backend.clear_request_status.side_effect = None
             backend.clear_request_status.return_value = 'complete'
             result = await client.get('/account/receive/status/'+item['id'])
             assert result.json() == {'state':'complete'}
             assert code not in result.text
+            page = await client.get(response.headers['location'])
+            assert '>Received</p>' in page.text
+            assert 'data-receive-pending' not in page.text
     asyncio.run(run())
 
 
