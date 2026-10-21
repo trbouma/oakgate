@@ -184,9 +184,9 @@ def test_adapter_leaves_mint_selection_to_acorn(monkeypatch):
             send_ecash_transfer=AsyncMock(return_value={'status': 'OK', 'event_id': 'event'}))
         monkeypatch.setattr(backend, 'wallet', lambda material: wallet)
         await backend.send_payment({}, {'route': 'ecash', 'amount': 42, 'pubkey': 'ab'*32,
-                                        'relay': 'wss://relay.example', 'comment': 'hello', 'id': 'attempt'})
+                                        'relay': 'wss://relay.example', 'comment': 'hello', 'id': 'attempt', 'fee_quote': {'recipient_amount':42}})
         wallet.send_ecash_transfer.assert_awaited_once_with(
-            amount=42, recipient='ab'*32, relay='wss://relay.example', comment='hello', nonce='attempt')
+            amount=42, recipient='ab'*32, relay='wss://relay.example', comment='hello', nonce='attempt', fee_quote={'recipient_amount':42})
     asyncio.run(run())
 
 
@@ -328,4 +328,36 @@ def test_404_never_uses_social_directory_even_with_old_configuration(tmp_path, m
             assert fetch.await_count == 1
             assert fetch.await_args.args[0].endswith('/.well-known/lnurlp/alice')
             backend.send_payment.assert_not_awaited()
+    asyncio.run(run())
+
+
+def test_direct_fee_quote_is_saved_and_displayed(tmp_path):
+    async def run():
+        client, sessions, wallets, backend, owner, service, fetch = await prepared(tmp_path)
+        async with aclosing(client):
+            quote = {'recipient_amount':42,'token_amount':43,'receiver_fee':1,'sender_fee':1,'total_fee':2,'total_amount':44}
+            backend.quote_ecash_transfer = AsyncMock(return_value=quote)
+            payment = await service.prepare(owner, 'alice@safebox.dev', '42', '')
+            assert payment['fee_quote'] == quote
+            assert service.get(owner,payment['id'])['fee_quote'] == quote
+            client._transport.app.state.send = service
+            page = await client.get('/account/send?payment='+payment['id'])
+            assert page.status_code == 200
+            assert 'Total deducted' in page.text and '44 sats' in page.text
+            await service.send(owner,payment['id'])
+            assert backend.send_payment.await_args.args[1]['fee_quote'] == quote
+    asyncio.run(run())
+
+
+def test_changed_direct_fee_quote_cannot_send_or_hold_wallet(tmp_path):
+    async def run():
+        client, sessions, wallets, backend, owner, service, fetch = await prepared(tmp_path)
+        async with aclosing(client):
+            payment = await service.prepare(owner, 'alice@safebox.dev', '42', '')
+            backend.quote_ecash_transfer = AsyncMock(return_value={'changed':True})
+            with pytest.raises(ValueError, match='Start a new payment'):
+                await service.send(owner,payment['id'])
+            backend.send_payment.assert_not_awaited()
+            assert service.get(owner,payment['id'])['state'] == 'prepared'
+            assert wallets.store.acquire(owner)
     asyncio.run(run())

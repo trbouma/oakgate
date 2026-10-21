@@ -415,3 +415,7 @@ body:not(.landing) > header { padding-block: 12px; gap: 12px; }
 .send-panel select { min-width:0; max-width:100%; box-sizing:border-box; }
 .payment-recipient { margin:12px 0; }
 .payment-recipient code { display:block; max-width:100%; font-size:.85rem; }
+
+.payment-fees { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px 16px; margin:20px 0; }
+.payment-fees dt { overflow-wrap:anywhere; }
+.payment-fees dd { margin:0; text-align:right; font-variant-numeric:tabular-nums; }

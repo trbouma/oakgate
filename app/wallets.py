@@ -154,6 +154,13 @@ class AcornBackend:
     def direct_sending_available(self):
         return callable(getattr(Acorn, 'send_ecash_transfer', None))
 
+    async def quote_ecash_transfer(self, material, amount):
+        wallet = self.wallet(material)
+        if not callable(getattr(wallet, 'quote_ecash_transfer', None)):
+            raise WalletInputError('Sender-paid mint fees need the updated Acorn dependency.')
+        await wallet.load_data(force_profile_creation=False)
+        return await wallet.quote_ecash_transfer(amount)
+
     async def inspect_clear_request(self, material, code):
         return await self.wallet(material).inspect_payment_request(code)
 
@@ -232,7 +239,8 @@ class AcornBackend:
         if payment['route'] == 'ecash':
             result = await wallet.send_ecash_transfer(
                 amount=payment['amount'], recipient=payment['pubkey'],
-                relay=payment['relay'], comment=payment['comment'], nonce=payment['id'])
+                relay=payment['relay'], comment=payment['comment'], nonce=payment['id'],
+                fee_quote=payment['fee_quote'])
             if not isinstance(result, dict) or result.get('status') != 'OK':
                 raise RuntimeError('Transfer outcome unresolved')
             return {'event_id': result.get('event_id')}

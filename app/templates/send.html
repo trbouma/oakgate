@@ -15,6 +15,13 @@
 {% else %}<p class="breakable">{{ payment.address }}</p>{% endif %}
 <p>{% if payment.route in ['clear', 'clear-request'] %}{{ _('Clear payment') }}{% else %}{{ _('Direct ecash') if payment.route == 'ecash' else _('Lightning') }}{% endif %}</p>
 {% if payment.route in ['clear', 'clear-request'] %}<details><summary>{{ _('Asset details') }}</summary><p class="breakable">{{ payment.mint }}</p><p class="breakable">{{ payment.unit }}</p></details>{% endif %}
+{% if payment.route == 'ecash' and payment.fee_quote %}
+<dl class="payment-fees">
+<dt>{{ _('Recipient receives') }}</dt><dd>{{ payment.fee_quote.recipient_amount }} sats</dd>
+<dt>{{ _('Mint fees (paid by you)') }}</dt><dd>{{ payment.fee_quote.total_fee }} sats</dd>
+<dt>{{ _('Total deducted') }}</dt><dd>{{ payment.fee_quote.total_amount }} sats</dd>
+</dl>
+{% endif %}
 {% if payment.route == 'clear-request' %}<p>{{ _('Total with receiver fee') }}: {{ payment.proof_amount }} {{ payment.display_unit }} ({{ _('fee') }}: {{ payment.receiver_input_fee }})</p>{% endif %}
 {% if payment.state == 'prepared' %}
 <p class="note">{% if payment.route in ['clear', 'clear-request'] %}{{ _("Review the recipient, asset and amount before sending. Mint fees may apply.") }}{% else %}{{ _("Review the recipient and amount before sending. Mint or Lightning fees may apply.") }}{% endif %}</p>

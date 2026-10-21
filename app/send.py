@@ -173,6 +173,11 @@ class SendService:
                 raise PaymentInputError('Invoice network, amount or expiry does not match the request.')
             payment.update(route='lightning', invoice=invoice,
                            expires=min(payment['expires'], decoded.date + decoded.expiry))
+        if payment.get('route') == 'ecash':
+            record = self.wallets.store.get(owner)
+            if not record or record['status'] != 'active':
+                raise PaymentInputError('Connect an Acorn first.')
+            payment['fee_quote'] = await self.wallets.backend.quote_ecash_transfer(record['material'], payment['amount'])
         return self.save_prepared(payment)
 
     def save_prepared(self, payment):
@@ -414,12 +419,18 @@ class SendService:
             if (payment['route'] in {'ecash', 'clear'}
                     and payment.get('discovery_source') not in {'safebox-v1', 'local-wallet'}):
                 raise PaymentInputError('This payment used retired wallet discovery. Start a new payment.')
+            if payment['route'] == 'ecash' and not payment.get('fee_quote'):
+                raise PaymentInputError('Start a new payment to review sender-paid mint fees.')
             if payment['expires'] <= time.time():
                 raise ValueError('Payment confirmation expired. Start again.')
             record = self.wallets.store.get(owner)
             if not record or record['status'] != 'active':
                 raise ValueError('Connect an Acorn first.')
             self.wallets.relay(record['material']['relay'])
+            if payment['route'] == 'ecash':
+                fresh_quote = await self.wallets.backend.quote_ecash_transfer(record['material'], payment['amount'])
+                if fresh_quote != payment['fee_quote']:
+                    raise PaymentInputError('Mint fees or wallet funding changed. Start a new payment to review the total.')
             if payment['route'] == 'clear':
                 self.check_clear_route(payment)
             with closing(self.wallets.store.connect()) as db, db:
@@ -458,6 +469,9 @@ class SendService:
 def render(request, session, payment=None, message=None, status=200, assets=None, selected_asset="", values=None):
     # Pass only display fields, never invoices or encrypted journal contents.
     display = {k: payment[k] for k in ('id', 'address', 'amount', 'route', 'state', 'mint', 'unit', 'display_name', 'display_unit', 'proof_amount', 'receiver_input_fee') if k in payment} if payment else None
+    if display is not None and payment.get('fee_quote'):
+        display['fee_quote'] = {key: payment['fee_quote'][key] for key in
+                               ('recipient_amount', 'total_fee', 'total_amount')}
     return request.app.state.templates.TemplateResponse(request=request, name='send.html',
         context={**session, 'active_page': 'balances', 'payment': display, 'message': message, 'assets': assets or [], 'selected_asset': selected_asset, 'values': values or {}}, status_code=status)
 

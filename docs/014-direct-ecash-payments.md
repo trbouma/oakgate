@@ -42,6 +42,42 @@ support comments still receive them within their advertised length limit. Discov
 HTTPS, pin a public DNS result to the TLS connection, limit response size, and
 never follow redirects. No payment is sent during review.
 
+## Sender-paid mint fees
+
+For direct Cash sends, the entered amount is the recipient's intended net credit.
+OakGate asks Acorn for a read-only `quote_ecash_transfer(amount)` and displays the
+recipient amount, combined mint fees and total debit before confirmation. All
+proof selection, mint fee calculations and private-key operations remain in Acorn.
+
+The sender covers both the swap that prepares the token and the recipient's
+redemption of that token. Acorn chooses denominations so their value minus the
+NUT-02 redemption fee equals the requested amount. For example, a 6-sat payment
+with a 1-sat fee per proof can use two 4-sat proofs: the recipient redeems 8 sats
+and receives 6. If preparation costs 1 sat, the sender's total debit is 9 sats.
+
+OakGate rechecks the quote before claiming the outgoing attempt; Acorn rechecks
+under its wallet lock and again before the mint swap. A changed quote is never
+silently accepted. A failure after the attempt is claimed retains the existing
+uncertain-payment review hold; no automatic retry, second token or Lightning
+fallback is introduced. Old prepared direct sends require a new confirmation.
+
+Acorn journals sender-paid receipt metadata and settles these receipts individually,
+so another receipt's fee cannot be charged to them by batch allocation. Actual
+credit still depends on successful mint redemption and durable proof storage.
+Fees are based on the mint's advertised keyset rates; a mint changing those rates
+after dispatch cannot be guaranteed by the sender. Older recipients can redeem
+the ordinary topped-up Cashu token, but may allocate batch fees differently.
+Update the receiving Acorn too for the per-receipt accounting guarantee.
+
+Legacy Acorn callers that omit `fee_quote` retain their existing gross-token
+behavior. Clear sends, explicit Lightning invoices and Lightning fallback are
+unchanged. No mint allowlist is added.
+
+Deployment order: commit and push safebox-acorn first, run
+`poetry update safebox-acorn` in OakGate, commit the updated `poetry.lock` with
+OakGate, then deploy. The image build checks for the new quote API. Local tests
+with an Acorn source override do not update the locked container dependency.
+
 ## Receiving and settlement
 
 The background worker scans active Acorns, including users who are signed out or

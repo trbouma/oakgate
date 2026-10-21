@@ -43,6 +43,10 @@ class Backend:
             raise RuntimeError('SECRET-PHRASE provider details')
         return 0
 
+    async def quote_ecash_transfer(self, material, amount):
+        return {'version':1, 'recipient_amount':amount, 'token_amount':amount,
+                'sender_fee':0, 'receiver_fee':0, 'total_fee':0, 'total_amount':amount}
+
     async def clear_balances(self, material):
         return []
 
