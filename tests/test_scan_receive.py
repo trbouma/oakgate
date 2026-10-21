@@ -238,6 +238,11 @@ def test_presentation_renders_attachment_and_file_is_owner_bound(tmp_path, monke
             response = await client.post('/account/scan',data=form(lightning_payment='acorn:record-presentation:secret'))
             assert response.status_code == 200
             assert '<script>bad</script>' not in response.text
+            assert '<section class="presentation-check"' in response.text
+            assert '<details class="presentation-check"' not in response.text
+            assert 'No anchor found' in response.text
+            assert response.text.index('Download record file') < response.text.index('id="presentation-verification-title"')
+            assert 'view-only; no record has been added' in response.text
             ticket = RequestStore(wallets.store).recent(owner)[0]['id']
             assert '/account/scan/presentation/'+ticket+'/file?inline=true' in response.text
             response = await client.get('/account/scan/presentation/'+ticket+'/file?inline=true')
@@ -356,4 +361,36 @@ def test_detection_survives_reload_and_does_not_claim_credit(tmp_path):
             backend.clear_request_status.assert_awaited_once()
             with pytest.raises(ValueError):
                 store.get('another-owner',ticket)
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize('has_file', [False, True])
+def test_presentation_verification_missing_file_or_unavailable(tmp_path, monkeypatch, has_file):
+    async def run():
+        client, sessions, wallets, backend = setup(tmp_path)
+        lookup = AsyncMock(side_effect=TimeoutError)
+        monkeypatch.setattr('app.scan.query_openetr_history', lookup)
+        detail = {'label': 'Presented record', 'record_type': 'note',
+                  'payload': {'text': 'View only'}, 'has_original': has_file}
+        if has_file:
+            detail.update(blob_type='image/png', blob_data=b'PNG', blob_sha256='ab'*32)
+        backend.inspect_scanned_record = AsyncMock(return_value=detail)
+        backend.accept_scanned_record = AsyncMock()
+        async with aclosing(client):
+            await login(client, sessions)
+            await client.post('/account/acorn/create', data=form())
+            result = await client.post('/account/scan', data=form(lightning_payment='acorn:record-presentation:secret'))
+            assert result.status_code == 200
+            assert 'id="presentation-verification-title"' in result.text
+            assert 'Presented record' in result.text
+            assert '<details class="presentation-check"' not in result.text
+            if has_file:
+                assert 'Check unavailable' in result.text
+                assert 'this does not mean no anchor exists' in result.text
+                lookup.assert_awaited_once()
+                assert lookup.call_args.kwargs['digest_source'] == 'computed'
+            else:
+                assert 'A Record File is required before its anchor can be checked.' in result.text
+                lookup.assert_not_awaited()
+            backend.accept_scanned_record.assert_not_awaited()
     asyncio.run(run())

@@ -10,8 +10,11 @@ blob_preview=preview.blob_preview, blob_fingerprint=preview.blob_fingerprint,
 pkpass_preview=preview.pkpass_preview, json_credential_preview=preview.json_credential_preview,
 mdoc_preview=preview.mdoc_preview, blob_url=preview.blob_url, blob_inline_url=preview.blob_inline_url %}{% include 'record_preview.html' %}{% endwith %}
 <p><a href="{{ preview.blob_url }}">{{ _('Download record file') }}</a></p>{% endif %}
-{% if history %}<details class="presentation-check"><summary>{{ _('Check') }}</summary>
-{% with has_blob=true, blob_fingerprint=history.digest, openetr_history=history %}{% include '_control_history_content.html' %}{% endwith %}</details>{% endif %}
+<section class="presentation-check" aria-labelledby="presentation-verification-title">
+<h2 id="presentation-verification-title">{{ _('OpenETR evidence') }}</h2>
+{% if history %}<p class="note">{{ _('The original file was retrieved and its fingerprint verified before this lookup.') }}</p>{% endif %}
+{% with has_blob=detail.has_original, blob_fingerprint=history.digest if history else none, openetr_history=history %}{% include '_control_history_content.html' %}{% endwith %}
+</section>
 <p class="note">{{ _('This presentation is view-only; no record has been added to your Acorn.') }}</p>
 <a class="secondary-action" href="/account/scan">{{ _('Close presentation') }}</a>{% endif %}
 {% if purpose in ['transfer', 'token'] %}
