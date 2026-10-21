@@ -26,7 +26,7 @@
   {% elif blob_preview == "pdf" %}
   <p><a class="pdf-open-link nav-button" href="{{ blob_inline_url }}">{{ _("Open PDF full screen") }}</a></p>
   <div class="blob-preview blob-preview-pdf" data-pdf-viewer
-    data-pdf-url="{{ blob_inline_url }}" aria-label="PDF attached to {{ label }}">
+    data-pdf-url="{{ blob_inline_url }}" aria-label="{{ _('PDF attached to %(label)s') % {'label': label} }}">
     <p data-pdf-status role="status">{{ _("Loading PDF…") }}</p>
     <div class="pdf-controls" data-pdf-controls hidden>
       <button type="button" data-pdf-previous>{{ _("Previous") }}</button>

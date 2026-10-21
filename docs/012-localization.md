@@ -41,7 +41,7 @@ Translation maintenance uses Babel from the docs dependency group:
 
 ```sh
 poetry install --with docs
-poetry run pybabel extract -k N_ -F babel.cfg -o /tmp/oakgate-messages.pot .
+poetry run pybabel extract -k N_ -k error_page:2 -F babel.cfg -o /tmp/oakgate-messages.pot .
 poetry run pybabel update -i /tmp/oakgate-messages.pot -d app/locales
 poetry run pybabel compile -d app/locales
 poetry run pytest tests/test_localization.py
@@ -89,3 +89,37 @@ For a demo, save Inuktitut in Preferences, then visit Funds, Records, Messages,
 Receive and Preferences on mobile and desktop. Confirm syllabics render and
 record labels stay exactly as supplied. Sign into another account to confirm
 preferences remain account-specific. Restart the app after catalog changes.
+
+## French coverage review
+
+The French catalog now covers all currently extracted account-screen messages,
+including setup, payment review, recovery warnings, records, sharing, scanner,
+PDF previews and OpenETR explanations. Static messages passed to `error_page`
+are also translated; include `-k error_page:2` during extraction to retain them.
+Recovery placeholders and record-preview accessibility labels now use gettext.
+Cash balance wording is consistently “Solde en espèces”; Clear remains a product
+name. User content and public identifiers are unchanged.
+
+A regression test checks that every marked template message, marked Python
+message and static error-page message has an entry in the compiled French
+catalog, including plural forms. This is source-message coverage, not a claim
+that arbitrary backend exceptions, third-party protocol findings, user content,
+the anonymous landing page or Keycloak are translated. New dynamic display
+messages must be marked for extraction and translated separately.
+
+## Prominent action-label demonstration
+
+The demonstration now translates prominent payment, setup, recovery, scanner and
+record buttons across Spanish, Portuguese, German, Italian and Simplified Chinese.
+Inuktitut additionally covers Scan, sign-out, record editing/presentation/sharing,
+request creation, message sending, list/folder navigation and common form labels.
+Translated Inuktitut actions use syllabics without English appended. User-supplied
+units in “Send %(unit)s” remain unchanged, as do product names and identifiers.
+
+These Inuktitut labels are provisional UI adaptations, not certified translations.
+The existing Preferences notice remains. Longer instructions and safety warnings
+still fall back to English; label coverage is not full language coverage. Fluent
+review of dialect, imperatives and financial terminology is required before
+presenting the demonstration as a fully localized service. Microsoft's
+[Inuktitut localization style guide](https://download.microsoft.com/download/0/b/6/0b65bcfe-5fac-4b20-86fe-f613200667c1/iku-can-styleguide.pdf)
+was consulted for language conventions, not as certification of these labels.

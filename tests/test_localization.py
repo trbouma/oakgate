@@ -142,3 +142,90 @@ def test_browser_messages_are_request_local_and_safe():
     context['_']=lambda text: '</script><script>bad()</script>'
     page=env.get_template('base.html').render(**context)
     assert '</script><script>bad()' not in page
+
+
+def test_french_compiled_catalog_covers_current_marked_messages():
+    """Catch missing/fuzzy translations without requiring Babel at test time."""
+    import ast
+    from pathlib import Path
+    from jinja2 import Environment
+
+    app_dir = Path(__file__).resolve().parents[1] / 'app'
+    env = Environment(extensions=['jinja2.ext.i18n'])
+    catalog = translations_for('fr')._catalog
+    messages = set()
+    plurals = set()
+    for path in (app_dir / 'templates').glob('*.html'):
+        for _, function, message in env.extract_translations(path.read_text()):
+            if function == 'ngettext':
+                plurals.add(message[0])
+            elif isinstance(message, str):
+                messages.add(message)
+    for path in app_dir.glob('*.py'):
+        for node in ast.walk(ast.parse(path.read_text())):
+            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name):
+                continue
+            index = 1 if node.func.id == 'error_page' else 0
+            if node.func.id not in {'_', 'N_', 'gettext', 'error_page'} or len(node.args) <= index:
+                continue
+            value = node.args[index]
+            if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                messages.add(value.value)
+    missing = sorted(message for message in messages if not catalog.get(message))
+    missing += sorted(message for message in plurals if not all(catalog.get((message, n)) for n in (0, 1)))
+    assert not missing, 'Missing compiled French translations: ' + repr(missing)
+
+
+def test_french_onboarding_and_payment_warnings(tmp_path):
+    async def run():
+        client, sessions, service, backend = setup(tmp_path)
+        async with client:
+            await login(client, sessions)
+            await client.post('/account/preferences', data=form(handle='', language='fr'))
+            page = await client.get('/account')
+            assert 'Créer un nouvel Acorn' in page.text
+            assert 'Saisissez les mots de récupération dans l’ordre' in page.text
+            assert 'I trust OakGate' not in page.text
+    asyncio.run(run())
+    fr = translations_for('fr')
+    warning = 'Payment outcome needs review. Do not send it again. Check Acorn transaction history and contact the operator if the result is unclear.'
+    assert 'Ne le renvoyez pas.' in fr.gettext(warning)
+    assert fr.gettext('Cash Balance') == fr.gettext('Cash balance') == 'Solde en espèces'
+    assert fr.gettext('PDF attached to %(label)s') % {'label': 'My document'} == 'PDF joint à My document'
+
+
+@pytest.mark.parametrize('language', ['fr', 'es', 'pt', 'de', 'it', 'zh-Hans', 'iu'])
+def test_prominent_demo_actions_have_compiled_translations(language):
+    translator = translations_for(language)
+    for message in ['Scan', 'Receive', 'Send payment', 'Confirm payment', 'Review payment',
+                    'Payment address', 'Attach a file', 'Replace attached file', 'Remove file',
+                    'Create a new Acorn', 'Connect an existing Acorn', 'Back to Preferences',
+                    'Interpret Code', 'Create request', 'Send wallet message', 'Save preferences']:
+        assert translator.gettext(message) != message, (language, message)
+
+
+def test_inuktitut_demo_actions_use_syllabics_without_english_suffixes():
+    import re
+    iu = translations_for('iu')
+    for key in ['Scan', 'Sign out', 'Cancel', 'Confirm payment', 'Share record',
+                'Stop sharing', 'Copy code', 'Send wallet message', 'Your Receipt Address']:
+        value = iu.gettext(key)
+        assert re.search('[\u1400-\u167f]', value)
+        assert not re.search('[A-Za-z]', value)
+    assert iu.gettext('Send %(unit)s') % {'unit': 'shares'} == 'shares ᐊᐅᓪᓚᖅᑎᒃᑭᑦ'
+
+
+def test_inuktitut_demo_receive_buttons_render(tmp_path):
+    async def run():
+        client, sessions, service, backend = setup(tmp_path)
+        async with client:
+            await login(client, sessions)
+            await client.post('/account/preferences', data=form(handle='', language='iu'))
+            page = await client.get('/account')
+            assert 'ᖃᐅᔨᓴᕆᑦ' in page.text  # Scan
+            assert 'ᐊᓂᒋᑦ' in page.text  # Sign out
+            assert 'ᓄᑖᒥᒃ ᓴᓇᒋᑦ' in page.text  # Create Acorn
+            assert '>Scan<' not in page.text
+            preferences = await client.get('/account/preferences')
+            assert 'Terminology needs review by a fluent speaker.' in preferences.text
+    asyncio.run(run())

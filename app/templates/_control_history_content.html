@@ -19,7 +19,7 @@
   {% if openetr_history.candidate_graphs|length > 1 %}<p>{{ _("Multiple anchors were found. None is selected as authoritative.") }}</p>{% endif %}
   {% include "_openetr_durable_link.html" %}
   {% for graph in openetr_history.candidate_graphs %}
-  <section class="openetr-candidate-graph" aria-label="Candidate anchor graph {{ loop.index }}">
+  <section class="openetr-candidate-graph" aria-label="{{ _('Candidate anchor graph %(number)s') % {'number': loop.index} }}">
     {% if openetr_history.candidate_graphs|length > 1 %}<h2>{{ _("Candidate") }} {{ loop.index }}</h2>{% endif %}
     {% with history=openetr_history, graph=graph, graph_number=loop.index %}{% include "_openetr_candidate_graph.html" %}{% endwith %}
   </section>

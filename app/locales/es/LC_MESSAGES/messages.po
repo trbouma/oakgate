@@ -703,7 +703,7 @@ msgstr "Revisión de pagos"
 #: app/templates/account.html:6 app/templates/clear_transactions.html:10 app/templates/send.html:4
 #: app/templates/transactions.html:13
 msgid "Send payment"
-msgstr ""
+msgstr "Enviar pago"
 
 #: app/templates/account.html:9
 msgid "Your account is ready. Safebox storage is being configured."
@@ -724,7 +724,7 @@ msgstr "Tu dirección de recepción"
 
 #: app/templates/account.html:20
 msgid "Show payment QR code"
-msgstr ""
+msgstr "Mostrar código QR de pago"
 
 #: app/templates/account.html:21
 #, python-format
@@ -753,7 +753,7 @@ msgstr ""
 
 #: app/templates/account.html:33
 msgid "View recent transactions"
-msgstr ""
+msgstr "Ver transacciones recientes"
 
 #: app/templates/account.html:34
 #, python-format
@@ -762,7 +762,7 @@ msgstr "Enviar %(unit)s"
 
 #: app/templates/account.html:35 app/templates/clear_transactions.html:8 app/templates/send.html:17
 msgid "Asset details"
-msgstr ""
+msgstr "Detalles del activo"
 
 #: app/templates/account.html:35
 msgid "Unit:"
@@ -786,7 +786,7 @@ msgstr ""
 
 #: app/templates/account.html:43
 msgid "Retry setup"
-msgstr ""
+msgstr "Reintentar configuración"
 
 #: app/templates/account.html:45
 msgid "Acorn public identity"
@@ -804,7 +804,7 @@ msgstr ""
 
 #: app/templates/account.html:51
 msgid "Create a new Acorn"
-msgstr ""
+msgstr "Crear un nuevo Acorn"
 
 #: app/templates/account.html:51
 msgid "Start with an empty safebox. OakGate will keep its recovery information for you."
@@ -824,7 +824,7 @@ msgstr ""
 
 #: app/templates/account.html:57
 msgid "Connect an existing Acorn"
-msgstr ""
+msgstr "Conectar un Acorn existente"
 
 #: app/templates/account.html:57
 msgid "Use the recovery phrase and bootstrap relay for your existing safebox."
@@ -848,7 +848,7 @@ msgstr ""
 
 #: app/templates/base.html:6
 msgid "About OakGate"
-msgstr ""
+msgstr "Acerca de OakGate"
 
 #: app/templates/base.html:7
 msgid ""
@@ -968,7 +968,7 @@ msgstr "No se pudo copiar. Selecciona y copia el código o enlace manualmente."
 
 #: app/templates/clear_transactions.html:3
 msgid "Clear transactions"
-msgstr ""
+msgstr "Transacciones Clear"
 
 #: app/templates/clear_transactions.html:7 app/templates/transactions.html:11
 msgid "Tap your balance to return home."
@@ -1112,7 +1112,7 @@ msgstr ""
 
 #: app/templates/payment_review.html:16
 msgid "Check Acorn history"
-msgstr ""
+msgstr "Consultar historial de Acorn"
 
 #: app/templates/payment_review.html:18
 msgid "What did you learn?"
@@ -1594,7 +1594,7 @@ msgstr "Importe"
 
 #: app/templates/receive.html:38
 msgid "Description (Clear requests)"
-msgstr ""
+msgstr "Descripción (solicitudes Clear)"
 
 #: app/templates/receive.html:39
 msgid "Create request"
@@ -1602,7 +1602,7 @@ msgstr "Crear solicitud"
 
 #: app/templates/receive.html:42
 msgid "Recent requests"
-msgstr ""
+msgstr "Solicitudes recientes"
 
 #: app/templates/record.html:6
 msgid "Record actions"
@@ -1622,7 +1622,7 @@ msgstr "Descargar archivo del registro"
 
 #: app/templates/record.html:23
 msgid "Manage record"
-msgstr ""
+msgstr "Gestionar documento"
 
 #: app/templates/record_action.html:6 app/templates/record_action.html:13
 msgid "Delete record"
@@ -1661,11 +1661,11 @@ msgstr ""
 
 #: app/templates/record_action.html:23
 msgid "Replace attached file"
-msgstr ""
+msgstr "Reemplazar archivo adjunto"
 
 #: app/templates/record_action.html:23 app/templates/record_new.html:10
 msgid "Attach a file"
-msgstr ""
+msgstr "Adjuntar archivo"
 
 #: app/templates/record_action.html:23 app/templates/record_new.html:10
 msgid "(optional, up to 25 MiB)"
@@ -1810,7 +1810,7 @@ msgstr ""
 
 #: app/templates/record_new.html:18
 msgid "Remove file"
-msgstr ""
+msgstr "Quitar archivo"
 
 #: app/templates/record_new.html:20
 msgid "The preview stays in your browser. Save record to upload the file to your Acorn."
@@ -1956,7 +1956,7 @@ msgstr ""
 
 #: app/templates/recovery.html:11
 msgid "Recovery mode"
-msgstr ""
+msgstr "Modo de recuperación"
 
 #: app/templates/recovery.html:11
 msgid "Legacy key derivation — enable legacy recovery when restoring."
@@ -1978,7 +1978,7 @@ msgstr ""
 
 #: app/templates/recovery.html:15
 msgid "Hide recovery information"
-msgstr ""
+msgstr "Ocultar información de recuperación"
 
 #: app/templates/recovery.html:16
 msgid "This view hides after two minutes or when you leave the tab. Avoid screenshots or shared devices."
@@ -1990,7 +1990,7 @@ msgstr ""
 
 #: app/templates/recovery.html:22
 msgid "Reveal recovery information"
-msgstr ""
+msgstr "Mostrar información de recuperación"
 
 #: app/templates/recovery.html:25
 msgid ""
@@ -2000,11 +2000,11 @@ msgstr ""
 
 #: app/templates/recovery.html:26 app/templates/recovery_verify.html:3
 msgid "Verify sign-in"
-msgstr ""
+msgstr "Verificar inicio de sesión"
 
 #: app/templates/recovery.html:29
 msgid "Back to Preferences"
-msgstr ""
+msgstr "Volver a preferencias"
 
 #: app/templates/recovery_verify.html:5
 msgid ""
@@ -2074,7 +2074,7 @@ msgstr ""
 
 #: app/templates/scan_payment_error.html:5
 msgid "Review payment again"
-msgstr ""
+msgstr "Revisar el pago de nuevo"
 
 #: app/templates/scan_result.html:3
 msgid "Review code"
@@ -2212,11 +2212,11 @@ msgstr ""
 
 #: app/templates/scan_review.html:23
 msgid "Interpret Code"
-msgstr ""
+msgstr "Interpretar código"
 
 #: app/templates/scan_review.html:25
 msgid "Acquire another code"
-msgstr ""
+msgstr "Capturar otro código"
 
 #: app/templates/send.html:11
 msgid "Recipient wallet"
@@ -2268,7 +2268,7 @@ msgstr "Enviando pago. Espera y no vuelvas a enviarlo."
 
 #: app/templates/send.html:28
 msgid "Confirm payment"
-msgstr ""
+msgstr "Confirmar pago"
 
 #: app/templates/send.html:28
 msgid "Sending payment…"
@@ -2306,19 +2306,19 @@ msgstr "Saldo a enviar"
 
 #: app/templates/send.html:39
 msgid "Payment address"
-msgstr ""
+msgstr "Dirección de pago"
 
 #: app/templates/send.html:40
 msgid "Amount (whole units)"
-msgstr ""
+msgstr "Importe (unidades enteras)"
 
 #: app/templates/send.html:41
 msgid "Comment (optional)"
-msgstr ""
+msgstr "Comentario (opcional)"
 
 #: app/templates/send.html:42
 msgid "Review payment"
-msgstr ""
+msgstr "Revisar pago"
 
 #: app/templates/transactions.html:5
 msgid "Connect an Acorn to see your cash transactions."

@@ -60,9 +60,10 @@ msgstr ""
 msgid "Choose a supported language."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record.html:23 app/templating.py:9
 msgid "Edit"
-msgstr ""
+msgstr "ᐋᖅᑭᒋᐊᕐᓗᒍ"
 
 # Provisional UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record.html:8 app/templating.py:9
@@ -79,9 +80,10 @@ msgstr "ᐊᕕᖃᑎᖃᕐᓂᖅ"
 msgid "Check"
 msgstr "ᖃᐅᔨᓴᕐᓂᖅ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record.html:23 app/templating.py:9
 msgid "Delete"
-msgstr ""
+msgstr "ᐲᕐᓗᒍ"
 
 #: app/templates/receive.html:8 app/transactions.py:27
 msgid "Received"
@@ -418,10 +420,11 @@ msgstr "ᑮᓇᐅᔭᑎᑦ"
 msgid "Payment review"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/account.html:6 app/templates/clear_transactions.html:10 app/templates/send.html:4
 #: app/templates/transactions.html:13
 msgid "Send payment"
-msgstr ""
+msgstr "ᐊᑭᓖᓂᖅ ᐊᐅᓪᓚᖅᑎᒍᒃ"
 
 #: app/templates/account.html:9
 msgid "Your account is ready. Safebox storage is being configured."
@@ -441,13 +444,15 @@ msgstr ""
 msgid "Your Acorn is still connected. Try refreshing in a moment."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/account.html:17
 msgid "Your Receipt Address"
-msgstr ""
+msgstr "ᑎᒍᓯᕕᑦ ᑐᕌᕈᑎᖓ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/account.html:20
 msgid "Show payment QR code"
-msgstr ""
+msgstr "ᐊᑭᓖᓂᐅᑉ ᓇᓗᓇᐃᒃᑯᑕᖓ ᓴᖅᑭᒍᒃ"
 
 #: app/templates/account.html:21
 #, python-format
@@ -479,18 +484,21 @@ msgstr "Clear · ᐊᒥᐊᒃᑯᑦ"
 msgid "Clear balances unavailable right now. Try refreshing in a moment."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/account.html:33
 msgid "View recent transactions"
-msgstr ""
+msgstr "ᓄᑖᑦ ᐊᑭᓖᓂᐅᔪᑦ ᑕᑯᒃᑭᑦ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/account.html:34
 #, python-format
 msgid "Send %(unit)s"
-msgstr ""
+msgstr "%(unit)s ᐊᐅᓪᓚᖅᑎᒃᑭᑦ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/account.html:35 app/templates/clear_transactions.html:8 app/templates/send.html:17
 msgid "Asset details"
-msgstr ""
+msgstr "ᐱᖁᑎᐅᑉ ᐃᓗᓕᖏᑦ"
 
 #: app/templates/account.html:35
 msgid "Unit:"
@@ -504,9 +512,10 @@ msgstr ""
 msgid "No Clear balances yet."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/account.html:40
 msgid "Refresh balances"
-msgstr ""
+msgstr "ᐊᒥᐊᒃᑯᑦ ᓄᑖᙳᖅᑎᒃᑭᑦ"
 
 #: app/templates/account.html:42
 msgid "Your new Acorn setup is pending."
@@ -520,9 +529,10 @@ msgstr ""
 msgid "Finishing Acorn setup. Please wait…"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/account.html:43
 msgid "Retry setup"
-msgstr ""
+msgstr "ᐋᖅᑭᒃᓱᐃᒋᐊᒃᑲᓐᓂᕆᑦ"
 
 #: app/templates/account.html:45
 msgid "Acorn public identity"
@@ -538,9 +548,10 @@ msgid ""
 "copy too."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/account.html:51
 msgid "Create a new Acorn"
-msgstr ""
+msgstr "ᓄᑖᒥᒃ ᓴᓇᒋᑦ"
 
 #: app/templates/account.html:51
 msgid "Start with an empty safebox. OakGate will keep its recovery information for you."
@@ -558,13 +569,15 @@ msgstr ""
 msgid "I trust OakGate to hold my safebox secrets."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/account.html:55
 msgid "Create my Acorn"
-msgstr ""
+msgstr "ᓄᑖᒥᒃ ᓴᓇᒋᑦ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/account.html:57
 msgid "Connect an existing Acorn"
-msgstr ""
+msgstr "ᐱᑕᖃᕇᖅᑐᖅ ᐊᑎᓕᕐᓗᒍ"
 
 #: app/templates/account.html:57
 msgid "Use the recovery phrase and bootstrap relay for your existing safebox."
@@ -574,9 +587,10 @@ msgstr ""
 msgid "Connecting your Acorn. Please wait…"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/account.html:60 app/templates/recovery.html:9
 msgid "Recovery phrase"
-msgstr ""
+msgstr "ᐅᑎᖅᑎᑦᑎᔾᔪᑎᐅᔪᑦ ᐅᖃᐅᓰᑦ"
 
 #: app/templates/account.html:61 app/templates/recovery.html:10
 msgid "Bootstrap relay"
@@ -590,13 +604,15 @@ msgstr ""
 msgid "Use legacy key derivation"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/account.html:64
 msgid "Connect my Acorn"
-msgstr ""
+msgstr "ᐊᑎᓕᕐᓗᒍ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/account.html:68 app/templates/records.html:17
 msgid "Sign out"
-msgstr ""
+msgstr "ᐊᓂᒋᑦ"
 
 #: app/templates/account.html:69 app/templates/rates.html:3
 msgid "Exchange rates"
@@ -606,9 +622,10 @@ msgstr ""
 msgid "OakGate · Mainstay"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/base.html:6
 msgid "About OakGate"
-msgstr ""
+msgstr "ᑐᑭᓯᒋᐊᕈᑏᑦ"
 
 #: app/templates/base.html:7
 msgid ""
@@ -659,10 +676,11 @@ msgstr "ᑐᓴᐅᒪᔾᔪᑏᑦ"
 msgid "Wallet actions"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/base.html:18 app/templates/scan_lightning_address.html:3
 #: app/templates/scan_review.html:3
 msgid "Scan"
-msgstr ""
+msgstr "ᖃᐅᔨᓴᕆᑦ"
 
 # Provisional UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/base.html:18 app/templates/receive.html:3
@@ -745,9 +763,10 @@ msgstr ""
 msgid "Local currency estimate unavailable."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/clear_transactions.html:3
 msgid "Clear transactions"
-msgstr ""
+msgstr "ᐊᑭᓖᓂᐅᔪᑦ"
 
 #: app/templates/clear_transactions.html:7 app/templates/clear_transactions.html:22
 #: app/templates/send.html:45 app/templates/transactions.html:6 app/templates/transactions.html:10
@@ -783,9 +802,10 @@ msgstr ""
 msgid "Let's try that again."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/message.html:7
 msgid "Sign in"
-msgstr ""
+msgstr "ᐃᓯᕆᑦ"
 
 #: app/templates/message.html:9 app/templates/rates.html:14
 msgid "Back to OakGate"
@@ -816,22 +836,25 @@ msgstr ""
 msgid "Sending wallet message. Please wait and do not submit again."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/messages.html:12
 msgid "Recipient wallet address"
-msgstr ""
+msgstr "ᑎᒍᓯᔫᑉ ᑐᕌᕈᑎᖓ"
 
 # Provisional UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/messages.html:13
 msgid "Message"
 msgstr "ᑐᓴᐅᒪᔾᔪᑎ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/messages.html:14
 msgid "Send wallet message"
-msgstr ""
+msgstr "ᑐᓴᐅᒪᔾᔪᑎᒥᒃ ᐊᐅᓪᓚᖅᑎᑦᑎ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/messages.html:16
 msgid "Inbox"
-msgstr ""
+msgstr "ᑎᒍᔭᐅᔪᑦ"
 
 #: app/templates/messages.html:16
 msgid ""
@@ -914,9 +937,10 @@ msgstr ""
 msgid "Checking Acorn history. No funds will be sent."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/payment_review.html:16
 msgid "Check Acorn history"
-msgstr ""
+msgstr "ᐊᑐᖅᑕᐅᓯᒪᔪᑦ ᖃᐅᔨᓴᒃᑭᑦ"
 
 #: app/templates/payment_review.html:18
 msgid "What did you learn?"
@@ -956,9 +980,10 @@ msgstr ""
 msgid "Saving preferences. Please wait…"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/preferences.html:9
 msgid "Local currency"
-msgstr ""
+msgstr "ᓄᓇᓕᐅᑉ ᑮᓇᐅᔭᖏᑦ"
 
 #: app/templates/preferences.html:11
 msgid "Used for estimated cash values. Your Acorn balance remains in sats."
@@ -973,9 +998,10 @@ msgstr "ᐅᖃᐅᓯᖅ"
 msgid "Saved to your OakGate account and used on all your devices."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/preferences.html:16
 msgid "Your OakGate handle"
-msgstr ""
+msgstr "ᐊᑎᕈᓰᑦ"
 
 #: app/templates/preferences.html:18
 msgid ""
@@ -1021,17 +1047,19 @@ msgstr "ᓇᓖᕌᕈᑎᓂᒃ ᑐᖅᑯᐃ"
 msgid "Preferences storage is being configured."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/preferences.html:29 app/templates/recovery.html:3
 msgid "Recovery information"
-msgstr ""
+msgstr "ᐅᑎᖅᑎᑦᑎᔾᔪᑏᑦ"
 
 #: app/templates/preferences.html:30
 msgid "Keep your own recovery copy so you can access your Acorn outside OakGate."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/preferences.html:31
 msgid "View recovery information"
-msgstr ""
+msgstr "ᐅᑎᖅᑎᑦᑎᔾᔪᑏᑦ ᑕᑯᒃᑭᑦ"
 
 #: app/templates/product_information.html:3
 msgid "Product information"
@@ -1216,13 +1244,15 @@ msgstr ""
 msgid "Verified product information PDF"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/product_information.html:59 app/templates/record_preview.html:32
 msgid "Previous"
-msgstr ""
+msgstr "ᓯᕗᓪᓕᖅ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/product_information.html:61 app/templates/record_preview.html:34
 msgid "Next"
-msgstr ""
+msgstr "ᑭᖑᓪᓕᖅ"
 
 #: app/templates/product_information.html:63 app/templates/record_preview.html:36
 msgid "Rendered PDF page"
@@ -1336,10 +1366,11 @@ msgid ""
 "retrieval destinations."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/product_information.html:117 app/templates/scan_payment_error.html:6
 #: app/templates/scan_result.html:21
 msgid "Scan another code"
-msgstr ""
+msgstr "ᐊᓯᐊᓂᒃ ᓇᓗᓇᐃᒃᑯᑕᒥᒃ ᖃᐅᔨᓴᕆᑦ"
 
 #: app/templates/rates.html:4
 msgid ""
@@ -1405,13 +1436,15 @@ msgstr ""
 msgid "Request expired"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/receive.html:10
 msgid "View funds"
-msgstr ""
+msgstr "ᑮᓇᐅᔭᐃᑦ ᑕᑯᒃᑭᑦ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/receive.html:12 app/templates/scan_payment_error.html:2
 msgid "Payment request"
-msgstr ""
+msgstr "ᐊᑭᓖᖁᔨᔾᔪᑎ"
 
 #: app/templates/receive.html:13
 msgid ""
@@ -1435,21 +1468,24 @@ msgstr ""
 msgid "Checking time remaining:"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/receive.html:19
 msgid "Check receipt"
-msgstr ""
+msgstr "ᑎᒍᓯᓂᖅ ᖃᐅᔨᓴᕐᓗᒍ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/receive.html:22
 msgid "New request"
-msgstr ""
+msgstr "ᓄᑖᖅ ᑐᒃᓯᕋᐅᑎ"
 
 #: app/templates/receive.html:24
 msgid "Creating your request. Please wait…"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/receive.html:26
 msgid "Balance to receive"
-msgstr ""
+msgstr "ᑎᒍᔭᒃᓴᑦ"
 
 #: app/templates/receive.html:26 app/templates/receive.html:30
 msgid "sats"
@@ -1459,29 +1495,34 @@ msgstr ""
 msgid "Cash (sats)"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/receive.html:28
 msgid "Amount"
-msgstr ""
+msgstr "ᖃᔅᓯᐅᓂᖓ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/receive.html:38
 msgid "Description (Clear requests)"
-msgstr ""
+msgstr "ᐅᖃᐅᓯᖏᑦ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/receive.html:39
 msgid "Create request"
-msgstr ""
+msgstr "ᑐᒃᓯᕋᐅᑎᒥᒃ ᓴᓇᒋᑦ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/receive.html:42
 msgid "Recent requests"
-msgstr ""
+msgstr "ᓄᑖᑦ ᑐᒃᓯᕋᐅᑏᑦ"
 
 #: app/templates/record.html:4
 msgid "← Records"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record.html:6
 msgid "Record actions"
-msgstr ""
+msgstr "ᑎᑎᖅᑲᓕᕆᓂᖅ"
 
 #: app/templates/record.html:7
 msgid "Attach a file to check its fingerprint"
@@ -1495,22 +1536,25 @@ msgstr ""
 msgid "Download record file"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record.html:23
 msgid "Manage record"
-msgstr ""
+msgstr "ᑎᑎᖅᑲᒥᒃ ᐊᐅᓚᑦᑎ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record.html:23 app/templates/record_action.html:53 app/templates/records.html:5
 msgid "Active shares"
-msgstr ""
+msgstr "ᐊᕕᖃᑎᖃᕈᑏᑦ"
 
 # Provisional UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record_action.html:4
 msgid "Record"
 msgstr "ᑎᑎᖅᑲᖅ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record_action.html:6 app/templates/record_action.html:13
 msgid "Delete record"
-msgstr ""
+msgstr "ᑎᑎᖅᑲᖅ ᐲᕐᓗᒍ"
 
 #: app/templates/record_action.html:8
 msgid "Delete this record from your Acorn? OakGate cannot undo this action."
@@ -1530,38 +1574,45 @@ msgstr ""
 msgid "I confirm that I want to delete this record"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record_action.html:14 app/templates/record_new.html:23
 #: app/templates/recovery_verify.html:8
 msgid "Cancel"
-msgstr ""
+msgstr "ᓄᖅᑲᕐᓗᒍ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record_action.html:17
 msgid "Edit record"
-msgstr ""
+msgstr "ᑎᑎᖅᑲᖅ ᐋᖅᑭᒋᐊᕐᓗᒍ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record_action.html:17
 msgid "Present record"
-msgstr ""
+msgstr "ᑎᑎᖅᑲᖅ ᓴᖅᑭᓪᓗᒍ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record_action.html:17 app/templates/record_action.html:37
 msgid "Share record"
-msgstr ""
+msgstr "ᑎᑎᖅᑲᒥᒃ ᐊᕕᖃᑎᖃᕆᑦ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record_action.html:17 app/templates/record_action.html:56
 msgid "Check record"
-msgstr ""
+msgstr "ᑎᑎᖅᑲᖅ ᖃᐅᔨᓴᕐᓗᒍ"
 
 #: app/templates/record_action.html:18
 msgid "Processing your record. Please wait…"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record_action.html:21 app/templates/record_new.html:8
 msgid "Format"
-msgstr ""
+msgstr "ᐋᖅᑭᒃᓯᒪᓂᖓ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record_action.html:21 app/templates/record_new.html:8
 msgid "Text"
-msgstr ""
+msgstr "ᑎᑎᖅᓯᒪᔪᑦ"
 
 #: app/templates/record_action.html:21 app/templates/record_new.html:8
 msgid "JSON"
@@ -1572,13 +1623,15 @@ msgstr ""
 msgid "Contents"
 msgstr "ᐃᓗᓕᖏᑦ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record_action.html:23
 msgid "Replace attached file"
-msgstr ""
+msgstr "ᑎᑎᖅᑲᖅ ᐊᓯᔾᔨᕐᓗᒍ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record_action.html:23 app/templates/record_new.html:10
 msgid "Attach a file"
-msgstr ""
+msgstr "ᑎᑎᖅᑲᒥᒃ ᐃᓚᓯ"
 
 #: app/templates/record_action.html:23 app/templates/record_new.html:10
 msgid "(optional, up to 25 MiB)"
@@ -1632,13 +1685,15 @@ msgstr ""
 msgid "Create this temporary copy"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record_action.html:34
 msgid "Save changes"
-msgstr ""
+msgstr "ᐊᓯᔾᔨᖅᑕᑦ ᑐᖅᑯᒃᑭᑦ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record_action.html:37 app/templates/record_action.html:54
 msgid "Presentation"
-msgstr ""
+msgstr "ᓴᖅᑭᑎᑦᑎᓂᖅ"
 
 #: app/templates/record_action.html:38
 msgid "Scan with a compatible Safebox, or copy the code below."
@@ -1662,9 +1717,10 @@ msgstr ""
 msgid "This code has expired. You can still request deletion of the temporary copy."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record_action.html:46
 msgid "Copy private code"
-msgstr ""
+msgstr "ᐃᔨᖅᓯᒪᔪᖅ ᓇᓗᓇᐃᒃᑯᑕᖅ ᐊᔾᔨᓕᐅᕐᓗᒍ"
 
 #: app/templates/record_action.html:47
 msgid "Private presentation code"
@@ -1674,9 +1730,10 @@ msgstr ""
 msgid "Private sharing code"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record_action.html:48
 msgid "Copy code"
-msgstr ""
+msgstr "ᓇᓗᓇᐃᒃᑯᑕᖅ ᐊᔾᔨᓕᐅᕐᓗᒍ"
 
 #: app/templates/record_action.html:50
 msgid "Expires:"
@@ -1693,13 +1750,15 @@ msgstr ""
 msgid "Requesting deletion of the temporary copy…"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record_action.html:51
 msgid "Stop presentation"
-msgstr ""
+msgstr "ᓴᖅᑭᑎᑦᑎᓂᖅ ᓄᖅᑲᕐᓗᒍ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record_action.html:51
 msgid "Stop sharing"
-msgstr ""
+msgstr "ᐊᕕᖃᑎᖃᕐᓂᖅ ᓄᖅᑲᕐᓗᒍ"
 
 #: app/templates/record_action.html:53
 msgid "Copies awaiting a confirmed deletion request, including expired codes."
@@ -1726,9 +1785,10 @@ msgstr "ᑎᑎᖅᑲᒥᒃ ᐃᓚᓯ"
 msgid "Saving your record. Please wait…"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record_new.html:7
 msgid "Label"
-msgstr ""
+msgstr "ᐊᑎᖅ"
 
 #: app/templates/record_new.html:12
 msgid "Preview unavailable for this file type. You can still save it."
@@ -1746,9 +1806,10 @@ msgstr ""
 msgid "PDF preview — first page"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/record_new.html:18
 msgid "Remove file"
-msgstr ""
+msgstr "ᑎᑎᖅᑲᖅ ᐲᕐᓗᒍ"
 
 #: app/templates/record_new.html:20
 msgid "The preview stays in your browser. Save record to upload the file to your Acorn."
@@ -1866,21 +1927,24 @@ msgstr ""
 msgid "Your Records"
 msgstr "ᑎᑎᖅᑲᑎᑦ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/records.html:3
 msgid "Newest first"
-msgstr ""
+msgstr "ᓄᑖᖑᓛᑦ ᓯᕗᓪᓕᐅᑎᓪᓗᒋᑦ"
 
 #: app/templates/records.html:5
 msgid "Record views"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/records.html:5
 msgid "List"
-msgstr ""
+msgstr "ᑎᑎᖅᓯᒪᔪᑦ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/records.html:5 app/templates/records.html:6
 msgid "Folders"
-msgstr ""
+msgstr "ᑎᑎᖅᑲᖃᐅᑏᑦ"
 
 #: app/templates/records.html:7
 msgid "Acorn records"
@@ -1898,9 +1962,10 @@ msgstr ""
 msgid "Records are unavailable right now."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/records.html:13
 msgid "Folder →"
-msgstr ""
+msgstr "ᑎᑎᖅᑲᖃᐅᑎ →"
 
 #: app/templates/records.html:15
 msgid "No records yet."
@@ -1918,9 +1983,10 @@ msgid ""
 "payments. Go Independent is planned for later."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/recovery.html:11
 msgid "Recovery mode"
-msgstr ""
+msgstr "ᐅᑎᖅᑎᑦᑎᓂᐅᑉ ᐊᑐᖅᑕᐅᓂᖓ"
 
 #: app/templates/recovery.html:11
 msgid "Legacy key derivation — enable legacy recovery when restoring."
@@ -1940,9 +2006,10 @@ msgstr ""
 msgid "Recovery information is hidden. Verify your sign-in again to reveal it."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/recovery.html:15
 msgid "Hide recovery information"
-msgstr ""
+msgstr "ᐅᑎᖅᑎᑦᑎᔾᔪᑏᑦ ᐃᔨᕐᓗᒋᑦ"
 
 #: app/templates/recovery.html:16
 msgid "This view hides after two minutes or when you leave the tab. Avoid screenshots or shared devices."
@@ -1952,9 +2019,10 @@ msgstr ""
 msgid "I am in a private place and understand that this phrase gives access to my Acorn."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/recovery.html:22
 msgid "Reveal recovery information"
-msgstr ""
+msgstr "ᐅᑎᖅᑎᑦᑎᔾᔪᑏᑦ ᓴᖅᑭᓪᓗᒋᑦ"
 
 #: app/templates/recovery.html:25
 msgid ""
@@ -1962,13 +2030,15 @@ msgid ""
 "currently signed in with."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/recovery.html:26 app/templates/recovery_verify.html:3
 msgid "Verify sign-in"
-msgstr ""
+msgstr "ᐃᓯᕐᓂᖅ ᖃᐅᔨᓴᕐᓗᒍ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/recovery.html:29
 msgid "Back to Preferences"
-msgstr ""
+msgstr "ᓇᓖᕌᕈᑎᓄᑦ ᐅᑎᕆᑦ"
 
 #: app/templates/recovery_verify.html:5
 msgid ""
@@ -1980,21 +2050,24 @@ msgstr ""
 msgid "Continue to verify sign-in"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/scan_lightning_address.html:11
 msgid "Start camera"
-msgstr ""
+msgstr "ᐊᔾᔨᓕᐅᕈᑎ ᐱᒋᐊᖅᑎᒍᒃ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/scan_lightning_address.html:12
 msgid "Stop camera"
-msgstr ""
+msgstr "ᐊᔾᔨᓕᐅᕈᑎ ᓄᖅᑲᖅᑎᒍᒃ"
 
 #: app/templates/scan_lightning_address.html:20
 msgid "Scan or paste a code or payment request"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/scan_lightning_address.html:25
 msgid "Review Code"
-msgstr ""
+msgstr "ᓇᓗᓇᐃᒃᑯᑕᖅ ᖃᐅᔨᓴᕐᓗᒍ"
 
 #: app/templates/scan_lightning_address.html:30
 msgid ""
@@ -2036,13 +2109,15 @@ msgstr ""
 msgid "The payment request was recognized, but could not be prepared."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/scan_payment_error.html:5
 msgid "Review payment again"
-msgstr ""
+msgstr "ᐊᑭᓖᓂᖅ ᖃᐅᔨᓴᒃᑲᓐᓂᕐᓗᒍ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/scan_result.html:3
 msgid "Review code"
-msgstr ""
+msgstr "ᓇᓗᓇᐃᒃᑯᑕᖅ ᖃᐅᔨᓴᕐᓗᒍ"
 
 #: app/templates/scan_result.html:5
 msgid "This code opens an external website. Check the address before continuing."
@@ -2052,9 +2127,10 @@ msgstr ""
 msgid "Open website"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/scan_result.html:6
 msgid "Shared by"
-msgstr ""
+msgstr "ᐊᕕᖃᑎᖃᖅᑐᖅ"
 
 #: app/templates/scan_result.html:6
 msgid "The originator handle is a suggested label, not verified authorship."
@@ -2084,9 +2160,10 @@ msgstr ""
 msgid "This presentation is view-only; no record has been added to your Acorn."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/scan_result.html:16
 msgid "Close presentation"
-msgstr ""
+msgstr "ᓴᖅᑭᑎᑦᑎᓂᖅ ᒪᑐᓗᒍ"
 
 #: app/templates/scan_result.html:18
 msgid "Accept this record into your Acorn?"
@@ -2100,9 +2177,10 @@ msgstr ""
 msgid "Accepting. Please wait and do not submit again."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/scan_result.html:19
 msgid "Store as"
-msgstr ""
+msgstr "ᑐᖅᑯᕐᓗᒍ ᐃᒪᓐᓇ"
 
 #: app/templates/scan_result.html:19
 msgid ""
@@ -2110,9 +2188,10 @@ msgid ""
 "name."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/scan_result.html:19
 msgid "Accept"
-msgstr ""
+msgstr "ᐊᖏᕐᓗᒍ"
 
 #: app/templates/scan_review.html:4
 msgid "The code has been acquired. The camera is stopped. Choose how OakGate should interpret it."
@@ -2172,17 +2251,20 @@ msgid ""
 "separators cannot be reconstructed safely."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/scan_review.html:23
 msgid "Interpret Code"
-msgstr ""
+msgstr "ᓇᓗᓇᐃᒃᑯᑕᖅ ᑐᑭᓯᓗᒍ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/scan_review.html:25
 msgid "Acquire another code"
-msgstr ""
+msgstr "ᐊᓯᐊᓂᒃ ᓇᓗᓇᐃᒃᑯᑕᒥᒃ ᑎᒍᓯ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/send.html:11
 msgid "Recipient wallet"
-msgstr ""
+msgstr "ᑎᒍᓯᔫᑉ ᑮᓇᐅᔭᖃᐅᑎᖓ"
 
 #: app/templates/send.html:12
 msgid "Wallet public key"
@@ -2228,9 +2310,10 @@ msgstr ""
 msgid "Sending payment. Please wait and do not submit again."
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/send.html:28
 msgid "Confirm payment"
-msgstr ""
+msgstr "ᐊᑭᓖᓂᖅ ᓇᓗᓇᐃᕐᓗᒍ"
 
 #: app/templates/send.html:28
 msgid "Sending payment…"
@@ -2262,25 +2345,30 @@ msgstr ""
 msgid "Preparing your payment. Please wait…"
 msgstr ""
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/send.html:37
 msgid "Balance to send"
-msgstr ""
+msgstr "ᐊᐅᓪᓚᖅᑎᑕᒃᓴᑦ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/send.html:39
 msgid "Payment address"
-msgstr ""
+msgstr "ᐊᑭᓖᕕᒃ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/send.html:40
 msgid "Amount (whole units)"
-msgstr ""
+msgstr "ᖃᔅᓯᐅᓂᖓ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/send.html:41
 msgid "Comment (optional)"
-msgstr ""
+msgstr "ᐅᖃᐅᓯᒃᓴᖅ"
 
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 #: app/templates/send.html:42
 msgid "Review payment"
-msgstr ""
+msgstr "ᐊᑭᓖᓂᖅ ᖃᐅᔨᓴᕐᓗᒍ"
 
 #: app/templates/send.html:45 app/templates/transactions.html:3
 msgid "Cash transactions"
@@ -2322,3 +2410,15 @@ msgstr "ᐊᐅᓪᓚᖅᑎᑦᑎ"
 # Provisional UI adaptation; fluent Inuktitut speaker review required.
 msgid "Add record"
 msgstr "ᑎᑎᖅᑲᒥᒃ ᐃᓚᓯ"
+
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
+msgid "Back"
+msgstr "ᐅᑎᕆᑦ"
+
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
+msgid "Continue"
+msgstr "ᑲᔪᓯᒋᑦ"
+
+#. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
+msgid "Copied"
+msgstr "ᐊᔾᔨᓕᐅᖅᑕᐅᔪᖅ"
