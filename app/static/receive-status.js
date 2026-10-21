@@ -26,6 +26,28 @@
       if (paused) note.textContent = note.dataset.paused;
     }
   }
+  function celebrate() {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const burst = document.createElement('div');
+    burst.className = 'receive-confetti';
+    burst.setAttribute('aria-hidden', 'true');
+    const colors = ['#9bbf74', '#e9c46a', '#62b6b7', '#f4a261', '#d7e9bd'];
+    for (let i = 0; i < 48; i++) {
+      const piece = document.createElement('span');
+      piece.style.setProperty('--x', `${Math.random() * 100}%`);
+      piece.style.setProperty('--drift', `${(Math.random() - 0.5) * 160}px`);
+      piece.style.setProperty('--delay', `${Math.random() * 0.35}s`);
+      piece.style.setProperty('--turn', `${Math.random() * 720 - 360}deg`);
+      piece.style.backgroundColor = colors[i % colors.length];
+      burst.appendChild(piece);
+    }
+    document.body.appendChild(burst);
+    const cleanup = setTimeout(() => burst.remove(), 2600);
+    window.addEventListener('pagehide', () => {
+      clearTimeout(cleanup);
+      burst.remove();
+    }, {once: true});
+  }
   function updateProgress() {
     if (stopped) return;
     const remaining = Math.max(0, Math.ceil((deadline - performance.now()) / 1000));
@@ -59,6 +81,7 @@
         pending.hidden = true;
         if (received) received.hidden = state !== 'complete';
         stop();
+        celebrate();
         return;
       }
       if (state === 'expired') { stop(); return; }

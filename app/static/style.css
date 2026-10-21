@@ -388,3 +388,23 @@ body:not(.landing) > header { padding-block: 12px; gap: 12px; }
 .receive-poll-progress { max-width:320px; margin:12px auto; }
 .receive-poll-progress progress { display:block; width:100%; height:10px; accent-color:var(--accent, #506337); }
 [data-receive-countdown] { font-variant-numeric:tabular-nums; }
+
+/* A brief receipt celebration; never blocks thumb actions or assistive tools. */
+.receive-confetti { position:fixed; inset:0; overflow:hidden; pointer-events:none; z-index:1000; }
+.receive-confetti span { position:absolute; top:-16px; left:var(--x); width:8px; height:12px; border-radius:2px; opacity:0; animation:receipt-confetti-fall 2.1s var(--delay) ease-out forwards; }
+@keyframes receipt-confetti-fall {
+  0% { opacity:0; transform:translate3d(0,0,0) rotate(0); }
+  8% { opacity:1; }
+  75% { opacity:1; }
+  100% { opacity:0; transform:translate3d(var(--drift),100vh,0) rotate(var(--turn)); }
+}
+@media (prefers-reduced-motion:reduce) { .receive-confetti { display:none; } }
+
+.receive-amount { margin:20px 0 16px; }
+.receive-panel .receive-amount input { width:100%; font-size:clamp(1.7rem,7vw,3rem); font-weight:650; font-variant-numeric:tabular-nums; padding:12px 4px; margin-bottom:0; }
+.receive-amount p { margin:6px 0 0; color:var(--muted); }
+.receive-keypad:not([hidden]) { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:16px 0 20px; }
+.receive-keypad button { width:100%; min-height:60px; margin:0; padding:10px; font-size:1.7rem; font-weight:600; touch-action:manipulation; }
+.receive-keypad button:active { transform:scale(.97); }
+[data-receive-entry][aria-busy=true] .receive-keypad { opacity:.5; pointer-events:none; }
+@media (prefers-reduced-motion:reduce) { .receive-keypad button:active { transform:none; } }

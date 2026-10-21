@@ -379,3 +379,15 @@ msgstr "Los tipos de cambio no están disponibles en este momento."
 
 msgid "Payment detected — confirming in background"
 msgstr "Pago detectado — confirmando en segundo plano"
+
+
+msgid "Amount keypad"
+msgstr "Teclado de importe"
+
+
+msgid "Clear amount"
+msgstr "Borrar importe"
+
+
+msgid "Delete last digit"
+msgstr "Eliminar el último dígito"

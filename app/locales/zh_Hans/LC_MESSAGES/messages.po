@@ -368,3 +368,15 @@ msgstr "汇率暂不可用。"
 
 msgid "Payment detected — confirming in background"
 msgstr "已检测到付款 — 正在后台确认"
+
+
+msgid "Amount keypad"
+msgstr "金额键盘"
+
+
+msgid "Clear amount"
+msgstr "清除金额"
+
+
+msgid "Delete last digit"
+msgstr "删除最后一位数字"

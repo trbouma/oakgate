@@ -377,3 +377,15 @@ msgstr "I tassi di cambio non sono disponibili al momento."
 
 msgid "Payment detected — confirming in background"
 msgstr "Pagamento rilevato — conferma in background"
+
+
+msgid "Amount keypad"
+msgstr "Tastierino importo"
+
+
+msgid "Clear amount"
+msgstr "Cancella importo"
+
+
+msgid "Delete last digit"
+msgstr "Elimina ultima cifra"

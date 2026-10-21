@@ -18,16 +18,27 @@
 </div>
 <a class="primary-action" href="/account/receive?ticket={{ item.id }}">{{ _('Check receipt') }}</a></div>
 {% endif %}
-<script src="/static/receive-status.js?v=6" defer></script>
+<script src="/static/receive-status.js?v=7" defer></script>
 <p><a class="primary-action" href="/account/receive">{{ _('New request') }}</a></p>
 {% else %}
-<form method="post" action="/account/receive" data-progress-message="{{ _('Creating your request. Please wait…') }}">
+<form method="post" action="/account/receive" data-receive-entry data-progress-message="{{ _('Creating your request. Please wait…') }}">
 <input type="hidden" name="csrf" value="{{ csrf }}">
-<label for="asset">{{ _('Balance to receive') }}</label><select id="asset" name="asset"><option value="">{{ _('Cash (sats)') }}</option>{% for asset in assets %}<option value="{{ asset.id }}">{{ asset.display_name }} — {{ asset.display_unit }}</option>{% endfor %}</select>
-<label for="amount">{{ _('Amount') }}</label><input id="amount" name="amount" type="number" min="1" step="1" required inputmode="numeric">
+<label for="asset">{{ _('Balance to receive') }}</label><select id="asset" name="asset"><option value="" data-unit="{{ _('sats') }}">{{ _('Cash (sats)') }}</option>{% for asset in assets %}<option value="{{ asset.id }}" data-unit="{{ asset.display_unit }}">{{ asset.display_name }} — {{ asset.display_unit }}</option>{% endfor %}</select>
+<div class="receive-amount">
+<label for="amount">{{ _('Amount') }}</label>
+<input id="amount" name="amount" type="text" pattern="[1-9][0-9]{0,12}" maxlength="13" required inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="0" aria-describedby="receive-unit">
+<p id="receive-unit" data-receive-unit>{{ _('sats') }}</p>
+</div>
+<div class="receive-keypad" data-receive-keypad role="group" aria-label="{{ _('Amount keypad') }}" hidden>
+{% for digit in ['1','2','3','4','5','6','7','8','9'] %}<button type="button" data-key="{{ digit }}">{{ digit }}</button>{% endfor %}
+<button type="button" data-key="clear" aria-label="{{ _('Clear amount') }}">C</button>
+<button type="button" data-key="0">0</button>
+<button type="button" data-key="backspace" aria-label="{{ _('Delete last digit') }}">⌫</button>
+</div>
 <label for="description">{{ _('Description (Clear requests)') }}</label><input id="description" name="description" maxlength="200">
 <button class="primary-action" type="submit">{{ _('Create request') }}</button>
 </form>
+<script src="/static/receive-keypad.js?v=1" defer></script>
 {% if recent %}<details><summary>{{ _('Recent requests') }}</summary>{% for entry in recent %}<p><a href="/account/receive?ticket={{ entry.id }}">{{ entry.display_name }} · {{ entry.amount }} {{ entry.display_unit }}</a></p>{% endfor %}</details>{% endif %}
 {% endif %}
 </section>

@@ -41,3 +41,15 @@ msgstr "ᓇᓖᕌᕈᑏᑦ ᓄᑖᙳᖅᑎᑕᐅᔪᑦ."
 
 msgid "Payment detected — confirming in background"
 msgstr ""
+
+
+msgid "Amount keypad"
+msgstr ""
+
+
+msgid "Clear amount"
+msgstr ""
+
+
+msgid "Delete last digit"
+msgstr ""

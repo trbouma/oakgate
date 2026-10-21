@@ -13,7 +13,7 @@ function setup(fetcher) {
   const nodes = {'[data-receive-progress]':progress, '[data-receive-progress-bar]':bar, '[data-receive-countdown]':countdown, '[data-receive-status]':status, '[data-receive-pending]':pending, '[data-receive-complete]':complete, '[data-receive-poll-note]':note};
   let calls = 0, lastSignal, onHide;
   vm.runInNewContext(source, {
-    document:{querySelector:s=>nodes[s]}, performance:{now:()=>now}, AbortController,
+    document:{querySelector:s=>nodes[s], createElement:()=>({style:{setProperty(){}},setAttribute(){},appendChild(){},remove(){}}),body:{appendChild(){}}}, performance:{now:()=>now}, AbortController,
     setTimeout:(fn, delay)=>{const id=++next; timers.set(id, {fn, at:now+delay}); return id;},
     clearTimeout:id=>timers.delete(id), window:{addEventListener:(_,fn)=>{onHide=fn;}},
     fetch:async (_,options)=>{calls++; lastSignal=options.signal; return fetcher(options);}

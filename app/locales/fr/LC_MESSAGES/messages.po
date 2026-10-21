@@ -380,3 +380,15 @@ msgstr "Les taux de change sont indisponibles pour le moment."
 
 msgid "Payment detected — confirming in background"
 msgstr "Paiement détecté — confirmation en arrière-plan"
+
+
+msgid "Amount keypad"
+msgstr "Clavier du montant"
+
+
+msgid "Clear amount"
+msgstr "Effacer le montant"
+
+
+msgid "Delete last digit"
+msgstr "Supprimer le dernier chiffre"

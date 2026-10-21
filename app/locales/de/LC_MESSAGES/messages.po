@@ -382,3 +382,15 @@ msgstr "Wechselkurse sind derzeit nicht verfügbar."
 
 msgid "Payment detected — confirming in background"
 msgstr "Zahlung erkannt — Bestätigung im Hintergrund"
+
+
+msgid "Amount keypad"
+msgstr "Betragstastatur"
+
+
+msgid "Clear amount"
+msgstr "Betrag löschen"
+
+
+msgid "Delete last digit"
+msgstr "Letzte Ziffer löschen"
