@@ -69,7 +69,7 @@ def test_record_workflows_and_owner_isolation(tmp_path, monkeypatch):
             assert (await client.get(f'/account/records/{REF}/check')).status_code == 200
             query.assert_not_awaited()
             checked = await client.post(f'/account/records/{REF}/check', data=form(confirmed='yes'))
-            assert checked.status_code == 200 and 'No qualifying anchor' in checked.text
+            assert checked.status_code == 200 and 'No anchor found' in checked.text
             assert query.await_args.args[0] == hashlib.sha256(b'original').hexdigest()
             backend.record_blob.return_value = (DETAIL, 'application/pdf', b'tampered')
             assert (await client.post(f'/account/records/{REF}/check', data=form(confirmed='yes'))).status_code == 409

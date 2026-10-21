@@ -36,24 +36,22 @@
 {% elif action == 'capability' %}
 <h1>{{ _('Presentation') if item.purpose == 'present' else _('Share record') }}</h1><p>{{ item.label }}</p>
 <p>{{ _("Scan with a compatible Safebox, or copy the code below.") }}</p>
-{% if qr %}<div class="record-qr">{{ qr|safe }}</div>{% endif %}
+{% if expired %}<p role="status">{{ _('This code has expired. You can still request deletion of the temporary copy.') }}</p>{% elif qr %}<button type="button" class="record-qr record-copy-qr" data-copy-value="{{ item.descriptor }}" data-copy-status="record-copy-status" aria-label="{{ _('Copy private code') }}">{{ qr|safe }}</button>{% endif %}
 <label for="descriptor">{{ _("Private presentation code") if item.purpose == "present" else _("Private sharing code") }}</label><textarea id="descriptor" readonly rows="5" spellcheck="false">{{ item.descriptor }}</textarea>
+<button type="button" class="secondary-action" data-copy-value="{{ item.descriptor }}" data-copy-status="record-copy-status">{{ _('Copy code') }}</button>
+<p id="record-copy-status" role="status" aria-live="polite" hidden></p>
 <p>{{ _("Expires:") }} {{ expiry }}</p><p class="note">{{ _("This is a bearer secret. Expiry is enforced by compatible clients; storage retention may differ. You can return through Active shares to request deletion. Copies already received cannot be recalled.") }}</p>
-<form method="post" action="/account/record-shares/{{ item.id }}/stop"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="primary-action">{{ _("Stop presentation") if item.purpose == "present" else _("Stop sharing") }}</button></form>
+<form method="post" action="/account/record-shares/{{ item.id }}/stop" data-stop-record-sharing data-progress-message="{{ _('Requesting deletion of the temporary copy…') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="primary-action">{{ _("Stop presentation") if item.purpose == "present" else _("Stop sharing") }}</button></form>
 {% elif action == 'shares' %}
 <h1>{{ _("Active shares") }}</h1><p class="note">{{ _("Copies awaiting a confirmed deletion request, including expired codes.") }}</p>
 <ul class="record-list">{% for item in shares %}<li><a href="/account/record-shares/{{ item.id }}">{{ item.label }} · {{ _('Presentation') if item.purpose == 'present' else _('Share') }}</a></li>{% else %}<li>{{ _("No sharing copies tracked.") }}</li>{% endfor %}</ul>
 {% elif action == 'checked' %}
-<h1>{{ _("OpenETR check") }}</h1><p>{{ record.label }}</p>
-<p class="note">{{ _("Fingerprint of the original file:") }} <code>{{ history.digest }}</code></p>
-{% if history.error %}<p role="status">{{ history.error }}</p>{% endif %}
-{% for warning in history.warnings %}<p role="status">{{ warning }}</p>{% endfor %}
-{% for graph in history.candidate_graphs %}<article class="openetr-card"><h2>{{ _("Candidate") }} {{ loop.index }}</h2><p>{{ _("Publisher:") }} <code>{{ graph.anchor.author }}</code></p><p>{{ graph.publisher_position_label }}</p>
-{% for event in graph.controls %}<p>{{ event.content }}</p>{% endfor %}
-<details><summary>{{ _("Evidence details") }}</summary><pre>{{ graph|tojson(indent=2) }}</pre></details></article>
-{% else %}{% if not history.error %}<p>{{ _("No qualifying anchor was found in the retrieved evidence.") }}</p>{% endif %}{% endfor %}
-<p class="note">{{ _("Bounded relay queries cannot establish global completeness. This check does not establish ownership, legal validity, or recognition of a publisher.") }}</p>
-<details><summary>{{ _("Ruleset findings") }}</summary><pre>{{ history.verification|tojson(indent=2) }}</pre></details>
+<h1>{{ _('Check record') }}</h1><p>{{ record.label }}</p>
+<p class="note">{% if bytes_verified %}{{ _('The original file was retrieved and its fingerprint verified before this lookup.') }}{% else %}{{ _('This check uses a scanned fingerprint. It has not retrieved or verified the original file.') }}{% endif %}</p>
+{% with has_blob=true, blob_fingerprint=history.digest, openetr_history=history %}
+{% include '_control_history_content.html' %}
+{% endwith %}
 {% endif %}
 </section>
+<script src="/static/record-actions.js?v=1" defer></script>
 {% endblock %}

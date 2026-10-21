@@ -54,8 +54,33 @@ copies already received. An upload followed by a lost response or database failu
 can leave an untracked copy; OakGate reports the outcome as uncertain and does not
 automatically retry. There is no background expiry/deletion worker yet.
 
-This iteration supports sending codes to compatible Safebox clients. It does not
-add an OakGate scanner/import flow, record renaming or folder moves.
+OakGate's Scan action accepts the same Acorn presentation and transfer codes as
+Safebox Web. Presentations render content and supported attachments without
+importing them, and show the OpenETR evidence check. Transfers show their type,
+attachment presence and expiry, with a **Store as** label before import. A label
+already in this OakGate wallet is rejected before claiming the import ticket;
+this is not atomic exclusion against another independent Acorn client. Each ticket
+remains owner-bound and one-shot, including uncertain results. Import and temporary
+copy deletion run through Acorn. Record renaming and folder moves are not added.
+
+Check now uses Safebox Web's candidate/signer/publisher-notice presentation and
+separates **Anchor found**, **No anchor found**, and **Check unavailable**. A local
+record check still retrieves and hashes its original bytes before querying.
+Timeouts return an unavailable check, not a message implying a failed save.
+Matching anchors can show a public OpenETR evidence link and QR. That link contains
+a fingerprint, not the private record or its sharing secret.
+
+Scanning an exact `OAKGATE_OPENETR_PUBLIC_BASE_URL/<sha256>` link opens an OakGate
+evidence check using configured relays. A scanned fingerprint does not prove
+possession or verification of the original bytes. Unrecognized HTTPS links stay
+on the external-link review page; they cannot select relays or storage servers.
+GS1 Digital Link, GTIN and element-string discovery remain available, alongside
+Lightning addresses/invoices, Cashu tokens and Clear payment requests.
+
+Present/Share pages have tap-to-copy QR codes and Copy code buttons, expiry
+information, progress feedback on Stop, and a best-effort leave-page warning.
+Expired codes no longer show a usable QR, but remain in Active shares so deletion
+can be retried. Closing a presentation view does not revoke the sender's copy.
 
 ## Infrastructure configuration
 
@@ -63,6 +88,11 @@ add an OakGate scanner/import flow, record renaming or folder moves.
 OAKGATE_BLOSSOM_SERVER=https://grove.safebox.dev
 OAKGATE_TRANSFER_SERVER=https://grove.safebox.dev
 OAKGATE_OPENETR_RELAYS=wss://relay.openetr.org
+OAKGATE_OPENETR_PUBLIC_BASE_URL=https://openetr.org/etr
+OAKGATE_OPENETR_QUERY_TIMEOUT_SECONDS=5
+OAKGATE_OPENETR_QUERY_LIMIT=100
+OAKGATE_OPENETR_BLOSSOM_SERVERS=https://grove.safebox.dev
+OAKGATE_RECORD_ALLOWED_SERVERS=https://grove.safebox.dev
 ```
 
 The first server receives new/replacement encrypted attachments; the second
@@ -163,3 +193,35 @@ directory. Future address-based record delivery must use explicit wallet
 capabilities in `safebox.json`, not a social key. See the
 [resolution contract](018-safebox-address-discovery.md#which-lookup-serves-which-purpose)
 for how this differs from payments and wallet messages.
+
+
+## Deployment and smoke test
+
+These settings are passed into the app by Compose. Update `.env`, then rebuild
+and recreate only OakGate with `./refresh-app.sh`; Keycloak and Redis need no
+restart. This change uses the existing Acorn presentation/transfer APIs and does
+not require a new Acorn commit or any change to Safebox Web.
+
+Public OpenETR artifacts may live on a different Grove/Blossom server from private
+wallet attachments. List those public sources in `OAKGATE_OPENETR_BLOSSOM_SERVERS`.
+For cross-application Present/Share, both applications must trust the server that
+hosts the temporary encrypted copy. Add approved remote servers to
+`OAKGATE_RECORD_ALLOWED_SERVERS`; OakGate's own Blossom and transfer servers are
+always included. Merely scanning a code never authorizes a new server. Limits:
+1–8 servers per list, 1–15 seconds per query, 1–200 events per query.
+
+After deployment, use two test Acorns with a harmless record and attachment:
+
+1. Open Check; compare the file fingerprint and candidate/signer evidence with
+   Safebox Web. Test an unanchored file as well as a known OpenETR record.
+2. Present in each application and scan in the other. Confirm the preview opens
+   without adding a record to the receiver, then stop the presentation.
+3. Share in each direction; choose a new destination label and import once.
+   Confirm the record and file appear in the receiver's Acorn. Resubmitting the
+   same ticket must not import again.
+4. Copy/scan an OpenETR evidence link and a GS1 code with a known published anchor.
+   Compare artifact retrieval and candidate selection against Safebox Web.
+5. Repeat on a phone; test clipboard fallback, expiration and unavailable relays.
+
+Real camera permission, deployed relay contents and cross-instance server access
+require this deployment smoke test; isolated regression tests cannot prove them.

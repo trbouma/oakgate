@@ -205,11 +205,11 @@ class AcornBackend:
     async def inspect_scanned_record(self, material, code, presentation=False):
         wallet = self.wallet(material)
         method = wallet.inspect_record_presentation if presentation else wallet.inspect_record_transfer
-        return await method(code, allowed_servers=[self.record_settings.blossom, self.record_settings.transfer_server])
+        return await method(code, allowed_servers=list(self.record_settings.allowed_servers))
 
-    async def accept_scanned_record(self, material, code):
-        return await self.wallet(material).accept_record_transfer(code,
-            allowed_servers=[self.record_settings.blossom, self.record_settings.transfer_server])
+    async def accept_scanned_record(self, material, code, label=None):
+        return await self.wallet(material).accept_record_transfer(code, record_name=label,
+            allowed_servers=list(self.record_settings.allowed_servers))
 
     async def accept_scanned_token(self, material, code):
         wallet = self.wallet(material)

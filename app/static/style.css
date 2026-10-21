@@ -419,3 +419,19 @@ body:not(.landing) > header { padding-block: 12px; gap: 12px; }
 .payment-fees { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px 16px; margin:20px 0; }
 .payment-fees dt { overflow-wrap:anywhere; }
 .payment-fees dd { margin:0; text-align:right; font-variant-numeric:tabular-nums; }
+
+/* Record actions and evidence retain readable widths on phone screens. */
+.record-capabilities { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:16px 0; }
+.record-capabilities a,.record-capabilities [aria-disabled] { text-align:center; padding:14px 8px; border:1px solid var(--border); border-radius:8px; }
+.record-capabilities [aria-disabled] { opacity:.5; }
+.record-detail,.openetr-history-content,.openetr-candidate-graph { min-width:0; overflow-wrap:anywhere; }
+.openetr-history-content pre,.scan-content pre { white-space:pre-wrap; overflow-wrap:anywhere; }
+.openetr-event-fields,.record-review-fields { margin:16px 0; }
+.openetr-event-fields dt,.record-review-fields dt { font-weight:600; margin-top:10px; }
+.openetr-event-fields dd,.record-review-fields dd { margin:4px 0 12px; }
+.openetr-candidate-graph { border:1px solid var(--border); border-radius:10px; padding:14px; margin:16px 0; }
+.openetr-protocol-details { margin:12px 0; }
+.record-copy-qr,.openetr-durable-qr-button { display:block; background:white; color:black; padding:12px; border:0; border-radius:10px; margin:16px auto; max-width:100%; cursor:pointer; }
+.record-copy-qr svg,.openetr-durable-qr-button svg { display:block; width:260px; max-width:100%; height:auto; }
+.openetr-verification-fingerprint .inline-icon { width:20px; height:20px; }
+.presentation-check summary { cursor:pointer; padding:12px 0; font-weight:600; }

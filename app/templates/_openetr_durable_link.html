@@ -1,0 +1,32 @@
+{% if durable_url and durable_qr %}
+<section class="openetr-durable-link" aria-labelledby="openetr-verification-link-heading">
+  <h2 id="openetr-verification-link-heading">OpenETR Evidence Link</h2>
+  {% if blob_fingerprint %}
+  <p class="record-fingerprint openetr-verification-fingerprint">
+    <svg class="inline-icon" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+      stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 11a2 2 0 0 1 2 2c0 3-.7 5.7-2 8"></path>
+      <path d="M8.2 20c1.2-2.2 1.8-4.5 1.8-7a2 2 0 0 1 4 0c0 2.6-.4 5-1.2 7.2"></path>
+      <path d="M5.5 18.5A15 15 0 0 0 7 12.8a5 5 0 0 1 10 0c0 2.2-.2 4.4-.8 6.5"></path>
+      <path d="M4 14v-1.2a8 8 0 0 1 16 0c0 1.2 0 2.4-.2 3.6"></path>
+      <path d="M7 6.2A8 8 0 0 1 18.5 8"></path>
+    </svg>
+    <span>Record File Fingerprint:</span> <code>{{ blob_fingerprint }}</code>
+  </p>
+  {% endif %}
+  <p><a class="breakable" href="{{ durable_url }}" rel="noopener noreferrer" target="_blank">{{ durable_url }}</a></p>
+  <p class="openetr-evidence-note">Scan to inspect the available OpenETR evidence.
+  Tap the QR code to copy its link.</p>
+  <button type="button" class="openetr-durable-qr-button"
+          data-copy-value="{{ durable_url }}"
+          data-copy-status="openetr-durable-copy-status"
+          aria-label="Copy durable verification link">
+    <span class="invoice-qr" aria-label="OpenETR durable link QR code">
+      {{ durable_qr | safe }}
+    </span>
+  </button>
+  <p id="openetr-durable-copy-status" class="openetr-source" role="status"
+     aria-live="polite" hidden></p>
+</section>
+{% endif %}

@@ -11,6 +11,7 @@ from app.request_store import RequestStore
 from app.wallets import AcornBackend
 from app.clear_balances import asset_id
 from app.zaps import encode_lnurl
+from app.openetr import build_openetr_history
 from test_wallets import setup, login, form
 from test_send import prepared
 
@@ -114,6 +115,7 @@ def test_record_import_owner_bound_and_not_repeated(tmp_path):
             await client.post('/account/acorn/create', data=form())
             backend.inspect_scanned_record = AsyncMock(return_value={'label':'Test record','record_type':'note'})
             backend.accept_scanned_record = AsyncMock(return_value={'stored':True})
+            backend.records = AsyncMock(return_value=[])
             response = await client.post('/account/scan', data=form(lightning_payment='acorn:record-transfer:secret'))
             assert response.status_code == 200
             backend.accept_scanned_record.assert_not_awaited()
@@ -232,7 +234,7 @@ def test_presentation_renders_attachment_and_file_is_owner_bound(tmp_path, monke
             owner = await login(client,sessions)
             await client.post('/account/acorn/create',data=form())
             backend.inspect_scanned_record = AsyncMock(return_value={'label':'Certificate','record_type':'note','payload':{'text':'<script>bad</script>'},'has_original':True,'blob_type':'image/png','blob_data':b'PNG','blob_sha256':'ab'*32})
-            monkeypatch.setattr('app.scan.query_openetr_history',AsyncMock(return_value={'candidate_graphs':[]}))
+            monkeypatch.setattr('app.scan.query_openetr_history',AsyncMock(return_value=build_openetr_history('ab'*32, [], [])))
             response = await client.post('/account/scan',data=form(lightning_payment='acorn:record-presentation:secret'))
             assert response.status_code == 200
             assert '<script>bad</script>' not in response.text

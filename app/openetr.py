@@ -262,7 +262,7 @@ def unavailable_openetr_history(digest: str, relays: Iterable[str]) -> dict[str,
     return history
 
 
-async def query_openetr_history(digest, relays, *, timeout=5.0, limit=100):
+async def query_openetr_history(digest, relays, *, timeout=5.0, limit=100, digest_source="supplied"):
     import asyncio
     import aiohttp
     from app.identity import PublicResolver
@@ -270,6 +270,8 @@ async def query_openetr_history(digest, relays, *, timeout=5.0, limit=100):
 
     if not SHA256_PATTERN.fullmatch(digest):
         raise ValueError("Invalid artifact digest")
+    if digest_source not in {"supplied", "computed"}:
+        raise ValueError("Invalid digest source")
     relays = tuple(public_relay(url) for url in relays)
     async def no_redirect(session, context, params):
         raise ValueError("Relay redirects are not supported")
@@ -279,14 +281,16 @@ async def query_openetr_history(digest, relays, *, timeout=5.0, limit=100):
         return aiohttp.ClientSession(connector=aiohttp.TCPConnector(resolver=PublicResolver()),
                                      trace_configs=[trace], trust_env=False, **kwargs)
     event_filter = {"#o": [digest], "kinds": [ANCHOR_KIND, CONTROL_KIND], "limit": limit}
-    async def query(relay):
+    async def query(relay, filters):
         async with asyncio.timeout(timeout):
             return await RelayClient(relay, timeout=timeout, max_msg_size=262144,
-                                     session_factory=session_factory).query(event_filter)
+                                     session_factory=session_factory).query(filters)
     started = datetime.now(timezone.utc).isoformat()
-    results = await asyncio.gather(*(query(relay) for relay in relays), return_exceptions=True)
+    results = await asyncio.gather(*(query(relay, event_filter) for relay in relays), return_exceptions=True)
     if all(isinstance(result, BaseException) for result in results):
-        return unavailable_openetr_history(digest, relays)
+        history = unavailable_openetr_history(digest, relays)
+        history["verification"]["artifact"]["digest_source"] = digest_source
+        return history
     events = [event for result in results if not isinstance(result, BaseException)
               for event in result if event.kind in (ANCHOR_KIND, CONTROL_KIND)
               and _tag_value(event, "o") == digest]
@@ -294,8 +298,21 @@ async def query_openetr_history(digest, relays, *, timeout=5.0, limit=100):
     history["verification"]["retrieval"].update({"mode": "relay_discovery", "filters": [event_filter], "started_at": started,
         "ended_at": datetime.now(timezone.utc).isoformat(), "timeout_seconds": timeout,
         "limitations": ["Bounded queries; no guarantee of global completeness."]})
-    history["verification"]["artifact"]["digest_source"] = "computed"
+    history["verification"]["artifact"]["digest_source"] = digest_source
     history["verification"]["findings"].append({"code": "retrieval_incomplete", "event_id": None})
     if any(isinstance(result, BaseException) for result in results):
         history["warnings"].append("Some relays were unavailable; the evidence is incomplete.")
+    graphs = history["candidate_graphs"]
+    if graphs:
+        profile_filter = {"kinds": [PROFILE_KIND],
+                          "authors": sorted({g["anchor"]["author_hex"] for g in graphs}),
+                          "limit": min(200, max(10, len(graphs) * 3))}
+        profiles = await asyncio.gather(*(query(relay, profile_filter) for relay in relays),
+                                        return_exceptions=True)
+        profile_events = [event for result in profiles if not isinstance(result, BaseException)
+                          for event in result]
+        for graph in graphs:
+            graph["signer_profile"] = build_signer_profile(graph["anchor"]["author_hex"], profile_events)
+            if any(isinstance(result, BaseException) for result in profiles):
+                graph["signer_profile_error"] = "Some signer profile sources were unavailable."
     return history

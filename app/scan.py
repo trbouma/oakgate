@@ -5,6 +5,7 @@ import re
 from types import SimpleNamespace
 from app import record_previews as previews
 from dataclasses import replace
+from datetime import datetime, timezone
 from urllib.parse import urlencode, urlsplit
 
 from fastapi import APIRouter, Request, HTTPException
@@ -82,6 +83,9 @@ async def scan(request: Request):
         if product:
             return RedirectResponse('/account/product?' + urlencode({'link': raw, 'mode': mode, 'symbology': symbology}), 303)
         code = raw.strip()
+        digest = RecordSettings().scanned_digest(code)
+        if digest:
+            return RedirectResponse('/account/check/' + digest, 303)
         destination = https_url(code)
         if destination:
             return render(request, session, 'scan_result.html', destination=destination)
@@ -100,16 +104,19 @@ async def scan(request: Request):
             if purpose != 'token':
                 async with asyncio.timeout(35):
                     detail = await service.backend.inspect_scanned_record(material, code, purpose == 'presentation')
-            ident = RequestStore(service.store).save(owner, {'purpose': purpose, 'code': code})
+            ident = RequestStore(service.store).save(owner, {'purpose': purpose, 'code': code, 'label': detail.get('label') if detail else None,
+                'detail': {k:detail[k] for k in ('label','record_type','has_original','expires_at') if k in detail} if detail else None})
             preview = presentation_preview(detail, ident) if purpose == 'presentation' else None
             history = None
             if detail and purpose == 'presentation' and detail.get('blob_sha256'):
                 config = RecordSettings()
                 try:
-                    history = await asyncio.wait_for(query_openetr_history(detail['blob_sha256'], config.openetr_relays, timeout=5, limit=50), 16)
+                    history = await asyncio.wait_for(query_openetr_history(detail['blob_sha256'], config.openetr_relays, timeout=config.openetr_timeout, limit=config.openetr_limit, digest_source="computed"), config.openetr_timeout * 3 + 1)
                 except Exception:
                     history = unavailable_openetr_history(detail['blob_sha256'], config.openetr_relays)
-            return render(request, session, 'scan_result.html', purpose=purpose, detail=detail, ticket=ident, preview=preview, history=history)
+                history["verification"]["artifact"]["digest_source"] = "computed"
+            return render(request, session, 'scan_result.html', purpose=purpose, detail=detail, ticket=ident, preview=preview, history=history,
+                expiry=datetime.fromtimestamp(detail['expires_at'], timezone.utc).strftime('%Y-%m-%d %H:%M UTC') if detail and detail.get('expires_at') else None)
         message = 'Choose how to interpret this code.'
     except Exception as exc:
         message = str(exc) if isinstance(exc, PaymentInputError) else 'This code could not be reviewed. No payment was sent. Check the code and interpretation, or try again shortly.'
@@ -129,16 +136,24 @@ async def accept(request: Request):
     item = store.get(owner, ident)
     if item['purpose'] not in {'transfer', 'token'} or form.get('confirmed') != 'yes':
         raise HTTPException(400, 'Confirm the import first')
+    label = str(form.get('label') or item.get('label') or '').strip()
+    if item['purpose'] == 'transfer' and (not label or len(label) > 200 or any(ord(c) < 32 for c in label)):
+        raise HTTPException(400, 'Choose a record label of 1–200 characters without control characters.')
     try:
         lease = service.store.acquire(owner)
     except Busy:
         return render(request, session, 'scan_result.html', message='Your Acorn is busy. Return to the review and try again shortly.', status=409)
     try:
+        if item['purpose'] == 'transfer' and item['state'] == 'ready':
+            if any(record['label'] == label for record in await service.records(material)):
+                return render(request, session, 'scan_result.html', purpose='transfer', ticket=ident,
+                    detail={**(item.get('detail') or {}), 'label':label},
+                    message='That label already exists. Choose another label to keep both records.', status=409)
         if not store.claim(owner, ident):
             return render(request, session, 'scan_result.html', message='This import was already submitted. Check your records or transactions before trying again.')
         async with asyncio.timeout(60):
             if item['purpose'] == 'transfer':
-                await service.backend.accept_scanned_record(material, item['code'])
+                await service.backend.accept_scanned_record(material, item['code'], label=label)
             else:
                 result = await service.backend.accept_scanned_token(material, item['code'])
                 if not result.get('accepted'):
@@ -163,12 +178,12 @@ async def product_page(request: Request, link: str, mode: str = 'auto', symbolog
     except ValueError:
         raise HTTPException(400, 'Use a supported GS1 barcode or Digital Link') from None
     config = RecordSettings()
-    servers = (config.blossom,)
+    servers = config.openetr_servers
     history = artifact = discovery = selected = None
     associations = []
     scanned_digest = product.digest
     if not product.digest:
-        discovery = await discover_product(product, config.openetr_relays, timeout=5, limit=50)
+        discovery = await discover_product(product, config.openetr_relays, timeout=config.openetr_timeout, limit=config.openetr_limit)
         for candidate in discovery['candidates']:
             candidate['url'] = '/account/product?' + urlencode(dict(link=link, mode=mode, symbology=symbology, anchor=candidate['id']))
         if anchor:
@@ -179,10 +194,10 @@ async def product_page(request: Request, link: str, mode: str = 'auto', symbolog
     if product.digest:
         async def lookup():
             try:
-                return await asyncio.wait_for(query_openetr_history(product.digest, config.openetr_relays, timeout=5, limit=50), 16)
+                return await asyncio.wait_for(query_openetr_history(product.digest, config.openetr_relays, timeout=config.openetr_timeout, limit=config.openetr_limit), config.openetr_timeout * 3 + 1)
             except Exception:
                 return unavailable_openetr_history(product.digest, config.openetr_relays)
-        history, artifact = await asyncio.gather(lookup(), retrieve_product_artifact(product.digest, servers, timeout=5, max_bytes=25*1024*1024))
+        history, artifact = await asyncio.gather(lookup(), retrieve_product_artifact(product.digest, servers, timeout=config.openetr_timeout, max_bytes=25*1024*1024))
         associations = product_associations(product, history)
     media = product_media_type(artifact['data']) if artifact and artifact['status'] == 'verified' else None
     return render(request, session, 'product_information.html', product=product, openetr_history=history,
@@ -199,7 +214,8 @@ async def artifact(request: Request, digest: str, inline: bool = False):
         return RedirectResponse('/auth/login', 303)
     if not re.fullmatch('[0-9a-f]{64}', digest):
         raise HTTPException(400, 'Invalid digest')
-    result = await retrieve_product_artifact(digest, [RecordSettings().blossom], timeout=5, max_bytes=25*1024*1024)
+    config = RecordSettings()
+    result = await retrieve_product_artifact(digest, config.openetr_servers, timeout=config.openetr_timeout, max_bytes=25*1024*1024)
     if result['status'] != 'verified':
         raise HTTPException(404, 'No digest-verified artifact available')
     media = product_media_type(result['data'])
@@ -249,3 +265,21 @@ async def presentation_file(request: Request, ticket: str, inline: bool = False)
         return Response(data, media_type=media, headers=headers)
     except Exception:
         raise HTTPException(404, 'Presentation unavailable or expired') from None
+
+
+@router.get('/account/check/{digest}', include_in_schema=False)
+async def check_fingerprint(request: Request, digest: str):
+    session = await current_session(request)
+    if not session:
+        return RedirectResponse('/auth/login', 303)
+    if not re.fullmatch('[0-9a-f]{64}', digest):
+        raise HTTPException(400, 'Invalid fingerprint')
+    config = RecordSettings()
+    try:
+        history = await asyncio.wait_for(query_openetr_history(digest, config.openetr_relays,
+            timeout=config.openetr_timeout, limit=config.openetr_limit), config.openetr_timeout * 3 + 1)
+    except Exception:
+        history = unavailable_openetr_history(digest, config.openetr_relays)
+    url = config.evidence_url(digest)
+    return render(request, session, 'record_action.html', action='checked', record={'label':'Scanned fingerprint'},
+        history=history, durable_url=url, durable_qr=previews._qr_svg(url), bytes_verified=False)

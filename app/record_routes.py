@@ -18,7 +18,7 @@ from app.wallet_routes import checked_form
 from app.record_capabilities import RecordCapabilities
 from app.record_settings import RecordSettings
 from app.record_previews import _qr_svg
-from app.openetr import query_openetr_history
+from app.openetr import query_openetr_history, unavailable_openetr_history
 
 router = APIRouter()
 
@@ -139,8 +139,16 @@ async def record_action(request: Request, reference: str, action: str):
             digest = hashlib.sha256(result[2]).hexdigest()
             if detail.get('origsha256') and digest != detail['origsha256'].lower():
                 raise HTTPException(409, 'The file does not match the recorded fingerprint.')
-            history = await asyncio.wait_for(query_openetr_history(digest, RecordSettings().openetr_relays), 15)
-            return render(request, session, action='checked', reference=reference, record=detail, history=history)
+            config = RecordSettings()
+            try:
+                history = await asyncio.wait_for(query_openetr_history(digest, config.openetr_relays,
+                    timeout=config.openetr_timeout, limit=config.openetr_limit, digest_source="computed"), config.openetr_timeout * 3 + 1)
+            except Exception:
+                history = unavailable_openetr_history(digest, config.openetr_relays)
+            history["verification"]["artifact"]["digest_source"] = "computed"
+            url = config.evidence_url(digest)
+            return render(request, session, action='checked', reference=reference, record=detail,
+                history=history, durable_url=url, durable_qr=_qr_svg(url), bytes_verified=True)
         if not getattr(service.backend, 'record_workflows_available', True):
             raise HTTPException(503, 'The operator must update the Acorn dependency before enabling record changes and sharing.')
         token = service.store.acquire(owner)
@@ -180,6 +188,8 @@ async def record_action(request: Request, reference: str, action: str):
     except Busy:
         return error_page(request, 'Another Acorn operation is in progress. Please wait and reload.', 409)
     except Exception:
+        if action == 'check':
+            return error_page(request, 'The original file could not be checked. No record was changed. Try again later.', 503)
         if action == 'delete':
             return error_page(request, 'Deletion could not be confirmed. Reload Records before trying again.', 503)
         return error_page(request, 'The operation could not be confirmed. Its outcome may be uncertain. '
@@ -202,6 +212,7 @@ async def capability(request: Request, ident: str):
     if not item:
         raise HTTPException(404, 'Share not found')
     return render(request, session, action='capability', item=item, qr=_qr_svg(item['descriptor']),
+                  expired=item['expires_at'] <= datetime.now(timezone.utc).timestamp(),
                   expiry=datetime.fromtimestamp(item['expires_at'], timezone.utc).strftime('%Y-%m-%d %H:%M UTC'))
 
 @router.post('/account/record-shares/{ident}/stop', include_in_schema=False)

@@ -3,7 +3,12 @@
 <section class="record-detail">
 <a class="back-link" href="/account/records">{{ _("← Records") }}</a>
 <h1>{{ record.label }}</h1>
-<nav class="record-actions" aria-label="Record actions">{% for action in ['edit', 'present', 'share', 'delete'] %}<a href="/account/records/{{ reference }}/{{ action }}">{{ action_labels[action] }}</a>{% endfor %}{% if record.has_blob %}<a href="/account/records/{{ reference }}/check">{{ _("Check") }}</a>{% endif %}</nav>
+<nav class="record-actions record-capabilities" aria-label="{{ _('Record actions') }}">
+{% if record.has_blob %}<a href="/account/records/{{ reference }}/check">{{ _('Check') }}</a>{% else %}<span aria-disabled="true" title="{{ _('Attach a file to check its fingerprint') }}">{{ _('Check') }}</span>{% endif %}
+<a href="/account/records/{{ reference }}/present">{{ _('Present') }}</a>
+<a href="/account/records/{{ reference }}/share">{{ _('Share') }}</a>
+</nav>
+
 <pre class="record-contents">{{ record.contents }}</pre>
 {% if record.has_blob %}
 {% if record.preview_error %}<p role="status">{{ _("The file preview is unavailable. You can try opening or downloading the file.") }}</p>{% endif %}
@@ -15,5 +20,6 @@ mdoc_preview=record.mdoc_preview, blob_url=record.blob_url, blob_inline_url=reco
 {% endwith %}
 <p><a class="back-link" href="{{ record.blob_url }}">{{ _("Download record file") }}</a></p>
 {% endif %}
+<nav class="record-actions" aria-label="{{ _('Manage record') }}"><a href="/account/records/{{ reference }}/edit">{{ _('Edit') }}</a><a href="/account/records/{{ reference }}/delete">{{ _('Delete') }}</a><a href="/account/record-shares">{{ _('Active shares') }}</a></nav>
 </section>
 {% endblock %}
