@@ -60,6 +60,7 @@ nav:
       - Scan and Receive: 020-scan-and-receive.md
       - Lightning payments and zaps: 009-lightning-receiving.md
       - Identity storage and backups: 008-identity-storage-backups.md
+      - Storage latency incident: 022-storage-latency-incident.md
       - Keycloak on Beelink: 002-keycloak-beelink.md
       - Authentication design: 001-authentication-design.md
 

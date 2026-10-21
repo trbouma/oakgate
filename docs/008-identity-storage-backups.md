@@ -39,10 +39,10 @@ Deleting and recreating a Keycloak user normally creates a different subject. Ch
 
 ## SQLite holds durable application state
 
-On the current Beelink deployment, the host directory `/mnt/bitcoin/oakgate` is mounted at `/app/data`. The database is:
+On the current Beelink deployment, `OAKGATE_DATA_DIR=/var/lib/oakgate` selects the internal SSD directory mounted at `/app/data`. The database is:
 
 ```text
-/mnt/bitcoin/oakgate/custody.sqlite3
+/var/lib/oakgate/custody.sqlite3
 ```
 
 | Table | Contents | Protection and constraints |
@@ -139,3 +139,7 @@ backup so users retain their Stop controls after restoration. Restoring an older
 backup can restore already-deleted descriptors or omit newer copies; it cannot
 restore a copy already removed from the external Blossom server. See
 [Records and sharing](011-record-workflows.md).
+
+See the [20 October storage latency incident](022-storage-latency-incident.md) for
+the SSD migration evidence and stale-copy precautions. Back up the configured
+active directory, not the old `/mnt/bitcoin/oakgate` copy.

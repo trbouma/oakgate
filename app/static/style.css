@@ -408,3 +408,10 @@ body:not(.landing) > header { padding-block: 12px; gap: 12px; }
 .receive-keypad button:active { transform:scale(.97); }
 [data-receive-entry][aria-busy=true] .receive-keypad { opacity:.5; pointer-events:none; }
 @media (prefers-reduced-motion:reduce) { .receive-keypad button:active { transform:none; } }
+
+/* Payment identifiers must fit small screens without hiding their contents. */
+.send-panel { min-width:0; overflow-wrap:anywhere; }
+.send-panel .breakable { overflow-wrap:anywhere; word-break:normal; white-space:normal; }
+.send-panel select { min-width:0; max-width:100%; box-sizing:border-box; }
+.payment-recipient { margin:12px 0; }
+.payment-recipient code { display:block; max-width:100%; font-size:.85rem; }

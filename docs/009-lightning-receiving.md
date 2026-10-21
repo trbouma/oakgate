@@ -288,3 +288,6 @@ can still fail redemption. Cash requests use the durable paid-invoice observatio
 for the same early state. Only Acorn settlement updates wallet funds and history;
 users check Transactions for the final outcome. Already confirmed payments still
 display Received when first observed. No payment is resent by status polling.
+
+For measured database and disk delays, the SSD migration, and operational lessons,
+see the [storage latency incident](022-storage-latency-incident.md).
