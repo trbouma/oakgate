@@ -1,13 +1,15 @@
 "use strict";
+const t = (message) => window.oakgateTranslate ? window.oakgateTranslate(message) : message;
+
 (() => {
   document.querySelectorAll('[data-copy-value]').forEach((button) => {
     button.addEventListener('click', async () => {
       const status = document.getElementById(button.dataset.copyStatus);
       try {
         await navigator.clipboard.writeText(button.dataset.copyValue);
-        if (status) status.textContent = 'Copied.';
+        if (status) status.textContent = t('Copied.');
       } catch (_) {
-        if (status) status.textContent = 'Copy unavailable. Select and copy the code or link manually.';
+        if (status) status.textContent = t("Copy unavailable. Select and copy the code or link manually.");
       }
       if (status) status.hidden = false;
     });

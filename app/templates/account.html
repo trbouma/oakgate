@@ -31,7 +31,7 @@
 <article class="clear-balance-row">
 <h4>{{ item.display_name }}</h4>
 <a class="balance-link" href="/account/clear-transactions?asset={{ item.asset_id }}" aria-label="{{ _('View recent transactions') }}"><p class="clear-amount">{{ '{:,}'.format(item.amount) }} <span>{{ item.display_unit }}</span></p></a>
-<a class="back-link clear-send" href="/account/send?asset={{ item.asset_id }}">{{ _("Send") }} {{ item.display_unit }}</a>
+<a class="back-link clear-send" href="/account/send?asset={{ item.asset_id }}">{{ _("Send %(unit)s") % {"unit": item.display_unit} }}</a>
 <details><summary>{{ _("Asset details") }}</summary><p>{{ item.mint }}</p><p>{{ _("Unit:") }} {{ item.unit }}</p>{% if item.keyset_id %}<p>{{ _("Keyset:") }} {{ item.keyset_id }}</p>{% endif %}</details>
 </article>
 {% endfor %}

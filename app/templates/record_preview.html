@@ -33,13 +33,13 @@
       <span data-pdf-page aria-live="polite"></span>
       <button type="button" data-pdf-next>{{ _("Next") }}</button>
     </div>
-    <canvas class="pdf-canvas" aria-label="Rendered PDF page" hidden></canvas>
+    <canvas class="pdf-canvas" aria-label='{{ _("Rendered PDF page") }}' hidden></canvas>
   </div>
   <noscript><p>{{ _("JavaScript is required for the inline PDF preview. Use the open\n  or download link instead.") }}</p></noscript>
-  <script type="module" src="/static/pdf-viewer.js"></script>
+  <script type="module" src="/static/pdf-viewer.js?v=20261021-locales"></script>
   {% elif blob_type == "application/vnd.apple.pkpass" %}
   {% if pkpass_preview %}
-  <article class="pkpass-preview" aria-label="Wallet pass preview">
+  <article class="pkpass-preview" aria-label='{{ _("Wallet pass preview") }}'>
     {% if pkpass_preview.images.strip %}
     <img class="pkpass-strip" src="{{ pkpass_preview.images.strip|safe }}" alt="">
     {% endif %}
@@ -89,7 +89,7 @@
   <p><a class="nav-button" href="{{ blob_url }}">{{ _("Open/Add Wallet Pass") }}</a></p>
   {% elif blob_type in ["application/vc", "application/vp"] %}
   {% if json_credential_preview %}
-  <article class="json-credential-preview" aria-label="Credential preview">
+  <article class="json-credential-preview" aria-label='{{ _("Credential preview") }}'>
     <h3>{{ json_credential_preview.title }}</h3>
     <p class="preview-status">{{ _("Preview only. OakGate decoded this credential but has not verified its issuer proof, credential status, holder binding, or presentation.") }}</p>
     {% if json_credential_preview.summary %}

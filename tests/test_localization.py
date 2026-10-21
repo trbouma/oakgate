@@ -91,3 +91,54 @@ def test_request_contexts_do_not_share_translation_state():
 @pytest.mark.parametrize('language,label', [('fr','Documents'),('es','Registros'),('pt','Registos'),('de','Dokumente'),('it','Documenti'),('zh-Hans','记录')])
 def test_compiled_catalogs_include_oakgate_vocabulary(language,label):
     assert translations_for(language).gettext('Records') == label
+
+
+@pytest.mark.parametrize('language', ['fr','es','pt','de','it','zh-Hans'])
+def test_new_screen_and_browser_vocabulary_is_translated(language):
+    translator=translations_for(language)
+    for text in ['Your Funds','Your Records','Your Messages','Receive','Store as',
+                 'Waiting for payment','Check unavailable','Requesting camera access…','Copied.']:
+        assert translator.gettext(text) != text
+    assert '%(page)s' in translator.gettext('Page %(page)s of %(total)s')
+    assert '%(total)s' in translator.gettext('Page %(page)s of %(total)s')
+    assert '%(unit)s' in translator.gettext('Send %(unit)s')
+
+
+def test_inuktitut_syllabics_and_user_content(tmp_path):
+    async def run():
+        client,sessions,service,backend=setup(tmp_path)
+        backend.records=AsyncMock(return_value=[{'ref':'a'*64,'timestamp':1,'label':'Your Funds'}])
+        async with client:
+            owner=await login(client,sessions)
+            await client.post('/account/acorn/create',data=form())
+            service.store.save_handle(owner,'test-handle',language='iu')
+            response=await client.get('/account/records')
+            assert response.headers['content-language'] == 'iu'
+            assert '<html lang="iu"' in response.text
+            assert 'ᑎᑎᖅᑲᑎᑦ' in response.text
+            assert 'ᑮᓇᐅᔭᐃᑦ</a>' in response.text
+            assert '(Funds)' not in response.text
+            assert '>Your Funds ' in response.text  # user's label stays unchanged
+            prefs=await client.get('/account/preferences')
+            assert 'Inuktitut demonstration' in prefs.text
+            assert 'selected labels use syllabics' in prefs.text
+            await login(client,sessions,sub='different')
+            other=await client.get('/account/preferences')
+            assert '<html lang="en"' in other.text
+            assert 'Inuktitut demonstration' not in other.text
+    asyncio.run(run())
+
+
+def test_browser_messages_are_request_local_and_safe():
+    import json,re
+    from jinja2 import Environment,FileSystemLoader,select_autoescape
+    from pathlib import Path
+    env=Environment(loader=FileSystemLoader(Path(__file__).resolve().parents[1]/'app/templates'),autoescape=select_autoescape())
+    context=localization_context(SimpleNamespace(state=SimpleNamespace(language='fr')))
+    page=env.get_template('base.html').render(**context)
+    messages=json.loads(re.search(r'<script id="oakgate-translations" type="application/json">(.*?)</script>',page,re.S)[1])
+    assert messages['Copied.'] == 'Copié.'
+    assert messages['Requesting camera access…'] != 'Requesting camera access…'
+    context['_']=lambda text: '</script><script>bad()</script>'
+    page=env.get_template('base.html').render(**context)
+    assert '</script><script>bad()' not in page

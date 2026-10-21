@@ -1,3 +1,4 @@
+const t = (message) => window.oakgateTranslate ? window.oakgateTranslate(message) : message;
 import * as pdfjsLib from "/static/pdf.mjs";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/static/pdf.worker.mjs";
@@ -30,7 +31,7 @@ async function initializeViewer(viewer) {
     return;
   }
 
-  status.textContent = "Loading PDF…";
+  status.textContent = t("Loading PDF\u2026");
   status.hidden = false;
 
   try {
@@ -74,7 +75,7 @@ async function initializeViewer(viewer) {
         }).promise;
 
         currentPage = pageNumber;
-        pageLabel.textContent = `Page ${currentPage} of ${pdf.numPages}`;
+        pageLabel.textContent = t("Page %(page)s of %(total)s").replace("%(page)s", currentPage).replace("%(total)s", pdf.numPages);
         status.hidden = true;
         controls.hidden = false;
       } finally {
@@ -96,7 +97,7 @@ async function initializeViewer(viewer) {
     console.error("PDF preview failed", error);
     showViewerError(
       viewer,
-      "PDF preview is unavailable. Use the open or download links instead.",
+      t("PDF preview is unavailable. Use the open or download links instead."),
     );
   }
 }

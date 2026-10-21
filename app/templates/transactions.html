@@ -5,10 +5,10 @@
 <p class="note">{{ _("Connect an Acorn to see your cash transactions.") }}</p>
 <a class="back-link" href="/account">{{ _("Back to balances") }}</a>
 {% else %}
-<section class="wallet-panel transaction-balance" aria-label="Cash balance">
+<section class="wallet-panel transaction-balance" aria-label='{{ _("Cash balance") }}'>
 <p class="eyebrow">{{ _("CASH BALANCE") }}</p>
 {% if balance_error %}<p role="status">{{ _("Balance unavailable right now.") }}</p><a class="back-link" href="/account">{{ _("Back to balances") }}</a>
-{% else %}<a class="balance-link" href="/account" aria-label="{{ '{:,}'.format(balance) }} sats. Back to balances">{% include "cash_balance.html" %}</a><p class="note">{{ _("Tap your balance to return home.") }}</p>{% endif %}
+{% else %}<a class="balance-link" href="/account" aria-label="{{ _('%(amount)s sats. Back to balances') % {'amount': '{:,}'.format(balance)} }}">{% include "cash_balance.html" %}</a><p class="note">{{ _("Tap your balance to return home.") }}</p>{% endif %}
 </section>
 <p><a class="back-link" href="/account/send">{{ _("Send payment") }}</a></p>
 <section class="transaction-list" aria-labelledby="transactions-title">

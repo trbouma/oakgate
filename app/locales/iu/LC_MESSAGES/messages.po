@@ -19,12 +19,15 @@ msgstr ""
 msgid "Safebox is Connected"
 msgstr "Safebox ᐊᑕᔪᖅ"
 
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
 msgid "Home"
 msgstr "ᐱᒋᐊᕐᕕᒃ"
 
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
 msgid "Preferences"
 msgstr "ᓇᓖᕌᕈᑏᑦ"
 
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
 msgid "Advisories"
 msgstr "ᖃᐅᔨᒃᑲᐃᔾᔪᑏᑦ"
 
@@ -37,19 +40,2285 @@ msgstr "ᑎᑎᖅᑲᓂᒃ ᐊᐅᓚᑦᑎᓂᖅ"
 msgid "Display preferences updated."
 msgstr "ᓇᓖᕌᕈᑏᑦ ᓄᑖᙳᖅᑎᑕᐅᔪᑦ."
 
-
-
 msgid "Payment detected — confirming in background"
 msgstr ""
-
 
 msgid "Amount keypad"
 msgstr ""
 
-
 msgid "Clear amount"
 msgstr ""
 
-
 msgid "Delete last digit"
 msgstr ""
+
+#: app/custody.py:103
+msgid "Choose a supported currency."
+msgstr ""
+
+#: app/custody.py:105
+msgid "Choose a supported language."
+msgstr ""
+
+#: app/templates/record.html:23 app/templating.py:9
+msgid "Edit"
+msgstr ""
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+#: app/templates/record.html:8 app/templating.py:9
+msgid "Present"
+msgstr "ᓴᖅᑭᑎᑦᑎ"
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+#: app/templates/record.html:9 app/templates/record_action.html:54 app/templating.py:9
+msgid "Share"
+msgstr "ᐊᕕᖃᑎᖃᕐᓂᖅ"
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+#: app/templates/record.html:7 app/templates/scan_result.html:13 app/templating.py:9
+msgid "Check"
+msgstr "ᖃᐅᔨᓴᕐᓂᖅ"
+
+#: app/templates/record.html:23 app/templating.py:9
+msgid "Delete"
+msgstr ""
+
+#: app/templates/receive.html:8 app/transactions.py:27
+msgid "Received"
+msgstr ""
+
+#: app/transactions.py:27
+msgid "Sent"
+msgstr ""
+
+#: app/transactions.py:28
+msgid "Failed"
+msgstr ""
+
+#: app/transactions.py:28
+msgid "Transaction"
+msgstr ""
+
+#: app/wallet_routes.py:214
+msgid "That handle is already taken. Please choose another."
+msgstr ""
+
+#: app/wallet_routes.py:219
+msgid "Preferences saved."
+msgstr ""
+
+#: app/templates/_anchor_signer.html:4
+msgid "Anchor and Signer"
+msgstr ""
+
+#: app/templates/_anchor_signer.html:6 app/templates/_openetr_protocol_details.html:28
+msgid "Signer Public Key"
+msgstr ""
+
+#: app/templates/_anchor_signer.html:7 app/templates/_openetr_protocol_details.html:13
+msgid "Anchor Event ID"
+msgstr ""
+
+#: app/templates/_anchor_signer.html:12
+msgid "Signer"
+msgstr ""
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+#: app/templates/_anchor_signer.html:13
+msgid "Name"
+msgstr "ᐊᑎᖅ"
+
+#: app/templates/_anchor_signer.html:14
+msgid "About"
+msgstr ""
+
+#: app/templates/_anchor_signer.html:16 app/templates/send.html:16
+msgid "Lightning"
+msgstr ""
+
+#: app/templates/_anchor_signer.html:17
+msgid "Website"
+msgstr ""
+
+#: app/templates/_anchor_signer.html:18
+msgid "Image"
+msgstr ""
+
+#: app/templates/_anchor_signer.html:18
+msgid "Open Image"
+msgstr ""
+
+#: app/templates/_anchor_signer.html:21
+msgid "Signer profile:"
+msgstr ""
+
+#: app/templates/_anchor_signer.html:23
+msgid "No valid kind 0 profile for the signer was returned by the configured relays."
+msgstr ""
+
+#: app/templates/_anchor_signer.html:27
+msgid "Signer-declared anchor time"
+msgstr ""
+
+#: app/templates/_anchor_signer.html:28 app/templates/_openetr_candidate_graph.html:27
+msgid "Statement"
+msgstr ""
+
+#: app/templates/_anchor_signer.html:32
+msgid ""
+"Signer information is self-published Nostr profile metadata signed by the same key as the Anchor "
+"Event. It may help identify or recognize the signer, but it does not independently establish the "
+"signer's authority."
+msgstr ""
+
+#: app/templates/_control_history_content.html:1
+msgid "Anchor check details"
+msgstr ""
+
+#: app/templates/_control_history_content.html:3
+msgid "A Record File is required before its anchor can be checked."
+msgstr ""
+
+#: app/templates/_control_history_content.html:5
+msgid "This Record File does not contain a valid SHA-256 object digest."
+msgstr ""
+
+#: app/templates/_control_history_content.html:7 app/templates/_control_history_content.html:10
+msgid "Check unavailable"
+msgstr ""
+
+#: app/templates/_control_history_content.html:8
+msgid "The relay lookup could not be completed. Try again later; this does not mean no anchor exists."
+msgstr ""
+
+#: app/templates/_control_history_content.html:11
+msgid "The supplied evidence could not be verified."
+msgstr ""
+
+#: app/templates/_control_history_content.html:13
+msgid "No anchor found"
+msgstr ""
+
+#: app/templates/_control_history_content.html:14
+msgid ""
+"No qualifying OpenETR Anchor Event matching this Record File's exact SHA-256 digest was returned "
+"by the queried relays. This is not a search of every relay."
+msgstr ""
+
+#: app/templates/_control_history_content.html:16
+msgid "Anchor found"
+msgstr ""
+
+#: app/templates/_control_history_content.html:17
+msgid "A qualifying signed OpenETR Anchor Event references this Record File's exact SHA-256 digest."
+msgstr ""
+
+#: app/templates/_control_history_content.html:18
+msgid ""
+"This check confirms a signed reference to the file, not recognized authority, current control, "
+"ownership, or legal effect."
+msgstr ""
+
+#: app/templates/_control_history_content.html:19
+msgid "Multiple anchors were found. None is selected as authoritative."
+msgstr ""
+
+#: app/templates/_control_history_content.html:23
+msgid "Candidate"
+msgstr ""
+
+#: app/templates/_control_history_content.html:28 app/templates/_openetr_candidate_graph.html:42
+msgid "Note:"
+msgstr ""
+
+#: app/templates/_control_history_content.html:32
+msgid "Unlinked Protocol Events"
+msgstr ""
+
+#: app/templates/_control_history_content.html:35
+msgid "(kind"
+msgstr ""
+
+#: app/templates/_control_history_content.html:42
+msgid "Ruleset:"
+msgstr ""
+
+#: app/templates/_control_history_content.html:43
+msgid ""
+"Results apply only to the supplied or retrieved evidence. Relay completeness and signer-declared "
+"times are not independently verified."
+msgstr ""
+
+#: app/templates/_control_history_content.html:45 app/templates/product_information.html:107
+msgid "Ruleset findings and signed evidence"
+msgstr ""
+
+#: app/templates/_control_history_content.html:46
+msgid "Digest source:"
+msgstr ""
+
+#: app/templates/_control_history_content.html:46
+msgid ". A supplied digest is not a fresh verification of the file bytes."
+msgstr ""
+
+#: app/templates/_control_history_content.html:50
+msgid "Machine-readable result, including the raw signed evidence:"
+msgstr ""
+
+#: app/templates/_openetr_candidate_graph.html:3
+msgid "Publisher position:"
+msgstr ""
+
+#: app/templates/_openetr_candidate_graph.html:6
+msgid "Publisher statement:"
+msgstr ""
+
+#: app/templates/_openetr_candidate_graph.html:11
+msgid "Related events and technical details"
+msgstr ""
+
+#: app/templates/_openetr_candidate_graph.html:16
+msgid "Candidate DCR"
+msgstr ""
+
+#: app/templates/_openetr_candidate_graph.html:16
+#, python-format
+msgid "%(count)s end-verifiable record"
+msgid_plural "%(count)s end-verifiable records"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/templates/_openetr_candidate_graph.html:19
+msgid "Publisher Notices"
+msgstr ""
+
+#: app/templates/_openetr_candidate_graph.html:24
+msgid "Signer-declared time"
+msgstr ""
+
+#: app/templates/_openetr_candidate_graph.html:25
+msgid "Notice type"
+msgstr ""
+
+#: app/templates/_openetr_candidate_graph.html:26
+msgid "Participant"
+msgstr ""
+
+#: app/templates/_openetr_candidate_graph.html:31
+msgid "No qualifying publisher notices were found for this candidate Anchor Event."
+msgstr ""
+
+#: app/templates/_openetr_candidate_graph.html:35
+msgid "Anchor state"
+msgstr ""
+
+#: app/templates/_openetr_candidate_graph.html:36
+msgid "Recognition"
+msgstr ""
+
+#: app/templates/_openetr_candidate_graph.html:36 app/templates/_openetr_candidate_graph.html:37
+msgid "Not evaluated"
+msgstr ""
+
+#: app/templates/_openetr_candidate_graph.html:37
+msgid "Effect"
+msgstr ""
+
+#: app/templates/_openetr_candidate_graph.html:39
+msgid ""
+"Core Record Ruleset 1.0 evaluates anchoring and publisher notices, not transfer or ownership. "
+"Ruleset verification does not by itself establish that the signer is a recognized authority or "
+"that this record has effect for a particular purpose."
+msgstr ""
+
+#: app/templates/_openetr_durable_link.html:3
+msgid "OpenETR Evidence Link"
+msgstr ""
+
+#: app/templates/_openetr_durable_link.html:15 app/templates/record_preview.html:19
+msgid "Record File Fingerprint:"
+msgstr ""
+
+#: app/templates/_openetr_durable_link.html:19
+msgid "Scan to inspect the available OpenETR evidence. Tap the QR code to copy its link."
+msgstr ""
+
+#: app/templates/_openetr_durable_link.html:23
+msgid "Copy durable verification link"
+msgstr ""
+
+#: app/templates/_openetr_durable_link.html:24
+msgid "OpenETR durable link QR code"
+msgstr ""
+
+#: app/templates/_openetr_protocol_details.html:6
+msgid "Protocol Details"
+msgstr ""
+
+#: app/templates/_openetr_protocol_details.html:8
+msgid "Anchor Event"
+msgstr ""
+
+#: app/templates/_openetr_protocol_details.html:10
+msgid "Artifact Digest"
+msgstr ""
+
+#: app/templates/_openetr_protocol_details.html:11
+msgid "DCR Status"
+msgstr ""
+
+#: app/templates/_openetr_protocol_details.html:12
+msgid "DCR Record Count"
+msgstr ""
+
+#: app/templates/_openetr_protocol_details.html:14
+msgid "Anchor Event Kind"
+msgstr ""
+
+#: app/templates/_openetr_protocol_details.html:15
+msgid "Anchor Signer Public Key"
+msgstr ""
+
+#: app/templates/_openetr_protocol_details.html:17
+msgid "Profile Event ID"
+msgstr ""
+
+#: app/templates/_openetr_protocol_details.html:18
+msgid "Profile Event Kind"
+msgstr ""
+
+#: app/templates/_openetr_protocol_details.html:19
+msgid "Profile Updated"
+msgstr ""
+
+#: app/templates/_openetr_protocol_details.html:26
+msgid "Event ID"
+msgstr ""
+
+#: app/templates/_openetr_protocol_details.html:27
+msgid "Kind"
+msgstr ""
+
+#: app/templates/_openetr_protocol_details.html:29
+msgid "Prior Event ID"
+msgstr ""
+
+#: app/templates/_openetr_protocol_details.html:34
+msgid "Relay Query"
+msgstr ""
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+#: app/templates/account.html:3 app/templates/payment_review.html:23
+#: app/templates/scan_payment_error.html:6
+msgid "Your Funds"
+msgstr "ᑮᓇᐅᔭᑎᑦ"
+
+#: app/templates/account.html:4 app/templates/payment_review.html:2
+#: app/templates/scan_payment_error.html:3 app/templates/send.html:3
+msgid "Payment review"
+msgstr ""
+
+#: app/templates/account.html:6 app/templates/clear_transactions.html:10 app/templates/send.html:4
+#: app/templates/transactions.html:13
+msgid "Send payment"
+msgstr ""
+
+#: app/templates/account.html:9
+msgid "Your account is ready. Safebox storage is being configured."
+msgstr ""
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+#: app/templates/account.html:13
+msgid "Cash Balance"
+msgstr "ᑮᓇᐅᔭᐃᑦ · ᐊᒥᐊᒃᑯᑦ"
+
+#: app/templates/account.html:14 app/templates/clear_transactions.html:6
+#: app/templates/transactions.html:10
+msgid "Balance unavailable right now."
+msgstr ""
+
+#: app/templates/account.html:14
+msgid "Your Acorn is still connected. Try refreshing in a moment."
+msgstr ""
+
+#: app/templates/account.html:17
+msgid "Your Receipt Address"
+msgstr ""
+
+#: app/templates/account.html:20
+msgid "Show payment QR code"
+msgstr ""
+
+#: app/templates/account.html:21
+#, python-format
+msgid "Lightning payment QR code for %(address)s"
+msgstr ""
+
+#: app/templates/account.html:22
+msgid "Scan with a Lightning wallet to pay this address."
+msgstr ""
+
+#: app/templates/account.html:24
+msgid "Choose a"
+msgstr ""
+
+#: app/templates/account.html:24
+msgid "handle in Preferences"
+msgstr ""
+
+#: app/templates/account.html:24
+msgid "to receive payments at your OakGate address. Receiving requires this instance’s HTTPS domain."
+msgstr ""
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+#: app/templates/account.html:27
+msgid "Clear Balances"
+msgstr "Clear · ᐊᒥᐊᒃᑯᑦ"
+
+#: app/templates/account.html:28
+msgid "Clear balances unavailable right now. Try refreshing in a moment."
+msgstr ""
+
+#: app/templates/account.html:33
+msgid "View recent transactions"
+msgstr ""
+
+#: app/templates/account.html:34
+#, python-format
+msgid "Send %(unit)s"
+msgstr ""
+
+#: app/templates/account.html:35 app/templates/clear_transactions.html:8 app/templates/send.html:17
+msgid "Asset details"
+msgstr ""
+
+#: app/templates/account.html:35
+msgid "Unit:"
+msgstr ""
+
+#: app/templates/account.html:35
+msgid "Keyset:"
+msgstr ""
+
+#: app/templates/account.html:38
+msgid "No Clear balances yet."
+msgstr ""
+
+#: app/templates/account.html:40
+msgid "Refresh balances"
+msgstr ""
+
+#: app/templates/account.html:42
+msgid "Your new Acorn setup is pending."
+msgstr ""
+
+#: app/templates/account.html:42
+msgid "Your recovery information is saved. Retry to finish setting up the same Acorn."
+msgstr ""
+
+#: app/templates/account.html:43
+msgid "Finishing Acorn setup. Please wait…"
+msgstr ""
+
+#: app/templates/account.html:43
+msgid "Retry setup"
+msgstr ""
+
+#: app/templates/account.html:45
+msgid "Acorn public identity"
+msgstr ""
+
+#: app/templates/account.html:48
+msgid "Bring your Acorn, or start a new one."
+msgstr ""
+
+#: app/templates/account.html:49
+msgid ""
+"OakGate will store your secret key and recovery phrase on your behalf. Keep your own recovery "
+"copy too."
+msgstr ""
+
+#: app/templates/account.html:51
+msgid "Create a new Acorn"
+msgstr ""
+
+#: app/templates/account.html:51
+msgid "Start with an empty safebox. OakGate will keep its recovery information for you."
+msgstr ""
+
+#: app/templates/account.html:51
+msgid "Bootstrap relay:"
+msgstr ""
+
+#: app/templates/account.html:52
+msgid "Creating your Acorn. Please wait…"
+msgstr ""
+
+#: app/templates/account.html:54 app/templates/account.html:63
+msgid "I trust OakGate to hold my safebox secrets."
+msgstr ""
+
+#: app/templates/account.html:55
+msgid "Create my Acorn"
+msgstr ""
+
+#: app/templates/account.html:57
+msgid "Connect an existing Acorn"
+msgstr ""
+
+#: app/templates/account.html:57
+msgid "Use the recovery phrase and bootstrap relay for your existing safebox."
+msgstr ""
+
+#: app/templates/account.html:58
+msgid "Connecting your Acorn. Please wait…"
+msgstr ""
+
+#: app/templates/account.html:60 app/templates/recovery.html:9
+msgid "Recovery phrase"
+msgstr ""
+
+#: app/templates/account.html:61 app/templates/recovery.html:10
+msgid "Bootstrap relay"
+msgstr ""
+
+#: app/templates/account.html:62
+msgid "Older Acorn recovery"
+msgstr ""
+
+#: app/templates/account.html:62
+msgid "Use legacy key derivation"
+msgstr ""
+
+#: app/templates/account.html:64
+msgid "Connect my Acorn"
+msgstr ""
+
+#: app/templates/account.html:68 app/templates/records.html:17
+msgid "Sign out"
+msgstr ""
+
+#: app/templates/account.html:69 app/templates/rates.html:3
+msgid "Exchange rates"
+msgstr ""
+
+#: app/templates/base.html:3
+msgid "OakGate · Mainstay"
+msgstr ""
+
+#: app/templates/base.html:6
+msgid "About OakGate"
+msgstr ""
+
+#: app/templates/base.html:7
+msgid ""
+"A custodial home for your Acorn funds, records, and messages. OakGate keeps your recovery "
+"information on your behalf."
+msgstr ""
+
+#: app/templates/base.html:7 app/templates/base.html:35
+msgid "Part of the Mainstay family."
+msgstr ""
+
+#: app/templates/base.html:7
+msgid "Learn about OakGate"
+msgstr ""
+
+#: app/templates/base.html:9
+msgid "OpenID Access Gate"
+msgstr ""
+
+#: app/templates/base.html:9
+msgid "Use light mode"
+msgstr ""
+
+#: app/templates/base.html:9
+msgid "Use dark mode"
+msgstr ""
+
+#: app/templates/base.html:13
+msgid "Account navigation"
+msgstr ""
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+#: app/templates/base.html:14
+msgid "Funds"
+msgstr "ᑮᓇᐅᔭᐃᑦ"
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+#: app/templates/base.html:15 app/templates/record_action.html:4
+msgid "Records"
+msgstr "ᑎᑎᖅᑲᑦ"
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+#: app/templates/base.html:16
+msgid "Messages"
+msgstr "ᑐᓴᐅᒪᔾᔪᑏᑦ"
+
+#: app/templates/base.html:18
+msgid "Wallet actions"
+msgstr ""
+
+#: app/templates/base.html:18 app/templates/scan_lightning_address.html:3
+#: app/templates/scan_review.html:3
+msgid "Scan"
+msgstr ""
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+#: app/templates/base.html:18 app/templates/receive.html:3
+msgid "Receive"
+msgstr "ᑎᒍᓯ"
+
+#: app/templates/base.html:19
+msgid "Working. Please wait…"
+msgstr ""
+
+#: app/templates/base.html:19
+msgid "Opening…"
+msgstr ""
+
+#: app/templates/base.html:20
+msgid "Copied."
+msgstr ""
+
+#: app/templates/base.html:20
+msgid ""
+"Camera scanning requires HTTPS when Safebox is opened from another device. Enter the code "
+"manually below."
+msgstr ""
+
+#: app/templates/base.html:21
+msgid "Camera access was unavailable. Check browser permission or enter the address manually."
+msgstr ""
+
+#: app/templates/base.html:22
+msgid "Camera active. Hold one supported barcode in view."
+msgstr ""
+
+#: app/templates/base.html:23 app/templates/scan_lightning_address.html:9
+msgid "Requesting camera access…"
+msgstr ""
+
+#: app/templates/base.html:24
+msgid "Camera scanning stopped."
+msgstr ""
+
+#: app/templates/base.html:25
+msgid "Multiple barcodes detected. Show one barcode at a time."
+msgstr ""
+
+#: app/templates/base.html:26
+msgid "No code acquired yet. Hold one supported barcode clearly in view, or paste its text below."
+msgstr ""
+
+#: app/templates/base.html:27
+msgid "Code acquired. Checking the next step…"
+msgstr ""
+
+#: app/templates/base.html:28
+msgid "The QR code did not contain any data. Try again."
+msgstr ""
+
+#: app/templates/base.html:29
+msgid "PDF preview is unavailable. Use the open or download links instead."
+msgstr ""
+
+#: app/templates/base.html:30 app/templates/product_information.html:57
+#: app/templates/record_preview.html:30
+msgid "Loading PDF…"
+msgstr ""
+
+#: app/templates/base.html:31
+#, python-format
+msgid "Page %(page)s of %(total)s"
+msgstr ""
+
+#: app/templates/base.html:32
+msgid "Copy unavailable. Select and copy the code or link manually."
+msgstr ""
+
+#: app/templates/cash_balance.html:4
+msgid "Cached rate may be stale."
+msgstr ""
+
+#: app/templates/cash_balance.html:7
+msgid "Local currency estimate unavailable."
+msgstr ""
+
+#: app/templates/clear_transactions.html:3
+msgid "Clear transactions"
+msgstr ""
+
+#: app/templates/clear_transactions.html:7 app/templates/clear_transactions.html:22
+#: app/templates/send.html:45 app/templates/transactions.html:6 app/templates/transactions.html:10
+msgid "Back to balances"
+msgstr ""
+
+#: app/templates/clear_transactions.html:7 app/templates/transactions.html:11
+msgid "Tap your balance to return home."
+msgstr ""
+
+#: app/templates/clear_transactions.html:12 app/templates/transactions.html:15
+msgid "Most recent transactions"
+msgstr ""
+
+#: app/templates/clear_transactions.html:13 app/templates/transactions.html:16
+msgid "Acorn transaction history is unavailable right now."
+msgstr ""
+
+#: app/templates/clear_transactions.html:13 app/templates/records.html:11
+#: app/templates/transactions.html:16
+msgid "Try again"
+msgstr ""
+
+#: app/templates/clear_transactions.html:17 app/templates/transactions.html:20
+msgid "Amount unavailable"
+msgstr ""
+
+#: app/templates/clear_transactions.html:20
+msgid "No Clear transactions yet."
+msgstr ""
+
+#: app/templates/message.html:3
+msgid "Let's try that again."
+msgstr ""
+
+#: app/templates/message.html:7
+msgid "Sign in"
+msgstr ""
+
+#: app/templates/message.html:9 app/templates/rates.html:14
+msgid "Back to OakGate"
+msgstr ""
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+#: app/templates/messages.html:3
+msgid "Your Messages"
+msgstr "ᑐᓴᐅᒪᔾᔪᑎᑎᑦ"
+
+#: app/templates/messages.html:4
+msgid "Private messages between Acorn wallets. Your wallet key is used, not your social NIP-05 identity."
+msgstr ""
+
+#: app/templates/messages.html:6
+msgid "Connect or create an Acorn first."
+msgstr ""
+
+#: app/templates/messages.html:6
+msgid "Balances"
+msgstr ""
+
+#: app/templates/messages.html:7
+msgid "Wallet messaging requires the updated Safebox Acorn component."
+msgstr ""
+
+#: app/templates/messages.html:10
+msgid "Sending wallet message. Please wait and do not submit again."
+msgstr ""
+
+#: app/templates/messages.html:12
+msgid "Recipient wallet address"
+msgstr ""
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+#: app/templates/messages.html:13
+msgid "Message"
+msgstr "ᑐᓴᐅᒪᔾᔪᑎ"
+
+#: app/templates/messages.html:14
+msgid "Send wallet message"
+msgstr ""
+
+#: app/templates/messages.html:16
+msgid "Inbox"
+msgstr ""
+
+#: app/templates/messages.html:16
+msgid ""
+"Recent messages only. Open this page again to refresh. Messages never trigger payments or other "
+"actions."
+msgstr ""
+
+#: app/templates/messages.html:17
+msgid "Wallet messages are unavailable. Please try again later."
+msgstr ""
+
+#: app/templates/messages.html:18
+msgid "No messages yet."
+msgstr ""
+
+#: app/templates/messages.html:20
+msgid "Sender wallet key"
+msgstr ""
+
+#: app/templates/messages.html:21
+msgid "Wallet address verified"
+msgstr ""
+
+#: app/templates/messages.html:21
+msgid "Address does not match sender wallet"
+msgstr ""
+
+#: app/templates/messages.html:21
+msgid "Unverified wallet address"
+msgstr ""
+
+#: app/templates/payment_review.html:4
+msgid ""
+"Review an interrupted payment without sending it again. This activity log is separate from your "
+"Acorn transaction history."
+msgstr ""
+
+#: app/templates/payment_review.html:6
+msgid ""
+"Acorn history is unavailable. The outcome remains uncertain. Contact the recipient or operator "
+"before making a replacement payment."
+msgstr ""
+
+#: app/templates/payment_review.html:7
+msgid "Recent Acorn transactions"
+msgstr ""
+
+#: app/templates/payment_review.html:8
+msgid "No recent entries were returned. This does not prove that the payment failed."
+msgstr ""
+
+#: app/templates/payment_review.html:9
+msgid ""
+"History can be incomplete or delayed. Matching amounts alone do not prove a payment outcome. "
+"Check with the recipient if needed."
+msgstr ""
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+#: app/templates/payment_review.html:10 app/templates/send.html:8
+msgid "Cash"
+msgstr "ᑮᓇᐅᔭᐃᑦ"
+
+#: app/templates/payment_review.html:12
+msgid "Payment reference"
+msgstr ""
+
+#: app/templates/payment_review.html:13
+msgid "Set aside after review. The original payment cannot be sent again."
+msgstr ""
+
+#: app/templates/payment_review.html:13
+msgid "Your report (not independently verified):"
+msgstr ""
+
+#: app/templates/payment_review.html:15
+msgid "This payment is holding further outgoing payments until reviewed."
+msgstr ""
+
+#: app/templates/payment_review.html:16
+msgid "Checking Acorn history. No funds will be sent."
+msgstr ""
+
+#: app/templates/payment_review.html:16
+msgid "Check Acorn history"
+msgstr ""
+
+#: app/templates/payment_review.html:18
+msgid "What did you learn?"
+msgstr ""
+
+#: app/templates/payment_review.html:19
+msgid "Choose an outcome"
+msgstr ""
+
+#: app/templates/payment_review.html:19
+msgid "Recipient confirms receipt"
+msgstr ""
+
+#: app/templates/payment_review.html:19
+msgid "Recipient reports no receipt"
+msgstr ""
+
+#: app/templates/payment_review.html:19
+msgid "Outcome is still uncertain"
+msgstr ""
+
+#: app/templates/payment_review.html:20
+msgid ""
+"I understand this payment may already have completed or may complete later. I will not send it "
+"again. Setting it aside does not cancel, refund or retry it."
+msgstr ""
+
+#: app/templates/payment_review.html:21
+msgid "Set aside and allow other payments"
+msgstr ""
+
+#: app/templates/payment_review.html:22
+msgid "No payments need review."
+msgstr ""
+
+#: app/templates/preferences.html:7
+msgid "Saving preferences. Please wait…"
+msgstr ""
+
+#: app/templates/preferences.html:9
+msgid "Local currency"
+msgstr ""
+
+#: app/templates/preferences.html:11
+msgid "Used for estimated cash values. Your Acorn balance remains in sats."
+msgstr ""
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+#: app/templates/preferences.html:12
+msgid "Preferred language"
+msgstr "ᐅᖃᐅᓯᖅ"
+
+#: app/templates/preferences.html:14
+msgid "Saved to your OakGate account and used on all your devices."
+msgstr ""
+
+#: app/templates/preferences.html:16
+msgid "Your OakGate handle"
+msgstr ""
+
+#: app/templates/preferences.html:18
+msgid ""
+"Unique to this OakGate instance. Use 3–32 letters, numbers, hyphens or underscores, starting with"
+" a letter or number. Uppercase and lowercase count as the same name."
+msgstr ""
+
+#: app/templates/preferences.html:19
+msgid ""
+"Your handle becomes your Lightning address when an Acorn is connected. Leave blank to disable the"
+" address. Once a handle is connected to an active Acorn, it stays reserved to you. This does not "
+"change your Acorn identity."
+msgstr ""
+
+#: app/templates/preferences.html:20
+msgid "Social npub (optional)"
+msgstr ""
+
+#: app/templates/preferences.html:22
+msgid ""
+"Use your public Nostr npub for your handle’s NIP-05 identity. Never enter a private key. Leave "
+"blank to use your Acorn public key."
+msgstr ""
+
+#: app/templates/preferences.html:23
+msgid ""
+"Set the same address in your Nostr profile. Nostr clients verify that the signed profile and this"
+" address agree. OakGate does not verify control of this social key."
+msgstr ""
+
+#: app/templates/preferences.html:24
+msgid ""
+"Your payments and wallet messages keep using your Acorn key through safebox.json. Older wallets "
+"that use NIP-05 for payments may no longer work with this address when the keys differ."
+msgstr ""
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+#: app/templates/preferences.html:25
+msgid "Save preferences"
+msgstr "ᓇᓖᕌᕈᑎᓂᒃ ᑐᖅᑯᐃ"
+
+#: app/templates/preferences.html:27
+msgid "Preferences storage is being configured."
+msgstr ""
+
+#: app/templates/preferences.html:29 app/templates/recovery.html:3
+msgid "Recovery information"
+msgstr ""
+
+#: app/templates/preferences.html:30
+msgid "Keep your own recovery copy so you can access your Acorn outside OakGate."
+msgstr ""
+
+#: app/templates/preferences.html:31
+msgid "View recovery information"
+msgstr ""
+
+#: app/templates/product_information.html:3
+msgid "Product information"
+msgstr ""
+
+#: app/templates/product_information.html:4
+msgid "Scanned product identifiers"
+msgstr ""
+
+#: app/templates/product_information.html:5
+msgid ""
+"These identifiers were parsed independently from the barcode. The printed website was not "
+"contacted."
+msgstr ""
+
+#: app/templates/product_information.html:7
+msgid "GTIN"
+msgstr ""
+
+#: app/templates/product_information.html:8
+msgid "Lot No"
+msgstr ""
+
+#: app/templates/product_information.html:8 app/templates/product_information.html:9
+#: app/templates/product_information.html:10 app/templates/product_information.html:11
+msgid "Not provided"
+msgstr ""
+
+#: app/templates/product_information.html:9
+msgid "Serial No"
+msgstr ""
+
+#: app/templates/product_information.html:10
+msgid "Expiry (YYMMDD)"
+msgstr ""
+
+#: app/templates/product_information.html:11
+msgid "SHA-256 digest"
+msgstr ""
+
+#: app/templates/product_information.html:15
+msgid "Expiry is preserved exactly as encoded. Century and current-expiry assessment are not determined."
+msgstr ""
+
+#: app/templates/product_information.html:16
+msgid ""
+"Day 00 denotes end of month in legacy GS1 usage; it is not an explicitly encoded final day and is"
+" not compliant with the regulated-healthcare valid-day requirement effective in 2025."
+msgstr ""
+
+#: app/templates/product_information.html:18
+msgid "Acquisition details"
+msgstr ""
+
+#: app/templates/product_information.html:18
+msgid "Mode:"
+msgstr ""
+
+#: app/templates/product_information.html:18
+msgid ". Symbology:"
+msgstr ""
+
+#: app/templates/product_information.html:20
+msgid "GTIN anchor discovery"
+msgstr ""
+
+#: app/templates/product_information.html:21
+msgid "Discovered product anchors"
+msgstr ""
+
+#: app/templates/product_information.html:22
+msgid ""
+"The scan did not supply an artifact digest. Choose a signed candidate to retrieve its file. Field"
+" matching does not establish issuer recognition or physical authenticity."
+msgstr ""
+
+#: app/templates/product_information.html:23
+msgid "Selected anchor:"
+msgstr ""
+
+#: app/templates/product_information.html:23
+msgid ""
+". The artifact digest was learned from this signed anchor, not the barcode. Selection does not "
+"promote its match status or recognize its publisher."
+msgstr ""
+
+#: app/templates/product_information.html:24
+msgid "No matching anchor found in the queried relays."
+msgstr ""
+
+#: app/templates/product_information.html:28
+msgid "Publisher:"
+msgstr ""
+
+#: app/templates/product_information.html:28
+msgid "— recognition not evaluated."
+msgstr ""
+
+#: app/templates/product_information.html:29
+msgid "Lot:"
+msgstr ""
+
+#: app/templates/product_information.html:29
+msgid "; expiry:"
+msgstr ""
+
+#: app/templates/product_information.html:29
+msgid "; serial:"
+msgstr ""
+
+#: app/templates/product_information.html:30
+msgid "Artifact:"
+msgstr ""
+
+#: app/templates/product_information.html:32
+msgid "Inspect this candidate's file"
+msgstr ""
+
+#: app/templates/product_information.html:33
+msgid "Signed anchor"
+msgstr ""
+
+#: app/templates/product_information.html:36
+msgid "Query coverage"
+msgstr ""
+
+#: app/templates/product_information.html:37
+msgid ""
+"Queries use kind 1415 and #g only. Searches may be incomplete; no global completeness is "
+"asserted. Legacy-only gs1_gtin anchors cannot be discovered by #g."
+msgstr ""
+
+#: app/templates/product_information.html:38
+msgid "pages; limit"
+msgstr ""
+
+#: app/templates/product_information.html:38
+msgid "per page)."
+msgstr ""
+
+#: app/templates/product_information.html:39
+msgid "Rejected association"
+msgstr ""
+
+#: app/templates/product_information.html:44
+msgid "No digest was supplied. No candidate files have been downloaded automatically."
+msgstr ""
+
+#: app/templates/product_information.html:46
+msgid "Artifact lookup"
+msgstr ""
+
+#: app/templates/product_information.html:47
+msgid "Product information artifact"
+msgstr ""
+
+#: app/templates/product_information.html:49
+msgid "File digest verified."
+msgstr ""
+
+#: app/templates/product_information.html:49
+msgid "The retrieved file's exact bytes match the scanned digest ("
+msgstr ""
+
+#: app/templates/product_information.html:49
+msgid "bytes)."
+msgstr ""
+
+#: app/templates/product_information.html:50
+msgid "Download verified file"
+msgstr ""
+
+#: app/templates/product_information.html:52
+msgid "Verified product information image"
+msgstr ""
+
+#: app/templates/product_information.html:54 app/templates/record_preview.html:27
+msgid "Open PDF full screen"
+msgstr ""
+
+#: app/templates/product_information.html:56
+msgid "Verified product information PDF"
+msgstr ""
+
+#: app/templates/product_information.html:59 app/templates/record_preview.html:32
+msgid "Previous"
+msgstr ""
+
+#: app/templates/product_information.html:61 app/templates/record_preview.html:34
+msgid "Next"
+msgstr ""
+
+#: app/templates/product_information.html:63 app/templates/record_preview.html:36
+msgid "Rendered PDF page"
+msgstr ""
+
+#: app/templates/product_information.html:65
+msgid "Use the open or download link to view this PDF without JavaScript."
+msgstr ""
+
+#: app/templates/product_information.html:68
+msgid "Verified product information video"
+msgstr ""
+
+#: app/templates/product_information.html:70
+msgid "No inline preview is available for this file format. Use the download link."
+msgstr ""
+
+#: app/templates/product_information.html:72
+msgid ""
+"File bytes are rechecked against the digest before each preview or download. A preview does not "
+"establish the truth of the content."
+msgstr ""
+
+#: app/templates/product_information.html:74
+msgid "No file was found on the configured Blossom servers. It may exist elsewhere."
+msgstr ""
+
+#: app/templates/product_information.html:76
+msgid "File lookup unavailable or verification failed."
+msgstr ""
+
+#: app/templates/product_information.html:76
+msgid "No unverified file will be offered for download. See storage results below."
+msgstr ""
+
+#: app/templates/product_information.html:78
+msgid "Storage results"
+msgstr ""
+
+#: app/templates/product_information.html:82 app/templates/product_information.html:83
+msgid "Signed product associations"
+msgstr ""
+
+#: app/templates/product_information.html:85
+msgid "Anchor"
+msgstr ""
+
+#: app/templates/product_information.html:90
+msgid "— scanned:"
+msgstr ""
+
+#: app/templates/product_information.html:90
+msgid "; signed:"
+msgstr ""
+
+#: app/templates/product_information.html:90
+msgid "(missing, different, or repeated tag)."
+msgstr ""
+
+#: app/templates/product_information.html:93
+msgid "No qualifying signed product association is available in the retrieved evidence."
+msgstr ""
+
+#: app/templates/product_information.html:94
+msgid ""
+"A matching signed association is a claim by the signing key. It does not establish GS1 "
+"allocation, manufacturer authority, accuracy of the file, or authenticity of a physical item."
+msgstr ""
+
+#: app/templates/product_information.html:96
+msgid "OpenETR evidence"
+msgstr ""
+
+#: app/templates/product_information.html:97
+msgid "Anchors and publisher notices"
+msgstr ""
+
+#: app/templates/product_information.html:99
+msgid "Relay lookup unavailable. This does not mean no anchor exists."
+msgstr ""
+
+#: app/templates/product_information.html:101
+msgid "No qualifying anchor was returned by the configured relays."
+msgstr ""
+
+#: app/templates/product_information.html:106
+msgid ""
+"All qualifying anchors are shown; none is selected as authoritative. Results are limited to "
+"retrieved evidence, not a complete search of all relays."
+msgstr ""
+
+#: app/templates/product_information.html:112
+msgid "Lookup sources and supported format"
+msgstr ""
+
+#: app/templates/product_information.html:113
+msgid "Relays:"
+msgstr ""
+
+#: app/templates/product_information.html:114
+msgid "Blossom servers:"
+msgstr ""
+
+#: app/templates/product_information.html:115
+#, python-brace-format
+msgid ""
+"Supported subset: Digital Links with /01/{GTIN}, optional /10/{lot} then /21/{serial}, optional "
+"query attribute 17 for expiry, and one optional d or digest parameter. Also supported: validated "
+"GTIN/EAN/UPC and explicitly identified GS1 element strings with AIs 01, 10, 17 and 21. This is "
+"not a full GS1 resolver. URLs in scanned codes and storage hints in events do not select "
+"retrieval destinations."
+msgstr ""
+
+#: app/templates/product_information.html:117 app/templates/scan_payment_error.html:6
+#: app/templates/scan_result.html:21
+msgid "Scan another code"
+msgstr ""
+
+#: app/templates/rates.html:4
+msgid ""
+"Indicative local currency values for one bitcoin. Estimates only; payments and balances remain in"
+" sats."
+msgstr ""
+
+#: app/templates/rates.html:5
+msgid "Exchange-rate display is not enabled."
+msgstr ""
+
+#: app/templates/rates.html:6
+msgid "Exchange rates are unavailable right now."
+msgstr ""
+
+#: app/templates/rates.html:8
+msgid "Currency"
+msgstr ""
+
+#: app/templates/rates.html:8
+msgid "Value of 1 BTC"
+msgstr ""
+
+#: app/templates/rates.html:8
+msgid "Updated"
+msgstr ""
+
+#: app/templates/rates.html:9
+msgid "Awaiting rate"
+msgstr ""
+
+#: app/templates/rates.html:9
+msgid "Possibly stale"
+msgstr ""
+
+#: app/templates/rates.html:11
+msgid ""
+"Rates refresh in the background. If the provider is unavailable, the last successful rates are "
+"retained."
+msgstr ""
+
+#: app/templates/rates.html:12
+msgid "Rate sources"
+msgstr ""
+
+#: app/templates/rates.html:12
+msgid "Awaiting the first successful refresh."
+msgstr ""
+
+#: app/templates/receive.html:8
+msgid "Waiting for payment"
+msgstr ""
+
+#: app/templates/receive.html:8
+msgid "Checking payment status"
+msgstr ""
+
+#: app/templates/receive.html:8
+msgid "Receipt needs review. Check transactions."
+msgstr ""
+
+#: app/templates/receive.html:8
+msgid "Request expired"
+msgstr ""
+
+#: app/templates/receive.html:10
+msgid "View funds"
+msgstr ""
+
+#: app/templates/receive.html:12 app/templates/scan_payment_error.html:2
+msgid "Payment request"
+msgstr ""
+
+#: app/templates/receive.html:13
+msgid ""
+"This Clear request is limited to wallets that can reach its mint. Use a receipt address for an "
+"instance-only balance."
+msgstr ""
+
+#: app/templates/receive.html:14
+msgid "Automatic checking has stopped. Check receipt to check again."
+msgstr ""
+
+#: app/templates/receive.html:14
+msgid "Checking automatically for 2 minutes."
+msgstr ""
+
+#: app/templates/receive.html:16
+msgid "Automatic checking time elapsed"
+msgstr ""
+
+#: app/templates/receive.html:17
+msgid "Checking time remaining:"
+msgstr ""
+
+#: app/templates/receive.html:19
+msgid "Check receipt"
+msgstr ""
+
+#: app/templates/receive.html:22
+msgid "New request"
+msgstr ""
+
+#: app/templates/receive.html:24
+msgid "Creating your request. Please wait…"
+msgstr ""
+
+#: app/templates/receive.html:26
+msgid "Balance to receive"
+msgstr ""
+
+#: app/templates/receive.html:26 app/templates/receive.html:30
+msgid "sats"
+msgstr ""
+
+#: app/templates/receive.html:26 app/templates/send.html:38
+msgid "Cash (sats)"
+msgstr ""
+
+#: app/templates/receive.html:28
+msgid "Amount"
+msgstr ""
+
+#: app/templates/receive.html:38
+msgid "Description (Clear requests)"
+msgstr ""
+
+#: app/templates/receive.html:39
+msgid "Create request"
+msgstr ""
+
+#: app/templates/receive.html:42
+msgid "Recent requests"
+msgstr ""
+
+#: app/templates/record.html:4
+msgid "← Records"
+msgstr ""
+
+#: app/templates/record.html:6
+msgid "Record actions"
+msgstr ""
+
+#: app/templates/record.html:7
+msgid "Attach a file to check its fingerprint"
+msgstr ""
+
+#: app/templates/record.html:14
+msgid "The file preview is unavailable. You can try opening or downloading the file."
+msgstr ""
+
+#: app/templates/record.html:21 app/templates/scan_result.html:12
+msgid "Download record file"
+msgstr ""
+
+#: app/templates/record.html:23
+msgid "Manage record"
+msgstr ""
+
+#: app/templates/record.html:23 app/templates/record_action.html:53 app/templates/records.html:5
+msgid "Active shares"
+msgstr ""
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+#: app/templates/record_action.html:4
+msgid "Record"
+msgstr "ᑎᑎᖅᑲᖅ"
+
+#: app/templates/record_action.html:6 app/templates/record_action.html:13
+msgid "Delete record"
+msgstr ""
+
+#: app/templates/record_action.html:8
+msgid "Delete this record from your Acorn? OakGate cannot undo this action."
+msgstr ""
+
+#: app/templates/record_action.html:9
+msgid ""
+"Shared copies and separately stored attachments are not deleted. Relays may retain historical "
+"copies."
+msgstr ""
+
+#: app/templates/record_action.html:10
+msgid "Deleting your record. Please wait…"
+msgstr ""
+
+#: app/templates/record_action.html:12
+msgid "I confirm that I want to delete this record"
+msgstr ""
+
+#: app/templates/record_action.html:14 app/templates/record_new.html:23
+#: app/templates/recovery_verify.html:8
+msgid "Cancel"
+msgstr ""
+
+#: app/templates/record_action.html:17
+msgid "Edit record"
+msgstr ""
+
+#: app/templates/record_action.html:17
+msgid "Present record"
+msgstr ""
+
+#: app/templates/record_action.html:17 app/templates/record_action.html:37
+msgid "Share record"
+msgstr ""
+
+#: app/templates/record_action.html:17 app/templates/record_action.html:56
+msgid "Check record"
+msgstr ""
+
+#: app/templates/record_action.html:18
+msgid "Processing your record. Please wait…"
+msgstr ""
+
+#: app/templates/record_action.html:21 app/templates/record_new.html:8
+msgid "Format"
+msgstr ""
+
+#: app/templates/record_action.html:21 app/templates/record_new.html:8
+msgid "Text"
+msgstr ""
+
+#: app/templates/record_action.html:21 app/templates/record_new.html:8
+msgid "JSON"
+msgstr ""
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+#: app/templates/record_action.html:22 app/templates/record_new.html:9
+msgid "Contents"
+msgstr "ᐃᓗᓕᖏᑦ"
+
+#: app/templates/record_action.html:23
+msgid "Replace attached file"
+msgstr ""
+
+#: app/templates/record_action.html:23 app/templates/record_new.html:10
+msgid "Attach a file"
+msgstr ""
+
+#: app/templates/record_action.html:23 app/templates/record_new.html:10
+msgid "(optional, up to 25 MiB)"
+msgstr ""
+
+#: app/templates/record_action.html:24
+msgid "The label stays the same. Leaving the file empty preserves the existing attachment."
+msgstr ""
+
+#: app/templates/record_action.html:26
+msgid ""
+"Check the original file’s fingerprint against OpenETR anchor events and publisher notices. This "
+"sends the fingerprint to the configured public relays; your file and private key stay private."
+msgstr ""
+
+#: app/templates/record_action.html:27
+msgid ""
+"A check evaluates retrieved evidence, not legal validity, ownership or recognition of the "
+"publisher."
+msgstr ""
+
+#: app/templates/record_action.html:29
+msgid "Create a temporary presentation for another Safebox to view."
+msgstr ""
+
+#: app/templates/record_action.html:29
+msgid "Create a temporary sharing copy that another Safebox can import."
+msgstr ""
+
+#: app/templates/record_action.html:30
+msgid ""
+"The code grants access to this record and its attached file for two minutes. Anyone with it can "
+"read the copy. Presentation is a view-only convention, not protection against copying."
+msgstr ""
+
+#: app/templates/record_action.html:31
+msgid ""
+"Stopping requests deletion from the storage server. It cannot recall copies already received, and"
+" expiry does not prove deletion."
+msgstr ""
+
+#: app/templates/record_action.html:33
+msgid "Save these changes to my Acorn"
+msgstr ""
+
+#: app/templates/record_action.html:33
+msgid "Send the fingerprint to check this file"
+msgstr ""
+
+#: app/templates/record_action.html:33
+msgid "Create this temporary copy"
+msgstr ""
+
+#: app/templates/record_action.html:34
+msgid "Save changes"
+msgstr ""
+
+#: app/templates/record_action.html:37 app/templates/record_action.html:54
+msgid "Presentation"
+msgstr ""
+
+#: app/templates/record_action.html:38
+msgid "Scan with a compatible Safebox, or copy the code below."
+msgstr ""
+
+#: app/templates/record_action.html:41
+msgid "Sharing time elapsed"
+msgstr ""
+
+#: app/templates/record_action.html:42
+msgid "Automatically stops in"
+msgstr ""
+
+#: app/templates/record_action.html:44
+msgid ""
+"Keep this page open to request deletion automatically. The code’s expiry still applies if you "
+"leave."
+msgstr ""
+
+#: app/templates/record_action.html:46
+msgid "This code has expired. You can still request deletion of the temporary copy."
+msgstr ""
+
+#: app/templates/record_action.html:46
+msgid "Copy private code"
+msgstr ""
+
+#: app/templates/record_action.html:47
+msgid "Private presentation code"
+msgstr ""
+
+#: app/templates/record_action.html:47
+msgid "Private sharing code"
+msgstr ""
+
+#: app/templates/record_action.html:48
+msgid "Copy code"
+msgstr ""
+
+#: app/templates/record_action.html:50
+msgid "Expires:"
+msgstr ""
+
+#: app/templates/record_action.html:50
+msgid ""
+"This is a bearer secret. Expiry is enforced by compatible clients; storage retention may differ. "
+"You can return through Active shares to request deletion. Copies already received cannot be "
+"recalled."
+msgstr ""
+
+#: app/templates/record_action.html:51
+msgid "Requesting deletion of the temporary copy…"
+msgstr ""
+
+#: app/templates/record_action.html:51
+msgid "Stop presentation"
+msgstr ""
+
+#: app/templates/record_action.html:51
+msgid "Stop sharing"
+msgstr ""
+
+#: app/templates/record_action.html:53
+msgid "Copies awaiting a confirmed deletion request, including expired codes."
+msgstr ""
+
+#: app/templates/record_action.html:54
+msgid "No sharing copies tracked."
+msgstr ""
+
+#: app/templates/record_action.html:57
+msgid "The original file was retrieved and its fingerprint verified before this lookup."
+msgstr ""
+
+#: app/templates/record_action.html:57
+msgid "This check uses a scanned fingerprint. It has not retrieved or verified the original file."
+msgstr ""
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+#: app/templates/record_new.html:3 app/templates/records.html:4
+msgid "Add Record"
+msgstr "ᑎᑎᖅᑲᒥᒃ ᐃᓚᓯ"
+
+#: app/templates/record_new.html:5
+msgid "Saving your record. Please wait…"
+msgstr ""
+
+#: app/templates/record_new.html:7
+msgid "Label"
+msgstr ""
+
+#: app/templates/record_new.html:12
+msgid "Preview unavailable for this file type. You can still save it."
+msgstr ""
+
+#: app/templates/record_new.html:13
+msgid "Choose a nonempty file up to 25 MiB."
+msgstr ""
+
+#: app/templates/record_new.html:14
+msgid "Loading preview…"
+msgstr ""
+
+#: app/templates/record_new.html:15
+msgid "PDF preview — first page"
+msgstr ""
+
+#: app/templates/record_new.html:18
+msgid "Remove file"
+msgstr ""
+
+#: app/templates/record_new.html:20
+msgid "The preview stays in your browser. Save record to upload the file to your Acorn."
+msgstr ""
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+#: app/templates/record_new.html:22
+msgid "Save record"
+msgstr "ᑎᑎᖅᑲᒥᒃ ᑐᖅᑯᐃ"
+
+#: app/templates/record_preview.html:3
+msgid "Record File"
+msgstr ""
+
+#: app/templates/record_preview.html:4
+msgid "The Record File is protected by Acorn and stored separately from its record metadata."
+msgstr ""
+
+#: app/templates/record_preview.html:38
+msgid ""
+"JavaScript is required for the inline PDF preview. Use the open\n"
+"  or download link instead."
+msgstr ""
+
+#: app/templates/record_preview.html:42
+msgid "Wallet pass preview"
+msgstr ""
+
+#: app/templates/record_preview.html:83
+msgid "Serial:"
+msgstr ""
+
+#: app/templates/record_preview.html:87
+msgid "No inline preview is available for this Wallet pass."
+msgstr ""
+
+#: app/templates/record_preview.html:89
+msgid "Open/Add Wallet Pass"
+msgstr ""
+
+#: app/templates/record_preview.html:92
+msgid "Credential preview"
+msgstr ""
+
+#: app/templates/record_preview.html:94
+msgid ""
+"Preview only. OakGate decoded this credential but has not verified its issuer proof, credential "
+"status, holder binding, or presentation."
+msgstr ""
+
+#: app/templates/record_preview.html:115
+msgid "Claims preview truncated."
+msgstr ""
+
+#: app/templates/record_preview.html:119
+msgid "Technical credential fields"
+msgstr ""
+
+#: app/templates/record_preview.html:130
+msgid "Technical preview truncated."
+msgstr ""
+
+#: app/templates/record_preview.html:134
+msgid "No inline preview is available for this credential."
+msgstr ""
+
+#: app/templates/record_preview.html:140
+msgid "EU Digital Identity PID"
+msgstr ""
+
+#: app/templates/record_preview.html:142
+msgid "Mobile Driving Licence"
+msgstr ""
+
+#: app/templates/record_preview.html:144
+msgid ""
+"Preview only. OakGate decoded this mdoc container but has not verified issuer signatures, device "
+"signatures, or digest bindings."
+msgstr ""
+
+#: app/templates/record_preview.html:149
+msgid "Document type"
+msgstr ""
+
+#: app/templates/record_preview.html:155
+msgid "Documents"
+msgstr ""
+
+#: app/templates/record_preview.html:161
+msgid "Status"
+msgstr ""
+
+#: app/templates/record_preview.html:177
+msgid "Technical mdoc fields"
+msgstr ""
+
+#: app/templates/record_preview.html:191
+msgid "Preview truncated."
+msgstr ""
+
+#: app/templates/record_preview.html:195
+msgid "No inline preview is available for this mDL/mdoc."
+msgstr ""
+
+#: app/templates/record_preview.html:198
+msgid "No inline preview is available"
+msgstr ""
+
+#: app/templates/record_preview.html:198
+msgid "for"
+msgstr ""
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+#: app/templates/records.html:3
+msgid "Your Records"
+msgstr "ᑎᑎᖅᑲᑎᑦ"
+
+#: app/templates/records.html:3
+msgid "Newest first"
+msgstr ""
+
+#: app/templates/records.html:5
+msgid "Record views"
+msgstr ""
+
+#: app/templates/records.html:5
+msgid "List"
+msgstr ""
+
+#: app/templates/records.html:5 app/templates/records.html:6
+msgid "Folders"
+msgstr ""
+
+#: app/templates/records.html:7
+msgid "Acorn records"
+msgstr ""
+
+#: app/templates/records.html:9
+msgid "Connect or create an Acorn to see your records."
+msgstr ""
+
+#: app/templates/records.html:9
+msgid "Go to Balances"
+msgstr ""
+
+#: app/templates/records.html:11
+msgid "Records are unavailable right now."
+msgstr ""
+
+#: app/templates/records.html:13
+msgid "Folder →"
+msgstr ""
+
+#: app/templates/records.html:15
+msgid "No records yet."
+msgstr ""
+
+#: app/templates/recovery.html:5
+msgid ""
+"Anyone with your recovery phrase can control your Acorn. Keep it private and store a copy "
+"somewhere safe."
+msgstr ""
+
+#: app/templates/recovery.html:6
+msgid ""
+"Viewing this information does not end custody. OakGate keeps its copy and continues processing "
+"payments. Go Independent is planned for later."
+msgstr ""
+
+#: app/templates/recovery.html:11
+msgid "Recovery mode"
+msgstr ""
+
+#: app/templates/recovery.html:11
+msgid "Legacy key derivation — enable legacy recovery when restoring."
+msgstr ""
+
+#: app/templates/recovery.html:11
+msgid "Standard key derivation — leave legacy recovery disabled."
+msgstr ""
+
+#: app/templates/recovery.html:12
+msgid ""
+"Save the phrase, relay and recovery mode together. These restore your Acorn identity; access to "
+"records and funds also depends on the relay, storage services and mints."
+msgstr ""
+
+#: app/templates/recovery.html:14
+msgid "Recovery information is hidden. Verify your sign-in again to reveal it."
+msgstr ""
+
+#: app/templates/recovery.html:15
+msgid "Hide recovery information"
+msgstr ""
+
+#: app/templates/recovery.html:16
+msgid "This view hides after two minutes or when you leave the tab. Avoid screenshots or shared devices."
+msgstr ""
+
+#: app/templates/recovery.html:21
+msgid "I am in a private place and understand that this phrase gives access to my Acorn."
+msgstr ""
+
+#: app/templates/recovery.html:22
+msgid "Reveal recovery information"
+msgstr ""
+
+#: app/templates/recovery.html:25
+msgid ""
+"First verify your sign-in again with your identity provider. Use the same account you are "
+"currently signed in with."
+msgstr ""
+
+#: app/templates/recovery.html:26 app/templates/recovery_verify.html:3
+msgid "Verify sign-in"
+msgstr ""
+
+#: app/templates/recovery.html:29
+msgid "Back to Preferences"
+msgstr ""
+
+#: app/templates/recovery_verify.html:5
+msgid ""
+"Continue to your configured identity provider and sign in with the same account. You will return "
+"here before any recovery information is shown."
+msgstr ""
+
+#: app/templates/recovery_verify.html:6
+msgid "Continue to verify sign-in"
+msgstr ""
+
+#: app/templates/scan_lightning_address.html:11
+msgid "Start camera"
+msgstr ""
+
+#: app/templates/scan_lightning_address.html:12
+msgid "Stop camera"
+msgstr ""
+
+#: app/templates/scan_lightning_address.html:20
+msgid "Scan or paste a code or payment request"
+msgstr ""
+
+#: app/templates/scan_lightning_address.html:25
+msgid "Review Code"
+msgstr ""
+
+#: app/templates/scan_lightning_address.html:30
+msgid ""
+"Valid raw GTINs open product information automatically. Eight-digit codes require EAN-8 or UPC-E "
+"decoder metadata, or an explicit choice on the interpretation page."
+msgstr ""
+
+#: app/templates/scan_lightning_address.html:31
+msgid ""
+"Point the camera at an Acorn record-sharing or presentation code, Clear token, NUT-18 Clear "
+"payment request, Lightning address or invoice, or GS1 Digital Link, OpenETR evidence link, or "
+"HTTPS website address. Scanning only acquires the request; OakGate determines the capability from"
+" the code before showing the next action."
+msgstr ""
+
+#: app/templates/scan_lightning_address.html:32
+msgid ""
+"The camera starts automatically. If access is unavailable, check the browser's camera permission "
+"or enter the code manually. Camera access from another device requires OakGate to be served over "
+"HTTPS."
+msgstr ""
+
+#: app/templates/scan_lightning_address.html:33
+msgid ""
+"Once text is acquired, the camera stops. Recognized GS1 Digital Links open OakGate’s independent "
+"product verification page, without visiting the printed website. Other HTTPS websites require a "
+"warning and confirmation before opening. Receipt/Lightning addresses, valid LNURLs encoding "
+"supported Lightning-address endpoints, and Clear payment requests open payment review "
+"automatically; payment still requires confirmation. Other codes go to a separate interpretation "
+"page. EAN, UPC and DataMatrix camera decoding depends on browser support. Preserve ASCII group "
+"separators when pasting GS1 element strings."
+msgstr ""
+
+#: app/templates/scan_lightning_address.html:34
+msgid "Camera scanning requires JavaScript. You can still enter the code manually."
+msgstr ""
+
+#: app/templates/scan_payment_error.html:4
+msgid "The payment request was recognized, but could not be prepared."
+msgstr ""
+
+#: app/templates/scan_payment_error.html:5
+msgid "Review payment again"
+msgstr ""
+
+#: app/templates/scan_result.html:3
+msgid "Review code"
+msgstr ""
+
+#: app/templates/scan_result.html:5
+msgid "This code opens an external website. Check the address before continuing."
+msgstr ""
+
+#: app/templates/scan_result.html:5
+msgid "Open website"
+msgstr ""
+
+#: app/templates/scan_result.html:6
+msgid "Shared by"
+msgstr ""
+
+#: app/templates/scan_result.html:6
+msgid "The originator handle is a suggested label, not verified authorship."
+msgstr ""
+
+#: app/templates/scan_result.html:6
+msgid "Record type"
+msgstr ""
+
+#: app/templates/scan_result.html:6
+msgid "Record file"
+msgstr ""
+
+#: app/templates/scan_result.html:6
+msgid "Included"
+msgstr ""
+
+#: app/templates/scan_result.html:6
+msgid "Not included"
+msgstr ""
+
+#: app/templates/scan_result.html:6
+msgid "Expires"
+msgstr ""
+
+#: app/templates/scan_result.html:15
+msgid "This presentation is view-only; no record has been added to your Acorn."
+msgstr ""
+
+#: app/templates/scan_result.html:16
+msgid "Close presentation"
+msgstr ""
+
+#: app/templates/scan_result.html:18
+msgid "Accept this record into your Acorn?"
+msgstr ""
+
+#: app/templates/scan_result.html:18
+msgid "Accept this token into your Acorn? Successful redemption determines mint acceptance."
+msgstr ""
+
+#: app/templates/scan_result.html:19
+msgid "Accepting. Please wait and do not submit again."
+msgstr ""
+
+#: app/templates/scan_result.html:19
+msgid "Store as"
+msgstr ""
+
+#: app/templates/scan_result.html:19
+msgid ""
+"You can change this suggested label. Choose a new label to keep an existing record with the same "
+"name."
+msgstr ""
+
+#: app/templates/scan_result.html:19
+msgid "Accept"
+msgstr ""
+
+#: app/templates/scan_review.html:4
+msgid "The code has been acquired. The camera is stopped. Choose how OakGate should interpret it."
+msgstr ""
+
+#: app/templates/scan_review.html:5
+msgid "The acquisition step has not performed a lookup or payment."
+msgstr ""
+
+#: app/templates/scan_review.html:7
+msgid "Decoder format:"
+msgstr ""
+
+#: app/templates/scan_review.html:7
+msgid "Not supplied (pasted text)"
+msgstr ""
+
+#: app/templates/scan_review.html:7
+msgid ". A format such as DataMatrix does not by itself confirm GS1."
+msgstr ""
+
+#: app/templates/scan_review.html:8
+msgid "Captured text (escaped view)"
+msgstr ""
+
+#: app/templates/scan_review.html:10
+msgid "The original text is preserved."
+msgstr ""
+
+#: app/templates/scan_review.html:10
+msgid "\\u001d"
+msgstr ""
+
+#: app/templates/scan_review.html:10
+msgid "denotes an ASCII group separator; it has not been removed."
+msgstr ""
+
+#: app/templates/scan_review.html:16
+msgid "Code interpretation"
+msgstr ""
+
+#: app/templates/scan_review.html:18
+msgid "Automatic / Digital Link / payment"
+msgstr ""
+
+#: app/templates/scan_review.html:19
+msgid "GS1 element string (AIs 01, 10, 17, 21)"
+msgstr ""
+
+#: app/templates/scan_review.html:20
+msgid "GTIN / EAN (not compressed UPC-E)"
+msgstr ""
+
+#: app/templates/scan_review.html:22
+msgid ""
+"For a GS1 element string without GS1 decoder metadata, explicitly select GS1 mode. Missing "
+"separators cannot be reconstructed safely."
+msgstr ""
+
+#: app/templates/scan_review.html:23
+msgid "Interpret Code"
+msgstr ""
+
+#: app/templates/scan_review.html:25
+msgid "Acquire another code"
+msgstr ""
+
+#: app/templates/send.html:11
+msgid "Recipient wallet"
+msgstr ""
+
+#: app/templates/send.html:12
+msgid "Wallet public key"
+msgstr ""
+
+#: app/templates/send.html:16
+msgid "Clear payment"
+msgstr ""
+
+#: app/templates/send.html:16
+msgid "Direct ecash"
+msgstr ""
+
+#: app/templates/send.html:20
+msgid "Recipient receives"
+msgstr ""
+
+#: app/templates/send.html:21
+msgid "Mint fees (paid by you)"
+msgstr ""
+
+#: app/templates/send.html:22
+msgid "Total deducted"
+msgstr ""
+
+#: app/templates/send.html:25
+msgid "Total with receiver fee"
+msgstr ""
+
+#: app/templates/send.html:25
+msgid "fee"
+msgstr ""
+
+#: app/templates/send.html:27
+msgid "Review the recipient, asset and amount before sending. Mint fees may apply."
+msgstr ""
+
+#: app/templates/send.html:27
+msgid "Review the recipient and amount before sending. Mint or Lightning fees may apply."
+msgstr ""
+
+#: app/templates/send.html:28
+msgid "Sending payment. Please wait and do not submit again."
+msgstr ""
+
+#: app/templates/send.html:28
+msgid "Confirm payment"
+msgstr ""
+
+#: app/templates/send.html:28
+msgid "Sending payment…"
+msgstr ""
+
+#: app/templates/send.html:30
+msgid "Payment sent."
+msgstr ""
+
+#: app/templates/send.html:31
+msgid ""
+"Delivery does not prove redemption. OakGate recipients can redeem while signed out; other "
+"recipients may need to open their wallet."
+msgstr ""
+
+#: app/templates/send.html:32
+msgid ""
+"This payment was set aside after review. Its outcome has not been verified by OakGate. This "
+"confirmation cannot send it again."
+msgstr ""
+
+#: app/templates/send.html:33
+msgid ""
+"Payment outcome needs review. Do not send it again. Check Acorn transaction history and contact "
+"the operator if the result is unclear."
+msgstr ""
+
+#: app/templates/send.html:35
+msgid "Preparing your payment. Please wait…"
+msgstr ""
+
+#: app/templates/send.html:37
+msgid "Balance to send"
+msgstr ""
+
+#: app/templates/send.html:39
+msgid "Payment address"
+msgstr ""
+
+#: app/templates/send.html:40
+msgid "Amount (whole units)"
+msgstr ""
+
+#: app/templates/send.html:41
+msgid "Comment (optional)"
+msgstr ""
+
+#: app/templates/send.html:42
+msgid "Review payment"
+msgstr ""
+
+#: app/templates/send.html:45 app/templates/transactions.html:3
+msgid "Cash transactions"
+msgstr ""
+
+#: app/templates/transactions.html:5
+msgid "Connect an Acorn to see your cash transactions."
+msgstr ""
+
+#: app/templates/transactions.html:8
+msgid "Cash balance"
+msgstr ""
+
+#: app/templates/transactions.html:9
+msgid "CASH BALANCE"
+msgstr ""
+
+#: app/templates/transactions.html:11
+#, python-format
+msgid "%(amount)s sats. Back to balances"
+msgstr ""
+
+#: app/templates/transactions.html:21
+msgid "Fees"
+msgstr ""
+
+#: app/templates/transactions.html:21
+msgid "Balance after"
+msgstr ""
+
+#: app/templates/transactions.html:24
+msgid "No cash transactions yet."
+msgstr ""
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+msgid "Send"
+msgstr "ᐊᐅᓪᓚᖅᑎᑦᑎ"
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+msgid "Add record"
+msgstr "ᑎᑎᖅᑲᒥᒃ ᐃᓚᓯ"

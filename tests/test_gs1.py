@@ -133,6 +133,7 @@ def test_product_page_renders_mismatched_signed_tags(signed_values, display):
     from pathlib import Path
     env = Environment(loader=FileSystemLoader(Path(__file__).resolve().parents[1] / 'app/templates'), autoescape=select_autoescape())
     env.globals['_'] = lambda text: text
+    env.globals['ngettext'] = lambda one, many, count: one if count == 1 else many
     def render_template(name, **context):
         return env.get_template(name).render(**context)
 

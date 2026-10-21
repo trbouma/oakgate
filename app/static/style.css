@@ -435,3 +435,13 @@ body:not(.landing) > header { padding-block: 12px; gap: 12px; }
 .record-copy-qr svg,.openetr-durable-qr-button svg { display:block; width:260px; max-width:100%; height:auto; margin-inline:auto; }
 .openetr-verification-fingerprint .inline-icon { width:20px; height:20px; }
 .presentation-check summary { cursor:pointer; padding:12px 0; font-weight:600; }
+
+/* Self-hosted syllabics: no font request or user metadata leaves OakGate. */
+@font-face { font-family:"OakGate Syllabics"; src:url('/static/fonts/NotoSansCanadianAboriginal.ttf') format('truetype'); font-weight:100 900; font-style:normal; font-display:swap; unicode-range:U+1400-167F,U+18B0-18FF; }
+:lang(iu) body, :lang(iu) button, :lang(iu) input, :lang(iu) select, :lang(iu) textarea { font-family:"OakGate Syllabics",system-ui,sans-serif; }
+:lang(iu) h1,:lang(iu) h2,:lang(iu) h3 { line-height:1.45; letter-spacing:normal; }
+.account-nav { flex-wrap:wrap; row-gap:12px; }
+.account-nav a { overflow-wrap:anywhere; min-width:0; }
+:lang(iu) .primary-action,:lang(iu) .secondary-action { line-height:1.65; white-space:normal; }
+:lang(iu) .record-capabilities { grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); }
+.language-demo-note { max-width:60ch; }

@@ -51,3 +51,41 @@ Review `.po` changes before compiling and commit both `.po` and `.mo`. Restart t
 app after changing catalogs because gettext objects are cached. Keep interpolation
 placeholders intact and use English fallback for unreviewed translations rather
 than inventing terminology. Reuse this approach for future account controls.
+
+
+## Expanded screens and Inuktitut demonstration
+
+The account screens now extract labels in the scanner, product and OpenETR
+views as well as Funds, Records, Messages, Preferences, Send and Receive.
+Scanner status, PDF paging and copy feedback receive a request-local JSON
+translation dictionary. `tojson` escapes that dictionary; browser code displays
+translations as text, never HTML. User records, handles, balances, asset units
+and signed publisher statements remain untouched. English remains the fallback
+for untranslated technical explanations and errors; this is not full coverage.
+
+Each of French, Spanish, Portuguese, German, Italian and Simplified Chinese gained
+120 common-screen translations in this pass. Inuktitut has 26 additional or
+refined demonstration labels. Per the product decision, those labels display
+syllabics alone, without appended English. Preferences identifies the demonstration
+and the need for fluent-speaker review. Financial warnings and specialized terms
+without a reviewed translation remain English. These are draft UI adaptations,
+not certified translations; do not mark them reviewed without a fluent reviewer.
+
+The existing provisional catalog and these references informed the demonstration:
+- [Pirurvik Tusaalanga: work and money vocabulary](https://www.tusaalanga.ca/node/1096)
+- [Qikiqtani Inuit Association: language vocabulary](https://www.qia.ca/word-of-the-day/)
+
+These references support vocabulary, not certification of the UI sentences.
+A reviewer should confirm dialect, terminology, possessive forms, button verbs and
+payment language before a broader Inuktitut release.
+
+Syllabics use the bundled Noto Sans Canadian Aboriginal variable font, distributed
+under the SIL Open Font License (license stored beside the font). It is loaded
+from OakGate itself, never a font CDN. Navigation wraps on smaller screens and
+syllabic headings avoid condensed letter spacing. Font source:
+https://github.com/google/fonts/tree/main/ofl/notosanscanadianaboriginal
+
+For a demo, save Inuktitut in Preferences, then visit Funds, Records, Messages,
+Receive and Preferences on mobile and desktop. Confirm syllabics render and
+record labels stay exactly as supplied. Sign into another account to confirm
+preferences remain account-specific. Restart the app after catalog changes.

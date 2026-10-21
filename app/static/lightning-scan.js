@@ -1,4 +1,6 @@
 "use strict";
+const t = (message) => window.oakgateTranslate ? window.oakgateTranslate(message) : message;
+
 
 import QrScanner from "/static/qr-scanner.min.js";
 
@@ -37,7 +39,7 @@ if (
       const scannedValue = String(result.data || "");
       if (!scannedValue) {
         accepted = false;
-        status.textContent = "The QR code did not contain any data. Try again.";
+        status.textContent = t("The QR code did not contain any data. Try again.");
         return;
       }
       resultInput.value = scannedValue;
@@ -49,7 +51,7 @@ if (
         payloadInput.value = btoa(binary);
       }
       if (symbologyInput) symbologyInput.value = result.symbology || "qr_code";
-      status.textContent = "Code acquired. Checking the next step…";
+      status.textContent = t("Code acquired. Checking the next step\u2026");
       scanner.stop();
       cameraRunning = false;
       startButton.hidden = false;
@@ -72,7 +74,7 @@ if (
         if (message && message !== QrScanner.NO_QR_CODE_FOUND) {
           console.warn("QR decoder error", error);
           status.textContent =
-            "No code acquired yet. Hold one supported barcode clearly in view, or paste its text below.";
+            t("No code acquired yet. Hold one supported barcode clearly in view, or paste its text below.");
         }
       },
     },
@@ -98,7 +100,7 @@ if (
       if (results.length === 1 && cameraRunning && !accepted) {
         acceptResult({ data: results[0].rawValue, symbology: results[0].format });
       } else if (results.length > 1) {
-        status.textContent = "Multiple barcodes detected. Show one barcode at a time.";
+        status.textContent = t("Multiple barcodes detected. Show one barcode at a time.");
       }
     } catch (_error) {
       // QR acquisition and manual input remain available.
@@ -113,7 +115,7 @@ if (
     startButton.hidden = false;
     startButton.disabled = false;
     stopButton.hidden = true;
-    if (!accepted) status.textContent = "Camera scanning stopped.";
+    if (!accepted) status.textContent = t("Camera scanning stopped.");
   };
 
   const start = async () => {
@@ -122,24 +124,24 @@ if (
       startButton.hidden = true;
       stopButton.hidden = true;
       status.textContent =
-        "Camera scanning requires HTTPS when Safebox is opened from another device. Enter the code manually below.";
+        t("Camera scanning requires HTTPS when Safebox is opened from another device. Enter the code manually below.");
       return;
     }
     accepted = false;
     startButton.disabled = true;
-    status.textContent = "Requesting camera access…";
+    status.textContent = t("Requesting camera access\u2026");
     try {
       await scanner.start();
       cameraRunning = true;
       startButton.hidden = true;
       startButton.disabled = false;
       stopButton.hidden = false;
-      status.textContent = "Camera active. Hold one supported barcode in view.";
+      status.textContent = t("Camera active. Hold one supported barcode in view.");
     } catch (_error) {
       startButton.hidden = false;
       startButton.disabled = false;
       status.textContent =
-        "Camera access was unavailable. Check browser permission or enter the address manually.";
+        t("Camera access was unavailable. Check browser permission or enter the address manually.");
     }
   };
 
@@ -156,6 +158,6 @@ if (
     video.hidden = true;
     startButton.hidden = true;
     status.textContent =
-      "Camera scanning requires HTTPS when Safebox is opened from another device. Enter the code manually below.";
+      t("Camera scanning requires HTTPS when Safebox is opened from another device. Enter the code manually below.");
   }
 }

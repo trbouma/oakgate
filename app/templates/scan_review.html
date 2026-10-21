@@ -1,26 +1,26 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="scan-content"><h1 class="account-page-title">Scan</h1>
-<p>The code has been acquired. The camera is stopped. Choose how OakGate should interpret it.</p>
-{% if not error %}<p>The acquisition step has not performed a lookup or payment.</p>{% endif %}
-{% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
-<p>Decoder format: <code>{{ symbology or 'Not supplied (pasted text)' }}</code>. A format such as DataMatrix does not by itself confirm GS1.</p>
-<details open><summary>Captured text (escaped view)</summary>
+<div class="scan-content"><h1 class="account-page-title">{{ _("Scan") }}</h1>
+<p>{{ _("The code has been acquired. The camera is stopped. Choose how OakGate should interpret it.") }}</p>
+{% if not error %}<p>{{ _("The acquisition step has not performed a lookup or payment.") }}</p>{% endif %}
+{% if error %}<p class="error" role="alert">{{ _(error) }}</p>{% endif %}
+<p>{{ _("Decoder format:") }} <code>{{ symbology or _('Not supplied (pasted text)') }}</code>{{ _(". A format such as DataMatrix does not by itself confirm GS1.") }}</p>
+<details open><summary>{{ _("Captured text (escaped view)") }}</summary>
   <pre>{{ payload|tojson }}</pre>
-  <p>The original text is preserved. <code>\u001d</code> denotes an ASCII group separator; it has not been removed.</p>
+  <p>{{ _("The original text is preserved.") }} <code>{{ _("\\u001d") }}</code> {{ _("denotes an ASCII group separator; it has not been removed.") }}</p>
 </details>
 <form class="scan-form" method="post" action="/account/scan" autocomplete="off" data-progress-form>
   <input type="hidden" name="csrf" value="{{ csrf }}">
   <input type="hidden" name="acquired_payload" value="{{ acquired_payload }}">
   <input type="hidden" name="symbology" value="{{ symbology }}">
-  <label for="acquisition_mode">Code interpretation</label>
+  <label for="acquisition_mode">{{ _("Code interpretation") }}</label>
   <select id="acquisition_mode" name="acquisition_mode">
-    <option value="auto"{% if acquisition_mode == 'auto' %} selected{% endif %}>Automatic / Digital Link / payment</option>
-    <option value="gs1"{% if acquisition_mode == 'gs1' %} selected{% endif %}>GS1 element string (AIs 01, 10, 17, 21)</option>
-    <option value="gtin"{% if acquisition_mode == 'gtin' %} selected{% endif %}>GTIN / EAN (not compressed UPC-E)</option>
+    <option value="auto"{% if acquisition_mode == 'auto' %} selected{% endif %}>{{ _("Automatic / Digital Link / payment") }}</option>
+    <option value="gs1"{% if acquisition_mode == 'gs1' %} selected{% endif %}>{{ _("GS1 element string (AIs 01, 10, 17, 21)") }}</option>
+    <option value="gtin"{% if acquisition_mode == 'gtin' %} selected{% endif %}>{{ _("GTIN / EAN (not compressed UPC-E)") }}</option>
   </select>
-  <p>For a GS1 element string without GS1 decoder metadata, explicitly select GS1 mode. Missing separators cannot be reconstructed safely.</p>
-  <button type="submit" data-progress-label="Interpreting code…">Interpret Code</button>
+  <p>{{ _("For a GS1 element string without GS1 decoder metadata, explicitly select GS1 mode. Missing separators cannot be reconstructed safely.") }}</p>
+  <button type="submit" data-progress-label="Interpreting code…">{{ _("Interpret Code") }}</button>
 </form>
-<p><a class="nav-button" href="/account/scan">Acquire another code</a></p>
+<p><a class="nav-button" href="/account/scan">{{ _("Acquire another code") }}</a></p>
 </div>{% endblock %}

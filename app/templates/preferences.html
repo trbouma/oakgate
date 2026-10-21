@@ -12,6 +12,7 @@
 <label for="language">{{ _("Preferred language") }}</label>
 <select id="language" name="language" required>{% for tag, label in language_options.items() %}<option value="{{ tag }}"{% if tag == language %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
 <p class="note">{{ _("Saved to your OakGate account and used on all your devices.") }}</p>
+{% if language.split('-')[0] == 'iu' %}<p class="note language-demo-note" lang="en">Inuktitut demonstration: selected labels use syllabics. Terminology needs review by a fluent speaker. Untranslated instructions remain in English.</p>{% endif %}
 <label for="handle">{{ _("Your OakGate handle") }}</label>
 <input id="handle" name="handle" type="text" value="{{ handle }}" maxlength="32" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="handle-help">
 <p id="handle-help" class="note">{{ _("Unique to this OakGate instance. Use 3–32 letters, numbers, hyphens or underscores, starting with a letter or number. Uppercase and lowercase count as the same name.") }}</p>

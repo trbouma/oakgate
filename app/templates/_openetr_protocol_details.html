@@ -3,35 +3,35 @@
 {% set artifact = graph.artifact|default({"id": history.digest}) %}
 {% set dcr = graph.digital_controllable_record|default({"record_count": 1 + graph.controls|length, "status": "candidate"}) %}
 <details class="openetr-protocol-details">
-  <summary>Protocol Details</summary>
+  <summary>{{ _("Protocol Details") }}</summary>
   <div class="openetr-protocol-details-content">
-    <h3>Anchor Event</h3>
+    <h3>{{ _("Anchor Event") }}</h3>
     <dl class="openetr-event-fields openetr-protocol-fields">
-      <dt>Artifact Digest</dt><dd><code>{{ artifact.id }}</code></dd>
-      <dt>DCR Status</dt><dd>{{ dcr.status }}</dd>
-      <dt>DCR Record Count</dt><dd>{{ dcr.record_count }}</dd>
-      <dt>Anchor Event ID</dt><dd><code>{{ anchor.id }}</code></dd>
-      {% if anchor.kind %}<dt>Anchor Event Kind</dt><dd>{{ anchor.kind }}</dd>{% endif %}
-      <dt>Anchor Signer Public Key</dt><dd><code>{{ anchor.author }}</code></dd>
+      <dt>{{ _("Artifact Digest") }}</dt><dd><code>{{ artifact.id }}</code></dd>
+      <dt>{{ _("DCR Status") }}</dt><dd>{{ dcr.status }}</dd>
+      <dt>{{ _("DCR Record Count") }}</dt><dd>{{ dcr.record_count }}</dd>
+      <dt>{{ _("Anchor Event ID") }}</dt><dd><code>{{ anchor.id }}</code></dd>
+      {% if anchor.kind %}<dt>{{ _("Anchor Event Kind") }}</dt><dd>{{ anchor.kind }}</dd>{% endif %}
+      <dt>{{ _("Anchor Signer Public Key") }}</dt><dd><code>{{ anchor.author }}</code></dd>
       {% if profile %}
-      <dt>Profile Event ID</dt><dd><code>{{ profile.event_id }}</code></dd>
-      <dt>Profile Event Kind</dt><dd>0</dd>
-      <dt>Profile Updated</dt><dd>{{ profile.created_at }}</dd>
+      <dt>{{ _("Profile Event ID") }}</dt><dd><code>{{ profile.event_id }}</code></dd>
+      <dt>{{ _("Profile Event Kind") }}</dt><dd>0</dd>
+      <dt>{{ _("Profile Updated") }}</dt><dd>{{ profile.created_at }}</dd>
       {% endif %}
     </dl>
 
     {% for event in graph.controls %}
     <h3>{{ event.action_label }}</h3>
     <dl class="openetr-event-fields openetr-protocol-fields">
-      <dt>Event ID</dt><dd><code>{{ event.id }}</code></dd>
-      <dt>Kind</dt><dd>{{ event.kind }}</dd>
-      <dt>Signer Public Key</dt><dd><code>{{ event.author }}</code></dd>
-      <dt>Prior Event ID</dt><dd><code>{{ event.prior_event_id }}</code></dd>
+      <dt>{{ _("Event ID") }}</dt><dd><code>{{ event.id }}</code></dd>
+      <dt>{{ _("Kind") }}</dt><dd>{{ event.kind }}</dd>
+      <dt>{{ _("Signer Public Key") }}</dt><dd><code>{{ event.author }}</code></dd>
+      <dt>{{ _("Prior Event ID") }}</dt><dd><code>{{ event.prior_event_id }}</code></dd>
     </dl>
     {% endfor %}
 
     {% if history.relays %}
-    <h3>Relay Query</h3>
+    <h3>{{ _("Relay Query") }}</h3>
     <p class="openetr-source">{% for relay in history.relays %}<code>{{ relay }}</code>{% if not loop.last %}, {% endif %}{% endfor %}</p>
     {% endif %}
   </div>

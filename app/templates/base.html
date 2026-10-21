@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="{{ language }}" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="/static/theme.js?v=20261018-theme-1"></script><meta name="theme-color" content="#171914"><title>{{ _("OakGate · Mainstay") }}</title><link rel="icon" href="/logo.png"><link rel="stylesheet" href="/static/style.css?v=20261021-records-2"><script src="/static/forms.js?v=20261019-confirm-busy-1" defer></script></head>
+<script src="/static/theme.js?v=20261018-theme-1"></script><meta name="theme-color" content="#171914"><title>{{ _("OakGate · Mainstay") }}</title><link rel="icon" href="/logo.png"><link rel="stylesheet" href="/static/style.css?v=20261021-locales-1"><script src="/static/forms.js?v=20261019-confirm-busy-1" defer></script></head>
 <body{% if active_page %} class="account-shell"{% endif %}><header class="app-header"><div class="header-brand-group">
 <details class="brand-disclosure">
 <summary class="brand-icon" aria-label="{{ _('About OakGate') }}" title="{{ _('About OakGate') }}"><img src="/logo.png" alt="" width="32" height="32"></summary>
@@ -10,12 +10,26 @@
 <svg class="theme-icon" data-theme-icon="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg>
 <svg class="theme-icon" data-theme-icon="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.2A8 8 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7Z"></path></svg>
 </button></div></header>
-{% if active_page %}<nav class="account-nav" aria-label="Account navigation">
+{% if active_page %}<nav class="account-nav" aria-label='{{ _("Account navigation") }}'>
 <a href="/account"{% if active_page == 'balances' %} aria-current="page"{% endif %}>{{ _("Funds") }}</a>
 <a href="/account/records"{% if active_page == 'records' %} aria-current="page"{% endif %}>{{ _("Records") }}</a>
 <a href="/account/messages"{% if active_page == 'messages' %} aria-current="page"{% endif %}>{{ _("Messages") }}</a>
 <a href="/account/preferences"{% if active_page == 'preferences' %} aria-current="page"{% endif %}>{{ _("Preferences") }}</a>
 </nav><div class="wallet-actions" aria-label="{{ _('Wallet actions') }}"><a class="primary-action" href="/account/scan"{% if active_page == 'scan' %} aria-current="page"{% endif %}>{{ _('Scan') }}</a><a class="primary-action" href="/account/receive"{% if active_page == 'receive' %} aria-current="page"{% endif %}>{{ _('Receive') }}</a></div>{% endif %}
 <p id="page-progress" class="page-progress" role="status" aria-live="polite" aria-atomic="true" data-working="{{ _('Working. Please wait…') }}" data-opening="{{ _('Opening…') }}" hidden></p>
+<script id="oakgate-translations" type="application/json">{{ {"Copied.": _("Copied."), "Camera scanning requires HTTPS when Safebox is opened from another device. Enter the code manually below.": _("Camera scanning requires HTTPS when Safebox is opened from another device. Enter the code manually below."),
+"Camera access was unavailable. Check browser permission or enter the address manually.": _("Camera access was unavailable. Check browser permission or enter the address manually."),
+"Camera active. Hold one supported barcode in view.": _("Camera active. Hold one supported barcode in view."),
+"Requesting camera access\u2026": _("Requesting camera access\u2026"),
+"Camera scanning stopped.": _("Camera scanning stopped."),
+"Multiple barcodes detected. Show one barcode at a time.": _("Multiple barcodes detected. Show one barcode at a time."),
+"No code acquired yet. Hold one supported barcode clearly in view, or paste its text below.": _("No code acquired yet. Hold one supported barcode clearly in view, or paste its text below."),
+"Code acquired. Checking the next step\u2026": _("Code acquired. Checking the next step\u2026"),
+"The QR code did not contain any data. Try again.": _("The QR code did not contain any data. Try again."),
+"PDF preview is unavailable. Use the open or download links instead.": _("PDF preview is unavailable. Use the open or download links instead."),
+"Loading PDF\u2026": _("Loading PDF\u2026"),
+"Page %(page)s of %(total)s": _("Page %(page)s of %(total)s"),
+"Copy unavailable. Select and copy the code or link manually.": _("Copy unavailable. Select and copy the code or link manually.")} | tojson }}</script>
+<script src="/static/localization.js?v=1"></script>
 <main>{% block content %}{% endblock %}</main>
 <footer>OakGate <span>{{ _("Part of the Mainstay family.") }}</span></footer></body></html>
