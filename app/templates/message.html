@@ -1,2 +1,10 @@
 {% extends "base.html" %}
-{% block content %}<h1>{{ _("Let's try that again.") }}</h1><p class="intro">{{ _(message) }}</p><a class="primary-action" href="/auth/login">{{ _("Sign in") }}</a><nav><a href="/">{{ _("Back to OakGate") }}</a></nav>{% endblock %}
+{% block content %}
+<h1>{{ _("Let's try that again.") }}</h1><p class="intro">{{ _(message) }}</p>
+{% if authenticated %}
+<a class="primary-action" href="{{ return_url or '/account' }}">{{ _(return_label or 'Back to your funds') }}</a>
+{% else %}
+<a class="primary-action" href="/auth/login">{{ _("Sign in") }}</a>
+{% endif %}
+<nav><a href="/">{{ _("Back to OakGate") }}</a></nav>
+{% endblock %}

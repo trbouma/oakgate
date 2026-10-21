@@ -432,6 +432,6 @@ body:not(.landing) > header { padding-block: 12px; gap: 12px; }
 .openetr-candidate-graph { border:1px solid var(--border); border-radius:10px; padding:14px; margin:16px 0; }
 .openetr-protocol-details { margin:12px 0; }
 .record-copy-qr,.openetr-durable-qr-button { display:block; background:white; color:black; padding:12px; border:0; border-radius:10px; margin:16px auto; max-width:100%; cursor:pointer; }
-.record-copy-qr svg,.openetr-durable-qr-button svg { display:block; width:260px; max-width:100%; height:auto; }
+.record-copy-qr svg,.openetr-durable-qr-button svg { display:block; width:260px; max-width:100%; height:auto; margin-inline:auto; }
 .openetr-verification-fingerprint .inline-icon { width:20px; height:20px; }
 .presentation-check summary { cursor:pointer; padding:12px 0; font-weight:600; }

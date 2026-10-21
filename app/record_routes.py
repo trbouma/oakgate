@@ -229,6 +229,25 @@ async def stop_capability(request: Request, ident: str):
         if not result.get('transfer_deleted'):
             raise RuntimeError('Deletion unconfirmed')
         store.remove(owner, ident)
-    except Exception:
-        return error_page(request, 'Deletion could not be confirmed. The sharing code is retained so you can retry.', 503)
+    except Exception as exc:
+        # Log only exception classes/statuses, never descriptor secrets or URLs.
+        cause = exc
+        seen = set()
+        kinds = []
+        http_status = None
+        while cause is not None and id(cause) not in seen:
+            seen.add(id(cause))
+            kinds.append(type(cause).__name__)
+            response = getattr(cause, 'response', None)
+            candidate = getattr(cause, 'status_code', None) or getattr(response, 'status_code', None)
+            if isinstance(candidate, int):
+                http_status = candidate
+            cause = cause.__cause__ or cause.__context__
+        logging.getLogger(__name__).warning('Record share stop unconfirmed error_types=%s http_status=%s',
+            '/'.join(kinds), http_status or 'unknown')
+        message = ('Your Acorn is busy. Please wait and try stopping the share again.' if isinstance(exc, Busy)
+                   else 'Deletion could not be confirmed. You are still signed in. The sharing code is retained so you can retry. '
+                        'If another wallet already accepted this share, its temporary copy may already have been removed.')
+        return error_page(request, message, 409 if isinstance(exc, Busy) else 503,
+                          return_url=f'/account/record-shares/{ident}', return_label='Back to share')
     return RedirectResponse('/account/record-shares', status_code=303)

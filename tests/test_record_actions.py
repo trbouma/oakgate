@@ -13,7 +13,7 @@ DETAIL = {'label': 'Personal/Notes', 'contents': 'hello', 'payload': 'hello', 'h
           'record_type': 'credential', 'origsha256': hashlib.sha256(b'original').hexdigest()}
 
 
-def test_record_workflows_and_owner_isolation(tmp_path, monkeypatch):
+def test_record_workflows_and_owner_isolation(tmp_path, monkeypatch, caplog):
     async def run():
         client, sessions, service, backend = setup(tmp_path)
         backend.records = AsyncMock(return_value=[{'label': 'Personal/Notes', 'ref': REF, 'timestamp': 2},
@@ -61,7 +61,18 @@ def test_record_workflows_and_owner_isolation(tmp_path, monkeypatch):
             backend.stop_record_capability.assert_not_awaited()
             await login(client, sessions)
             backend.stop_record_capability.return_value = {'transfer_deleted': False}
-            assert (await client.post(url+'/stop', data=form())).status_code == 503
+            failed = await client.post(url+'/stop', data=form())
+            assert failed.status_code == 503
+            assert 'href="/auth/login"' not in failed.text
+            assert 'Back to share' in failed.text and 'Account navigation' in failed.text
+            assert f'href="{url}"' in failed.text
+            backend.stop_record_capability.side_effect = TimeoutError('PRIVATE-BEARER')
+            failed = await client.post(url+'/stop', data=form())
+            assert failed.status_code == 503 and 'PRIVATE-BEARER' not in failed.text
+            assert 'href="/auth/login"' not in failed.text
+            assert 'PRIVATE-BEARER' not in caplog.text
+            assert 'TimeoutError' in caplog.text
+            backend.stop_record_capability.side_effect = None
             assert (await client.get(url)).status_code == 200
             backend.stop_record_capability.return_value = {'transfer_deleted': True}
             assert (await client.post(url+'/stop', data=form())).status_code == 303
