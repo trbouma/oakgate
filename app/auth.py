@@ -30,12 +30,18 @@ def clear_cookie(request, response, kind):
                            httponly=True, samesite="lax")
 
 
-def error_page(request, message, status=400):
+def error_page(request, message, status=400, *, return_url=None, return_label=None):
+    session = getattr(request.state, "authenticated_session", None)
+    context = {**(session or {}), "message": message, "authenticated": bool(session),
+               "return_url": return_url, "return_label": return_label}
+    if session:
+        context["active_page"] = "records" if request.url.path.startswith("/account/record") else "account"
     return request.app.state.templates.TemplateResponse(
-        request=request, name="message.html", context={"message": message}, status_code=status)
+        request=request, name="message.html", context=context, status_code=status)
 
 
 async def current_session(request):
+    request.state.authenticated_session = None
     value = request.cookies.get(cookie_name(request, "session"))
     if not value:
         return None
@@ -50,6 +56,7 @@ async def current_session(request):
             except sqlite3.Error:
                 # A preference read must not prevent sign-out or session recovery.
                 request.state.language = 'en'
+        request.state.authenticated_session = session
         return session
     return None
 
