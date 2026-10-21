@@ -268,3 +268,23 @@ inbox work and inspect `database=... elapsed=...` and phase timing logs. The tes
 suite covers HTTP health during a real SQLite write-lock wait and cancellation
 during lease acquisition. Production SSL failure reproduction and server latency
 verification still require deployment; tests do not send real payments.
+
+
+### Early receive indication
+
+An active Clear request checks Acorn's stored receipts and read-only gift-wrap
+preview, matching request ID, mint, unit and at least the requested amount. Preview
+uses `preview_only=True` and `advance_cursor=False`; it does not redeem tokens,
+write receipts or move the background discovery cursor. The view polls one second
+after each response for up to two minutes, with a five-second read deadline.
+Latency still depends on relay availability; it is not a guaranteed delivery SLA.
+
+A match displays **Payment detected — confirming in background**, hides the code,
+stops polling and offers **New request**. Detection is persisted in the existing
+owner-bound request ticket and wakes the background inbox worker. Reloading that
+ticket retains the indication without another network lookup. It is an observation
+of an incoming transfer, not validation of spendable funds. A matching transfer
+can still fail redemption. Cash requests use the durable paid-invoice observation
+for the same early state. Only Acorn settlement updates wallet funds and history;
+users check Transactions for the final outcome. Already confirmed payments still
+display Received when first observed. No payment is resent by status polling.

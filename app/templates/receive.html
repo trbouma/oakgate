@@ -5,10 +5,10 @@
 {% if message %}<p role="alert">{{ _(message) }}</p>{% endif %}
 {% if item %}
 <h2>{{ item.display_name }}</h2><p class="cash-balance">{{ '{:,}'.format(item.amount) }} <span>{{ item.display_unit }}</span></p>
-{% set receipt_labels = {'pending': _('Waiting for payment'), 'unavailable': _('Checking payment status'), 'complete': _('Received'), 'review': _('Receipt needs review. Check transactions.'), 'expired': _('Request expired')} %}
-<p class="receive-status" role="status" aria-live="polite" aria-atomic="true" data-state="{{ receipt_state }}" data-receive-status data-status-url="/account/receive/status/{{ item.id }}" data-complete="{{ receipt_labels.complete }}" data-pending="{{ receipt_labels.pending }}" data-unavailable="{{ receipt_labels.unavailable }}" data-review="{{ receipt_labels.review }}" data-expired="{{ receipt_labels.expired }}">{{ receipt_labels.get(receipt_state, receipt_labels.unavailable) }}</p>
-<div data-receive-complete {% if receipt_state != 'complete' %}hidden{% endif %}><a class="primary-action" href="/account">{{ _('View funds') }}</a></div>
-{% if receipt_state != 'complete' %}
+{% set receipt_labels = {'detected': _('Payment detected — confirming in background'), 'pending': _('Waiting for payment'), 'unavailable': _('Checking payment status'), 'complete': _('Received'), 'review': _('Receipt needs review. Check transactions.'), 'expired': _('Request expired')} %}
+<p class="receive-status" role="status" aria-live="polite" aria-atomic="true" data-state="{{ receipt_state }}" data-receive-status data-status-url="/account/receive/status/{{ item.id }}" data-detected="{{ receipt_labels.detected }}" data-complete="{{ receipt_labels.complete }}" data-pending="{{ receipt_labels.pending }}" data-unavailable="{{ receipt_labels.unavailable }}" data-review="{{ receipt_labels.review }}" data-expired="{{ receipt_labels.expired }}">{{ receipt_labels.get(receipt_state, receipt_labels.unavailable) }}</p>
+<div data-receive-complete {% if receipt_state not in ['complete', 'detected'] %}hidden{% endif %}><a class="primary-action" href="/account">{{ _('View funds') }}</a></div>
+{% if receipt_state not in ['complete', 'detected'] %}
 <div data-receive-pending><div class="receive-code">{{ qr | safe }}<label for="request-code">{{ _('Payment request') }}</label><textarea id="request-code" readonly onclick="this.select()">{{ item.code }}</textarea></div>
 {% if item.scope and item.scope != 'across-networks' %}<p class="note">{{ _('This Clear request is limited to wallets that can reach its mint. Use a receipt address for an instance-only balance.') }}</p>{% endif %}
 <p class="note" data-receive-poll-note data-paused="{{ _('Automatic checking has stopped. Check receipt to check again.') }}"{% if receipt_state == 'expired' %} hidden{% endif %}>{{ _('Checking automatically for 2 minutes.') }}</p>
@@ -18,8 +18,8 @@
 </div>
 <a class="primary-action" href="/account/receive?ticket={{ item.id }}">{{ _('Check receipt') }}</a></div>
 {% endif %}
-<script src="/static/receive-status.js?v=5" defer></script>
-<p><a href="/account/receive">{{ _('New request') }}</a></p>
+<script src="/static/receive-status.js?v=6" defer></script>
+<p><a class="primary-action" href="/account/receive">{{ _('New request') }}</a></p>
 {% else %}
 <form method="post" action="/account/receive" data-progress-message="{{ _('Creating your request. Please wait…') }}">
 <input type="hidden" name="csrf" value="{{ csrf }}">

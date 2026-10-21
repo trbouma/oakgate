@@ -52,12 +52,12 @@
       if (!response.ok) throw new Error('Unavailable');
       const result = await response.json();
       if (stopped) return;
-      const state = ['pending', 'unavailable', 'complete', 'review', 'expired'].includes(result.state) ? result.state : 'unavailable';
+      const state = ['pending', 'unavailable', 'detected', 'complete', 'review', 'expired'].includes(result.state) ? result.state : 'unavailable';
       status.textContent = status.dataset[state];
       status.dataset.state = state;
-      if (state === 'complete') {
+      if (state === 'complete' || state === 'detected') {
         pending.hidden = true;
-        if (received) received.hidden = false;
+        if (received) received.hidden = state !== 'complete';
         stop();
         return;
       }
@@ -67,9 +67,9 @@
     } finally {
       clearTimeout(requestTimer);
     }
-    if (!stopped) timer = setTimeout(poll, 5000);
+    if (!stopped) timer = setTimeout(poll, 1000);
   }
-  if (['complete', 'expired'].includes(status.dataset.state)) return;
+  if (['complete', 'detected', 'expired'].includes(status.dataset.state)) return;
   updateProgress();
   deadlineTimer = setTimeout(() => stop(true), 120000);
   timer = setTimeout(poll, 1000);

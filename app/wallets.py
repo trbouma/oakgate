@@ -174,7 +174,19 @@ class AcornBackend:
             and (r.get('mint') or ((r.get('mints') or [''])[0])).rstrip('/') == item['mint'].rstrip('/')
             and r.get('unit') == item['unit']}
         if not accepted:
-            return 'pending'
+            def matches(receipt):
+                return (receipt.get('payment_request_id') == item['request_id']
+                    and (receipt.get('mint') or ((receipt.get('mints') or [''])[0])).rstrip('/') == item['mint'].rstrip('/')
+                    and receipt.get('unit') == item['unit']
+                    and int(receipt.get('amount') or 0) >= item['amount'])
+            if any(matches(r) for r in receipts if r.get('status') == 'pending'):
+                return 'detected'
+            # Read-only Acorn preview: no cursor advancement, receipt write,
+            # mint redemption or wallet mutation in the HTTP polling request.
+            preview = await wallet.sweep_clear_transfers(
+                relays=[material['relay']], since=max(0, int(item.get('created_at', 0)) - 60),
+                preview_only=True, advance_cursor=False, limit=100, max_pages=10)
+            return 'detected' if any(matches(r) for r in preview.get('previewed', [])) else 'pending'
         history = await wallet.get_clear_transaction_history()
         credits = {row['source_event']: int(row.get('amount') or 0) for row in history
             if row.get('source_event') in accepted and row.get('direction') == 'in'

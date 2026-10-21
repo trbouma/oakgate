@@ -31,7 +31,7 @@ async def page(request: Request, ticket: str = ''):
             if item['purpose'] not in {'cash-request', 'clear-request'}:
                 raise ValueError()
             state = await receipt_status(request, service, owner, material, item)
-            return render(request, session, item=item, receipt_state=state, qr=_qr_svg(item['code']) if state != 'complete' else None)
+            return render(request, session, item=item, receipt_state=state, qr=_qr_svg(item['code']) if state not in {'complete', 'detected'} else None)
         except ValueError:
             raise HTTPException(404, 'Request not found') from None
     try:
@@ -91,18 +91,29 @@ async def create(request: Request):
 
 
 async def receipt_status(request, service, owner, material, item):
+    if item.get('state') == 'detected':
+        return 'detected'
+    async def detected():
+        await asyncio.to_thread(RequestStore(service.store).detected, owner, item['id'])
+        receiver = request.app.state.ecash
+        if receiver:
+            await asyncio.to_thread(receiver.wake_owner, owner)
+        return 'detected'
     if item['purpose'] == 'cash-request':
         payment = request.app.state.payments.store.get(item['payment_id'])
         if not payment or payment['owner'] != owner:
             raise ValueError('Request not found')
         if payment.get('history_written'):
             return 'complete'
+        if payment.get('paid_at'):
+            return await detected()
         if not payment.get('paid_at') and payment.get('expiry', 0) < time.time():
             return 'expired'
         return 'pending'
     try:
-        async with asyncio.timeout(20):
-            return await service.backend.clear_request_status(material, item)
+        async with asyncio.timeout(5):
+            state = await service.backend.clear_request_status(material, item)
+        return await detected() if state == 'detected' else state
     except Exception:
         return 'unavailable'
 

@@ -24,7 +24,11 @@ class RequestStore:
         decoded = json.loads(self.custody.cipher.decrypt(row['encrypted']))
         if decoded['owner'] != owner or decoded['material']['id'] != ident:
             raise ValueError('Request identity mismatch')
-        return {**decoded['material'], 'state': row['state']}
+        return {**decoded['material'], 'state': row['state'], 'created_at': row['created']}
+
+    def detected(self, owner, ident):
+        with closing(self.custody.connect()) as db, db:
+            db.execute("UPDATE wallet_requests SET state='detected' WHERE id=? AND owner=? AND state='ready'", (ident, owner))
 
     def claim(self, owner, ident):
         with closing(self.custody.connect()) as db, db:

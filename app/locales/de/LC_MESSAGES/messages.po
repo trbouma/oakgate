@@ -378,3 +378,7 @@ msgstr "Kursquellen"
 msgid "Exchange rates are unavailable right now."
 msgstr "Wechselkurse sind derzeit nicht verfügbar."
 
+
+
+msgid "Payment detected — confirming in background"
+msgstr "Zahlung erkannt — Bestätigung im Hintergrund"

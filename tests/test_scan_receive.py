@@ -310,3 +310,48 @@ def test_clear_creation_uses_b_or_explicit_dependency_message():
             assert request.amount==12 and request.unit=='cmu-shares'
             assert request.mints==('https://clear.safebox.dev',)
     asyncio.run(run())
+
+
+@pytest.mark.parametrize('change,expected', [({}, 'detected'), ({'payment_request_id':'other'}, 'pending'),
+    ({'unit':'other'}, 'pending'), ({'mints':['https://other.example']}, 'pending'), ({'amount':11}, 'pending')])
+def test_clear_preview_detects_only_matching_request(monkeypatch, change, expected):
+    async def run():
+        backend = AcornBackend()
+        receipt = {'event_id':'evt', 'payment_request_id':'request', 'amount':12,
+                   'unit':'cmu-test', 'mints':['https://mint.example'], **change}
+        wallet = SimpleNamespace(get_clear_receipts=AsyncMock(return_value=[]),
+            sweep_clear_transfers=AsyncMock(return_value={'previewed':[receipt]}),
+            get_clear_transaction_history=AsyncMock(), accept_pending_clear_receipt=AsyncMock())
+        monkeypatch.setattr(backend, 'wallet', lambda material: wallet)
+        item = {'request_id':'request','mint':'https://mint.example','unit':'cmu-test','amount':12,'created_at':1000}
+        assert await backend.clear_request_status({'relay':'wss://relay.example'}, item) == expected
+        wallet.sweep_clear_transfers.assert_awaited_once_with(relays=['wss://relay.example'], since=940,
+            preview_only=True, advance_cursor=False, limit=100, max_pages=10)
+        wallet.accept_pending_clear_receipt.assert_not_awaited()
+        wallet.get_clear_transaction_history.assert_not_awaited()
+    asyncio.run(run())
+
+
+def test_detection_survives_reload_and_does_not_claim_credit(tmp_path):
+    async def run():
+        client, sessions, wallets, backend = setup(tmp_path)
+        async with aclosing(client):
+            owner = await login(client, sessions)
+            await client.post('/account/acorn/create', data=form())
+            store = RequestStore(wallets.store)
+            ticket = store.save(owner, {'purpose':'clear-request','request_id':'request','mint':'https://mint.example',
+                'unit':'cmu-test','amount':12,'code':'creqB-test','display_name':'Shares','display_unit':'shares'})
+            backend.clear_request_status = AsyncMock(return_value='detected')
+            response = await client.get('/account/receive/status/'+ticket)
+            assert response.json() == {'state':'detected'}
+            assert RequestStore(wallets.store).get(owner,ticket)['state'] == 'detected'
+            backend.clear_request_status.side_effect = RuntimeError('offline')
+            page = await client.get('/account/receive?ticket='+ticket)
+            assert 'Payment detected — confirming in background' in page.text
+            assert 'data-receive-pending' not in page.text
+            assert 'New request' in page.text
+            assert (await client.get('/account/receive/status/'+ticket)).json() == {'state':'detected'}
+            backend.clear_request_status.assert_awaited_once()
+            with pytest.raises(ValueError):
+                store.get('another-owner',ticket)
+    asyncio.run(run())

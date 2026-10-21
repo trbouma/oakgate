@@ -86,9 +86,12 @@ class EcashReceiver:
     def wake(self, handle):
         owner = self.wallets.store.address_owner(handle)
         if owner:
-            with closing(self.wallets.store.connect()) as db, db:
-                db.execute('INSERT INTO ecash_inboxes(owner,next_poll) VALUES(?,0) '
-                           'ON CONFLICT(owner) DO UPDATE SET next_poll=0', (owner,))
+            self.wake_owner(owner)
+
+    def wake_owner(self, owner):
+        with closing(self.wallets.store.connect()) as db, db:
+            db.execute('INSERT INTO ecash_inboxes(owner,next_poll) VALUES(?,0) '
+                       'ON CONFLICT(owner) DO UPDATE SET next_poll=0', (owner,))
 
     def due(self):
         with closing(self.wallets.store.connect()) as db, db:

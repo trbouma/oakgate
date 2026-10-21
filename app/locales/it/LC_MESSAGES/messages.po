@@ -373,3 +373,7 @@ msgstr "Fonti dei tassi"
 msgid "Exchange rates are unavailable right now."
 msgstr "I tassi di cambio non sono disponibili al momento."
 
+
+
+msgid "Payment detected — confirming in background"
+msgstr "Pagamento rilevato — conferma in background"

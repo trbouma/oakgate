@@ -6,7 +6,7 @@ const source = fs.readFileSync('app/static/receive-status.js', 'utf8');
 function setup(fetcher) {
   let now = 0, next = 0;
   const timers = new Map();
-  const status = {dataset: {state:'pending', statusUrl:'/status', pending:'Waiting', complete:'Received', unavailable:'Checking', expired:'Expired', review:'Review'}};
+  const status = {dataset: {state:'pending', statusUrl:'/status', pending:'Waiting', detected:'Detected', complete:'Received', unavailable:'Checking', expired:'Expired', review:'Review'}};
   const pending = {hidden:false}, complete = {hidden:true};
   const note = {hidden:false, dataset:{paused:'Stopped'}};
   const progress = {hidden:true}, bar = {value:0}, countdown = {textContent:''};
@@ -85,4 +85,15 @@ test('checking countdown advances and disappears when polling stops',async()=>{
   await h.advance(120000); assert.equal(h.progress.hidden,true);
   const last=h.countdown.textContent;
   await h.advance(180000); assert.equal(h.countdown.textContent,last);
+});
+
+test('detected transfer stops polling without claiming confirmed credit',async()=>{
+  const h=setup(()=>response('detected'));
+  await h.advance(1000);
+  assert.equal(h.status.textContent,'Detected');
+  assert.equal(h.pending.hidden,true);
+  assert.equal(h.complete.hidden,true);
+  assert.equal(h.progress.hidden,true);
+  await h.advance(120000);
+  assert.equal(h.calls(),1);
 });

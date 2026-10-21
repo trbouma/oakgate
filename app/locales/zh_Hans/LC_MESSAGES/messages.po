@@ -364,3 +364,7 @@ msgstr "汇率来源"
 msgid "Exchange rates are unavailable right now."
 msgstr "汇率暂不可用。"
 
+
+
+msgid "Payment detected — confirming in background"
+msgstr "已检测到付款 — 正在后台确认"

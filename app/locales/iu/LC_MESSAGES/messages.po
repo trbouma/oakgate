@@ -37,3 +37,7 @@ msgstr "ᑎᑎᖅᑲᓂᒃ ᐊᐅᓚᑦᑎᓂᖅ"
 msgid "Display preferences updated."
 msgstr "ᓇᓖᕌᕈᑏᑦ ᓄᑖᙳᖅᑎᑕᐅᔪᑦ."
 
+
+
+msgid "Payment detected — confirming in background"
+msgstr ""
