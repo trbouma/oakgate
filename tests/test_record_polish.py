@@ -125,6 +125,7 @@ def test_expired_share_keeps_stop_but_hides_qr(tmp_path):
             response=await client.get('/account/record-shares/'+ident)
             assert 'This code has expired' in response.text
             assert 'record-copy-qr' not in response.text
+            assert 'data-share-progress' not in response.text
             assert 'data-stop-record-sharing' in response.text
             assert 'no-store' in response.headers['cache-control']
     asyncio.run(run())

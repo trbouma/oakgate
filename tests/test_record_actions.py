@@ -103,7 +103,10 @@ def test_acorn_adapter_preserves_attachment_type_and_delegates():
         assert kwargs['blob_data'] is None and kwargs['return_result']
         await backend.create_record_capability({}, REF, 'present')
         assert wallet.create_record_presentation.await_args.kwargs['public_only']
-        wallet.create_record_transfer.assert_not_awaited()
+        assert wallet.create_record_presentation.await_args.kwargs['expires_in'] == 120
+        await backend.create_record_capability({}, REF, 'share')
+        assert wallet.create_record_transfer.await_args.kwargs['expires_in'] == 120
+        wallet.create_record_transfer.assert_awaited_once()
         backend.record_detail.return_value = None
         with pytest.raises(Exception):
             await backend.update_record({}, REF, 'bad')

@@ -213,6 +213,7 @@ async def capability(request: Request, ident: str):
         raise HTTPException(404, 'Share not found')
     return render(request, session, action='capability', item=item, qr=_qr_svg(item['descriptor']),
                   expired=item['expires_at'] <= datetime.now(timezone.utc).timestamp(),
+                  remaining_seconds=max(0, min(120, item['expires_at'] - datetime.now(timezone.utc).timestamp())),
                   expiry=datetime.fromtimestamp(item['expires_at'], timezone.utc).strftime('%Y-%m-%d %H:%M UTC'))
 
 @router.post('/account/record-shares/{ident}/stop', include_in_schema=False)

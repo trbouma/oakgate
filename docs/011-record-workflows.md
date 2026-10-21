@@ -42,8 +42,7 @@ appears only on the Records page for connected Acorns. All three use a minimum
   confirms disclosure of the fingerprint first. Neither file contents nor a
   private key are sent in the evidence query.
 
-Present and Share copy one record and its attached file. Codes expire after one
-hour in compatible clients. They are bearer secrets: anyone holding one can read
+Present and Share copy one record and its attached file. New codes expire after two minutes in compatible clients. They are bearer secrets: anyone holding one can read
 the copy. Presentation's view-only convention cannot prevent copying, and neither
 expiry nor a successful deletion request proves removal from all storage.
 
@@ -52,7 +51,14 @@ and app restarts. Stopping calls Acorn's transfer-scoped deletion method; OakGat
 removes its saved descriptor only after deletion is confirmed. It cannot recall
 copies already received. An upload followed by a lost response or database failure
 can leave an untracked copy; OakGate reports the outcome as uncertain and does not
-automatically retry. There is no background expiry/deletion worker yet.
+automatically retry. The active Present/Share page shows a two-minute progress
+bar and countdown, then submits the normal CSRF-protected Stop request through
+Acorn. Reloading a new code does not extend its embedded expiry. Browser suspension
+can delay that deletion request; expiry still applies in compatible clients.
+Closing the page does not schedule background deletion. Unconfirmed deletion
+retains the code for manual retry through Active shares. Older codes retain their
+original embedded expiry, but an open page requests Stop within two minutes.
+There is no background expiry/deletion worker yet.
 
 OakGate's Scan action accepts the same Acorn presentation and transfer codes as
 Safebox Web. Presentations render content and supported attachments without
