@@ -29,6 +29,7 @@ def test_record_workflows_and_owner_isolation(tmp_path, monkeypatch, caplog):
             assert (await client.get(f'/account/records/{REF}/edit')).status_code == 401
             owner = await login(client, sessions)
             await client.post('/account/acorn/create', data=form())
+            service.store.save_handle(owner, 'alice')
             folders = await client.get('/account/records?view=folders')
             assert 'Personal' in folders.text and 'Folder →' in folders.text
             leaf = await client.get('/account/records?view=folders&folder=Personal')
@@ -49,6 +50,7 @@ def test_record_workflows_and_owner_isolation(tmp_path, monkeypatch, caplog):
                 backend.create_record_capability.assert_not_awaited() if action == 'present' else None
                 created = await client.post(f'/account/records/{REF}/{action}', data=form(confirmed='yes'))
                 assert created.status_code == 303
+                assert backend.create_record_capability.await_args.args[-1] == 'alice'
                 url = created.headers['location']
                 page = await client.get(url)
                 assert 'PRIVATE-BEARER' in page.text and 'no-store' in page.headers['cache-control']
@@ -104,8 +106,9 @@ def test_acorn_adapter_preserves_attachment_type_and_delegates():
         await backend.create_record_capability({}, REF, 'present')
         assert wallet.create_record_presentation.await_args.kwargs['public_only']
         assert wallet.create_record_presentation.await_args.kwargs['expires_in'] == 120
-        await backend.create_record_capability({}, REF, 'share')
+        await backend.create_record_capability({}, REF, 'share', 'alice')
         assert wallet.create_record_transfer.await_args.kwargs['expires_in'] == 120
+        assert wallet.create_record_transfer.await_args.kwargs['originator_handle'] == 'alice'
         wallet.create_record_transfer.assert_awaited_once()
         backend.record_detail.return_value = None
         with pytest.raises(Exception):

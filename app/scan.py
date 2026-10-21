@@ -104,8 +104,13 @@ async def scan(request: Request):
             if purpose != 'token':
                 async with asyncio.timeout(35):
                     detail = await service.backend.inspect_scanned_record(material, code, purpose == 'presentation')
-            ident = RequestStore(service.store).save(owner, {'purpose': purpose, 'code': code, 'label': detail.get('label') if detail else None,
-                'detail': {k:detail[k] for k in ('label','record_type','has_original','expires_at') if k in detail} if detail else None})
+            if detail:
+                handle = detail.get('originator_handle')
+                label = detail['label']
+                suggestion = f'{handle}/{label}' if isinstance(handle, str) and re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]{0,63}', handle) else label
+                detail['suggested_label'] = suggestion if len(suggestion) <= 200 else label
+            ident = RequestStore(service.store).save(owner, {'purpose': purpose, 'code': code, 'label': detail.get('suggested_label') if detail else None,
+                'detail': {k:detail[k] for k in ('label','record_type','has_original','expires_at','originator_handle','suggested_label') if k in detail} if detail else None})
             preview = presentation_preview(detail, ident) if purpose == 'presentation' else None
             history = None
             if detail and purpose == 'presentation' and detail.get('blob_sha256'):
@@ -147,7 +152,7 @@ async def accept(request: Request):
         if item['purpose'] == 'transfer' and item['state'] == 'ready':
             if any(record['label'] == label for record in await service.records(material)):
                 return render(request, session, 'scan_result.html', purpose='transfer', ticket=ident,
-                    detail={**(item.get('detail') or {}), 'label':label},
+                    detail={**(item.get('detail') or {}), 'suggested_label':label},
                     message='That label already exists. Choose another label to keep both records.', status=409)
         if not store.claim(owner, ident):
             return render(request, session, 'scan_result.html', message='This import was already submitted. Check your records or transactions before trying again.')

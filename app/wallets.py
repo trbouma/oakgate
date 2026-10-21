@@ -432,14 +432,15 @@ class AcornBackend:
                     and set(relays).issubset(set(result.get('hidden_on') or [])))
         return {'verified': verified}
 
-    async def create_record_capability(self, material, reference, purpose):
+    async def create_record_capability(self, material, reference, purpose, originator_handle=None):
         detail = await self.record_detail(material, reference)
         if detail is None:
             raise WalletInputError('This record changed. Reload Records and try again.')
         wallet = self.wallet(material)
         method = wallet.create_record_presentation if purpose == 'present' else wallet.create_record_transfer
         return await method(detail['label'], expires_in=120,
-                            blossom_transfer_server=self.record_settings.transfer_server, public_only=True)
+                            blossom_transfer_server=self.record_settings.transfer_server, public_only=True,
+                            originator_handle=originator_handle)
 
     async def stop_record_capability(self, material, descriptor):
         return await self.wallet(material).delete_record_transfer(descriptor,

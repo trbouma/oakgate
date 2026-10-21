@@ -180,7 +180,7 @@ async def record_action(request: Request, reference: str, action: str):
             if not isinstance(result, dict) or result.get('verified') is not True:
                 raise RuntimeError('Save not verified')
             return RedirectResponse('/account/records', status_code=303)
-        result = await service.record_action(material, 'create_record_capability', reference, action)
+        result = await service.record_action(material, 'create_record_capability', reference, action, service.store.preference(owner) or None)
         ident = RecordCapabilities(service.store).save(owner, {**result, 'purpose': action})
         return RedirectResponse('/account/record-shares/' + ident, status_code=303)
     except HTTPException:

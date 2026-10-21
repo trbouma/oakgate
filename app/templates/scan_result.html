@@ -3,7 +3,7 @@
 <h1 class="account-page-title">{{ _('Review code') }}</h1><section class="wallet-panel scan-content">
 {% if message %}<p role="status">{{ _(message) }}</p>{% endif %}
 {% if destination %}<p>{{ _('This code opens an external website. Check the address before continuing.') }}</p><p class="breakable">{{ destination }}</p><a class="primary-action" href="{{ destination }}" rel="noopener noreferrer" target="_blank">{{ _('Open website') }}</a>{% endif %}
-{% if detail %}<h2>{{ detail.label }}</h2><dl class="record-review-fields"><dt>{{ _('Record type') }}</dt><dd>{{ detail.record_type }}</dd><dt>{{ _('Record file') }}</dt><dd>{{ _('Included') if detail.has_original else _('Not included') }}</dd>{% if expiry %}<dt>{{ _('Expires') }}</dt><dd>{{ expiry }}</dd>{% endif %}</dl>{% endif %}
+{% if detail %}<h2>{{ detail.label }}</h2>{% if detail.originator_handle %}<p>{{ _('Shared by') }} {{ detail.originator_handle }}</p><p class="note">{{ _('The originator handle is a suggested label, not verified authorship.') }}</p>{% endif %}<dl class="record-review-fields"><dt>{{ _('Record type') }}</dt><dd>{{ detail.record_type }}</dd><dt>{{ _('Record file') }}</dt><dd>{{ _('Included') if detail.has_original else _('Not included') }}</dd>{% if expiry %}<dt>{{ _('Expires') }}</dt><dd>{{ expiry }}</dd>{% endif %}</dl>{% endif %}
 {% if purpose == 'presentation' %}<pre>{{ detail.payload | tojson(indent=2) }}</pre>{% if preview and preview.has_blob %}
 {% with label=preview.label, has_blob=preview.has_blob, blob_type=preview.blob_type,
 blob_preview=preview.blob_preview, blob_fingerprint=preview.blob_fingerprint,
@@ -16,7 +16,7 @@ mdoc_preview=preview.mdoc_preview, blob_url=preview.blob_url, blob_inline_url=pr
 <a class="secondary-action" href="/account/scan">{{ _('Close presentation') }}</a>{% endif %}
 {% if purpose in ['transfer', 'token'] %}
 <p>{{ _('Accept this record into your Acorn?') if purpose == 'transfer' else _('Accept this token into your Acorn? Successful redemption determines mint acceptance.') }}</p>
-<form method="post" action="/account/scan/accept" data-progress-message="{{ _('Accepting. Please wait and do not submit again.') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="ticket" value="{{ ticket }}"><input type="hidden" name="confirmed" value="yes">{% if purpose == 'transfer' %}<label for="import-label">{{ _('Store as') }}</label><input id="import-label" name="label" value="{{ detail.label }}" maxlength="200" required><p class="note">{{ _('Choose a new label to keep an existing record with the same name.') }}</p>{% endif %}<button class="primary-action" type="submit">{{ _('Accept') }}</button></form>
+<form method="post" action="/account/scan/accept" data-progress-message="{{ _('Accepting. Please wait and do not submit again.') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="ticket" value="{{ ticket }}"><input type="hidden" name="confirmed" value="yes">{% if purpose == 'transfer' %}<label for="import-label">{{ _('Store as') }}</label><input id="import-label" name="label" value="{{ detail.suggested_label or detail.label }}" maxlength="200" required><p class="note">{{ _('You can change this suggested label. Choose a new label to keep an existing record with the same name.') }}</p>{% endif %}<button class="primary-action" type="submit">{{ _('Accept') }}</button></form>
 {% endif %}
 <p><a href="/account/scan">{{ _('Scan another code') }}</a></p></section>
 {% endblock %}

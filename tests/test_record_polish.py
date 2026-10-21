@@ -154,3 +154,23 @@ def test_evidence_lookup_provenance_and_profile_binding(monkeypatch):
         result = await openetr.query_openetr_history(DIGEST, ['wss://relay.example'], digest_source='computed')
         assert result['error'] and result['verification']['artifact']['digest_source'] == 'computed'
     asyncio.run(run())
+
+
+def test_originator_suggests_editable_import_label(tmp_path):
+    async def run():
+        client, sessions, service, backend = setup(tmp_path)
+        backend.inspect_scanned_record = AsyncMock(return_value={'label':'Certificate','originator_handle':'alice','record_type':'note','has_original':False})
+        backend.accept_scanned_record = AsyncMock(return_value={'stored':True})
+        backend.records = AsyncMock(return_value=[])
+        async with aclosing(client):
+            owner = await login(client,sessions)
+            await client.post('/account/acorn/create',data=form())
+            result = await client.post('/account/scan',data=form(lightning_payment='acorn:record-transfer:private'))
+            assert 'value="alice/Certificate"' in result.text
+            assert 'Shared by' in result.text
+            ticket = RequestStore(service.store).recent(owner)[0]
+            assert ticket['label'] == 'alice/Certificate'
+            result = await client.post('/account/scan/accept',data=form(ticket=ticket['id'],confirmed='yes',label='My chosen label'))
+            assert result.status_code == 303
+            assert backend.accept_scanned_record.await_args.kwargs == {'label':'My chosen label'}
+    asyncio.run(run())

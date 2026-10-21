@@ -231,3 +231,19 @@ After deployment, use two test Acorns with a harmless record and attachment:
 
 Real camera permission, deployed relay contents and cross-instance server access
 require this deployment smoke test; isolated regression tests cannot prove them.
+
+
+## Originator handle suggestions
+
+New shares and presentations include the sender's current OakGate handle as
+optional metadata inside Acorn's encrypted transfer envelope. The QR descriptor
+still carries only the bearer capability; the handle is read after decryption.
+On acceptance, OakGate suggests `handle/existing label` in **Store as**, which the
+recipient may edit. Existing labels remain protected against overwrites. If the
+combined label exceeds the 200-character limit, the original label is suggested.
+The handle is a display hint, not verified authorship or a social identity claim.
+
+Publish the optional `originator_handle` Acorn API change first, then run
+`poetry update safebox-acorn` in OakGate and commit its lockfile before deployment.
+Old envelopes decode without a handle; older Acorn readers ignore the extra
+optional field. Safebox Web's existing calls and default import labels are unchanged.
