@@ -5,6 +5,7 @@
 <section class="wallet-panel preferences-panel send-panel">
 {% if message %}<p role="status">{{ _(message) }}</p>{% endif %}
 {% if payment %}
+<h2>{{ payment.display_name if payment.route in ['clear', 'clear-request'] else _('Cash') }}</h2>
 <p class="cash-balance">{% if payment.route not in ['clear', 'clear-request'] %}₿ {% endif %}{{ '{:,}'.format(payment.amount) }} <span>{{ payment.display_unit if payment.route in ['clear', 'clear-request'] else 'sats' }}</span></p>
 {% if payment.route == 'clear-request' %}
 <details class="payment-recipient"><summary>{{ _('Recipient wallet') }}</summary>
@@ -12,7 +13,7 @@
 <code class="breakable">{{ payment.address }}</code>
 </details>
 {% else %}<p class="breakable">{{ payment.address }}</p>{% endif %}
-<p>{% if payment.route in ['clear', 'clear-request'] %}{{ _('Clear payment') }} · {{ payment.display_name }}{% else %}{{ _('Direct ecash') if payment.route == 'ecash' else _('Lightning') }}{% endif %}</p>
+<p>{% if payment.route in ['clear', 'clear-request'] %}{{ _('Clear payment') }}{% else %}{{ _('Direct ecash') if payment.route == 'ecash' else _('Lightning') }}{% endif %}</p>
 {% if payment.route in ['clear', 'clear-request'] %}<details><summary>{{ _('Asset details') }}</summary><p class="breakable">{{ payment.mint }}</p><p class="breakable">{{ payment.unit }}</p></details>{% endif %}
 {% if payment.route == 'clear-request' %}<p>{{ _('Total with receiver fee') }}: {{ payment.proof_amount }} {{ payment.display_unit }} ({{ _('fee') }}: {{ payment.receiver_input_fee }})</p>{% endif %}
 {% if payment.state == 'prepared' %}
