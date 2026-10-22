@@ -35,7 +35,7 @@ def test_receive_currency_preference_and_invoice_amount(tmp_path):
                 db.execute("UPDATE currency_rates SET fiat_per_btc='100000', fetched_at=? WHERE code='CAD'",(time.time(),))
             wallets.store.save_handle(owner,'receiver',currency='CAD')
             page = await client.get('/account/receive')
-            assert 'value="CAD" data-rate="100000" selected' in page.text
+            assert 'value="CAD" data-symbol="$" data-rate="100000" selected' in page.text
             assert 'data-key="."' in page.text
             assert 'data-receive-sats' in page.text
             app.state.payments.request_invoice=AsyncMock(return_value={'invoice':'lnbc-test','id':'payment-test'})

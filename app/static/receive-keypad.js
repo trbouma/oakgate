@@ -27,7 +27,9 @@ if (typeof module !== 'undefined') module.exports = {receiveSats, receiveEntryVa
   const asset = form.querySelector('[name="asset"]');
   const currency = form.querySelector('[name="currency"]');
   const currencyPane = form.querySelector('[data-receive-currency]');
+  const description = form.querySelector('[data-receive-description]');
   const quotedRate = form.querySelector('[name="quoted_rate"]');
+  const symbol = form.querySelector('[data-receive-symbol]');
   const unit = form.querySelector('[data-receive-unit]');
   const preview = form.querySelector('[data-receive-sats]');
   const keypad = form.querySelector('[data-receive-keypad]');
@@ -80,8 +82,13 @@ if (typeof module !== 'undefined') module.exports = {receiveSats, receiveEntryVa
     // Switching units clears the amount; never reinterpret dollars as shares/sats.
     if (reset) { amount.value = ''; previous = ''; }
     currencyPane.hidden = !!asset.value;
+    if (description) description.hidden = !asset.value;
     currency.disabled = !!asset.value;
     unit.textContent = asset.value ? asset.selectedOptions[0]?.dataset.unit : currency.value;
+    if (symbol) {
+      symbol.textContent = asset.value ? '' : currency.selectedOptions[0]?.dataset.symbol || '';
+      symbol.hidden = !!asset.value;
+    }
     decimal.hidden = integer();
     keypad.classList.toggle('integer-mode', integer());
     amount.pattern = integer() ? '[1-9][0-9]{0,12}' : '(0|[1-9][0-9]{0,12})([.][0-9]{1,2})?';

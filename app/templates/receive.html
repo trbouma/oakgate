@@ -1,13 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 class="account-page-title">{{ _('Receive') }}</h1>
-<section class="wallet-panel preferences-panel send-panel receive-panel">
+<section class="wallet-panel preferences-panel send-panel receive-panel{% if not item %} receive-entry-panel{% else %} receive-request-panel{% endif %}">
 {% if message %}<p role="alert">{{ _(message) }}</p>{% endif %}
 {% if item %}
+<div class="receive-request-summary">
 <h2>{{ item.display_name }}</h2><p class="cash-balance">{{ '{:,}'.format(item.amount) }} <span>{{ item.display_unit }}</span></p>
 {% set receipt_labels = {'detected': _('Payment detected — confirming in background'), 'pending': _('Waiting for payment'), 'unavailable': _('Checking payment status'), 'complete': _('Received'), 'review': _('Receipt needs review. Check transactions.'), 'expired': _('Request expired')} %}
 <p class="receive-status" role="status" aria-live="polite" aria-atomic="true" data-state="{{ receipt_state }}" data-receive-status data-status-url="/account/receive/status/{{ item.id }}" data-detected="{{ receipt_labels.detected }}" data-complete="{{ receipt_labels.complete }}" data-pending="{{ receipt_labels.pending }}" data-unavailable="{{ receipt_labels.unavailable }}" data-review="{{ receipt_labels.review }}" data-expired="{{ receipt_labels.expired }}">{{ receipt_labels.get(receipt_state, receipt_labels.unavailable) }}</p>
 <div data-receive-complete {% if receipt_state not in ['complete', 'detected'] %}hidden{% endif %}><a class="primary-action" href="/account">{{ _('View funds') }}</a></div>
+<p><a class="primary-action" href="/account/receive" data-receive-cancel data-complete-label="{{ _('New request') }}">{{ _('New request') if receipt_state in ['complete', 'detected'] else _('Cancel') }}</a></p>
+</div>
 {% if receipt_state not in ['complete', 'detected'] %}
 <div data-receive-pending><div class="receive-code"><button type="button" class="receive-qr-copy" data-receive-copy="{{ item.code }}" aria-label="{{ _('Copy payment request') }}" aria-describedby="receive-copy-status">{{ qr | safe }}</button>
 <p class="note" id="receive-copy-status" role="status" aria-live="polite" data-copied="{{ _('Copied.') }}" data-failed="{{ _('Copy unavailable. Try again or scan the QR code.') }}">{{ _('Tap the QR code to copy the request.') }}</p></div>
@@ -21,37 +24,47 @@
 {% endif %}
 <script src="/static/receive-status.js?v=8" defer></script>
 <script src="/static/receive-copy.js?v=1" defer></script>
-<p><a class="primary-action" href="/account/receive" data-receive-cancel data-complete-label="{{ _('New request') }}">{{ _('New request') if receipt_state in ['complete', 'detected'] else _('Cancel') }}</a></p>
+
 {% else %}
 <form method="post" action="/account/receive" data-receive-entry data-progress-message="{{ _('Creating your request. Please wait…') }}">
 <input type="hidden" name="csrf" value="{{ csrf }}">
+<div class="receive-entry-settings">
 <label for="asset">{{ _('Balance to receive') }}</label><select id="asset" name="asset"><option value="" data-unit="{{ _('sats') }}">{{ _('Cash') }}</option>{% for asset in assets %}<option value="{{ asset.id }}" {% if selected_asset == asset.id %}selected{% endif %} data-unit="{{ asset.display_unit }}">{{ asset.display_name }} — {{ asset.display_unit }}</option>{% endfor %}</select>
 <div data-receive-currency>
 <label for="currency">{{ _('Currency') }}</label>
 <select id="currency" name="currency">
-{% for option in currency_options %}<option value="{{ option.code }}" data-rate="{{ option.fiat_per_btc if option.fiat_per_btc and not option.stale else '' }}" {% if currency == option.code %}selected{% endif %}>{{ option.code }} — {{ _(option.description) }}</option>{% endfor %}
-<option value="SATS" {% if currency == 'SATS' %}selected{% endif %}>SATS</option>
+{% for option in currency_options %}<option value="{{ option.code }}" data-symbol="{{ option.symbol }}" data-rate="{{ option.fiat_per_btc if option.fiat_per_btc and not option.stale else '' }}" {% if currency == option.code %}selected{% endif %}>{{ option.code }} — {{ _(option.description) }}</option>{% endfor %}
+<option value="SATS" data-symbol="sats" {% if currency == 'SATS' %}selected{% endif %}>SATS</option>
 </select>
 <input type="hidden" name="quoted_rate" value="{{ quoted_rate or '' }}">
 </div>
 <div class="receive-amount">
 <label for="amount">{{ _('Amount') }}</label>
+<div class="receive-amount-field">
+<span class="receive-amount-symbol" data-receive-symbol aria-hidden="true">{% if currency == 'SATS' %}sats{% else %}{% for option in currency_options %}{% if option.code == currency %}{{ option.symbol }}{% endif %}{% endfor %}{% endif %}</span>
 <input id="amount" name="amount" type="text" pattern="[0-9]+([.][0-9]{1,2})?" maxlength="16" value="{{ amount }}" required inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="0" aria-describedby="receive-unit">
+</div>
 <p id="receive-unit" data-receive-unit>{{ currency }}</p>
 <p data-receive-sats aria-live="polite" data-invalid="{{ _('The converted amount must be at least 1 sat and within the supported limit.') }}" data-sats-label="{{ _('sats') }}" data-unavailable="{{ _('Currency rate unavailable. Choose SATS or try again later.') }}"></p>
 </div>
+<details class="receive-description" data-receive-description{% if description %} open{% endif %}>
+<summary>{{ _('Description (Clear requests)') }}</summary><input aria-label="{{ _('Description (Clear requests)') }}" id="description" name="description" maxlength="200" value="{{ description or '' }}">
+</details>
+</div>
+<div class="receive-entry-controls">
 <div class="receive-keypad" data-receive-keypad role="group" aria-label="{{ _('Amount keypad') }}" hidden>
 {% for digit in ['1','2','3','4','5','6','7','8','9'] %}<button type="button" data-key="{{ digit }}">{{ digit }}</button>{% endfor %}
 <button type="button" data-key="." aria-label="{{ _('Decimal point') }}">.</button>
 <button type="button" data-key="0">0</button>
 <button type="button" data-key="backspace" aria-label="{{ _('Delete last digit') }}">⌫</button>
-<button type="button" data-key="clear" aria-label="{{ _('Clear amount') }}">C</button>
+<button type="button" data-key="clear" aria-label="{{ _('Clear amount') }}">{{ _('Clear amount') }}</button>
 
 </div>
-<label for="description">{{ _('Description (Clear requests)') }}</label><input id="description" name="description" maxlength="200" value="{{ description or '' }}">
+
 <button class="primary-action" type="submit">{{ _('Create request') }}</button>
+</div>
 </form>
-<script src="/static/receive-keypad.js?v=2" defer></script>
+<script src="/static/receive-keypad.js?v=4" defer></script>
 {% if recent %}<details><summary>{{ _('Recent requests') }}</summary>{% for entry in recent %}<p><a href="/account/receive?ticket={{ entry.id }}">{{ entry.display_name }} · {{ entry.amount }} {{ entry.display_unit }}</a></p>{% endfor %}</details>{% endif %}
 {% endif %}
 </section>
