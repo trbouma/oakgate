@@ -2683,3 +2683,81 @@ msgstr "Touchez le code QR pour copier la demande."
 
 msgid "Automatic checking has stopped. You can check your transactions for updates."
 msgstr "La vérification automatique est terminée. Consultez vos transactions pour connaître les mises à jour."
+
+msgid "A terminal can receive payments for your Acorn. It cannot spend funds or open your account. Payment collection is coming next."
+msgstr "Un terminal peut recevoir des paiements pour votre Acorn. Il ne peut ni dépenser des fonds ni ouvrir votre compte. L’encaissement sera disponible prochainement."
+
+msgid "Activated"
+msgstr "Activé"
+
+msgid "Activation key"
+msgstr "Clé d’activation"
+
+msgid "Connect an Acorn first. The activation key is shown once and must be activated within 24 hours."
+msgstr "Connectez d’abord un Acorn. La clé d’activation n’est affichée qu’une seule fois et doit être utilisée dans les 24 heures."
+
+msgid "Copied"
+msgstr "Copié"
+
+msgid "Copy key"
+msgstr "Copier la clé"
+
+msgid "Create POS key"
+msgstr "Créer une clé de terminal"
+
+msgid "Creating terminal…"
+msgstr "Création du terminal…"
+
+msgid "Device activation is ready. Payment collection will be added next."
+msgstr "L’activation des appareils est disponible. L’encaissement sera ajouté prochainement."
+
+msgid "Device fingerprint"
+msgstr "Empreinte de l’appareil"
+
+msgid "Front counter"
+msgstr "Comptoir principal"
+
+msgid "Last seen"
+msgstr "Dernière activité"
+
+msgid "Open POS"
+msgstr "Ouvrir le terminal"
+
+msgid "POS terminals"
+msgstr "Terminaux de paiement"
+
+msgid "Revoke terminal"
+msgstr "Révoquer le terminal"
+
+msgid "Save this key now. It is shown only once. Enter it on the dedicated POS device within 24 hours."
+msgstr "Conservez cette clé maintenant. Elle n’est affichée qu’une seule fois. Saisissez-la sur l’appareil dédié dans les 24 heures."
+
+msgid "Terminal name"
+msgstr "Nom du terminal"
+
+msgid "The first browser to activate this key becomes the registered device. Keep the key for signing back in on that same browser after logout."
+msgstr "Le premier navigateur qui active cette clé devient l’appareil enregistré. Conservez la clé pour vous reconnecter sur ce même navigateur après une déconnexion."
+
+msgid "Use a terminal name of 1–60 characters."
+msgstr "Utilisez un nom de terminal de 1 à 60 caractères."
+
+msgid "Your POS key"
+msgstr "Votre clé de terminal"
+
+msgid "Revoked"
+msgstr "Révoqué"
+
+msgid "Wallet unavailable"
+msgstr "Portefeuille indisponible"
+
+msgid "Active"
+msgstr "Actif"
+
+msgid "Expired"
+msgstr "Expiré"
+
+msgid "Awaiting activation"
+msgstr "En attente d’activation"
+
+msgid "Revoke this terminal? It will lose access immediately."
+msgstr "Révoquer ce terminal ? Il perdra immédiatement son accès."

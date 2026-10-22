@@ -33,7 +33,7 @@ def test_disabled_by_default_and_no_account_surface():
         assert client.get('/health').json()['status'] == 'ok'
         assert client.get('/ready').json()['status'] == 'disabled'
         response = client.get('/')
-        assert 'Point of sale is disabled' in response.text
+        assert client.get('/api/session').json() == {'enabled': False, 'session_present': False}
         assert 'set-cookie' not in response.headers
         assert client.get('/logo.png').status_code == 200
         for path in ('/account', '/auth/login', '/docs', '/openapi.json', '/receive'):
@@ -73,7 +73,7 @@ def test_connection_check_only_calls_metadata_endpoint():
     with TestClient(create_app(enabled_settings(), httpx.MockTransport(backend))) as client:
         response = client.get('/ready')
         assert response.status_code == 200
-        assert response.json() == {'status': 'connected', 'phase': 'foundation', 'activation_available': False}
+        assert response.json() == {'status': 'connected', 'phase': 'activation', 'activation_available': False, 'payments_available': False}
 
 
 @pytest.mark.parametrize('failure', ['disabled', 'redirect', 'invalid', 'timeout'])
@@ -96,7 +96,7 @@ def test_connection_failures_are_safe(failure):
 
 
 @pytest.mark.parametrize('enabled', ['true', 'false'])
-def test_backend_never_exposes_activation_or_payments(monkeypatch, enabled):
+def test_backend_without_storage_never_exposes_activation_or_payments(monkeypatch, enabled):
     monkeypatch.setenv('OAKGATE_POS_ENABLED', enabled)
     backend = FastAPI()
     backend.include_router(create_router())

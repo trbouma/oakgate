@@ -7,6 +7,7 @@ services:
     restart: unless-stopped
     environment:
       OAKGATE_POS_ENABLED: ${OAKGATE_POS_ENABLED:-false}
+      OAKGATE_POS_PUBLIC_URL: ${OAKGATE_POS_PUBLIC_URL:-https://pos.oakgate.safebox.dev}
       OAKGATE_PUBLIC_URL: ${OAKGATE_PUBLIC_URL:-https://oakgate.safebox.dev}
       OAKGATE_OIDC_ISSUER: ${OAKGATE_OIDC_ISSUER:-https://keycloak.safebox.dev/realms/oakgate}
       OAKGATE_OIDC_CLIENT_ID: ${OAKGATE_OIDC_CLIENT_ID:-oakgate-web}

@@ -85,7 +85,7 @@ The included GitHub Pages workflow publishes on pushes to `main` once **Settings
 
 ## Design
 
-- [Receive-only POS terminals and browser-bound keys (proposed)](docs/023-receive-only-pos.md)
+- [Receive-only POS terminals and browser-bound keys](docs/023-receive-only-pos.md)
 
 - [Safebox discovery contract and migration](docs/018-safebox-address-discovery.md)
 
@@ -168,8 +168,9 @@ from container readiness. Never run two refresh operations concurrently.
 
 ### Separate POS service
 
-The optional POS foundation runs on its own port (8804 by default), disabled by
+The optional POS service runs on its own port (8804 by default), disabled by
 default with `OAKGATE_POS_ENABLED=false`. Use `./refresh-pos.sh` to rebuild only
 POS with a bounded health wait. It has no wallet data mount or account access.
-Activation and payments are not available yet. See the
+Users can provision a terminal in Preferences, activate its browser-bound key,
+and revoke it. Payment collection is not available yet. See the
 [POS deployment guide](docs/024-pos-deployment.md) for environment settings and Nginx setup.

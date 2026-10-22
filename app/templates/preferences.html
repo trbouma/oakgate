@@ -29,4 +29,23 @@
 <section class="preferences-panel wallet-panel"><h2>{{ _('Recovery information') }}</h2>
 <p>{{ _('Keep your own recovery copy so you can access your Acorn outside OakGate.') }}</p>
 <a class="secondary-action" href="/account/recovery">{{ _('View recovery information') }}</a></section>
+{% if pos_enabled or pos_terminals %}
+<section class="preferences-panel wallet-panel"><h2>{{ _('POS terminals') }}</h2>
+<p class="note">{{ _('A terminal can receive payments for your Acorn. It cannot spend funds or open your account. Payment collection is coming next.') }}</p>
+{% if pos_enabled %}<form method="post" action="/account/pos" data-progress-message="{{ _('Creating terminal…') }}">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label for="terminal-name">{{ _('Terminal name') }}</label>
+<input id="terminal-name" name="name" maxlength="60" required placeholder="{{ _('Front counter') }}">
+<p class="note">{{ _('Connect an Acorn first. The activation key is shown once and must be activated within 24 hours.') }}</p>
+<button class="primary-action" type="submit">{{ _('Create POS key') }}</button>
+</form>{% endif %}
+{% for terminal in pos_terminals %}<article style="margin-top:1rem;padding-top:1rem;border-top:1px solid currentColor">
+<strong>{{ terminal.name }}</strong> · {{ _(terminal.status) }}
+{% if terminal.fingerprint %}<p class="note">{{ _('Device fingerprint') }}: <code>{{ terminal.fingerprint[:16] }}</code></p>{% endif %}
+{% if terminal.activated %}<p class="note">{{ _('Activated') }}: <time data-pos-time="{{ terminal.activated }}"></time><br>{{ _('Last seen') }}: <time data-pos-time="{{ terminal.last_seen }}"></time></p>{% endif %}
+{% if not terminal.revoked %}<form method="post" action="/account/pos/{{ terminal.id }}/revoke" data-pos-revoke data-confirm="{{ _('Revoke this terminal? It will lose access immediately.') }}">
+<input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit">{{ _('Revoke terminal') }}</button>
+</form>{% endif %}</article>{% endfor %}
+</section><script src="/static/pos-management.js" defer></script>
+{% endif %}
 {% endblock %}

@@ -178,13 +178,18 @@ async def preferences_page(request, session, message=None, status=200):
         handle = service.store.preference(identity_key(session['user'])) if service else ''
     except Exception:
         return error_page(request, 'Preferences are unavailable right now.', 503)
+    from pos.config import pos_enabled
+    from app.pos_api import invoke
+    pos = getattr(request.app.state, 'pos', None)
+    terminals = await invoke(pos.listing, identity_key(session['user'])) if pos else []
     return request.app.state.templates.TemplateResponse(
         request=request, name='preferences.html', status_code=status,
         context={**session, 'active_page': 'preferences', 'handle': handle,
                  'social_npub': service.store.social_npub(identity_key(session['user'])) if service else '',
                  'currency': service.store.currency(identity_key(session['user']), request.app.state.rates.default_currency) if service else 'USD',
                  'currency_options': request.app.state.rates.rows() if service else [],
-                 'preferences_enabled': service is not None, 'message': message})
+                 'preferences_enabled': service is not None, 'message': message,
+                 'pos_enabled': pos_enabled() and pos is not None, 'pos_terminals': terminals})
 
 
 @router.get('/account/preferences', include_in_schema=False)

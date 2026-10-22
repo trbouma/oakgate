@@ -1,6 +1,6 @@
-# Deploy the POS foundation
+# Deploy and activate POS terminals
 
-The separate `pos` service provides a landing page, health check and connection check to OakGate. Device activation, cookies and receipt requests are **not implemented yet**. Enabling the switch does not enable payment collection. Existing OakGate payment recovery and settlement remain unchanged.
+The separate `pos` service supports browser-bound device activation, encrypted terminal cookies and revocation. Receipt requests and payment collection are **not implemented yet**. Existing OakGate payment recovery and settlement remain unchanged.
 
 POS uses the same repository and Dockerfile, with its own application entry point and independently built service image. It has no custody volume, wallet keys, OIDC secrets or settlement worker. The Compose `pos` profile keeps it out of the default deployment.
 
@@ -19,7 +19,7 @@ OAKGATE_POS_COOKIE_KEY=
 
 Use the Beelink VPN address or `0.0.0.0` for the bind address if Nginx runs on another machine. Restrict access to the intended proxy network. The API URL is the internal Compose address, not the browser-facing URL. Keep existing OakGate and Keycloak data directory settings unchanged.
 
-To enable the connection check, generate a **separate** cookie encryption key, save it as `OAKGATE_POS_COOKIE_KEY`, and set `OAKGATE_POS_ENABLED=true`:
+To enable activation, generate a **separate** cookie encryption key, save it as `OAKGATE_POS_COOKIE_KEY`, and set `OAKGATE_POS_ENABLED=true`:
 
 ```sh
 poetry run python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'
@@ -31,7 +31,7 @@ Alternatively, on Beelink with the existing app running:
 docker compose exec app python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'
 ```
 
-Keep this key in `.env` and your protected configuration backup. Do not reuse the custody encryption key or commit secrets. The key is validated now and reserved for future POS cookies; no terminal cookies are issued in this foundation.
+Keep this key in `.env` and your protected configuration backup. Do not reuse the custody encryption key or commit secrets. This operator key encrypts the terminal session cookie. It is separate from the activation key an individual user creates in Preferences.
 
 ## Deploy independently
 
@@ -61,7 +61,7 @@ curl --max-time 5 http://127.0.0.1:8804/health
 curl --max-time 5 http://127.0.0.1:8804/ready
 ```
 
-Adjust the host if bound only to a VPN address. `/health` reports local process health and is the Docker check. `/ready` returns `disabled` when switched off, `connected` when enabled and OakGate is reachable with its flag enabled, or HTTP 503 with `unavailable` otherwise. A healthy container alone does not confirm connectivity. All responses explicitly leave activation unavailable.
+Adjust the host if bound only to a VPN address. `/health` reports local process health and is the Docker check. `/ready` returns `disabled` when switched off, `connected` when enabled and OakGate is reachable with its flag enabled, or HTTP 503 with `unavailable` otherwise. A healthy container alone does not confirm connectivity. When ready, `activation_available` is true; `payments_available` remains false.
 
 ## Nginx
 
@@ -77,9 +77,27 @@ location / {
 }
 ```
 
-Use `127.0.0.1:8804` instead when Nginx runs on Beelink. Validate and reload Nginx through your normal deployment process. The foundation does not trust forwarded headers or derive security-sensitive URLs from them; the configured public HTTPS origin will be used for future activation.
+Use `127.0.0.1:8804` instead when Nginx runs on Beelink. Validate and reload Nginx through your normal deployment process. POS does not trust forwarded headers or derive security-sensitive URLs from them. The configured public HTTPS origin is used for CSRF and device-proof audience checks and must match the browser address exactly. Compose supplies that same origin to both app and POS.
 
-Open the public hostname and check `/ready` through HTTPS. The page deliberately offers no account login or key-entry form yet.
+Open the public hostname and check `/ready` through HTTPS. Then activate a terminal:
+
+1. Sign in to the main OakGate app and ensure an Acorn is connected.
+2. Open **Preferences → POS terminals**, name the device and choose **Create POS key**.
+3. Save the displayed key privately; it is shown only once.
+4. On the intended device, open the HTTPS POS site and enter that key within 24 hours.
+5. Verify the terminal name and device fingerprint match the entry in Preferences.
+6. Reload the POS page to check browser storage persistence. Test **Log out of terminal**,
+   then sign in again using the saved key on the same browser.
+
+Normal logout invalidates the server session but retains the browser device key.
+A different browser cannot activate a bound key. If browser data is cleared or the
+key is lost, revoke the terminal in Preferences and create a replacement.
+**Clear local session** is an outage escape hatch that removes only the browser
+cookie; use Preferences to revoke server access. Seven-day sessions require
+reactivation using the original credential and browser key when they expire.
+
+The current screen confirms activation and explains that payment collection is
+coming next. It does not show balances, records or account navigation.
 
 ## Disable or stop
 
@@ -89,4 +107,4 @@ Set `OAKGATE_POS_ENABLED=false` and refresh both app and POS so both processes l
 docker compose stop pos
 ```
 
-Stopping POS does not stop OakGate settlement. Terminal credential revocation and device management will be implemented with the receive-only authorization flow described in the [design note](023-receive-only-pos.md).
+Stopping POS does not stop OakGate settlement. Terminal revocation is available in Preferences even while disabled. See the [design note](023-receive-only-pos.md).

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}<h1>{{ _('Your POS key') }}</h1>
+<section class="preferences-panel wallet-panel">
+<p>{{ _('Save this key now. It is shown only once. Enter it on the dedicated POS device within 24 hours.') }}</p>
+<label for="pos-key">{{ _('Activation key') }}</label>
+<textarea id="pos-key" readonly rows="4" autocomplete="off" spellcheck="false">{{ credential }}</textarea>
+<button type="button" id="copy-pos-key" data-copied="{{ _('Copied') }}">{{ _('Copy key') }}</button>
+<p>{{ _('The first browser to activate this key becomes the registered device. Keep the key for signing back in on that same browser after logout.') }}</p>
+<a class="primary-action" href="{{ pos_url }}" rel="noreferrer noopener" target="_blank">{{ _('Open POS') }}</a>
+<p class="note">{{ _('Device activation is ready. Payment collection will be added next.') }}</p>
+<a href="/account/preferences">{{ _('Back to Preferences') }}</a>
+</section><script src="/static/pos-management.js" defer></script>{% endblock %}

@@ -1,0 +1,16 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>OakGate POS</title>
+<link rel="stylesheet" href="/static/terminal.css"><script src="/static/terminal.js" defer></script></head>
+<body><main><header><img src="/logo.png" alt=""><span>MAINSTAY / OAKGATE POS</span></header>
+<section><p class="eyebrow">YOUR POINT OF SALE</p><h1 id="heading">Set up this terminal</h1>
+<p id="status" role="status" aria-live="polite">Checking terminal…</p>
+<form id="activation" hidden><label for="credential">POS activation key</label>
+<input id="credential" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" required maxlength="200" placeholder="ogpos1.…">
+<p class="note">Create a key in OakGate Preferences, then enter it here. This key will be bound to this browser.</p>
+<button type="submit">Activate terminal</button></form>
+<div id="terminal" hidden><p class="badge">RECEIVE ONLY</p><p class="note">This device cannot spend funds or open your account.</p>
+<p>Payment collection is coming next.</p><p class="note">Device fingerprint<br><code id="fingerprint"></code></p>
+<button id="logout" type="button" class="secondary">Log out of terminal</button></div>
+<button id="forget" type="button" class="secondary" hidden>Clear local session</button>
+<p id="error" role="alert"></p><noscript>JavaScript is required to securely activate this device.</noscript>
+</section><footer>Dedicated device. Limited access.</footer></main></body></html>

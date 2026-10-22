@@ -1,6 +1,6 @@
 # Receive-only point-of-sale terminals
 
-Status: **deployment foundation implemented; terminal activation and payments remain planned**. This note defines a separate POS
+Status: **deployment, provisioning and browser-bound activation implemented; payment collection remains planned**. This note defines a separate POS
 application using OakGate's existing receipt and settlement capabilities. It does
 not grant existing account sessions new permissions or introduce another wallet.
 
@@ -51,7 +51,7 @@ POS is opt-in. The setting defaults to:
 OAKGATE_POS_ENABLED=false
 ```
 
-The switch is implemented. Until terminal authorization is built, activation and payment operations remain unavailable even when enabled. The public `/api/pos/v1/status` endpoint is a diagnostic exception: it returns only feature availability, never account data.
+The switch is implemented. Activation and terminal management are available when enabled; payment operations remain unavailable. The public `/api/pos/v1/status` endpoint is a diagnostic exception: it returns only feature availability, never account data.
 OakGate is the authoritative enforcement point; hiding the UI or stopping the
 separate POS container is not sufficient enforcement.
 
@@ -104,7 +104,8 @@ request status, not a full terminal ledger or an account transaction feed.
 ## Provisioning and activation
 
 1. In authenticated OakGate Preferences, the owner creates a named POS terminal
-   with allowed receiving assets and limits. OakGate requires a connected Acorn.
+   with a name. OakGate requires a connected Acorn. Receiving asset selection and
+   limits will be added with payment support; this stage cannot create receipts.
 2. Generate an opaque, high-entropy random POS key, shown once for entry or QR
    activation. Store only its verifier hash, with a public credential identifier,
    owner mapping, policy, creation time and revocation state. Do not put the secret
@@ -119,8 +120,8 @@ request status, not a full terminal ledger or an account transaction feed.
    activation attempts cannot both succeed. Possession of an unbound key permits
    its first activation, so protect it until activation is complete.
 5. OakGate returns a terminal session bound to the credential and device. The POS
-   backend sets a dedicated authenticated-encrypted cookie containing the POS
-   credential and session reference. It must not contain an Acorn key or an
+   backend sets a dedicated authenticated-encrypted cookie containing a high-entropy terminal
+   session token. The activation credential is not retained in the cookie. It must not contain an Acorn key or an
    OakGate account session.
 6. Preferences displays the terminal name, activation/last-seen times, status and
    a short public-key fingerprint. The fingerprint is a display aid; verification
@@ -145,7 +146,7 @@ key belongs only to the POS service and is separate from custody encryption and
 account-session keys. Do not share cookies across `*.oakgate.safebox.dev`.
 
 JavaScript can sign requests with the device key without reading the HttpOnly
-cookie. The POS backend decrypts the cookie and forwards the credential plus the
+cookie. The POS backend decrypts the cookie and forwards the session token plus the
 original device proof to OakGate. Verify exact origin/CSRF requirements as well:
 SameSite alone does not distinguish sibling subdomains. Keep activation and API
 responses non-cacheable, apply a restrictive CSP and avoid third-party scripts.
@@ -179,14 +180,14 @@ not authorize implementing wallet signing in POS or OakGate.
 
 ## API shape and payment recovery
 
-Proposed routes, subject to implementation review:
+Implemented authorization routes and planned payment routes:
 
 | Route | Purpose |
 | --- | --- |
 | `POST /api/pos/v1/activation-challenges` | Short-lived activation challenge; rate-limited and no account disclosure |
 | `POST /api/pos/v1/activate` | Verify credential and proof, atomically bind or authenticate the registered device |
 | `POST /api/pos/v1/challenges` | Obtain a fresh nonce for a terminal session; grants no payment operation itself |
-| `GET /api/pos/v1/config` | Receive-only terminal configuration |
+| `POST /api/pos/v1/config` | Name, device fingerprint and receive-only scope; receiving assets/limits come with payment support |
 | `POST /api/pos/v1/requests` | Create one durable request using an idempotency key |
 | `GET /api/pos/v1/requests/{id}` | Read this credential's request and status |
 | `POST /api/pos/v1/logout` | Invalidate this terminal session |
@@ -217,8 +218,8 @@ pending receipts or prevent settlement into the rightful Acorn.
 Logout invalidates the terminal session server-side and clears its cookie. The
 browser may retain its non-exportable device key, which alone cannot log back in.
 Revocation disables the POS credential and all associated sessions immediately;
-check it on every operation. Rebinding requires the owner's account, invalidates
-the old session/device association and retains audit records. A dedicated device
+check it on every operation. Replacement currently means revoking the old terminal and issuing a new key
+from the owner's account; audit records are retained. A dedicated device
 can clear browser data, but cannot turn that action into account access.
 
 Store credential verifiers, public device keys, policy, revocation/session state,
@@ -268,6 +269,61 @@ Before release, verify that:
   balances/history, and a compromised POS service still cannot spend via this API;
 - terminal management and all wallet paths preserve Acorn/Stroma boundaries.
 
-Session duration, activation expiry, rate-limit thresholds and amount caps need
-explicit defaults before implementation. No production deployment or new
-credential is created by this design note.
+## Implemented activation protocol and defaults
+
+The activation key is `ogpos1.<random identifier>.<256-bit random secret>`.
+Only its SHA-256 verifier is persisted. An unused key expires after 24 hours;
+a bound key may authenticate the same device again until revoked. Each successful
+activation replaces previous sessions for that terminal. Sessions expire after
+seven days. Owners can have ten unrevoked terminals and provision at most ten
+per hour. Revoke expired unused entries to free a slot.
+
+Challenges expire after 60 seconds, allow at most 60 issues per terminal per
+minute, and are consumed atomically with the authorized operation in SQLite.
+API calls are limited to 120 per minute per actual peer (the POS proxy shares
+this budget); forwarded source headers are not trusted. This conservative
+activation-stage rate limit will need revisiting when payment polling is added.
+
+The exact proof message is a compact JSON array encoded as UTF-8:
+
+```text
+["oakgate-pos-proof-v1", public_origin, terminal_id, session_id,
+ "POST", exact_backend_path, "", sha256(canonical_operation_body), nonce, expires_unix]
+```
+
+For activation, `session_id` is empty and the canonical operation body is
+compact JSON `[terminal_id, public_key]`. For config/logout it is `{}`.
+The credential/session secret and proof envelope are excluded from this body;
+there are no other accepted action parameters. Query strings and extra JSON
+fields are rejected. Future payment bodies must define their own signed bytes.
+The server generates and stores the exact message; the browser checks its version,
+audience, operation, body hash, nonce and expiry before signing it. Public keys
+are base64url-encoded uncompressed P-256 points; signatures are base64url-encoded
+64-byte IEEE P1363 `r || s`, the Web Crypto format. Server verification converts
+that format to DER for cryptography's ECDSA SHA-256 verifier. This is a scoped
+application protocol, not a claim of DPoP conformance.
+
+The private `CryptoKey` is non-exportable and persisted through IndexedDB.
+A sign/verify round trip after reading it back must succeed before enrollment.
+An atomic IndexedDB read/write transaction keeps simultaneous tabs from
+replacing the device key. Missing keys fail closed; they do not silently rebind
+a terminal. Target Safari/iPad storage persistence still needs deployment testing.
+
+The host-only `__Host-oakgate_pos` Secure, HttpOnly, SameSite=Strict cookie uses
+Fernet authenticated encryption with a POS-specific payload prefix and seven-day
+TTL. Its plaintext is only the terminal session token, never a wallet credential.
+Normal logout uses a signed proof and invalidates the server session. **Clear
+local session** only removes the browser cookie and is available during an outage
+or lost device-key situation; it does not revoke server state. Revoke the terminal
+from Preferences if the cookie may have been copied. This distinction is deliberate.
+
+Tables `pos_terminals`, `pos_sessions`, `pos_challenges`, `pos_limits` and
+`pos_audit` live in `custody.sqlite3`, so existing consistent custody backups
+include them. Device public keys, verifier hashes and lifecycle timestamps are
+stored; no device private key is sent to the server. Authorization checks the
+original `wallet_id` is still active, preventing retargeting after replacement.
+Revocation remains available to owners while POS is disabled. No Acorn private-key
+operation is added by activation, and no receipt or payment row is modified.
+
+Payment endpoints remain unavailable. Asset policies, amount caps, request
+ownership and durable payment idempotency are prerequisites for the next stage.

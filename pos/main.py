@@ -1,14 +1,69 @@
-"""Deployable POS shell. Never imports OakGate's wallet application."""
+"""Isolated POS browser app: encrypted terminal sessions, no account or wallet keys."""
+import json
 from pathlib import Path
+
 import httpx
-from fastapi import FastAPI
+from cryptography.fernet import Fernet, InvalidToken
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
+
 from pos.config import POSSettings
+
+COOKIE = '__Host-oakgate_pos'
+TTL = 7 * 86400
+ROOT = Path(__file__).resolve().parent
+FIELDS = {'activation-challenges': {'credential', 'public_key'},
+          'activate': {'credential', 'public_key', 'challenge', 'signature'},
+          'challenges': {'operation'}, 'config': {'challenge', 'signature'},
+          'logout': {'challenge', 'signature'}}
 
 
 def create_app(settings=None, transport=None):
     settings = settings or POSSettings.from_env()
+    cipher = Fernet(settings.cookie_key.encode()) if settings.enabled else None
     app = FastAPI(title='OakGate POS', docs_url=None, redoc_url=None, openapi_url=None)
+    app.mount('/static', StaticFiles(directory=ROOT / 'static'), name='static')
+
+    @app.middleware('http')
+    async def headers(request, call_next):
+        response = await call_next(request)
+        response.headers.update({'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer',
+            'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY',
+            'Content-Security-Policy': "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"})
+        return response
+
+    def token(request):
+        value = request.cookies.get(COOKIE, '')
+        if not cipher or len(value) > 1024:
+            raise HTTPException(403, 'Activate this terminal to continue.')
+        try:
+            result = cipher.decrypt(value.encode('ascii'), ttl=TTL).decode('ascii')
+            if not result.startswith('oakgate-pos-session-v1:'):
+                raise ValueError
+            return result.split(':', 1)[1]
+        except (InvalidToken, ValueError, UnicodeError):
+            raise HTTPException(403, 'Activate this terminal to continue.') from None
+
+    async def backend(path, *, data=None, session=None):
+        headers = {'Authorization': 'Bearer ' + session} if session else {}
+        try:
+            async with httpx.AsyncClient(timeout=8, follow_redirects=False, trust_env=False, transport=transport) as client:
+                if data is None:
+                    result = await client.get(settings.api_url + '/api/pos/v1/' + path)
+                else:
+                    result = await client.post(settings.api_url + '/api/pos/v1/' + path, json=data, headers=headers)
+            if result.status_code in {400, 403, 429, 503}:
+                detail = {400: 'Check the activation request.', 403: 'Authorization failed. Check the key, device or revocation status.',
+                          429: 'Too many attempts. Please wait a minute.', 503: 'OakGate POS is unavailable. Please try again shortly.'}
+                raise HTTPException(result.status_code, detail[result.status_code])
+            result.raise_for_status()
+            value = result.json()
+            if not isinstance(value, dict):
+                raise ValueError
+            return value
+        except (httpx.HTTPError, ValueError):
+            raise HTTPException(503, 'Cannot reach OakGate. Please try again shortly.') from None
 
     @app.get('/health')
     async def health():
@@ -16,43 +71,78 @@ def create_app(settings=None, transport=None):
 
     @app.get('/ready')
     async def ready():
-        # Explicit diagnostics, separate from local Docker liveness. No proxying
-        # arbitrary routes and no wallet credentials are sent to this endpoint.
         if not settings.enabled:
-            return JSONResponse({'status': 'disabled', 'activation_available': False}, headers={'Cache-Control': 'no-store'})
+            return {'status': 'disabled', 'activation_available': False}
         try:
-            async with httpx.AsyncClient(timeout=3, follow_redirects=False, trust_env=False, transport=transport) as client:
-                response = await client.get(settings.api_url + '/api/pos/v1/status')
-                response.raise_for_status()
-                payload = response.json()
-                if payload.get('service') != 'oakgate-pos-api' or payload.get('enabled') is not True:
-                    raise ValueError('Backend not enabled')
-        except (httpx.HTTPError, ValueError, AttributeError):
-            return JSONResponse({'status': 'unavailable', 'activation_available': False}, status_code=503,
-                                headers={'Cache-Control': 'no-store'})
-        return JSONResponse({'status': 'connected', 'phase': 'foundation', 'activation_available': False},
-                            headers={'Cache-Control': 'no-store'})
+            payload = await backend('status')
+            if payload.get('service') != 'oakgate-pos-api' or payload.get('enabled') is not True:
+                raise HTTPException(503)
+        except HTTPException:
+            return JSONResponse({'status': 'unavailable', 'activation_available': False}, status_code=503)
+        return {'status': 'connected', 'phase': 'activation',
+                'activation_available': payload.get('activation_available') is True, 'payments_available': False}
+
+    @app.get('/api/session')
+    async def session_state(request: Request):
+        try:
+            token(request)
+            active = True
+        except HTTPException:
+            active = False
+        return {'enabled': settings.enabled, 'session_present': active}
+
+    @app.post('/api/{operation}')
+    async def proxy(request: Request, operation: str):
+        if request.headers.get('origin') != settings.public_url or request.url.query:
+            raise HTTPException(403, 'Use this POS site to continue.')
+        if operation == 'forget':
+            # Local cookie clearing is available even if the feature/backend is down.
+            response = JSONResponse({'status': 'local-session-cleared'})
+            response.delete_cookie(COOKIE, path='/', secure=True, httponly=True, samesite='strict')
+            return response
+        if not settings.enabled:
+            raise HTTPException(503, 'Point of sale is disabled.')
+        if operation not in FIELDS:
+            raise HTTPException(404, 'Unknown POS operation')
+        body = bytearray()
+        async for chunk in request.stream():
+            body.extend(chunk)
+            if len(body) > 8192:
+                raise HTTPException(413, 'Request too large')
+        if request.headers.get('content-type', '').split(';')[0] != 'application/json':
+            raise HTTPException(415, 'JSON required')
+        try:
+            data = json.loads(body)
+        except (ValueError, UnicodeError):
+            raise HTTPException(400, 'Invalid request') from None
+        if (not isinstance(data, dict) or set(data) != FIELDS[operation]
+                or any(not isinstance(v, str) or len(v) > 1024 for v in data.values())):
+            raise HTTPException(400, 'Invalid request')
+        session = None if operation in {'activation-challenges', 'activate'} else token(request)
+        payload = await backend(operation, data=data, session=session)
+        if operation == 'activate':
+            secret = payload.get('session')
+            if not isinstance(secret, str) or len(secret) > 128:
+                raise HTTPException(503, 'Activation could not be confirmed. Enter your key again on this device.')
+            response = JSONResponse({'status': 'activated'})
+            response.set_cookie(COOKIE, cipher.encrypt(('oakgate-pos-session-v1:' + secret).encode()).decode(),
+                                max_age=TTL, secure=True, httponly=True, samesite='strict', path='/')
+            return response
+        # Only explicit public fields cross back to browser JavaScript.
+        allowed = {'activation-challenges': {'challenge', 'message'}, 'challenges': {'challenge', 'message'},
+                   'config': {'name', 'fingerprint', 'scope', 'payments_available'}, 'logout': {'status'}}[operation]
+        response = JSONResponse({k: v for k, v in payload.items() if k in allowed})
+        if operation == 'logout':
+            response.delete_cookie(COOKIE, path='/', secure=True, httponly=True, samesite='strict')
+        return response
 
     @app.get('/', response_class=HTMLResponse)
     async def home():
-        heading = 'Terminal setup is coming next' if settings.enabled else 'Point of sale is disabled'
-        detail = ('The POS service is running. Device activation and payment collection are not available yet.'
-                  if settings.enabled else 'An operator must enable this service before terminal setup can begin.')
-        return HTMLResponse(f'''<!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1"><title>OakGate POS</title>
-<style> :root{{color-scheme:dark;font-family:system-ui,sans-serif;background:#171914;color:#eef0e8}}
-body{{margin:0;min-height:100vh;display:grid;place-items:center}} main{{max-width:480px;margin:24px;text-align:center}}
-img{{width:64px;height:64px}} .brand{{font-size:12px;letter-spacing:.15em;color:#b7baae}}
-section{{margin-top:24px;padding:28px;border:1px solid #4a4f42;border-radius:18px;background:#22251e}}
-h1{{font-size:24px}} p{{line-height:1.6;color:#b7baae}} a{{color:#bfd78c}}</style></head>
-<body><main><img src="/logo.png" alt=""><p class="brand">MAINSTAY / OAKGATE POS</p>
-<section><h1>{heading}</h1><p>{detail}</p><a href="/ready">Check service connection</a></section>
-</main></body></html>''', headers={'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff',
-'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"})
+        return HTMLResponse((ROOT / 'templates/index.html').read_text())
 
     @app.get('/logo.png')
     async def logo():
-        return FileResponse(Path(__file__).resolve().parents[1] / 'assets/branding/oakgate-logo-flat.png')
+        return FileResponse(ROOT.parent / 'assets/branding/oakgate-logo-flat.png')
 
     return app
 

@@ -1,4 +1,5 @@
 import asyncio
+import os
 from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 
@@ -12,6 +13,8 @@ from app.payment_review import router as payment_review_router
 from app.scan import router as scan_router
 from app.receive import router as receive_router
 from app.pos_api import create_router as pos_router
+from app.pos_store import POSStore
+from pos.config import origin
 from app.messages import router as message_router
 from app.recovery import router as recovery_router
 from app.auth import current_session, error_page, router
@@ -62,6 +65,8 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
     app = FastAPI(title="OakGate", description="OpenID Access Gate — part of the Mainstay family.",
                   version=APP_VERSION, servers=[{"url": settings.origin}], lifespan=lifespan)
     app.state.wallets = wallets if wallets is not None else configured_service()
+    pos_origin = origin(os.getenv('OAKGATE_POS_PUBLIC_URL', 'https://pos.oakgate.safebox.dev'), 'OAKGATE_POS_PUBLIC_URL')
+    app.state.pos = POSStore(app.state.wallets.store, pos_origin) if app.state.wallets else None
     app.state.ecash = EcashReceiver(app.state.wallets) if app.state.wallets else None
     app.state.send = SendService(app.state.wallets, settings.origin, app.state.ecash) if app.state.wallets else None
     app.state.rates = CurrencyRates(app.state.wallets.store) if app.state.wallets else None
@@ -101,6 +106,10 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
             response.headers['Referrer-Policy'] = 'strict-origin'
             response.headers['X-Frame-Options'] = 'DENY'
             response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'none'"
+        if request.url.path.startswith(('/account/pos', '/api/pos/')):
+            response.headers['Cache-Control'] = 'no-store, private'
+            response.headers['Referrer-Policy'] = 'no-referrer'
+            response.headers['X-Frame-Options'] = 'DENY'
         response.headers["Content-Language"] = getattr(request.state, "language", "en")
         response.headers["X-Content-Type-Options"] = "nosniff"
         return response
