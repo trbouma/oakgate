@@ -20,6 +20,7 @@ WORKDIR /app
 RUN useradd --uid 10001 --create-home oakgate && install -d -o oakgate -g oakgate -m 700 /app/data
 COPY --from=builder /app/.venv /app/.venv
 COPY app ./app
+COPY pos ./pos
 COPY assets/branding/oakgate-logo-flat.png ./assets/branding/oakgate-logo-flat.png
 USER oakgate
 EXPOSE 8000

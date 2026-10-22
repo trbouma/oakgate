@@ -6,6 +6,7 @@ services:
       context: .
     restart: unless-stopped
     environment:
+      OAKGATE_POS_ENABLED: ${OAKGATE_POS_ENABLED:-false}
       OAKGATE_PUBLIC_URL: ${OAKGATE_PUBLIC_URL:-https://oakgate.safebox.dev}
       OAKGATE_OIDC_ISSUER: ${OAKGATE_OIDC_ISSUER:-https://keycloak.safebox.dev/realms/oakgate}
       OAKGATE_OIDC_CLIENT_ID: ${OAKGATE_OIDC_CLIENT_ID:-oakgate-web}
@@ -52,6 +53,29 @@ services:
         condition: service_healthy
     ports:
       - "${OAKGATE_BIND_ADDRESS:-0.0.0.0}:${OAKGATE_PORT:-8801}:8000"
+
+  # Explicit opt-in service: docker compose --profile pos up -d pos
+  pos:
+    profiles: [pos]
+    build:
+      context: .
+    restart: unless-stopped
+    init: true
+    command: ["uvicorn", "pos.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-proxy-headers", "--no-access-log", "--loop", "asyncio"]
+    environment:
+      OAKGATE_POS_ENABLED: ${OAKGATE_POS_ENABLED:-false}
+      OAKGATE_POS_PUBLIC_URL: ${OAKGATE_POS_PUBLIC_URL:-https://pos.oakgate.safebox.dev}
+      OAKGATE_POS_API_URL: ${OAKGATE_POS_API_URL:-http://app:8000}
+      OAKGATE_POS_COOKIE_KEY: ${OAKGATE_POS_COOKIE_KEY:-}
+    ports:
+      - "${OAKGATE_POS_BIND_ADDRESS:-127.0.0.1}:${OAKGATE_POS_PORT:-8804}:8000"
+    # No custody volumes, account cookies, OIDC secrets or wallet keys.
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    stop_grace_period: 30s
 
   sessions:
     image: redis:7.4-alpine

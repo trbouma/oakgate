@@ -85,6 +85,8 @@ The included GitHub Pages workflow publishes on pushes to `main` once **Settings
 
 ## Design
 
+- [Receive-only POS terminals and browser-bound keys (proposed)](docs/023-receive-only-pos.md)
+
 - [Safebox discovery contract and migration](docs/018-safebox-address-discovery.md)
 
 - [Connect Keycloak sign-in](docs/005-keycloak-sign-in.md)
@@ -163,3 +165,11 @@ startup default to 300 seconds. OakGate's `./refresh-app.sh --timeout 120`
 remains app-only and leaves Keycloak and Redis running. Application checks
 (login, public HTTPS, record retrieval and a small payment) remain separate
 from container readiness. Never run two refresh operations concurrently.
+
+### Separate POS service
+
+The optional POS foundation runs on its own port (8804 by default), disabled by
+default with `OAKGATE_POS_ENABLED=false`. Use `./refresh-pos.sh` to rebuild only
+POS with a bounded health wait. It has no wallet data mount or account access.
+Activation and payments are not available yet. See the
+[POS deployment guide](docs/024-pos-deployment.md) for environment settings and Nginx setup.

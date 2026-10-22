@@ -3,6 +3,8 @@
 !poetry.lock
 !app/
 !app/**
+!pos/
+!pos/**
 !assets/
 !assets/branding/
 !assets/branding/oakgate-logo-flat.png
