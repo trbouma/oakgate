@@ -166,6 +166,13 @@ def test_receive_invoice_uses_durable_journal_and_clear_receipt_tickets(tmp_path
             assert stored['prepared'] and stored['invoice'] == item['code']
             response = await client.get(response.headers['location'])
             assert response.status_code == 200 and '>Waiting for payment</p>' in response.text
+            assert 'data-receive-copy=' in response.text
+            assert 'id="request-code"' not in response.text
+            assert '>Check receipt<' not in response.text
+            assert 'data-receive-cancel' in response.text and '>Cancel</a>' in response.text
+            actions = response.text.split('class="wallet-actions"', 1)[1].split('</div>', 1)[0]
+            assert 'href="/account/receive"' not in actions
+            assert 'href="/account/scan"' in actions
             assert 'SECRET-NSEC' not in response.text and 'SECRET-PHRASE' not in response.text
             other = await login(client,sessions,sub='other')
             await client.post('/account/acorn/create',data=form())

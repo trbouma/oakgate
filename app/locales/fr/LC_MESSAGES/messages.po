@@ -2671,3 +2671,15 @@ msgstr "Le taux de change a changé. Vérifiez le montant en sats et réessayez.
 
 msgid "Enter a positive whole-number amount."
 msgstr "Saisissez un nombre entier positif."
+
+msgid "Copy payment request"
+msgstr "Copier la demande de paiement"
+
+msgid "Copy unavailable. Try again or scan the QR code."
+msgstr "Copie indisponible. Réessayez ou scannez le code QR."
+
+msgid "Tap the QR code to copy the request."
+msgstr "Touchez le code QR pour copier la demande."
+
+msgid "Automatic checking has stopped. You can check your transactions for updates."
+msgstr "La vérification automatique est terminée. Consultez vos transactions pour connaître les mises à jour."

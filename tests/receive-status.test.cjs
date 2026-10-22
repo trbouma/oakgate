@@ -9,8 +9,10 @@ function setup(fetcher) {
   const status = {dataset: {state:'pending', statusUrl:'/status', pending:'Waiting', detected:'Detected', complete:'Received', unavailable:'Checking', expired:'Expired', review:'Review'}};
   const pending = {hidden:false}, complete = {hidden:true};
   const note = {hidden:false, dataset:{paused:'Stopped'}};
+  let onCancel;
+  const cancel = {dataset:{completeLabel:'New request'},addEventListener:(_,fn)=>{onCancel=fn;}};
   const progress = {hidden:true}, bar = {value:0}, countdown = {textContent:''};
-  const nodes = {'[data-receive-progress]':progress, '[data-receive-progress-bar]':bar, '[data-receive-countdown]':countdown, '[data-receive-status]':status, '[data-receive-pending]':pending, '[data-receive-complete]':complete, '[data-receive-poll-note]':note};
+  const nodes = {'[data-receive-cancel]':cancel,'[data-receive-progress]':progress, '[data-receive-progress-bar]':bar, '[data-receive-countdown]':countdown, '[data-receive-status]':status, '[data-receive-pending]':pending, '[data-receive-complete]':complete, '[data-receive-poll-note]':note};
   let calls = 0, lastSignal, onHide;
   vm.runInNewContext(source, {
     document:{querySelector:s=>nodes[s], createElement:()=>({style:{setProperty(){}},setAttribute(){},appendChild(){},remove(){}}),body:{appendChild(){}}}, performance:{now:()=>now}, AbortController,
@@ -27,7 +29,7 @@ function setup(fetcher) {
     }
     now=to;
   }
-  return {status,pending,complete,note,progress,bar,countdown,advance,hide:()=>onHide(),calls:()=>calls,signal:()=>lastSignal};
+  return {cancel:()=>onCancel({}),status,pending,complete,note,progress,bar,countdown,advance,hide:()=>onHide(),calls:()=>calls,signal:()=>lastSignal};
 }
 const response=state=>({ok:true,status:200,json:async()=>({state})});
 test('confirmed credit shows received and stops polling',async()=>{
@@ -96,4 +98,15 @@ test('detected transfer stops polling without claiming confirmed credit',async()
   assert.equal(h.progress.hidden,true);
   await h.advance(120000);
   assert.equal(h.calls(),1);
+});
+
+test('cancel aborts lookup and ignores a late response',async()=>{
+  let resolve;
+  const h=setup(()=>new Promise(r=>{resolve=r;}));
+  await h.advance(1000);h.cancel();
+  assert.equal(h.signal().aborted,true);
+  assert.equal(h.progress.hidden,true);
+  resolve(response('complete'));for(let i=0;i<12;i++) await Promise.resolve();
+  assert.equal(h.complete.hidden,true);
+  await h.advance(180000);assert.equal(h.calls(),1);
 });

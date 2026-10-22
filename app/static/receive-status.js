@@ -4,6 +4,7 @@
   const pending = document.querySelector('[data-receive-pending]');
   if (!status || !pending) return;
   const note = document.querySelector('[data-receive-poll-note]');
+  const cancel = document.querySelector('[data-receive-cancel]');
   const received = document.querySelector('[data-receive-complete]');
   const progress = document.querySelector('[data-receive-progress]');
   const bar = document.querySelector('[data-receive-progress-bar]');
@@ -80,6 +81,7 @@
       if (state === 'complete' || state === 'detected') {
         pending.hidden = true;
         if (received) received.hidden = state !== 'complete';
+        if (cancel) cancel.textContent = cancel.dataset.completeLabel;
         stop();
         celebrate();
         return;
@@ -92,6 +94,9 @@
     }
     if (!stopped) timer = setTimeout(poll, 1000);
   }
+  cancel?.addEventListener('click', event => {
+    if (!event.defaultPrevented && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && !event.button) stop();
+  });
   if (['complete', 'detected', 'expired'].includes(status.dataset.state)) return;
   updateProgress();
   deadlineTimer = setTimeout(() => stop(true), 120000);
