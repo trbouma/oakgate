@@ -12,7 +12,7 @@ Bitcoin symbol and exact sats underneath. The same display appears at the top of
 the cash transactions page. Existing balance links retain their behavior. Clear
 assets keep their own friendly units; they are not converted as if they were sats.
 Cash transactions remain exclusively Acorn's history; current exchange rates do
-not rewrite historical values or affect payment amounts.
+not rewrite historical values or change existing invoices.
 
 ## Initialization and refresh
 
@@ -32,8 +32,8 @@ followed. A compatible operator-selected HTTPS feed can replace the default.
 Rates older than 24 hours are marked stale. If the chosen rate is missing or rate
 display is disabled, the exact sats balance remains visible without a fabricated
 fiat value. Conversion uses decimal arithmetic; JPY estimates use whole yen and
-other supported currencies use two decimal places. Estimates are informational,
-never inputs to settlement or authorization.
+other supported currencies use two decimal places. Balance estimates are informational. Receive entry separately validates a current
+rate to create a new invoice, as described below.
 
 The public `/rates` page lists values for one BTC, currency descriptions, last
 successful refresh timestamps, stale markers and sources. Links appear at the
@@ -60,3 +60,20 @@ language preferences. Normal SQLite backups include currency preferences and cac
 rates; the cache itself can be rebuilt. No new dependencies or Acorn changes are
 required. After committing and pushing, deploy with `./refresh-app.sh`. Keycloak
 can stay running. Until the first successful refresh, balances fall back to sats.
+
+## Receive amounts
+
+Cash requests default to the account's preferred local currency. Users can
+select any listed currency or SATS. Currency entry accepts up to two decimal
+places (including JPY on this entry screen); SATS and Clear accept positive
+whole numbers. Switching currencies or balances clears the entered amount.
+The right-aligned keypad hides its decimal key for whole-number entry.
+
+The sats preview rounds to the nearest whole sat, with halves rounded up. The
+server validates the amount and recalculates the same conversion using the
+current stored rate before creating an invoice through the existing payment
+service. Missing, disabled or stale rates cannot create fiat-denominated
+requests. If the rate changed since display, creation stops and the refreshed
+form asks the user to review the new sats amount. No browser-supplied converted
+sats value is trusted. The durable request and invoice remain denominated in
+sats; existing receipt detection and settlement recovery are unchanged.

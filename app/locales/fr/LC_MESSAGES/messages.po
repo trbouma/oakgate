@@ -2653,3 +2653,21 @@ msgstr "Le stockage Safebox est indisponible. Réessayez dans un instant."
 
 msgid "Your session service is unavailable. Please try again shortly."
 msgstr "Le service de session est indisponible. Réessayez dans un instant."
+
+msgid "Currency rate unavailable. Choose SATS or try again later."
+msgstr "Taux de change indisponible. Choisissez SATS ou réessayez plus tard."
+
+msgid "Decimal point"
+msgstr "Séparateur décimal"
+
+msgid "The converted amount must be at least 1 sat and within the supported limit."
+msgstr "Le montant converti doit être d’au moins 1 sat et respecter la limite autorisée."
+
+msgid "Enter a positive amount with up to two decimal places."
+msgstr "Saisissez un montant positif avec au maximum deux décimales."
+
+msgid "The currency rate changed. Review the sats amount and try again."
+msgstr "Le taux de change a changé. Vérifiez le montant en sats et réessayez."
+
+msgid "Enter a positive whole-number amount."
+msgstr "Saisissez un nombre entier positif."

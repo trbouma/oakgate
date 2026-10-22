@@ -1,9 +1,8 @@
 """Cash invoices and Clear requests, with durable automatic receipt processing."""
 import asyncio
-import re
 import time
 from app.wallets import WalletInputError
-from app.custody import Busy
+from app.custody import Busy, identity_key
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import RedirectResponse, JSONResponse
 from acorn.payment_request import decode_payment_request
@@ -13,12 +12,21 @@ from app.request_store import RequestStore
 from app.record_previews import _qr_svg
 from app.clear_routing import clear_availability
 
+from app.receive_amount import receive_amount
+
 router = APIRouter()
 
 
 def render(request, session, status=200, **context):
+    rates = request.app.state.rates
+    rows = rates.rows() if rates and rates.enabled else []
+    currency = rates.store.currency(identity_key(session['user']), rates.default_currency) if rates else 'SATS'
+    defaults = {'currency_options': rows, 'currency': currency, 'amount': '', 'selected_asset': ''}
+    defaults.update(context)
+    selected = next((r for r in rows if r['code'] == defaults['currency']), None)
+    defaults['quoted_rate'] = selected['fiat_per_btc'] if selected and not selected['stale'] else ''
     return request.app.state.templates.TemplateResponse(request=request, name='receive.html',
-        context={**session, 'active_page': 'receive', **context}, status_code=status)
+        context={**session, 'active_page': 'receive', **defaults}, status_code=status)
 
 
 @router.get('/account/receive', include_in_schema=False)
@@ -47,45 +55,58 @@ async def create(request: Request):
     session, service, owner, material = await account(request)
     form = await checked_form(request, session)
     amount = str(form.get('amount', ''))
-    if not re.fullmatch('[1-9][0-9]{0,12}', amount):
-        return render(request, session, message='Enter a positive whole-number amount.', status=400)
+    asset_id = str(form.get('asset', ''))
+    currency = str(form.get('currency', 'SATS'))
+    try:
+        assets = await request.app.state.send.clear_assets(owner) if asset_id else []
+    except Exception:
+        assets = []
+    def failure(message, status=400):
+        return render(request, session, message=message, status=status, assets=assets,
+                      amount=amount, currency=currency, selected_asset=asset_id,
+                      description=str(form.get('description', '')))
+    rates = request.app.state.rates
+    try:
+        units = receive_amount(amount, 'SATS' if asset_id else currency,
+                               rates.rows() if rates and rates.enabled else [],
+                               str(form.get('quoted_rate', '')))
+    except ValueError as exc:
+        return failure(str(exc))
     service.relay(material['relay'])
     try:
         lease = service.store.acquire(owner)
     except Busy:
-        return render(request, session, message='Your Acorn is busy. Try again shortly.', status=409)
+        return failure('Your Acorn is busy. Try again shortly.', 409)
     try:
-        asset_id = str(form.get('asset', ''))
         async with asyncio.timeout(50):
             if asset_id:
                 receiver = request.app.state.ecash
                 if not receiver or not receiver.clear_available:
                     raise ValueError('Clear receiving unavailable')
-                assets = await request.app.state.send.clear_assets(owner)
                 asset = next((a for a in assets if a['id'] == asset_id), None)
                 if asset is None:
                     raise ValueError('Select an existing Clear balance')
                 if clear_availability(asset['mint']) == 'instance':
-                    return render(request, session, message='This Clear balance is instance-only. Receive it using your receipt address on the Funds page.', status=422)
+                    return failure('This Clear balance is instance-only. Receive it using your receipt address on the Funds page.', 422)
                 description = str(form.get('description', '')).strip()
                 if len(description) > 200:
                     raise ValueError('Description too long')
-                code = await service.backend.create_clear_request(material, int(amount), asset, description)
+                code = await service.backend.create_clear_request(material, units, asset, description)
                 decoded = decode_payment_request(code)
                 item = {'purpose': 'clear-request', 'code': code, 'request_id': decoded.payment_id,
-                    'amount': int(amount), 'mint': asset['mint'], 'unit': asset['unit'],
+                    'amount': units, 'mint': asset['mint'], 'unit': asset['unit'],
                     'display_name': asset['display_name'], 'display_unit': asset['display_unit'],
                     'scope': clear_availability(asset['mint'])}
             else:
-                payment = await request.app.state.payments.request_invoice(owner, int(amount))
+                payment = await request.app.state.payments.request_invoice(owner, units)
                 item = {'purpose': 'cash-request', 'code': payment['invoice'], 'payment_id': payment['id'],
-                    'amount': int(amount), 'display_name': 'Cash', 'display_unit': 'sats'}
+                    'amount': units, 'display_name': 'Cash', 'display_unit': 'sats'}
         ident = RequestStore(service.store).save(owner, item)
         return RedirectResponse('/account/receive?ticket='+ident, 303)
     except WalletInputError as exc:
-        return render(request, session, message=str(exc), status=503)
+        return failure(str(exc), 503)
     except Exception:
-        return render(request, session, message='Could not create this request. Check the amount and receiving configuration, then try again.', status=400)
+        return failure('Could not create this request. Check the amount and receiving configuration, then try again.')
     finally:
         service.store.release(owner, lease)
 

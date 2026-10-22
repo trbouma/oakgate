@@ -1,4 +1,4 @@
-"""Shared last-known-good rates; display estimates only, never payment amounts."""
+"""Shared last-known-good rates for estimates and validated receive conversion."""
 import asyncio
 from contextlib import closing
 from datetime import datetime, timezone
