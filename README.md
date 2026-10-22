@@ -28,7 +28,7 @@ chmod 600 .env
 openssl rand -hex 24
 ```
 
-Set `KC_BOOTSTRAP_ADMIN_PASSWORD` in `.env` to the generated password. Data is stored at `/mnt/bitcoin/keycloak` on Beelink, configurable with `KEYCLOAK_DATA_DIR` in `.env`.
+Set `KC_BOOTSTRAP_ADMIN_PASSWORD` in `.env` to the generated password. Set the required `KEYCLOAK_DATA_DIR` in `.env` to the existing Keycloak data directory (Beelink: `/mnt/lexar/keycloak`).
 
 Before the first start, confirm the external drive is mounted and prepare the existing directory for Keycloak's container user:
 
@@ -59,7 +59,7 @@ You can also use `./start-oakgate.sh` for routine startup, or continue to run `d
 
 Set `KC_HOSTNAME` in `.env` to the public HTTPS origin (default: `https://keycloak.safebox.dev`). Recreate the container after changing it.
 
-The intended app address is `https://oakgate.safebox.dev`, served by Nginx. Its upstream is `http://<beelink-address>:8801/`. Set `OAKGATE_PUBLIC_URL`, `OAKGATE_PORT`, and `OAKGATE_BIND_ADDRESS` in `.env`. Keycloak has separate `KC_HOSTNAME`, `KEYCLOAK_PORT`, and `KEYCLOAK_BIND_ADDRESS` settings. Existing `.env` files can omit these settings and use the defaults. The app uses private Redis for temporary sessions and encrypted SQLite custody storage at the host path selected by `OAKGATE_DATA_DIR`. The Compose default is `/mnt/bitcoin/oakgate`; Beelink now uses `/var/lib/oakgate` on its internal SSD. See the [storage latency incident](docs/022-storage-latency-incident.md) for measurements and migration precautions. Follow [Connect an Acorn](docs/007-acorn-custody.md) to prepare that directory and configure the custody encryption key before starting the updated containers.
+The intended app address is `https://oakgate.safebox.dev`, served by Nginx. Its upstream is `http://<beelink-address>:8801/`. Set `OAKGATE_PUBLIC_URL`, `OAKGATE_PORT`, and `OAKGATE_BIND_ADDRESS` in `.env`. Keycloak has separate `KC_HOSTNAME`, `KEYCLOAK_PORT`, and `KEYCLOAK_BIND_ADDRESS` settings. Existing `.env` files can omit these settings and use the defaults. The app uses private Redis for temporary sessions and encrypted SQLite custody storage at the host path selected by `OAKGATE_DATA_DIR`. There is no Compose storage default; Beelink now uses `/mnt/lexar/oakgate`. See the [storage latency incident](docs/022-storage-latency-incident.md) for measurements and migration precautions. Follow [Connect an Acorn](docs/007-acorn-custody.md) to prepare that directory and configure the custody encryption key before starting the updated containers.
 
 For routine app-only updates on Beelink, use:
 
@@ -117,3 +117,32 @@ see the [migration and compatibility notes](docs/018-safebox-address-discovery.m
 
 The Wallet messages page uses Acorn wallet keys and `safebox.json`, independently
 of social NIP-05. See [wallet messaging and dependency rollout](docs/019-wallet-messages.md).
+
+## Explicit Docker storage paths
+
+Storage settings in `.env` are required. Both an absent/empty setting and a
+missing host directory fail instead of selecting a fallback or creating a new
+empty directory. Set the path to the CURRENT data, not an older backup:
+
+```dotenv
+OAKGATE_DATA_DIR=/mnt/lexar/oakgate
+KEYCLOAK_DATA_DIR=/mnt/lexar/keycloak
+```
+
+These settings are Docker host paths; internal container paths stay unchanged.
+Keep `.env` ignored by Git and backed up with the matching instance secrets.
+This configuration does not copy or migrate data. Before converting a deployment
+from a named volume, stop all services sharing its database, take a consistent
+backup and explicitly migrate the current directory with ownership preserved.
+Keep the old copy until the new mounts, identities and application data are
+verified. For a fresh installation only, pre-create a directory writable by the
+container's configured user. Never create an empty replacement for an existing
+instance.
+
+Verify the external drive is mounted before startup (for Beelink, `mountpoint /mnt/lexar`). `create_host_path: false` checks directory existence, not drive
+identity; it cannot detect an unmounted drive if a directory already exists
+underneath the mount point. This applies to Docker restarts at boot too.
+
+Run `docker compose config --quiet` before deployment and inspect the actual
+container mounts afterward. Keep storage selection in `.env` rather than local
+Compose edits, so refreshes do not require stashing deployment configuration.

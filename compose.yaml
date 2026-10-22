@@ -43,7 +43,7 @@ services:
       OAKGATE_ALLOWED_RELAYS: ${OAKGATE_ALLOWED_RELAYS:-wss://spurline.safebox.dev}
     volumes:
       - type: bind
-        source: ${OAKGATE_DATA_DIR:-/mnt/bitcoin/oakgate}
+        source: ${OAKGATE_DATA_DIR:?Set OAKGATE_DATA_DIR in .env to the existing app data directory}
         target: /app/data
         bind:
           create_host_path: false
@@ -93,7 +93,7 @@ services:
       - "${KEYCLOAK_BIND_ADDRESS:-0.0.0.0}:${KEYCLOAK_PORT:-8800}:8080"
     volumes:
       - type: bind
-        source: ${KEYCLOAK_DATA_DIR:-/mnt/bitcoin/keycloak}
+        source: ${KEYCLOAK_DATA_DIR:?Set KEYCLOAK_DATA_DIR in .env to the existing Keycloak data directory}
         target: /opt/keycloak/data
         bind:
           create_host_path: false

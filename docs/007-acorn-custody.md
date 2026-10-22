@@ -36,18 +36,18 @@ Restart `./dev.sh` after changing the environment. Keep the key: regenerating it
 Prepare a separate directory on the mounted external drive:
 
 ```sh
-mountpoint /mnt/bitcoin
+mountpoint /mnt/lexar
 # Continue only if the mount check succeeds.
-sudo install -d -o 10001 -g 10001 -m 700 /mnt/bitcoin/oakgate
+sudo install -d -o 10001 -g 10001 -m 700 /mnt/lexar/oakgate
 ```
 
-Add the same settings to Beelink's `.env`, using `OAKGATE_DATA_DIR=/mnt/bitcoin/oakgate` and a separately generated deployment key. If Poetry is unavailable on Beelink, generate the key with the command above on your development machine and transfer it privately. Do not replace the existing Keycloak or OIDC secrets.
+Add the same settings to Beelink's `.env`, using `OAKGATE_DATA_DIR=/mnt/lexar/oakgate` and a separately generated deployment key. If Poetry is unavailable on Beelink, generate the key with the command above on your development machine and transfer it privately. Do not replace the existing Keycloak or OIDC secrets.
 
 ```sh
 docker compose up -d --build app
 ```
 
-Compose maps this host directory to `/app/data`. The image installs the locked Acorn dependency during its build on Beelink. No local Docker build is needed. Keycloak keeps its existing `/mnt/bitcoin/keycloak` mount; Redis remains disposable session storage.
+Compose maps this host directory to `/app/data`. The image installs the locked Acorn dependency during its build on Beelink. No local Docker build is needed. Keycloak keeps its existing `/mnt/lexar/keycloak` mount; Redis remains disposable session storage.
 
 A new host must create the app data directory before starting Compose, even if custody has not yet been enabled. Docker will not silently create an incorrectly owned directory.
 
@@ -107,7 +107,7 @@ Preferences lets a signed-in user set, change, or clear a custom OakGate handle.
 
 Handles use 3–32 ASCII letters, numbers, hyphens, or underscores, beginning with a letter or number. Surrounding whitespace is removed. Display capitalization is preserved, while lowercase normalization makes `Tim` and `tim` the same claim. An address reserved while an Acorn is active cannot be reassigned to another user after a rename or removal. Handles are not login credentials.
 
-The existing persistent SQLite database (`/mnt/bitcoin/oakgate/custody.sqlite3` on Beelink) contains a separate `user_preferences` table, created automatically at startup. Each row is keyed by the hash of the exact Keycloak issuer/subject pair. A UNIQUE constraint on `normalized_handle` enforces uniqueness across all users sharing this database, including simultaneous requests. Failed claims preserve the user's previous handle. Multiple independent database copies do not share a handle namespace.
+The existing persistent SQLite database (`/mnt/lexar/oakgate/custody.sqlite3` on Beelink) contains a separate `user_preferences` table, created automatically at startup. Each row is keyed by the hash of the exact Keycloak issuer/subject pair. A UNIQUE constraint on `normalized_handle` enforces uniqueness across all users sharing this database, including simultaneous requests. Failed claims preserve the user's previous handle. Multiple independent database copies do not share a handle namespace.
 
 Handle fields are stored as ordinary text for indexing; custody secrets remain encrypted separately. Database backups include preferences, and any future Go Independent deletion must remove the preference row as well. No new mount, secret, or environment setting is required, but the existing custody storage must be configured before preferences can be saved.
 
