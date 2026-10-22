@@ -2761,3 +2761,9 @@ msgstr "En attente d’activation"
 
 msgid "Revoke this terminal? It will lose access immediately."
 msgstr "Révoquer ce terminal ? Il perdra immédiatement son accès."
+
+msgid "POS activation QR code"
+msgstr "Code QR d’activation du terminal"
+
+msgid "On your POS device, choose Scan activation code. Keep this QR code private: the first browser to use it becomes the registered device."
+msgstr "Sur votre terminal, choisissez « Scanner le code d’activation ». Gardez ce code QR privé : le premier navigateur qui l’utilise devient l’appareil enregistré."

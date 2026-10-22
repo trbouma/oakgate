@@ -25,12 +25,20 @@ def create_app(settings=None, transport=None):
     app = FastAPI(title='OakGate POS', docs_url=None, redoc_url=None, openapi_url=None)
     app.mount('/static', StaticFiles(directory=ROOT / 'static'), name='static')
 
+    @app.get('/scanner/{filename}')
+    async def scanner_asset(filename: str):
+        # Share the bundled QR decoder only, not the account application's static surface.
+        if filename not in {'qr-scanner.min.js', 'qr-scanner-worker.min.js'}:
+            raise HTTPException(404)
+        return FileResponse(ROOT.parent / 'app/static' / filename, media_type='text/javascript')
+
     @app.middleware('http')
     async def headers(request, call_next):
         response = await call_next(request)
         response.headers.update({'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer',
             'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY',
-            'Content-Security-Policy': "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"})
+            'Permissions-Policy': 'camera=(self), microphone=()',
+            'Content-Security-Policy': "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; worker-src 'self' blob:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"})
         return response
 
     def token(request):

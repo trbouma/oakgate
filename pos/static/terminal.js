@@ -3,6 +3,7 @@
   const $ = id => document.getElementById(id);
   const utf8 = new TextEncoder();
   let pair;
+  let operationBusy = false;
   const b64 = bytes => btoa(String.fromCharCode(...new Uint8Array(bytes))).replaceAll('+','-').replaceAll('/','_').replace(/=+$/, '');
   function openDB() {
     return new Promise((resolve, reject) => {
@@ -77,14 +78,22 @@
     $('activation').hidden = true; $('terminal').hidden = false; $('forget').hidden = true;
   }
   async function busy(action) {
+    if (operationBusy) return;
+    operationBusy = true;
+    $('activation').setAttribute('aria-busy', 'true');
     $('error').textContent = '';
     document.querySelectorAll('button').forEach(button => {button.disabled=true;});
     try { await action(); } catch (error) {
       $('error').textContent = error.message || 'Please try again shortly.';
-    } finally { document.querySelectorAll('button').forEach(button => {button.disabled=false;}); }
+    } finally {
+      operationBusy = false;
+      $('activation').removeAttribute('aria-busy');
+      document.querySelectorAll('button').forEach(button => {button.disabled=false;});
+    }
   }
   $('activation').addEventListener('submit', event => {
     event.preventDefault();
+    document.dispatchEvent(new Event('pos-activation-start'));
     busy(async () => {
       // Web Locks serializes enrollment across tabs where available. The server
       // still atomically binds a credential and rejects a conflicting browser key.

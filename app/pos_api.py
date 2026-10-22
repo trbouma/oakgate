@@ -117,8 +117,10 @@ def create_router():
             return error_page(request, 'Use a terminal name of 1–60 characters.', 400, return_url='/account/preferences', return_label='Back to Preferences')
         except HTTPException as exc:
             return error_page(request, 'Connect an active Acorn before creating a terminal.' if exc.status_code == 403 else exc.detail, exc.status_code, return_url='/account/preferences', return_label='Back to Preferences')
+        from app.record_previews import _qr_svg
+        qr = _qr_svg(credential)
         return request.app.state.templates.TemplateResponse(request=request, name='pos_created.html',
-            context={**session, 'active_page': 'preferences', 'credential': credential, 'pos_url': public_url})
+            context={**session, 'active_page': 'preferences', 'credential': credential, 'pos_url': public_url, 'activation_qr': qr})
 
     @router.post('/account/pos/{terminal}/revoke')
     async def revoke(request: Request, terminal: str):

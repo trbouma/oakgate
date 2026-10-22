@@ -2,6 +2,8 @@
 {% block content %}<h1>{{ _('Your POS key') }}</h1>
 <section class="preferences-panel wallet-panel">
 <p>{{ _('Save this key now. It is shown only once. Enter it on the dedicated POS device within 24 hours.') }}</p>
+{% if activation_qr %}<div class="pos-activation-qr" role="img" aria-label="{{ _('POS activation QR code') }}">{{ activation_qr | safe }}</div>
+<p class="note">{{ _('On your POS device, choose Scan activation code. Keep this QR code private: the first browser to use it becomes the registered device.') }}</p>{% endif %}
 <label for="pos-key">{{ _('Activation key') }}</label>
 <textarea id="pos-key" readonly rows="4" autocomplete="off" spellcheck="false">{{ credential }}</textarea>
 <button type="button" id="copy-pos-key" data-copied="{{ _('Copied') }}">{{ _('Copy key') }}</button>

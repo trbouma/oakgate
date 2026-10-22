@@ -546,3 +546,6 @@ body:not(.landing) > header { padding-block: 12px; gap: 12px; }
   .receive-page .account-nav a { flex:1 1 0; min-width:0; min-height:44px; padding:12px 6px; }
   .receive-page .receive-panel { padding:12px; }
 }
+
+.pos-activation-qr { width:min(100%,300px); margin:20px auto; padding:8px; border-radius:12px; background:#fff; color:#000; }
+.pos-activation-qr svg { display:block; width:100%; height:auto; aspect-ratio:1; }

@@ -83,8 +83,11 @@ Open the public hostname and check `/ready` through HTTPS. Then activate a termi
 
 1. Sign in to the main OakGate app and ensure an Acorn is connected.
 2. Open **Preferences → POS terminals**, name the device and choose **Create POS key**.
-3. Save the displayed key privately; it is shown only once.
-4. On the intended device, open the HTTPS POS site and enter that key within 24 hours.
+3. Save the displayed key privately; the key and its QR code are shown only once.
+4. On the intended device, open the HTTPS POS site, choose **Scan activation code**
+   and allow camera access. Point it at the QR code shown in Preferences. A valid
+   scan starts activation automatically. Manual key entry remains available.
+   Complete first activation within 24 hours.
 5. Verify the terminal name and device fingerprint match the entry in Preferences.
 6. Reload the POS page to check browser storage persistence. Test **Log out of terminal**,
    then sign in again using the saved key on the same browser.
@@ -108,3 +111,19 @@ docker compose stop pos
 ```
 
 Stopping POS does not stop OakGate settlement. Terminal revocation is available in Preferences even while disabled. See the [design note](023-receive-only-pos.md).
+
+## Activation QR privacy and camera behavior
+
+The QR contains only the raw `ogpos1.…` activation credential, never an activation
+URL. Scan it from the POS page rather than the phone's general camera app. Treat
+the QR like the written key: the first browser to activate it becomes bound.
+There is no public QR endpoint and the one-time response is not cacheable.
+
+The scanner uses OakGate's bundled QR decoder and worker locally, without
+third-party scripts or uploading video frames. Camera access starts only after
+pressing the scan button. The camera stops on a valid scan, manual activation,
+cancellation, page exit or backgrounding. Unrelated QR codes are rejected locally
+and are never opened as links. If access is denied or the camera is unavailable,
+enter the key manually. Test the camera flow on the intended iPad/Safari device
+after deployment; automated tests exercise decoder callbacks and cancellation,
+not physical camera hardware.

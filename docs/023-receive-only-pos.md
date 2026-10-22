@@ -106,8 +106,7 @@ request status, not a full terminal ledger or an account transaction feed.
 1. In authenticated OakGate Preferences, the owner creates a named POS terminal
    with a name. OakGate requires a connected Acorn. Receiving asset selection and
    limits will be added with payment support; this stage cannot create receipts.
-2. Generate an opaque, high-entropy random POS key, shown once for entry or QR
-   activation. Store only its verifier hash, with a public credential identifier,
+2. Generate an opaque, high-entropy random POS key, shown once as text and a QR code for entry or camera activation. Store only its verifier hash, with a public credential identifier,
    owner mapping, policy, creation time and revocation state. Do not put the secret
    in URL query strings, logs or analytics. NFC activation is a later transport
    for the same credential, not extra wallet authority.

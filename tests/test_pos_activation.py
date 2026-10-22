@@ -165,6 +165,13 @@ def test_real_webcrypto_signatures_are_compatible(store):
 def test_owner_provisioning_and_end_to_end_cookie_activation(tmp_path, monkeypatch):
     monkeypatch.setenv('OAKGATE_POS_ENABLED','true')
     monkeypatch.setenv('OAKGATE_POS_PUBLIC_URL','https://pos.example')
+    import app.record_previews as previews
+    qr_payloads = []
+    original_qr = previews._qr_svg
+    def capture_qr(value):
+        qr_payloads.append(value)
+        return original_qr(value)
+    monkeypatch.setattr(previews, '_qr_svg', capture_qr)
     async def run():
         account, sessions, wallets, backend = setup(tmp_path)
         async with account:
@@ -176,11 +183,20 @@ def test_owner_provisioning_and_end_to_end_cookie_activation(tmp_path, monkeypat
             created = await account.post('/account/pos', data=form(name='Counter'))
             assert created.status_code == 200 and 'no-store' in created.headers['cache-control']
             key = html.unescape(re.search(r'<textarea[^>]+>(.*?)</textarea>', created.text).group(1))
+            assert key in qr_payloads and '<svg' in created.text
+            assert 'pos-activation-qr' in created.text
+            assert 'POS activation QR code' in created.text
             assert 'Create POS key' in (await account.get('/account/preferences')).text
             assert key not in (await account.get('/account/preferences')).text
             settings = POSSettings(True,'https://pos.example','https://oakgate.example',Fernet.generate_key().decode())
             pos = create_pos(settings, httpx.ASGITransport(account._transport.app))
             async with httpx.AsyncClient(transport=httpx.ASGITransport(pos), base_url='https://pos.example') as browser:
+                assert (await browser.get('/scanner/qr-scanner.min.js')).status_code == 200
+                assert (await browser.get('/scanner/qr-scanner-worker.min.js')).status_code == 200
+                assert (await browser.get('/scanner/forms.js')).status_code == 404
+                page = await browser.get('/')
+                assert 'Scan activation code' in page.text
+                assert "worker-src 'self' blob:" in page.headers['content-security-policy']
                 pair = device()
                 data = {'credential':key,'public_key':pair[1]}
                 assert (await browser.post('/api/activation-challenges',json=data)).status_code == 403
