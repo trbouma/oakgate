@@ -38,10 +38,17 @@ class PaymentStore:
         with closing(self.custody.connect()) as db:
             return self.decode(db.execute('SELECT * FROM incoming_payments WHERE id=?', (payment_id,)).fetchone())
 
-    def reserve(self, owner, payload, zap_id=None):
+    def reserve(self, owner, payload, zap_id=None, *, request_id=None):
         now = time.time()
         with closing(self.custody.connect()) as db, db:
             db.execute('BEGIN IMMEDIATE')
+            if request_id:
+                row = db.execute('SELECT * FROM incoming_payments WHERE id=?', (request_id,)).fetchone()
+                if row:
+                    existing = self.decode(row)
+                    if existing['owner'] != owner or existing['amount'] != payload['amount'] or existing['mint'] != payload['mint']:
+                        raise ValueError('Request identity mismatch')
+                    return existing, False
             if zap_id:
                 row = db.execute('SELECT * FROM incoming_payments WHERE zap_id=?', (zap_id,)).fetchone()
                 if row:
@@ -50,11 +57,12 @@ class PaymentStore:
                             or existing.get('zap') != payload.get('zap')):
                         raise ValueError('Zap already belongs to another payment')
                     return existing, False
-            # Bound anonymous quote creation across processes before contacting the mint.
-            if (db.execute('SELECT count(*) FROM incoming_payments WHERE owner=? AND created>?', (owner, now-3600)).fetchone()[0] >= 30
+            # Bound quote creation before contacting the mint. Only the internal POS
+            # path supplies a reserved request ID and gets the higher terminal budget.
+            if (db.execute('SELECT count(*) FROM incoming_payments WHERE owner=? AND created>?', (owner, now-3600)).fetchone()[0] >= (600 if request_id else 30)
                     or db.execute('SELECT count(*) FROM incoming_payments WHERE created>?', (now-60,)).fetchone()[0] >= 120):
                 raise PaymentBusy
-            item = {**payload, 'owner': owner, 'id': secrets.token_hex(16), 'state': 'creating'}
+            item = {**payload, 'owner': owner, 'id': request_id or secrets.token_hex(16), 'state': 'creating'}
             db.execute('INSERT INTO incoming_payments(id,owner,zap_id,created,state,encrypted) VALUES(?,?,?,?,?,?)',
                        (item['id'], owner, zap_id, now, item['state'], self.custody.seal(owner, item)))
             return item, True

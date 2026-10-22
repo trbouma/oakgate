@@ -1,5 +1,6 @@
-"""Receive-only POS authorization; no payment or wallet operations exposed."""
+"""Receive-only POS authorization; no spending or account operations exposed."""
 import json
+import asyncio
 import os
 import sqlite3
 from functools import partial
@@ -26,7 +27,7 @@ async def json_body(request, allowed):
         data = json.loads(body)
     except (ValueError, UnicodeError):
         raise HTTPException(400, 'Invalid request') from None
-    if (not isinstance(data, dict) or set(data) != set(allowed)
+    if (not isinstance(data, dict) or set(data) not in (allowed if isinstance(allowed, list) else [set(allowed)])
             or any(not isinstance(v, str) or len(v) > 1024 for v in data.values())):
         raise HTTPException(400, 'Invalid request')
     return data
@@ -58,23 +59,26 @@ def create_router():
     async def status(request: Request):
         available = enabled and getattr(request.app.state, 'pos', None) is not None
         return JSONResponse({'service': 'oakgate-pos-api', 'enabled': enabled,
-                             'phase': 'activation', 'activation_available': available,
-                             'payments_available': False}, headers={'Cache-Control': 'no-store'})
+                             'phase': 'receiving', 'activation_available': available,
+                             'payments_available': available}, headers={'Cache-Control': 'no-store'})
 
     @router.post('/api/pos/v1/{operation}')
     async def operation(request: Request, operation: str):
         store = storage(request)
         # Bounded attempt rate even when a credential or proof is invalid. Use the
         # actual peer, never untrusted forwarded headers. POS peers share this budget.
-        await invoke(store.limit_source, request.client.host if request.client else 'unknown')
+        await invoke(store.limit_source, request.client.host if request.client else 'unknown', operation not in {'activation-challenges', 'activate'})
         if request.url.query:
             raise HTTPException(400, 'Queries are not supported')
         fields = {'activation-challenges': {'credential', 'public_key'},
                   'activate': {'credential', 'public_key', 'challenge', 'signature'},
                   'challenges': {'operation'}, 'config': {'challenge', 'signature'},
-                  'logout': {'challenge', 'signature'}}
+                  'logout': {'challenge', 'signature'},
+                  **{op: {'payload', 'challenge', 'signature'} for op in ('receive-config', 'receive', 'receipt')}}
         if operation not in fields:
-            raise HTTPException(503, 'POS payments are not available yet.')
+            raise HTTPException(503, 'POS operation is unavailable.')
+        if operation == 'challenges':
+            fields['challenges'] = [{'operation'}, {'operation', 'payload'}]
         data = await json_body(request, fields[operation])
         if operation in {'activation-challenges', 'activate'}:
             args = [data['credential'], data['public_key']]
@@ -87,7 +91,27 @@ def create_router():
                 raise HTTPException(403, 'Terminal authorization required')
             token = auth[7:]
             if operation == 'challenges':
-                result = await invoke(store.challenge, token, data['operation'])
+                result = await invoke(store.challenge, token, data['operation'], data.get('payload', '{}'))
+            elif operation in {'receive-config', 'receive', 'receipt'}:
+                actor = await invoke(store.receiving_authority, token, operation, data['challenge'], data['signature'], data['payload'])
+                from app.pos_receiving import receive
+                # Keep request creation alive if the terminal disconnects. The journal
+                # prevents another request on retry; shutdown drains these tasks.
+                task = asyncio.create_task(receive(request, actor, operation, data['payload']))
+                request.app.state.pos_tasks.add(task)
+                def done(task):
+                    request.app.state.pos_tasks.discard(task)
+                    if not task.cancelled():
+                        task.exception()
+                task.add_done_callback(done)
+                try:
+                    result = await asyncio.shield(task)
+                except POSDenied:
+                    raise HTTPException(403, 'Terminal authorization failed.') from None
+                except POSLimited:
+                    raise HTTPException(429, 'Too many requests. Please wait before creating another.') from None
+                except (TimeoutError, sqlite3.Error):
+                    raise HTTPException(503, 'Receipt service is busy. Retry the same request.') from None
             else:
                 result = await invoke(store.authorized, token, operation, data['challenge'], data['signature'])
         return JSONResponse(result, headers={'Cache-Control': 'no-store'})

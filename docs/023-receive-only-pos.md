@@ -1,6 +1,6 @@
 # Receive-only point-of-sale terminals
 
-Status: **deployment, provisioning and browser-bound activation implemented; payment collection remains planned**. This note defines a separate POS
+Status: **deployment, browser-bound activation and Cash/Clear receiving implemented**. This note defines a separate POS
 application using OakGate's existing receipt and settlement capabilities. It does
 not grant existing account sessions new permissions or introduce another wallet.
 
@@ -51,7 +51,7 @@ POS is opt-in. The setting defaults to:
 OAKGATE_POS_ENABLED=false
 ```
 
-The switch is implemented. Activation and terminal management are available when enabled; payment operations remain unavailable. The public `/api/pos/v1/status` endpoint is a diagnostic exception: it returns only feature availability, never account data.
+The switch is implemented. Activation, terminal management and receive-only requests are available when enabled. The public `/api/pos/v1/status` endpoint is a diagnostic exception: it returns only feature availability, never account data.
 OakGate is the authoritative enforcement point; hiding the UI or stopping the
 separate POS container is not sufficient enforcement.
 
@@ -104,8 +104,7 @@ request status, not a full terminal ledger or an account transaction feed.
 ## Provisioning and activation
 
 1. In authenticated OakGate Preferences, the owner creates a named POS terminal
-   with a name. OakGate requires a connected Acorn. Receiving asset selection and
-   limits will be added with payment support; this stage cannot create receipts.
+   with a name. OakGate requires a connected Acorn. The server resolves available receiving assets and enforces limits; a terminal cannot choose a different recipient.
 2. Generate an opaque, high-entropy random POS key, shown once as text and a QR code for entry or camera activation. Store only its verifier hash, with a public credential identifier,
    owner mapping, policy, creation time and revocation state. Do not put the secret
    in URL query strings, logs or analytics. NFC activation is a later transport
@@ -179,20 +178,21 @@ not authorize implementing wallet signing in POS or OakGate.
 
 ## API shape and payment recovery
 
-Implemented authorization routes and planned payment routes:
+Implemented routes:
 
 | Route | Purpose |
 | --- | --- |
 | `POST /api/pos/v1/activation-challenges` | Short-lived activation challenge; rate-limited and no account disclosure |
 | `POST /api/pos/v1/activate` | Verify credential and proof, atomically bind or authenticate the registered device |
 | `POST /api/pos/v1/challenges` | Obtain a fresh nonce for a terminal session; grants no payment operation itself |
-| `POST /api/pos/v1/config` | Name, device fingerprint and receive-only scope; receiving assets/limits come with payment support |
-| `POST /api/pos/v1/requests` | Create one durable request using an idempotency key |
-| `GET /api/pos/v1/requests/{id}` | Read this credential's request and status |
+| `POST /api/pos/v1/config` | Name, device fingerprint and receive-only scope |
+| `POST /api/pos/v1/receive-config` | Allowed asset labels, currencies and receiving limits |
+| `POST /api/pos/v1/receive` | Create or recover one durable request using an idempotency key |
+| `POST /api/pos/v1/receipt` | Read this terminal's request status |
 | `POST /api/pos/v1/logout` | Invalidate this terminal session |
 
 Apply per-key, per-owner and activation-source limits, including a cap on
-outstanding requests. Strictly bound amounts, descriptions, payload sizes and
+request creation. Strictly bound amounts, descriptions, payload sizes and
 poll frequency. Return no account-existence detail on authentication failure.
 
 Reuse OakGate's validated fiat-to-sats conversion, invoice journal, Clear request
@@ -277,11 +277,9 @@ activation replaces previous sessions for that terminal. Sessions expire after
 seven days. Owners can have ten unrevoked terminals and provision at most ten
 per hour. Revoke expired unused entries to free a slot.
 
-Challenges expire after 60 seconds, allow at most 60 issues per terminal per
-minute, and are consumed atomically with the authorized operation in SQLite.
-API calls are limited to 120 per minute per actual peer (the POS proxy shares
-this budget); forwarded source headers are not trusted. This conservative
-activation-stage rate limit will need revisiting when payment polling is added.
+Challenges expire after 60 seconds, allow at most 120 issues per terminal per
+minute, and are consumed atomically during authorization in SQLite; receipt preparation follows a durable, separately committed reservation.
+Activation calls are limited to 120 per minute per actual peer. Authenticated-route traffic has a separate 1,200/minute peer budget for polling by multiple terminals. The POS proxy shares these budgets; forwarded source headers are not trusted.
 
 The exact proof message is a compact JSON array encoded as UTF-8:
 
@@ -293,8 +291,7 @@ The exact proof message is a compact JSON array encoded as UTF-8:
 For activation, `session_id` is empty and the canonical operation body is
 compact JSON `[terminal_id, public_key]`. For config/logout it is `{}`.
 The credential/session secret and proof envelope are excluded from this body;
-there are no other accepted action parameters. Query strings and extra JSON
-fields are rejected. Future payment bodies must define their own signed bytes.
+receiving operations sign the exact UTF-8 `payload` string sent in both the challenge and operation envelope. It contains a JSON object with strictly validated fields. Query strings and extra JSON fields are rejected.
 The server generates and stores the exact message; the browser checks its version,
 audience, operation, body hash, nonce and expiry before signing it. Public keys
 are base64url-encoded uncompressed P-256 points; signatures are base64url-encoded
@@ -324,5 +321,42 @@ original `wallet_id` is still active, preventing retargeting after replacement.
 Revocation remains available to owners while POS is disabled. No Acorn private-key
 operation is added by activation, and no receipt or payment row is modified.
 
-Payment endpoints remain unavailable. Asset policies, amount caps, request
-ownership and durable payment idempotency are prerequisites for the next stage.
+## Implemented receiving policy and recovery
+
+The POS defaults to the owner's preferred currency. Cash accepts two decimal
+places in fiat, validates the current rate server-side, and creates a whole-sat
+invoice. SATS and Clear accept positive integers. The keypad is shared with the
+account Receive page. QR codes can be tapped to copy; raw invoice text is hidden.
+
+Cash uses `OAKGATE_PAYMENTS_ENABLED`, `OAKGATE_RECEIVE_MIN_SAT` and
+`OAKGATE_RECEIVE_MAX_SAT`. Clear uses the owner's current eligible Clear assets,
+resolved on the server, excluding instance-only mints, with a maximum of
+1,000,000 whole units per request. Only names, unit labels and opaque asset IDs
+are returned; amounts, keys and wallet identifiers are not. Per-terminal custom
+asset subsets and custom limits remain future work. Existing mint trust policy
+is unchanged. New terminal requests are capped at 120/hour/terminal; cash quotes
+also retain the global 120/minute mint budget and an authenticated POS allowance
+of 600/hour/owner. Anonymous requests retain their existing 30/hour/owner cap.
+
+`pos_receipts` stores terminal ownership, the client request key, body hash and a
+reserved ticket/payment ID before any external creation. The browser retains the
+same parameters in sessionStorage before submitting. Duplicate submissions with
+that key return existing output; changing its body conflicts. Encrypted request
+codes live in `wallet_requests`, alongside the existing encrypted payment journal.
+These tables must be backed up consistently with custody data.
+
+Cash creates at most one quote for the reserved payment ID. If the process stops
+after the quote is persisted but before the receipt ticket is saved, a retry
+recovers that exact invoice. An interrupted preparation with no confirmed output
+is never automatically repeated: after 90 seconds it reports unconfirmed. The
+operator can check again or explicitly start a new request. Clear request
+creation goes through Acorn and persists its CREQB output before returning it.
+No new spending, minting, receipt-write or settlement algorithm is introduced.
+In-flight creation survives browser disconnects and drains on orderly shutdown.
+
+The POS checks its own request for two minutes, stopping as soon as Acorn/payment
+journal evidence reports detection or completion. Detection says **Payment
+detected — confirming in background**, not final settlement. Existing workers
+continue recovery and crediting after polling stops, logout or revocation.
+Cancel stops local polling and clears the entry form; it does not revoke an
+already-issued invoice/request. Late payments still settle to the original owner.

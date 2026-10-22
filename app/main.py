@@ -48,6 +48,8 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
         try:
             yield
         finally:
+            if app.state.pos_tasks:
+                await asyncio.gather(*app.state.pos_tasks, return_exceptions=True)
             if worker:
                 worker.cancel()
                 with suppress(asyncio.CancelledError):
@@ -64,6 +66,7 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
 
     app = FastAPI(title="OakGate", description="OpenID Access Gate — part of the Mainstay family.",
                   version=APP_VERSION, servers=[{"url": settings.origin}], lifespan=lifespan)
+    app.state.pos_tasks = set()
     app.state.wallets = wallets if wallets is not None else configured_service()
     pos_origin = origin(os.getenv('OAKGATE_POS_PUBLIC_URL', 'https://pos.oakgate.safebox.dev'), 'OAKGATE_POS_PUBLIC_URL')
     app.state.pos = POSStore(app.state.wallets.store, pos_origin) if app.state.wallets else None

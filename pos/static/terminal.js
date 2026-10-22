@@ -2,7 +2,7 @@
 (() => {
   const $ = id => document.getElementById(id);
   const utf8 = new TextEncoder();
-  let pair;
+  let pair, terminalID;
   let operationBusy = false;
   const b64 = bytes => btoa(String.fromCharCode(...new Uint8Array(bytes))).replaceAll('+','-').replaceAll('/','_').replace(/=+$/, '');
   function openDB() {
@@ -54,28 +54,31 @@
     if (!response.ok) throw new Error(result.detail || 'Please try again shortly.');
     return result;
   }
-  async function proof(challenge, operation, publicKey) {
+  async function proof(challenge, operation, publicKey, payload = '{}') {
     const fields = JSON.parse(challenge.message);
     // Only sign the agreed domain, audience and operation. The server checks the entire transcript.
     if (!Array.isArray(fields) || fields.length !== 10 || fields[0] !== 'oakgate-pos-proof-v1' ||
         fields[1] !== location.origin || fields[4] !== 'POST' || fields[5] !== '/api/pos/v1/' + operation ||
         fields[6] !== '' || fields[8] !== challenge.challenge || fields[9] < Date.now()/1000 - 5 ||
         fields[9] > Date.now()/1000 + 90) throw new Error('Invalid device challenge. Check this device’s clock and POS address.');
-    const expectedBody = operation === 'activate' ? JSON.stringify([fields[2], publicKey]) : '{}';
+    terminalID = fields[2];
+    const expectedBody = operation === 'activate' ? JSON.stringify([fields[2], publicKey]) : payload;
     const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', utf8.encode(expectedBody))), x => x.toString(16).padStart(2,'0')).join('');
     if (fields[7] !== hash) throw new Error('Invalid device challenge.');
     return {challenge:challenge.challenge, signature:b64(await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'}, pair.privateKey, utf8.encode(challenge.message)))};
   }
-  async function signed(operation) {
-    const challenge = await api('challenges', {operation});
-    return api(operation, await proof(challenge, operation));
+  async function signed(operation, body) {
+    const payload = body === undefined ? undefined : JSON.stringify(body);
+    const challenge = await api('challenges', {operation, ...(payload === undefined ? {} : {payload})});
+    return api(operation, {...await proof(challenge, operation, undefined, payload), ...(payload === undefined ? {} : {payload})});
   }
   async function showTerminal() {
     const config = await signed('config');
     $('heading').textContent = config.name;
     $('fingerprint').textContent = config.fingerprint.slice(0,16);
-    $('status').textContent = 'This browser is activated.';
+    $('status').textContent = 'Ready to receive';
     $('activation').hidden = true; $('terminal').hidden = false; $('forget').hidden = true;
+    await window.startPOSReceiving(signed, terminalID);
   }
   async function busy(action) {
     if (operationBusy) return;
@@ -89,6 +92,7 @@
       operationBusy = false;
       $('activation').removeAttribute('aria-busy');
       document.querySelectorAll('button').forEach(button => {button.disabled=false;});
+      if (!$('terminal').hidden) $('create-request').disabled = !$('asset').options.length;
     }
   }
   $('activation').addEventListener('submit', event => {

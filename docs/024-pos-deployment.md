@@ -1,6 +1,6 @@
 # Deploy and activate POS terminals
 
-The separate `pos` service supports browser-bound device activation, encrypted terminal cookies and revocation. Receipt requests and payment collection are **not implemented yet**. Existing OakGate payment recovery and settlement remain unchanged.
+The separate `pos` service supports browser-bound device activation, encrypted terminal cookies and revocation. Cash invoices and Clear requests use the compact keypad, currency selection, QR display and two-minute receipt polling. Existing OakGate payment recovery and settlement remain unchanged.
 
 POS uses the same repository and Dockerfile, with its own application entry point and independently built service image. It has no custody volume, wallet keys, OIDC secrets or settlement worker. The Compose `pos` profile keeps it out of the default deployment.
 
@@ -19,7 +19,7 @@ OAKGATE_POS_COOKIE_KEY=
 
 Use the Beelink VPN address or `0.0.0.0` for the bind address if Nginx runs on another machine. Restrict access to the intended proxy network. The API URL is the internal Compose address, not the browser-facing URL. Keep existing OakGate and Keycloak data directory settings unchanged.
 
-To enable activation, generate a **separate** cookie encryption key, save it as `OAKGATE_POS_COOKIE_KEY`, and set `OAKGATE_POS_ENABLED=true`:
+To enable POS, generate a **separate** cookie encryption key, save it as `OAKGATE_POS_COOKIE_KEY`, and set `OAKGATE_POS_ENABLED=true`:
 
 ```sh
 poetry run python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'
@@ -127,3 +127,20 @@ and are never opened as links. If access is denied or the camera is unavailable,
 enter the key manually. Test the camera flow on the intended iPad/Safari device
 after deployment; automated tests exercise decoder callbacks and cancellation,
 not physical camera hardware.
+
+
+## Deploy the receiving screen
+
+No new environment variables or key rotation are required for an already activated
+terminal. Push the repository changes, then on Beelink run `./refresh-app.sh`
+followed by `./refresh-pos.sh`. These update the receiving API and POS UI while
+leaving Keycloak and Redis running. Reload the terminal afterwards.
+
+Check a small Cash request and a Clear request, verify the recipient in OakGate,
+and confirm that detection ends polling and offers **New request**. Refresh while
+a request is displayed to verify the same code returns. A Cancel only stops local
+checking; it does not make an issued invoice unpayable. Status detection is not a
+promise of final settlement. Check the owner's transactions for final credit.
+
+The server-enforced policy and recovery behaviour are described in
+[the POS design note](023-receive-only-pos.md#implemented-receiving-policy-and-recovery).

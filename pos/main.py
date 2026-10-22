@@ -16,7 +16,8 @@ ROOT = Path(__file__).resolve().parent
 FIELDS = {'activation-challenges': {'credential', 'public_key'},
           'activate': {'credential', 'public_key', 'challenge', 'signature'},
           'challenges': {'operation'}, 'config': {'challenge', 'signature'},
-          'logout': {'challenge', 'signature'}}
+          'logout': {'challenge', 'signature'},
+          **{op: {'payload', 'challenge', 'signature'} for op in ('receive-config', 'receive', 'receipt')}}
 
 
 def create_app(settings=None, transport=None):
@@ -31,6 +32,10 @@ def create_app(settings=None, transport=None):
         if filename not in {'qr-scanner.min.js', 'qr-scanner-worker.min.js'}:
             raise HTTPException(404)
         return FileResponse(ROOT.parent / 'app/static' / filename, media_type='text/javascript')
+
+    @app.get('/shared/receive-keypad.js')
+    async def keypad():
+        return FileResponse(ROOT.parent / 'app/static/receive-keypad.js', media_type='text/javascript')
 
     @app.middleware('http')
     async def headers(request, call_next):
@@ -56,13 +61,13 @@ def create_app(settings=None, transport=None):
     async def backend(path, *, data=None, session=None):
         headers = {'Authorization': 'Bearer ' + session} if session else {}
         try:
-            async with httpx.AsyncClient(timeout=8, follow_redirects=False, trust_env=False, transport=transport) as client:
+            async with httpx.AsyncClient(timeout=65, follow_redirects=False, trust_env=False, transport=transport) as client:
                 if data is None:
                     result = await client.get(settings.api_url + '/api/pos/v1/' + path)
                 else:
                     result = await client.post(settings.api_url + '/api/pos/v1/' + path, json=data, headers=headers)
-            if result.status_code in {400, 403, 429, 503}:
-                detail = {400: 'Check the activation request.', 403: 'Authorization failed. Check the key, device or revocation status.',
+            if result.status_code in {400, 403, 404, 409, 429, 503}:
+                detail = {400: 'Check the amount and currency, or refresh the receiving options.', 404: 'Request not found on this terminal.', 409: 'This request already has a different amount. Start a new request.', 403: 'Authorization failed. Check the key, device or revocation status.',
                           429: 'Too many attempts. Please wait a minute.', 503: 'OakGate POS is unavailable. Please try again shortly.'}
                 raise HTTPException(result.status_code, detail[result.status_code])
             result.raise_for_status()
@@ -87,8 +92,8 @@ def create_app(settings=None, transport=None):
                 raise HTTPException(503)
         except HTTPException:
             return JSONResponse({'status': 'unavailable', 'activation_available': False}, status_code=503)
-        return {'status': 'connected', 'phase': 'activation',
-                'activation_available': payload.get('activation_available') is True, 'payments_available': False}
+        return {'status': 'connected', 'phase': 'receiving',
+                'activation_available': payload.get('activation_available') is True, 'payments_available': payload.get('payments_available') is True}
 
     @app.get('/api/session')
     async def session_state(request: Request):
@@ -123,7 +128,7 @@ def create_app(settings=None, transport=None):
             data = json.loads(body)
         except (ValueError, UnicodeError):
             raise HTTPException(400, 'Invalid request') from None
-        if (not isinstance(data, dict) or set(data) != FIELDS[operation]
+        if (not isinstance(data, dict) or set(data) not in ([FIELDS[operation], {'operation', 'payload'}] if operation == 'challenges' else [FIELDS[operation]])
                 or any(not isinstance(v, str) or len(v) > 1024 for v in data.values())):
             raise HTTPException(400, 'Invalid request')
         session = None if operation in {'activation-challenges', 'activate'} else token(request)
@@ -138,7 +143,9 @@ def create_app(settings=None, transport=None):
             return response
         # Only explicit public fields cross back to browser JavaScript.
         allowed = {'activation-challenges': {'challenge', 'message'}, 'challenges': {'challenge', 'message'},
-                   'config': {'name', 'fingerprint', 'scope', 'payments_available'}, 'logout': {'status'}}[operation]
+                   'config': {'name', 'fingerprint', 'scope', 'payments_available'}, 'logout': {'status'},
+                   'receive-config': {'assets', 'currencies', 'currency', 'cash_enabled', 'cash_min', 'cash_max', 'clear_max', 'clear_unavailable'},
+                   **{op: {'state', 'request_key', 'code', 'qr', 'amount', 'display_name', 'display_unit'} for op in ('receive', 'receipt')}}[operation]
         response = JSONResponse({k: v for k, v in payload.items() if k in allowed})
         if operation == 'logout':
             response.delete_cookie(COOKIE, path='/', secure=True, httponly=True, samesite='strict')

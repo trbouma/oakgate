@@ -172,5 +172,6 @@ The optional POS service runs on its own port (8804 by default), disabled by
 default with `OAKGATE_POS_ENABLED=false`. Use `./refresh-pos.sh` to rebuild only
 POS with a bounded health wait. It has no wallet data mount or account access.
 Users can provision a terminal in Preferences, activate its browser-bound key,
-and revoke it. Payment collection is not available yet. See the
+and revoke it. Terminals receive Cash and Clear using a currency-aware keypad,
+QR codes and payment detection, without account or spending access. See the
 [POS deployment guide](docs/024-pos-deployment.md) for environment settings and Nginx setup.

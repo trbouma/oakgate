@@ -73,7 +73,7 @@ def test_connection_check_only_calls_metadata_endpoint():
     with TestClient(create_app(enabled_settings(), httpx.MockTransport(backend))) as client:
         response = client.get('/ready')
         assert response.status_code == 200
-        assert response.json() == {'status': 'connected', 'phase': 'activation', 'activation_available': False, 'payments_available': False}
+        assert response.json() == {'status': 'connected', 'phase': 'receiving', 'activation_available': False, 'payments_available': False}
 
 
 @pytest.mark.parametrize('failure', ['disabled', 'redirect', 'invalid', 'timeout'])

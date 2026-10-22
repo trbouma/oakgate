@@ -92,10 +92,10 @@ class POSStore:
         db.execute('INSERT INTO pos_limits VALUES(?,1,?) ON CONFLICT(bucket) DO UPDATE SET count=count+1',
                    (name, now + window))
 
-    def limit_source(self, source):
+    def limit_source(self, source, receiving=False):
         with closing(self.connect()) as db, db:
             db.execute('BEGIN IMMEDIATE')
-            self._limit(db, 'source:' + digest(source), 120, 60)
+            self._limit(db, ('receive-source:' if receiving else 'source:') + digest(source), 1200 if receiving else 120, 60)
 
     @staticmethod
     def _wallet(db, owner, wallet_id=None):
@@ -173,15 +173,15 @@ class POSStore:
             raise POSDenied
         return row, self._terminal(db, row['terminal'])
 
-    def _challenge(self, db, row, session, operation, key):
+    def _challenge(self, db, row, session, operation, key, payload='{}'):
         now = time.time()
         db.execute('DELETE FROM pos_challenges WHERE expires<?', (now,))
         db.execute('DELETE FROM pos_sessions WHERE expires<?', (now,))
-        self._limit(db, 'challenge:' + row['id'], 60, 60)
+        self._limit(db, 'challenge:' + row['id'], 120, 60)
         nonce = secrets.token_urlsafe(32)
         path = '/api/pos/v1/' + operation
         # Browser signs the exact UTF-8 string returned here. No client serialization ambiguity.
-        body = json.dumps([row['id'], key], separators=(',', ':')) if operation == 'activate' else '{}'
+        body = json.dumps([row['id'], key], separators=(',', ':')) if operation == 'activate' else payload
         message = json.dumps(['oakgate-pos-proof-v1', self.audience, row['id'], session,
                               'POST', path, '', digest(body), nonce, int(now + CHALLENGE_TTL)], separators=(',', ':'))
         db.execute('INSERT INTO pos_challenges VALUES(?,?,?,?,?,?,?)',
@@ -197,11 +197,12 @@ class POSStore:
                 raise POSDenied
             return self._challenge(db, row, '', 'activate', key)
 
-    def _consume(self, db, ident, session, operation, key, challenge, signature):
+    def _consume(self, db, ident, session, operation, key, challenge, signature, payload=None):
         row = db.execute('SELECT * FROM pos_challenges WHERE id=? AND expires>?', (challenge, time.time())).fetchone()
         if not row or (row['terminal'], row['session'], row['operation'], row['public_key']) != (ident, session, operation, key):
             raise POSDenied
-        if json.loads(row['message'])[1] != self.audience:
+        if (json.loads(row['message'])[1] != self.audience
+                or (payload is not None and json.loads(row['message'])[7] != digest(payload))):
             raise POSDenied
         verify(key, row['message'], signature)
         db.execute('DELETE FROM pos_challenges WHERE id=?', (challenge,))
@@ -225,13 +226,13 @@ class POSStore:
             db.execute('INSERT INTO pos_audit(terminal,action,at) VALUES(?,?,?)', (row['id'], 'activated', now))
             return {'session': token, 'expires_in': SESSION_TTL}
 
-    def challenge(self, token, operation):
-        if operation not in {'config', 'logout'}:
+    def challenge(self, token, operation, payload='{}'):
+        if operation not in {'config', 'logout', 'receive-config', 'receive', 'receipt'}:
             raise POSDenied
         with closing(self.connect()) as db, db:
             db.execute('BEGIN IMMEDIATE')
             session, terminal = self._session(db, token)
-            return self._challenge(db, terminal, session['id'], operation, terminal['public_key'])
+            return self._challenge(db, terminal, session['id'], operation, terminal['public_key'], payload)
 
     def authorized(self, token, operation, challenge, signature):
         with closing(self.connect()) as db, db:
@@ -247,4 +248,15 @@ class POSStore:
                 raise POSDenied
             db.execute('UPDATE pos_terminals SET last_seen=? WHERE id=?', (time.time(), terminal['id']))
             return {'name': terminal['name'], 'fingerprint': terminal['fingerprint'],
-                    'scope': 'receive-only', 'payments_available': False}
+                    'scope': 'receive-only', 'payments_available': True}
+
+    def receiving_authority(self, token, operation, challenge, signature, payload):
+        """Internal authority only; never serialize this result to the terminal."""
+        if operation not in {'receive-config', 'receive', 'receipt'}:
+            raise POSDenied
+        with closing(self.connect()) as db, db:
+            db.execute('BEGIN IMMEDIATE')
+            session, terminal = self._session(db, token)
+            self._consume(db, terminal['id'], session['id'], operation,
+                          terminal['public_key'], challenge, signature, payload)
+            return {k: terminal[k] for k in ('id', 'owner', 'wallet_id')}

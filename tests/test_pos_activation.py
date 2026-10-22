@@ -105,7 +105,7 @@ def test_restart_logout_revocation_wallet_replacement_and_expiry(store):
     key, pair, session = activate(store)
     # New instance retains authority, while consumed challenges stay consumed.
     replacement = POSStore(type('Custody', (), {'connect': staticmethod(store.connect)})(), store.audience)
-    assert config(replacement, session, pair)['payments_available'] is False
+    assert config(replacement, session, pair)['payments_available'] is True
     challenge = store.challenge(session, 'logout')
     assert store.authorized(session, 'logout', **proof(pair[0], challenge))['status'] == 'signed-out'
     with pytest.raises(POSDenied): config(store, session, pair)

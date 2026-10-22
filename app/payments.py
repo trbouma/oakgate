@@ -96,16 +96,20 @@ class PaymentService:
         await self.create_quote(item)
         return item['invoice']
 
-    async def request_invoice(self, owner, amount):
+    async def request_invoice(self, owner, amount, *, request_id=None):
         if not self.config.enabled or not self.config.min_sat <= amount <= self.config.max_sat:
             raise ValueError('Amount is outside the configured receiving limits')
         wallet = self.wallets.store.get(owner)
         if not wallet or wallet['status'] != 'active':
             raise ValueError('Connect an Acorn first')
         self.wallets.relay(wallet['material']['relay'])
-        item, _ = self.store.reserve(owner, {'service_pubkey': self.identity.pubkey,
+        item, created = self.store.reserve(owner, {'service_pubkey': self.identity.pubkey,
             'amount': amount, 'mint': self.config.mint, 'zap': None, 'comment': None,
-            'description': 'OakGate cash request', 'relays': []})
+            'description': 'OakGate cash request', 'relays': []}, request_id=request_id)
+        if not created:
+            if item.get('invoice') and item['state'] in {'waiting', 'credited', 'complete'}:
+                return item
+            raise ValueError('Request preparation could not be confirmed')
         await self.create_quote(item)
         return item
 

@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>OakGate POS</title>
-<link rel="stylesheet" href="/static/terminal.css"><script src="/static/terminal.js" defer></script><script type="module" src="/static/activation-scan.js"></script></head>
+<link rel="stylesheet" href="/static/terminal.css"><script src="/static/receiving.js" defer></script><script src="/static/terminal.js" defer></script><script type="module" src="/static/activation-scan.js"></script></head>
 <body><main><header><img src="/logo.png" alt=""><span>MAINSTAY / OAKGATE POS</span></header>
 <section><p class="eyebrow">YOUR POINT OF SALE</p><h1 id="heading">Set up this terminal</h1>
 <p id="status" role="status" aria-live="polite">Checking terminal…</p>
@@ -14,9 +14,29 @@
 <input id="credential" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" required maxlength="200" placeholder="ogpos1.…">
 <p class="note">Create a key in OakGate Preferences, then enter it here. This key will be bound to this browser.</p>
 <button type="submit">Activate terminal</button></form>
-<div id="terminal" hidden><p class="badge">RECEIVE ONLY</p><p class="note">This device cannot spend funds or open your account.</p>
-<p>Payment collection is coming next.</p><p class="note">Device fingerprint<br><code id="fingerprint"></code></p>
-<button id="logout" type="button" class="secondary">Log out of terminal</button></div>
+<div id="terminal" hidden>
+<form id="receive-form" data-receive-entry>
+<div class="selectors"><div><label for="asset">Receive</label><select name="asset" id="asset"></select></div>
+<div data-receive-currency><label for="currency">Currency</label><select name="currency" id="currency"></select><input type="hidden" name="quoted_rate"></div></div>
+<div class="readout"><label for="amount" class="sr-only">Amount</label><div class="amount-line"><span data-receive-symbol></span><input name="amount" id="amount" type="text" required autocomplete="off" inputmode="decimal" placeholder="0.00" aria-describedby="amount-unit"></div>
+<p id="amount-unit" data-receive-unit></p><p data-receive-sats data-sats-label="sats" data-unavailable="Rate unavailable. Choose SATS." data-invalid="Enter an amount of at least 1 sat." aria-live="polite"></p></div>
+<div class="receive-keypad" data-receive-keypad role="group" aria-label="Amount keypad">
+<button type="button" data-key="1">1</button><button type="button" data-key="2">2</button><button type="button" data-key="3">3</button><button type="button" data-key="4">4</button><button type="button" data-key="5">5</button><button type="button" data-key="6">6</button><button type="button" data-key="7">7</button><button type="button" data-key="8">8</button><button type="button" data-key="9">9</button>
+<button type="button" data-key="." aria-label="Decimal point">.</button><button type="button" data-key="0">0</button><button type="button" data-key="backspace" aria-label="Delete last digit">⌫</button><button type="button" data-key="clear">Clear amount</button></div>
+<button id="create-request" type="submit">Create request</button>
+<button type="button" class="quiet" id="refresh-options">Refresh currencies and assets</button>
+</form>
+<div id="receipt" hidden>
+<h2 id="receipt-name"></h2><p id="receipt-amount" class="receipt-amount"></p>
+<p id="receipt-status" role="status" aria-live="polite"></p>
+<div id="receipt-code" hidden><button id="qr-copy" type="button" aria-label="Copy payment request"></button><p id="copy-note" class="note" role="status">Tap the QR code to copy the request.</p></div>
+<div id="poll-progress"><progress id="poll-bar" max="120" value="0" aria-label="Checking time elapsed"></progress><p id="poll-note" class="note"></p></div>
+<button id="retry-request" class="secondary" type="button" hidden>Check this request again</button>
+<button id="new-request" type="button">Cancel</button>
+<p id="cancel-note" class="note">Cancel stops checking. An issued request can still receive a payment.</p>
+</div>
+<details class="device-details"><summary>Terminal settings</summary><p class="note">Receive only · Device <code id="fingerprint"></code></p><button id="logout" type="button" class="secondary">Log out of terminal</button></details>
+</div>
 <button id="forget" type="button" class="secondary" hidden>Clear local session</button>
 <p id="error" role="alert"></p><noscript>JavaScript is required to securely activate this device.</noscript>
 </section><footer>Dedicated device. Limited access.</footer></main></body></html>
