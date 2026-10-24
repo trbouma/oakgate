@@ -145,16 +145,20 @@ Real NFC hardware and future card spending/login are outside those test claims.
 ## Available Balance
 
 On an activated POS choose **Available Balance**, tap an issued OakGate card,
-then choose **Show available balance**. Scanning alone does not send the card or
+then choose **Show available balance**. A compact dropdown selects Cash or a Clear
+balance; Cash initially shows local currency with sats underneath, and Clear shows
+the friendly asset name and balance in its friendly units. Scanning alone does not send the card or
 query its balance. Confirmation sends the encrypted card through the terminal's
 existing signed API. This adds balance disclosure only, not payment authority.
 Any active terminal on this instance can read a valid presented card; it need not
 be the issuing terminal. A copied card can also authorize this read-only lookup.
 
 OakGate validates issuer, authenticated ciphertext, activation, expiry, revocation
-and the original wallet binding, then reads cash through the Acorn adapter.
-The response contains only sats and a local-currency estimate using the card
-holder's preference. Missing or stale rates show sats with a currency-unavailable
+and the original wallet binding, then reads Cash and Clear through the Acorn adapter.
+The response contains sats, a local-currency estimate using the card holder’s
+preference, and Clear asset amounts with public asset labels. Clear keysets are
+grouped by exact mint and unit; friendly names never merge different assets. A
+Clear lookup failure leaves Cash available with an explicit warning. Missing or stale rates show sats with a currency-unavailable
 message. Revocation is checked again after the wallet read. No transaction
 history, account identifier or private key is returned to the terminal.
 

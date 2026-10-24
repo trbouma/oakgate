@@ -10,6 +10,7 @@ from app.pos_api import invoke
 from app.wallet_routes import checked_form
 from app.record_previews import _qr_svg
 from app.nfc_cards import CardStore
+from app.clear_balances import payment_assets
 from pos.config import pos_enabled
 
 router = APIRouter()
@@ -36,9 +37,18 @@ async def card_operation(request, actor, operation, payload):
         if (not record or record['status'] != 'active'
                 or hashlib.sha256(record['material']['npub'].encode()).hexdigest() != authority['wallet_id']):
             raise HTTPException(403, 'This card is no longer available.')
+        async def clear_balances():
+            try:
+                async with asyncio.timeout(12):
+                    rows = payment_assets(await service.clear_balances(record['material']))
+                return [{**{k: row[k] for k in ('id', 'display_name', 'display_unit', 'mint', 'unit')},
+                         'amount': str(row['amount'])} for row in rows], False
+            except Exception:
+                return [], True
         try:
             async with asyncio.timeout(40):
-                sats = await service.balance(record['material'])
+                sats, (clear, clear_unavailable) = await asyncio.gather(
+                    service.balance(record['material']), clear_balances())
             if type(sats) is not int or sats < 0:
                 raise ValueError('Invalid balance')
         except Exception:
@@ -55,7 +65,7 @@ async def card_operation(request, actor, operation, payload):
                     local = {k: estimate[k] for k in ('code', 'symbol', 'amount')}
             except Exception:
                 pass  # A missing/stale exchange rate must not hide the cash balance.
-        return {'sats': sats, 'local': local}
+        return {'sats': sats, 'local': local, 'clear': clear, 'clear_unavailable': clear_unavailable}
     fields = {'request_key', 'card_payload'} if operation == 'card-verify' else {'request_key'}
     if (not isinstance(data, dict) or set(data) != fields or any(not isinstance(v,str) for v in data.values())
             or not 16 <= len(data['request_key']) <= 80):

@@ -1,10 +1,10 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const vm=require('node:vm');
 function fixture(){
  const nodes={},readers=[],calls=[],events={},timers=new Map();let n=0,resolve;
- const el=id=>nodes[id]||={hidden:false,disabled:false,textContent:'',listeners:{},addEventListener(e,f){this.listeners[e]=f;}};
+ const el=id=>nodes[id]||={hidden:false,disabled:false,textContent:'',children:[],replaceChildren(){this.children=[];},append(child){this.children.push(child);},listeners:{},addEventListener(e,f){this.listeners[e]=f;}};
  class Reader{constructor(){readers.push(this);}async scan(o){this.options=o;}}
  const ctx={window:{NDEFReader:Reader},isSecureContext:true,AbortController,Uint8Array,btoa,
- document:{getElementById:el,addEventListener:(e,f)=>events[e]=f},addEventListener:(e,f)=>events[e]=f,
+ document:{createElement:()=>({}),getElementById:el,addEventListener:(e,f)=>events[e]=f},addEventListener:(e,f)=>events[e]=f,
  setTimeout:f=>{timers.set(++n,f);return n;},clearTimeout:n=>timers.delete(n)};
  vm.runInNewContext(fs.readFileSync('pos/static/card-balance.js','utf8'),ctx);
  ctx.window.startPOSCardBalance(async(op,data)=>{calls.push({op,data});return await new Promise(r=>resolve=r);});
@@ -32,4 +32,18 @@ test('wrong MIME, timeout and unsupported hardware cannot query balances',async(
  await f.click('card-balance-close');await f.click('available-balance');[...f.timers.values()][0]();
  assert.equal(f.readers[1].options.signal.aborted,true);
  await f.click('card-balance-close');f.ctx.window.NDEFReader=undefined;await f.click('available-balance');assert.equal(f.readers.length,2);
+});
+
+test('dropdown switches between local cash and friendly Clear units without another card lookup',async()=>{
+ const f=fixture();await f.click('available-balance');f.readers[0].onreading(f.read());const pending=f.click('card-balance-confirm');
+ f.resolve({sats:500,local:{symbol:'$',amount:'0.50',code:'CAD'},clear:[{display_name:'ClearCare',display_unit:'care credits',amount:'10000',mint:'https://clear.example',unit:'cmu-test'}]});await pending;
+ const select=f.el('card-balance-asset');assert.equal(select.children.length,2);assert.equal(select.children[1].textContent,'ClearCare');
+ select.value='0';select.listeners.change();assert.equal(f.el('card-balance-local').textContent,'10,000');assert.equal(f.el('card-balance-sats').textContent,'care credits');
+ select.value='cash';select.listeners.change();assert.equal(f.el('card-balance-local').textContent,'$0.50 CAD');assert.equal(f.calls.length,1);
+ await f.click('card-balance-close');assert.equal(select.children.length,0);
+});
+test('Clear failure shows cash with a warning, not an empty balance claim',async()=>{
+ const f=fixture();await f.click('available-balance');f.readers[0].onreading(f.read());const pending=f.click('card-balance-confirm');
+ f.resolve({sats:0,local:null,clear:[],clear_unavailable:true});await pending;
+ assert.equal(f.el('card-balance-asset').children.length,1);assert.match(f.el('card-balance-status').textContent,/temporarily unavailable/);assert.match(f.el('card-balance-sats').textContent,/0 sats/);
 });

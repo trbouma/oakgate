@@ -147,7 +147,7 @@ def create_app(settings=None, transport=None):
                    'config': {'name', 'fingerprint', 'scope', 'payments_available'}, 'logout': {'status'},
                    'receive-config': {'assets', 'currencies', 'currency', 'cash_enabled', 'cash_min', 'cash_max', 'clear_max', 'clear_unavailable'},
                    **{op: {'state', 'request_key', 'code', 'qr', 'amount', 'display_name', 'display_unit'} for op in ('receive', 'receipt')},
-                   **{op: {'state','pair_code','pair_url','qr','expires','wallet_label','payload','mime','byte_count','card_id','sats','local'} for op in CARD_OPS}}[operation]
+                   **{op: {'state','pair_code','pair_url','qr','expires','wallet_label','payload','mime','byte_count','card_id','sats','local','clear','clear_unavailable'} for op in CARD_OPS}}[operation]
         response = JSONResponse({k: v for k, v in payload.items() if k in allowed})
         if operation == 'logout':
             response.delete_cookie(COOKIE, path='/', secure=True, httponly=True, samesite='strict')

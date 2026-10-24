@@ -148,13 +148,26 @@ def test_wallet_callback_scanner_and_pos_proxy(tmp_path,monkeypatch):
                 assert (await call('card-balance',{'card_payload':prepared.json()['payload'],'confirmed':'no'})).status_code==400
                 balance=await call('card-balance',{'card_payload':prepared.json()['payload'],'confirmed':'yes'})
                 assert balance.status_code==200,balance.text
-                assert balance.json()=={'sats':1234,'local':None}
+                assert balance.json()=={'sats':1234,'local':None,'clear':[],'clear_unavailable':False}
                 from types import SimpleNamespace
                 app.state.rates=SimpleNamespace(default_currency='USD',
                     store=SimpleNamespace(currency=lambda owner,default:'CAD' if owner==alice else 'USD'),
                     estimate=lambda sats,currency:{'stale':False,'code':currency,'symbol':'$','amount':'1.23'})
                 balance=await call('card-balance',{'card_payload':prepared.json()['payload'],'confirmed':'yes'})
-                assert balance.json()=={'sats':1234,'local':{'code':'CAD','symbol':'$','amount':'1.23'}}
+                assert balance.json()=={'sats':1234,'local':{'code':'CAD','symbol':'$','amount':'1.23'},'clear':[],'clear_unavailable':False}
+                from unittest.mock import AsyncMock
+                wallets.clear_balances=AsyncMock(return_value=[
+                    {'mint':'https://clear.example','unit':'cmu-care','keyset_id':'one','amount':6000,'display_name':'ClearCare','display_unit':'care credits'},
+                    {'mint':'https://clear.example','unit':'cmu-care','keyset_id':'two','amount':4000,'display_name':'ClearCare','display_unit':'care credits'}])
+                balance=await call('card-balance',{'card_payload':prepared.json()['payload'],'confirmed':'yes'})
+                assert len(balance.json()['clear'])==1
+                assert balance.json()['clear'][0]['amount']=='10000'
+                assert balance.json()['clear'][0]['display_name']=='ClearCare'
+                assert balance.json()['clear'][0]['display_unit']=='care credits'
+                wallets.clear_balances.side_effect=TimeoutError()
+                balance=await call('card-balance',{'card_payload':prepared.json()['payload'],'confirmed':'yes'})
+                assert balance.status_code==200 and balance.json()['sats']==1234
+                assert balance.json()['clear_unavailable'] is True
                 app.state.rates=None
                 assert prepared.json()['card_id'][:8] in (await account.get('/account/cards')).text
                 monkeypatch.setenv('OAKGATE_POS_ENABLED','false')
