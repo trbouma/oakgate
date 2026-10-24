@@ -72,6 +72,10 @@ async def scan(request: Request):
     try:
         raw = payload(form)
         code = raw.strip()
+        from app.nfc_cards import pairing_destination
+        card_destination = pairing_destination(code, request.app.state.settings.origin)
+        if card_destination:
+            return RedirectResponse(card_destination, 303)
         recognized_payment = code.lower().startswith(('lnbc', 'lightning:lnbc', 'creqa', 'creqb1', 'bitcoin:'))
         if recognized_payment:
             async with asyncio.timeout(40):

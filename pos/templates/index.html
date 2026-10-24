@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>OakGate POS</title>
-<link rel="stylesheet" href="/static/terminal.css"><script src="/static/receiving.js" defer></script><script src="/static/terminal.js" defer></script><script type="module" src="/static/activation-scan.js"></script></head>
+<link rel="stylesheet" href="/static/terminal.css"><script src="/static/cards.js" defer></script><script src="/static/receiving.js" defer></script><script src="/static/terminal.js" defer></script><script type="module" src="/static/activation-scan.js"></script></head>
 <body><main><header><img src="/logo.png" alt=""><span>MAINSTAY / OAKGATE POS</span></header>
 <section><p class="eyebrow">YOUR POINT OF SALE</p><h1 id="heading">Set up this terminal</h1>
 <p id="status" role="status" aria-live="polite">Checking terminal…</p>
@@ -15,7 +15,7 @@
 <p class="note">Create a key in OakGate Preferences, then enter it here. This key will be bound to this browser.</p>
 <button type="submit">Activate terminal</button></form>
 <div id="terminal" hidden>
-<form id="receive-form" data-receive-entry>
+<div id="pos-payments"><form id="receive-form" data-receive-entry>
 <div class="selectors"><div><label for="asset">Receive</label><select name="asset" id="asset"></select></div>
 <div data-receive-currency><label for="currency">Currency</label><select name="currency" id="currency"></select><input type="hidden" name="quoted_rate"></div></div>
 <div class="readout"><label for="amount" class="sr-only">Amount</label><div class="amount-line"><span data-receive-symbol></span><input name="amount" id="amount" type="text" required autocomplete="off" inputmode="decimal" placeholder="0.00" aria-describedby="amount-unit"></div>
@@ -24,6 +24,7 @@
 <button type="button" data-key="1">1</button><button type="button" data-key="2">2</button><button type="button" data-key="3">3</button><button type="button" data-key="4">4</button><button type="button" data-key="5">5</button><button type="button" data-key="6">6</button><button type="button" data-key="7">7</button><button type="button" data-key="8">8</button><button type="button" data-key="9">9</button>
 <button type="button" data-key="." aria-label="Decimal point">.</button><button type="button" data-key="0">0</button><button type="button" data-key="backspace" aria-label="Delete last digit">⌫</button><button type="button" data-key="clear">Clear amount</button></div>
 <button id="create-request" type="submit">Create request</button>
+<button type="button" class="secondary" id="issue-card">Issue NFC card</button>
 <button type="button" class="quiet" id="refresh-options">Refresh currencies and assets</button>
 </form>
 <div id="receipt" hidden>
@@ -35,6 +36,20 @@
 <button id="new-request" type="button">Cancel</button>
 <p id="cancel-note" class="note">Cancel stops checking. An issued request can still receive a payment.</p>
 </div>
+</div>
+<section id="card-issuance" hidden>
+<h2>Issue NFC card</h2><p id="card-status" role="status" aria-live="polite"></p>
+<p id="card-pair-code"></p><div id="card-qr" class="card-qr" hidden></div>
+<p id="card-wallet"></p><button id="card-prepare" type="button" hidden>Prepare card for this wallet</button>
+<div id="card-hardware" hidden><p>Use a writable NDEF card with at least 496 bytes of usable space. No PIN is used.</p>
+<label><input id="card-overwrite" type="checkbox"> Replace the intended card’s existing contents.</label>
+<button id="card-write" type="button" disabled>Write card</button>
+<button id="card-read" type="button">Read back and verify</button>
+<button id="card-stop" type="button" class="secondary" hidden>Stop NFC operation</button></div>
+<button id="card-refresh" type="button" class="secondary" hidden>Check issuance status</button>
+<button id="card-cancel" type="button" class="secondary">Cancel issuance</button>
+<p class="note">The card holds an encrypted random credential. Spending and sign-in are not enabled.</p>
+</section>
 <details class="device-details"><summary>Terminal settings</summary><p class="note">Receive only · Device <code id="fingerprint"></code></p><button id="logout" type="button" class="secondary">Log out of terminal</button></details>
 </div>
 <button id="forget" type="button" class="secondary" hidden>Clear local session</button>

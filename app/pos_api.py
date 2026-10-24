@@ -1,4 +1,5 @@
 """Receive-only POS authorization; no spending or account operations exposed."""
+from pos.protocol import CARD_OPS
 import json
 import asyncio
 import os
@@ -74,7 +75,7 @@ def create_router():
                   'activate': {'credential', 'public_key', 'challenge', 'signature'},
                   'challenges': {'operation'}, 'config': {'challenge', 'signature'},
                   'logout': {'challenge', 'signature'},
-                  **{op: {'payload', 'challenge', 'signature'} for op in ('receive-config', 'receive', 'receipt')}}
+                  **{op: {'payload', 'challenge', 'signature'} for op in ('receive-config', 'receive', 'receipt', *CARD_OPS)}}
         if operation not in fields:
             raise HTTPException(503, 'POS operation is unavailable.')
         if operation == 'challenges':
@@ -92,6 +93,10 @@ def create_router():
             token = auth[7:]
             if operation == 'challenges':
                 result = await invoke(store.challenge, token, data['operation'], data.get('payload', '{}'))
+            elif operation in CARD_OPS:
+                actor = await invoke(store.receiving_authority, token, operation, data['challenge'], data['signature'], data['payload'])
+                from app.nfc_routes import card_operation
+                result = await card_operation(request, actor, operation, data['payload'])
             elif operation in {'receive-config', 'receive', 'receipt'}:
                 actor = await invoke(store.receiving_authority, token, operation, data['challenge'], data['signature'], data['payload'])
                 from app.pos_receiving import receive

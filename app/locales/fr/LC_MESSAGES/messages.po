@@ -2767,3 +2767,45 @@ msgstr "Code QR d’activation du terminal"
 
 msgid "On your POS device, choose Scan activation code. Keep this QR code private: the first browser to use it becomes the registered device."
 msgstr "Sur votre terminal, choisissez « Scanner le code d’activation ». Gardez ce code QR privé : le premier navigateur qui l’utilise devient l’appareil enregistré."
+
+msgid "Pair an NFC card"
+msgstr "Associer une carte NFC"
+
+msgid "Scan the code on the terminal, check its name and pairing code, then approve your card."
+msgstr "Scannez le code du terminal, vérifiez son nom et son code d’association, puis approuvez votre carte."
+
+msgid "Checking terminal…"
+msgstr "Vérification du terminal…"
+
+msgid "This card contains an encrypted random credential. It cannot sign in or spend funds yet. No PIN is used in this version."
+msgstr "Cette carte contient un identifiant aléatoire chiffré. Elle ne permet pas encore de se connecter ni de dépenser des fonds. Cette version n’utilise pas de NIP."
+
+msgid "Approve card issuance"
+msgstr "Approuver l’émission de la carte"
+
+msgid "Sign in in another tab, then return here and continue."
+msgstr "Connectez-vous dans un autre onglet, puis revenez ici pour continuer."
+
+msgid "Your NFC cards"
+msgstr "Vos cartes NFC"
+
+msgid "These cards contain random credentials, not wallet private keys. Spending and sign-in are not enabled."
+msgstr "Ces cartes contiennent des identifiants aléatoires, pas les clés privées du portefeuille. Les dépenses et la connexion ne sont pas activées."
+
+msgid "Card"
+msgstr "Carte"
+
+msgid "Not verified"
+msgstr "Non vérifiée"
+
+msgid "Revoke card"
+msgstr "Révoquer la carte"
+
+msgid "No cards issued yet."
+msgstr "Aucune carte émise pour le moment."
+
+msgid "Back to Funds"
+msgstr "Retour aux fonds"
+
+msgid "Verified"
+msgstr "Vérifiée"

@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% block content %}
+<h1 class="account-page-title">{{ _('Your NFC cards') }}</h1><section class="wallet-panel">
+<p>{{ _('These cards contain random credentials, not wallet private keys. Spending and sign-in are not enabled.') }}</p>
+{% for card in cards %}<article><p><strong>{{ _('Card') }} {{ card.id[:8] }}</strong> · {{ _('Revoked') if card.revoked else _('Verified') if card.activated else _('Not verified') }}</p>
+{% if not card.revoked %}<form action="/account/cards/{{ card.id }}/revoke" method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit">{{ _('Revoke card') }}</button></form>{% endif %}</article>
+{% else %}<p>{{ _('No cards issued yet.') }}</p>{% endfor %}
+<a href="/account/preferences">{{ _('Back to Preferences') }}</a></section>{% endblock %}

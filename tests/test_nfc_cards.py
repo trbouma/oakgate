@@ -1,0 +1,149 @@
+import asyncio
+import base64
+import hashlib
+import json
+import time
+from contextlib import closing
+from concurrent.futures import ThreadPoolExecutor
+from urllib.parse import urlsplit
+
+import httpx
+import pytest
+from cryptography.fernet import Fernet
+from app.custody import CustodyStore
+from app.nfc_cards import CardStore, MAX_BYTES, pairing_destination
+from app.pos_store import POSStore, POSDenied
+from pos.main import create_app as create_pos
+from pos.config import POSSettings
+from test_pos_activation import device, proof
+from test_wallets import setup,login,form
+
+@pytest.fixture
+def cards(tmp_path):
+    custody=CustodyStore(tmp_path,Fernet.generate_key())
+    pos=POSStore(custody,'https://pos.example')
+    with closing(custody.connect()) as db,db:
+        for owner in ('merchant','alice','bob'):
+            db.execute("INSERT INTO wallets(owner,wallet_id,encrypted,status) VALUES(?,?,X'00','active')",(owner,'wallet-'+owner))
+    terminal=pos.provision('merchant','Counter').split('.')[1]
+    return CardStore(custody,'https://oakgate.example'),pos,terminal
+
+def pair(cards,key='pair-request-key-0001',owner='alice'):
+    store,_,terminal=cards
+    start=store.start(terminal,key)
+    code=urlsplit(start['pair_url']).fragment
+    store.approve(code,owner)
+    return store.prepare(terminal,key),code
+
+
+def test_random_encrypted_card_idempotency_and_no_wallet_key_access(cards):
+    store,_,terminal=cards
+    result,code=pair(cards)
+    raw=base64.b64decode(result['payload'])
+    assert 100<len(raw)<=MAX_BYTES
+    assert raw.startswith(b'OGC1') and b'alice' not in raw and b'nsec' not in raw and b'wallet-alice' not in raw
+    assert store.prepare(terminal,'pair-request-key-0001')['payload']==result['payload']
+    assert store.status(terminal,'pair-request-key-0001')['state']=='prepared'
+    # Reload issuer state: no re-keying and no new credential on retry.
+    restarted=CardStore(store.custody,store.origin)
+    assert restarted.prepare(terminal,'pair-request-key-0001')['payload']==result['payload']
+    issued=restarted.verify(terminal,'pair-request-key-0001',result['payload'])
+    assert issued['state']=='issued' and 'payload' not in issued
+    assert restarted.verify(terminal,'pair-request-key-0001',result['payload'])['state']=='issued'
+    assert store.listing('merchant')==[] and len(store.listing('alice'))==1
+    with closing(store.custody.connect()) as db:
+        assert db.execute('SELECT payload FROM nfc_cards').fetchone()[0] is None
+        assert db.execute('SELECT invitation FROM nfc_pairings').fetchone()[0] is None
+        assert code.split('.')[-1] not in '\n'.join(db.iterdump())
+
+
+def test_pairing_approval_race_and_other_terminal(cards):
+    store,pos,terminal=cards
+    code=urlsplit(store.start(terminal,'pair-request-key-0001')['pair_url']).fragment
+    def approve(owner):
+        try:return store.approve(code,owner)
+        except POSDenied:return None
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        results=list(executor.map(approve,['alice','bob']))
+    assert sum(r is not None for r in results)==1
+    other=pos.provision('merchant','Other').split('.')[1]
+    with pytest.raises(POSDenied):store.status(other,'pair-request-key-0001')
+    with pytest.raises(POSDenied):store.prepare(other,'pair-request-key-0001')
+
+
+def test_expiry_cancel_revocation_and_wallet_replacement(cards):
+    store,pos,terminal=cards
+    result,_=pair(cards)
+    store.cancel(terminal,'pair-request-key-0001')
+    with pytest.raises(POSDenied):store.verify(terminal,'pair-request-key-0001',result['payload'])
+    result,_=pair(cards,'pair-request-key-0002')
+    store.revoke('alice',result['card_id'])
+    with pytest.raises(POSDenied):store.verify(terminal,'pair-request-key-0002',result['payload'])
+    with pytest.raises(POSDenied):store.revoke('bob',result['card_id'])
+    result,code=pair(cards,'pair-request-key-0003')
+    with closing(store.custody.connect()) as db,db:
+        db.execute("UPDATE nfc_pairings SET expires=0 WHERE request_key='pair-request-key-0003'")
+    assert store.status(terminal,'pair-request-key-0003')['state']=='expired'
+    with pytest.raises(POSDenied):store.approve(code,'alice')
+    with pytest.raises(POSDenied):store.verify(terminal,'pair-request-key-0003',result['payload'])
+    result,_=pair(cards,'pair-request-key-0004')
+    with closing(store.custody.connect()) as db,db:db.execute("UPDATE wallets SET wallet_id='replacement' WHERE owner='alice'")
+    with pytest.raises(POSDenied):store.verify(terminal,'pair-request-key-0004',result['payload'])
+    pos.revoke('merchant',terminal)
+    with pytest.raises(POSDenied):store.status(terminal,'pair-request-key-0004')
+
+
+def test_wrong_card_tampering_and_wrong_issuer(cards):
+    store,_,terminal=cards
+    first,_=pair(cards);second,_=pair(cards,'pair-request-key-0002','bob')
+    with pytest.raises(POSDenied):store.verify(terminal,'pair-request-key-0001',second['payload'])
+    raw=bytearray(base64.b64decode(first['payload']));raw[-1]^=1
+    with pytest.raises(POSDenied):store.verify(terminal,'pair-request-key-0001',base64.b64encode(raw).decode())
+    with pytest.raises(POSDenied):CardStore(store.custody,'https://other.example').verify(terminal,'pair-request-key-0001',first['payload'])
+    for value in ('x'*537,'abc',''):
+        with pytest.raises(POSDenied):store.verify(terminal,'pair-request-key-0001',value)
+    assert pairing_destination('https://evil.example/account/cards/pair#'+('x'*80),store.origin) is None
+
+
+def test_wallet_callback_scanner_and_pos_proxy(tmp_path,monkeypatch):
+    monkeypatch.setenv('OAKGATE_POS_ENABLED','true');monkeypatch.setenv('OAKGATE_POS_PUBLIC_URL','https://pos.example')
+    async def run():
+        account,sessions,wallets,_=setup(tmp_path)
+        async with account:
+            merchant=await login(account,sessions)
+            await account.post('/account/acorn/create',data=form())
+            app=account._transport.app;key=app.state.pos.provision(merchant,'Counter');pairkeys=device()
+            pos=create_pos(POSSettings(True,'https://pos.example','https://oakgate.example',Fernet.generate_key().decode()),httpx.ASGITransport(app))
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(pos),base_url='https://pos.example',headers={'Origin':'https://pos.example'}) as browser:
+                challenge=(await browser.post('/api/activation-challenges',json={'credential':key,'public_key':pairkeys[1]})).json()
+                assert (await browser.post('/api/activate',json={'credential':key,'public_key':pairkeys[1],**proof(pairkeys[0],challenge)})).status_code==200
+                async def call(op,data):
+                    payload=json.dumps(data,separators=(',',':'))
+                    challenge=(await browser.post('/api/challenges',json={'operation':op,'payload':payload})).json()
+                    return await browser.post('/api/'+op,json={'payload':payload,**proof(pairkeys[0],challenge)})
+                data={'request_key':'pair-request-key-0001'}
+                started=await call('card-start',data)
+                assert started.status_code==200,started.text
+                assert 'qr' in started.json()
+                code=urlsplit(started.json()['pair_url']).fragment
+                # Another logged-in user is the card holder, not the terminal owner.
+                alice=await login(account,sessions,sub='alice')
+                wallets.store.insert(alice,{'npub':'alice-wallet','relay':wallets.default_relay},'active')
+                scanned=await account.post('/account/scan',data=form(lightning_payment=started.json()['pair_url']))
+                assert scanned.status_code==303 and scanned.headers['location']==started.json()['pair_url']
+                page=await account.get('/account/cards/pair')
+                assert page.status_code==200 and 'no-store' in page.headers['cache-control']
+                assert code not in page.text
+                assert (await account.post('/account/cards/pair/approve',data={'csrf':'wrong','pair_code':code})).status_code==403
+                assert (await account.post('/account/cards/pair/approve',data={'csrf':'csrf-test','pair_code':code},headers={'Origin':'https://evil.example'})).status_code==403
+                assert (await call('card-prepare',data)).status_code==403
+                assert (await account.post('/account/cards/pair/approve',data={'csrf':'csrf-test','pair_code':code})).status_code==200
+                prepared=await call('card-prepare',data)
+                assert prepared.status_code==200,prepared.text
+                assert not {'owner','wallet_id','nsec'} & prepared.json().keys()
+                assert (await call('card-verify',{**data,'card_payload':prepared.json()['payload']})).json()['state']=='issued'
+                assert prepared.json()['card_id'][:8] in (await account.get('/account/cards')).text
+                monkeypatch.setenv('OAKGATE_POS_ENABLED','false')
+                assert (await call('card-start',{'request_key':'pair-request-key-0002'})).status_code==503
+                assert (await account.post('/account/cards/'+prepared.json()['card_id']+'/revoke',data={'csrf':'csrf-test'})).status_code==303
+    asyncio.run(run())

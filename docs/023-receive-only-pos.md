@@ -360,3 +360,11 @@ detected — confirming in background**, not final settlement. Existing workers
 continue recovery and crediting after polling stops, logout or revocation.
 Cancel stops local polling and clears the entry form; it does not revoke an
 already-issued invoice/request. Late payments still settle to the original owner.
+
+## Owner-approved NFC issuance
+
+POS terminals may also issue an encrypted random NFC credential after the wallet
+holder approves a short-lived pairing. This is a separate, narrow capability;
+funds access stays receive-only. It does not grant login or spending permissions.
+See [the NFC issuance contract](025-pos-nfc-cards.md) for approval, revocation,
+card encoding and the boundary for future NWC support.

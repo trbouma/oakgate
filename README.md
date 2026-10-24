@@ -86,6 +86,7 @@ The included GitHub Pages workflow publishes on pushes to `main` once **Settings
 ## Design
 
 - [Receive-only POS terminals and browser-bound keys](docs/023-receive-only-pos.md)
+- [POS NFC card issuance](docs/025-pos-nfc-cards.md)
 
 - [Safebox discovery contract and migration](docs/018-safebox-address-discovery.md)
 

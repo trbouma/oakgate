@@ -1,4 +1,5 @@
 """Isolated POS browser app: encrypted terminal sessions, no account or wallet keys."""
+from pos.protocol import CARD_OPS
 import json
 from pathlib import Path
 
@@ -17,7 +18,7 @@ FIELDS = {'activation-challenges': {'credential', 'public_key'},
           'activate': {'credential', 'public_key', 'challenge', 'signature'},
           'challenges': {'operation'}, 'config': {'challenge', 'signature'},
           'logout': {'challenge', 'signature'},
-          **{op: {'payload', 'challenge', 'signature'} for op in ('receive-config', 'receive', 'receipt')}}
+          **{op: {'payload', 'challenge', 'signature'} for op in ('receive-config', 'receive', 'receipt', *CARD_OPS)}}
 
 
 def create_app(settings=None, transport=None):
@@ -42,7 +43,7 @@ def create_app(settings=None, transport=None):
         response = await call_next(request)
         response.headers.update({'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer',
             'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY',
-            'Permissions-Policy': 'camera=(self), microphone=()',
+            'Permissions-Policy': 'camera=(self), nfc=(self), microphone=()',
             'Content-Security-Policy': "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; worker-src 'self' blob:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"})
         return response
 
@@ -145,7 +146,8 @@ def create_app(settings=None, transport=None):
         allowed = {'activation-challenges': {'challenge', 'message'}, 'challenges': {'challenge', 'message'},
                    'config': {'name', 'fingerprint', 'scope', 'payments_available'}, 'logout': {'status'},
                    'receive-config': {'assets', 'currencies', 'currency', 'cash_enabled', 'cash_min', 'cash_max', 'clear_max', 'clear_unavailable'},
-                   **{op: {'state', 'request_key', 'code', 'qr', 'amount', 'display_name', 'display_unit'} for op in ('receive', 'receipt')}}[operation]
+                   **{op: {'state', 'request_key', 'code', 'qr', 'amount', 'display_name', 'display_unit'} for op in ('receive', 'receipt')},
+                   **{op: {'state','pair_code','pair_url','qr','expires','wallet_label','payload','mime','byte_count','card_id'} for op in CARD_OPS}}[operation]
         response = JSONResponse({k: v for k, v in payload.items() if k in allowed})
         if operation == 'logout':
             response.delete_cookie(COOKIE, path='/', secure=True, httponly=True, samesite='strict')

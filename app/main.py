@@ -91,6 +91,8 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
     app.include_router(scan_router)
     app.include_router(receive_router)
     app.include_router(pos_router())
+    from app.nfc_routes import router as nfc_router
+    app.include_router(nfc_router)
 
     @app.middleware("http")
     async def private_responses(request, call_next):
@@ -103,7 +105,7 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
             response.headers["Referrer-Policy"] = (
                 "strict-origin" if request.url.path.startswith("/account") else "no-referrer"
             )
-        if request.url.path.startswith('/account/recovery'):
+        if request.url.path.startswith(('/account/recovery', '/account/cards')):
             response.headers['Cache-Control'] = 'no-store, private, max-age=0'
             response.headers['Pragma'] = 'no-cache'
             response.headers['Referrer-Policy'] = 'strict-origin'

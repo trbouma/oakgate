@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}<h1 class="account-page-title">{{ _('Pair an NFC card') }}</h1>
+<section class="wallet-panel" id="card-pair" data-signed-in="{{ 'yes' if pair_signed_in else 'no' }}" data-csrf="{{ csrf or '' }}">
+<p>{{ _('Scan the code on the terminal, check its name and pairing code, then approve your card.') }}</p>
+{% if pair_signed_in %}<p id="pair-details" role="status">{{ _('Checking terminal…') }}</p>
+<p>{{ _('This card contains an encrypted random credential. It cannot sign in or spend funds yet. No PIN is used in this version.') }}</p>
+<button id="pair-approve" type="button" disabled>{{ _('Approve card issuance') }}</button>
+{% else %}<p>{{ _('Sign in in another tab, then return here and continue.') }}</p>
+<a href="/auth/login" target="_blank" rel="noopener">{{ _('Sign in') }}</a><button type="button" id="pair-reload">{{ _('Continue') }}</button>{% endif %}
+<p id="pair-status" role="status" aria-live="polite"></p><a href="/account">{{ _('Back to Funds') }}</a>
+</section><script src="/static/card-pair.js" defer></script>{% endblock %}

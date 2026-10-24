@@ -144,3 +144,10 @@ promise of final settlement. Check the owner's transactions for final credit.
 
 The server-enforced policy and recovery behaviour are described in
 [the POS design note](023-receive-only-pos.md#implemented-receiving-policy-and-recovery).
+
+## Issue NFC cards
+
+The POS now includes **Issue NFC card** for wallet-approved pairing, writing and
+read-back verification. See [POS NFC card issuance](025-pos-nfc-cards.md) for the
+steps, card format and hardware requirements. No new environment variables are
+needed. Cards are issuance-only credentials; PIN, spending and NWC are later work.

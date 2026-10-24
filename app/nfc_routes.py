@@ -1,0 +1,84 @@
+"""Same-instance wallet approval callback and owner card revocation."""
+import json
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import JSONResponse, RedirectResponse
+from app.auth import current_session
+from app.custody import identity_key
+from app.pos_api import invoke
+from app.wallet_routes import checked_form
+from app.record_previews import _qr_svg
+from app.nfc_cards import CardStore
+from pos.config import pos_enabled
+
+router = APIRouter()
+
+async def card_store(request, *, enabled=True):
+    wallets = request.app.state.wallets
+    if not wallets or not request.app.state.settings.secure or (enabled and not pos_enabled()):
+        raise HTTPException(503, 'Card issuance is unavailable.')
+    return await invoke(CardStore, wallets.store, request.app.state.settings.origin)
+
+async def card_operation(request, actor, operation, payload):
+    try:
+        data = json.loads(payload)
+    except ValueError:
+        raise HTTPException(400, 'Invalid card request') from None
+    fields = {'request_key', 'card_payload'} if operation == 'card-verify' else {'request_key'}
+    if (not isinstance(data, dict) or set(data) != fields or any(not isinstance(v,str) for v in data.values())
+            or not 16 <= len(data['request_key']) <= 80):
+        raise HTTPException(400, 'Invalid card request')
+    store = await card_store(request)
+    args = [actor['id'], data['request_key']]
+    if operation == 'card-verify':
+        args.append(data['card_payload'])
+    method = {'card-start':store.start, 'card-status':store.status, 'card-prepare':store.prepare,
+              'card-verify':store.verify, 'card-cancel':store.cancel}[operation]
+    result = await invoke(method, *args)
+    if result.get('pair_url'):
+        result['qr'] = str(_qr_svg(result['pair_url']))
+    return result
+
+@router.get('/account/cards/pair', include_in_schema=False)
+async def pair_page(request: Request):
+    session = await current_session(request)
+    # The fragment is never sent to the server. A signed-out visitor is asked to
+    # sign in in another tab and return, so it cannot become an OIDC redirect URL.
+    return request.app.state.templates.TemplateResponse(request=request, name='card_pair.html',
+        context={**(session or {}), 'pair_signed_in': bool(session), 'active_page':'preferences'})
+
+@router.post('/account/cards/pair/{action}', include_in_schema=False)
+async def callback(request: Request, action: str):
+    session = await current_session(request)
+    if not session:
+        raise HTTPException(401, 'Sign in to OakGate, then scan this pairing code again.')
+    form = await checked_form(request, session)
+    if set(form) != {'csrf','pair_code'} or not isinstance(form['pair_code'],str):
+        raise HTTPException(400,'Invalid pairing request')
+    store = await card_store(request)
+    if action == 'details':
+        result = await invoke(store.inspect, form['pair_code'])
+    elif action == 'approve':
+        result = await invoke(store.approve, form['pair_code'], identity_key(session['user']))
+    else:
+        raise HTTPException(404)
+    return JSONResponse(result)
+
+@router.get('/account/cards', include_in_schema=False)
+async def cards(request: Request):
+    session = await current_session(request)
+    if not session:
+        return RedirectResponse('/auth/login',303)
+    store = await card_store(request, enabled=False)
+    entries = await invoke(store.listing, identity_key(session['user']))
+    return request.app.state.templates.TemplateResponse(request=request,name='cards.html',
+        context={**session,'cards':entries,'active_page':'preferences'})
+
+@router.post('/account/cards/{ident}/revoke', include_in_schema=False)
+async def revoke(request: Request, ident: str):
+    session = await current_session(request)
+    if not session:
+        return RedirectResponse('/auth/login',303)
+    await checked_form(request,session)
+    store = await card_store(request, enabled=False)
+    await invoke(store.revoke,identity_key(session['user']),ident)
+    return RedirectResponse('/account/cards',303)

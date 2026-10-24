@@ -79,6 +79,7 @@
     $('status').textContent = 'Ready to receive';
     $('activation').hidden = true; $('terminal').hidden = false; $('forget').hidden = true;
     await window.startPOSReceiving(signed, terminalID);
+    await window.startPOSCards(signed, terminalID);
   }
   async function busy(action) {
     if (operationBusy) return;
@@ -92,7 +93,10 @@
       operationBusy = false;
       $('activation').removeAttribute('aria-busy');
       document.querySelectorAll('button').forEach(button => {button.disabled=false;});
-      if (!$('terminal').hidden) $('create-request').disabled = !$('asset').options.length;
+      if (!$('terminal').hidden) {
+        $('create-request').disabled = !$('asset').options.length;
+        window.refreshPOSCardControls();
+      }
     }
   }
   $('activation').addEventListener('submit', event => {
@@ -117,10 +121,12 @@
   });
   $('logout').addEventListener('click', () => busy(async () => {
     $('forget').hidden = false;
+    document.dispatchEvent(new Event('pos-session-end'));
     await signed('logout');
     location.reload();
   }));
   $('forget').addEventListener('click', () => busy(async () => {
+    document.dispatchEvent(new Event('pos-session-end'));
     await api('forget', {});
     location.reload();
   }));
