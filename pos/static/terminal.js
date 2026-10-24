@@ -80,6 +80,7 @@
     $('activation').hidden = true; $('terminal').hidden = false; $('forget').hidden = true;
     await window.startPOSReceiving(signed, terminalID);
     await window.startPOSCards(signed, terminalID);
+    window.startPOSCardBalance(signed);
   }
   async function busy(action) {
     if (operationBusy) return;

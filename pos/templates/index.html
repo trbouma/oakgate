@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>OakGate POS</title>
-<link rel="stylesheet" href="/static/terminal.css"><script src="/static/cards.js" defer></script><script src="/static/receiving.js" defer></script><script src="/static/terminal.js" defer></script><script type="module" src="/static/activation-scan.js"></script></head>
+<link rel="stylesheet" href="/static/terminal.css"><script src="/static/cards.js" defer></script><script src="/static/card-balance.js" defer></script><script src="/static/receiving.js" defer></script><script src="/static/terminal.js" defer></script><script type="module" src="/static/activation-scan.js"></script></head>
 <body><main><header><img src="/logo.png" alt=""><span>MAINSTAY / OAKGATE POS</span></header>
 <section><p class="eyebrow">YOUR POINT OF SALE</p><h1 id="heading">Set up this terminal</h1>
 <p id="status" role="status" aria-live="polite">Checking terminal…</p>
@@ -25,6 +25,7 @@
 <button type="button" data-key="." aria-label="Decimal point">.</button><button type="button" data-key="0">0</button><button type="button" data-key="backspace" aria-label="Delete last digit">⌫</button><button type="button" data-key="clear">Clear amount</button></div>
 <button id="create-request" type="submit">Create request</button>
 <button type="button" class="secondary" id="issue-card">Issue NFC card</button>
+<button type="button" id="available-balance">Available Balance</button>
 <button type="button" class="quiet" id="refresh-options">Refresh currencies and assets</button>
 </form>
 <div id="receipt" hidden>
@@ -49,6 +50,13 @@
 <button id="card-refresh" type="button" class="secondary" hidden>Check issuance status</button>
 <button id="card-cancel" type="button" class="secondary">Cancel issuance</button>
 <p class="note">The card holds an encrypted random credential. Spending and sign-in are not enabled.</p>
+</section>
+<section id="card-balance-panel" hidden>
+<h2>Available Balance</h2>
+<p id="card-balance-status" role="status" aria-live="polite"></p>
+<div id="card-balance-result" hidden><p id="card-balance-local" class="card-balance-amount"></p><p id="card-balance-sats"></p></div>
+<button id="card-balance-confirm" type="button" hidden>Show available balance</button>
+<button id="card-balance-close" type="button" class="secondary">Cancel</button>
 </section>
 <details class="device-details"><summary>Terminal settings</summary><p class="note">Receive only · Device <code id="fingerprint"></code></p><button id="logout" type="button" class="secondary">Log out of terminal</button></details>
 </div>

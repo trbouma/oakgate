@@ -142,8 +142,37 @@ def test_wallet_callback_scanner_and_pos_proxy(tmp_path,monkeypatch):
                 assert prepared.status_code==200,prepared.text
                 assert not {'owner','wallet_id','nsec'} & prepared.json().keys()
                 assert (await call('card-verify',{**data,'card_payload':prepared.json()['payload']})).json()['state']=='issued'
+                assert (await call('card-balance',{'card_payload':prepared.json()['payload'],'confirmed':'no'})).status_code==400
+                balance=await call('card-balance',{'card_payload':prepared.json()['payload'],'confirmed':'yes'})
+                assert balance.status_code==200,balance.text
+                assert balance.json()=={'sats':1234,'local':None}
+                from types import SimpleNamespace
+                app.state.rates=SimpleNamespace(default_currency='USD',
+                    store=SimpleNamespace(currency=lambda owner,default:'CAD' if owner==alice else 'USD'),
+                    estimate=lambda sats,currency:{'stale':False,'code':currency,'symbol':'$','amount':'1.23'})
+                balance=await call('card-balance',{'card_payload':prepared.json()['payload'],'confirmed':'yes'})
+                assert balance.json()=={'sats':1234,'local':{'code':'CAD','symbol':'$','amount':'1.23'}}
+                app.state.rates=None
                 assert prepared.json()['card_id'][:8] in (await account.get('/account/cards')).text
                 monkeypatch.setenv('OAKGATE_POS_ENABLED','false')
                 assert (await call('card-start',{'request_key':'pair-request-key-0002'})).status_code==503
                 assert (await account.post('/account/cards/'+prepared.json()['card_id']+'/revoke',data={'csrf':'csrf-test'})).status_code==303
     asyncio.run(run())
+
+
+def test_balance_authority_requires_issued_current_unrevoked_card(cards):
+    store,pos,terminal=cards
+    result,_=pair(cards)
+    encoded=result['payload']
+    with pytest.raises(POSDenied):store.balance_authority(terminal,encoded)
+    store.verify(terminal,'pair-request-key-0001',encoded)
+    assert store.balance_authority(terminal,encoded)['owner']=='alice'
+    bad=bytearray(base64.b64decode(encoded));bad[-1]^=1
+    with pytest.raises(POSDenied):store.balance_authority(terminal,base64.b64encode(bad).decode())
+    with closing(store.custody.connect()) as db,db:
+        db.execute("UPDATE wallets SET wallet_id='changed' WHERE owner='alice'")
+    with pytest.raises(POSDenied):store.balance_authority(terminal,encoded)
+    with closing(store.custody.connect()) as db,db:
+        db.execute("UPDATE wallets SET wallet_id='wallet-alice' WHERE owner='alice'")
+    store.revoke('alice',result['card_id'])
+    with pytest.raises(POSDenied):store.balance_authority(terminal,encoded)

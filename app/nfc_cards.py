@@ -1,4 +1,4 @@
-"""Owner-approved POS issuance of opaque, non-spending NFC credentials.
+"""Owner-approved POS issuance and read-only balance access with NFC credentials.
 
 No Acorn private key is read. The card's random secret is deliberately NOT an
 NWC signing key, login credential, or spending authorization in this version.
@@ -187,7 +187,7 @@ class CardStore:
                 db.execute("UPDATE nfc_pairings SET state='prepared',card_id=? WHERE id=?", (ident.hex(),row['id']))
         return self.status(terminal, request_key)
 
-    def verify(self, terminal, request_key, encoded):
+    def _decode(self, encoded):
         try:
             if len(encoded)>536:
                 raise ValueError()
@@ -206,6 +206,25 @@ class CardStore:
                 raise ValueError()
         except Exception:
             raise POSDenied from None
+        return raw, ident, secret
+
+    def balance_authority(self, terminal, encoded, *, limit=False):
+        raw, ident, secret = self._decode(encoded)
+        with closing(self.custody.connect()) as db, db:
+            self._terminal(db, terminal)
+            card = db.execute('SELECT * FROM nfc_cards WHERE id=?', (ident,)).fetchone()
+            if (not card or card['activated'] is None or card['revoked'] is not None
+                    or card['expires'] <= time.time()
+                    or not secrets.compare_digest(card['payload_hash'], hashlib.sha256(raw).hexdigest())
+                    or not secrets.compare_digest(card['verifier'], hashlib.sha256(secret).hexdigest())):
+                raise POSDenied
+            POSStore._wallet(db, card['owner'], card['wallet_id'])
+            if limit:
+                POSStore._limit(db, 'card-balance:' + terminal, 60, 3600)
+            return {'owner': card['owner'], 'wallet_id': card['wallet_id']}
+
+    def verify(self, terminal, request_key, encoded):
+        raw, ident, secret = self._decode(encoded)
         with closing(self.custody.connect()) as db, db:
             db.execute('BEGIN IMMEDIATE')
             row=self._pair(db,terminal,request_key)

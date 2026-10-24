@@ -2,7 +2,7 @@
 
 OakGate POS can pair with a signed-in OakGate wallet, prepare an encrypted card
 credential, write an NDEF card and verify it by reading it back. This implements
-**issuance only**. Cards do not currently authorize login, spending, NWC calls or
+issuance and a confirmed, read-only cash balance lookup. Cards do not authorize login, spending, NWC calls or
 access to records. No PIN is used in this version.
 
 ## Operator flow
@@ -122,3 +122,24 @@ terminal isolation, races, retries, expiry, tampered/wrong cards, wallet replace
 revocation and encrypted payload size. Mock hardware tests cover explicit consent,
 write-only versus verification, MIME/byte matching, timeouts and late callbacks.
 Real NFC hardware and future card spending/login are outside those test claims.
+
+## Available Balance
+
+On an activated POS choose **Available Balance**, tap an issued OakGate card,
+then choose **Show available balance**. Scanning alone does not send the card or
+query its balance. Confirmation sends the encrypted card through the terminal's
+existing signed API. This adds balance disclosure only, not payment authority.
+Any active terminal on this instance can read a valid presented card; it need not
+be the issuing terminal. A copied card can also authorize this read-only lookup.
+
+OakGate validates issuer, authenticated ciphertext, activation, expiry, revocation
+and the original wallet binding, then reads cash through the Acorn adapter.
+The response contains only sats and a local-currency estimate using the card
+holder's preference. Missing or stale rates show sats with a currency-unavailable
+message. Revocation is checked again after the wallet read. No transaction
+history, account identifier or private key is returned to the terminal.
+
+The browser retains card bytes only in memory, requires confirmation, prevents
+double submission and clears the display on Done, logout, page backgrounding or
+after 60 seconds. NFC scanning stops after 30 seconds. No new configuration or
+card rewrite is needed; existing verified cards support this read-only action.

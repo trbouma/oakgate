@@ -1,5 +1,7 @@
 """Same-instance wallet approval callback and owner card revocation."""
 import json
+import asyncio
+import hashlib
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from app.auth import current_session
@@ -23,6 +25,37 @@ async def card_operation(request, actor, operation, payload):
         data = json.loads(payload)
     except ValueError:
         raise HTTPException(400, 'Invalid card request') from None
+    if operation == 'card-balance':
+        if (not isinstance(data, dict) or set(data) != {'card_payload', 'confirmed'}
+                or not isinstance(data['card_payload'], str) or data['confirmed'] != 'yes'):
+            raise HTTPException(400, 'Confirm the card balance lookup first.')
+        store = await card_store(request)
+        authority = await invoke(store.balance_authority, actor['id'], data['card_payload'], limit=True)
+        service = request.app.state.wallets
+        record = await invoke(service.store.get, authority['owner'])
+        if (not record or record['status'] != 'active'
+                or hashlib.sha256(record['material']['npub'].encode()).hexdigest() != authority['wallet_id']):
+            raise HTTPException(403, 'This card is no longer available.')
+        try:
+            async with asyncio.timeout(40):
+                sats = await service.balance(record['material'])
+            if type(sats) is not int or sats < 0:
+                raise ValueError('Invalid balance')
+        except Exception:
+            raise HTTPException(503, 'Balance unavailable. Please tap the card and try again.') from None
+        # Do not disclose a result if the card or either wallet was revoked/replaced during lookup.
+        await invoke(store.balance_authority, actor['id'], data['card_payload'])
+        local = None
+        rates = request.app.state.rates
+        if rates:
+            try:
+                currency = await invoke(rates.store.currency, authority['owner'], rates.default_currency)
+                estimate = await invoke(rates.estimate, sats, currency)
+                if estimate and not estimate['stale']:
+                    local = {k: estimate[k] for k in ('code', 'symbol', 'amount')}
+            except Exception:
+                pass  # A missing/stale exchange rate must not hide the cash balance.
+        return {'sats': sats, 'local': local}
     fields = {'request_key', 'card_payload'} if operation == 'card-verify' else {'request_key'}
     if (not isinstance(data, dict) or set(data) != fields or any(not isinstance(v,str) for v in data.values())
             or not 16 <= len(data['request_key']) <= 80):
