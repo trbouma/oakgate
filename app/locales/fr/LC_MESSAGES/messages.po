@@ -2809,3 +2809,57 @@ msgstr "Retour aux fonds"
 
 msgid "Verified"
 msgstr "Vérifiée"
+
+msgid "This card cannot sign in or spend funds yet. Save your new PIN separately; payments do not require it yet."
+msgstr "Cette carte ne permet pas encore de se connecter ni de dépenser des fonds. Conservez votre nouveau code PIN séparément ; les paiements ne l’exigent pas encore."
+
+msgid "Your private card PIN"
+msgstr "Votre code PIN privé de carte"
+
+msgid "Card PIN"
+msgstr "Code PIN de la carte"
+
+msgid "Memorize this PIN or save it separately from your card. It will be hidden after you confirm."
+msgstr "Mémorisez ce code PIN ou conservez-le séparément de votre carte. Il sera masqué après votre confirmation."
+
+msgid "I have saved my PIN"
+msgstr "J’ai conservé mon code PIN"
+
+msgid "Request card-and-PIN sign-in enrollment"
+msgstr "Demander l’inscription à la connexion par carte et code PIN"
+
+msgid "Optional. Records your request for the future Keycloak NFC login flow. Card login is not available yet; activation will require identity verification."
+msgstr "Facultatif. Enregistre votre demande pour la future connexion NFC via Keycloak. La connexion par carte n’est pas encore disponible ; son activation nécessitera une vérification d’identité."
+
+msgid "Sign-in enrollment requested — not active"
+msgstr "Inscription à la connexion demandée — non active"
+
+msgid "Withdraw sign-in request"
+msgstr "Retirer la demande de connexion"
+
+msgid "These cards contain random credentials, not wallet private keys. Card sign-in requires enrollment and your PIN."
+msgstr "Ces cartes contiennent des identifiants aléatoires, pas les clés privées du portefeuille. La connexion par carte nécessite une inscription et votre NIP."
+
+msgid "Enable card sign-in"
+msgstr "Activer la connexion par carte"
+
+msgid "Enable or unlock card sign-in"
+msgstr "Activer ou débloquer la connexion par carte"
+
+msgid "Card sign-in enabled"
+msgstr "Connexion par carte activée"
+
+msgid "Google or email"
+msgstr "Google ou courriel"
+
+msgid "NFC card and PIN"
+msgstr "Carte NFC et NIP"
+
+msgid "Card sign-in requires an enrolled card and a browser that supports Web NFC, such as Chrome on Android."
+msgstr "La connexion par carte nécessite une carte inscrite et un navigateur compatible Web NFC, comme Chrome sur Android."
+
+msgid "Sign in again with Google or email to enable this card and PIN for login. This also resets its failed PIN attempts. Only enable cards you control."
+msgstr "Connectez-vous à nouveau avec Google ou par courriel pour activer la connexion avec cette carte et son NIP. Cela réinitialise aussi les tentatives de NIP échouées. Activez uniquement les cartes dont vous avez le contrôle."
+
+msgid "Optional. After issuance, enable card sign-in in Your NFC cards by verifying your Google or email sign-in. You will need your card and PIN to log in."
+msgstr "Facultatif. Après émission, activez la connexion par carte dans Vos cartes NFC en vérifiant votre connexion Google ou par courriel. Vous aurez besoin de votre carte et de votre NIP."

@@ -1,0 +1,6 @@
+**
+!keycloak/
+!keycloak/nfc/
+!keycloak/nfc/pom.xml
+!keycloak/nfc/src/
+!keycloak/nfc/src/**

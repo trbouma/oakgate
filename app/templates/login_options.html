@@ -1,0 +1,6 @@
+{% extends "base.html" %}{% block content %}
+<h1>{{ _('Sign in') }}</h1><section class="wallet-panel">
+<a class="primary-action" href="/auth/login">{{ _('Google or email') }}</a>
+<a class="primary-action" href="/auth/nfc">{{ _('NFC card and PIN') }}</a>
+<p>{{ _('Card sign-in requires an enrolled card and a browser that supports Web NFC, such as Chrome on Android.') }}</p>
+</section>{% endblock %}

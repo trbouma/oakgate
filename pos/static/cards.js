@@ -44,6 +44,7 @@
     $('card-refresh').hidden=['issued','cancelled','expired','revoked'].includes(state);
     $('card-cancel').textContent=state==='issued'?'Done':'Cancel issuance';
     const labels={waiting:'Scan this code with the OakGate wallet that will own the card. Compare the pairing code and approve.',
+      pin_pending:'Waiting for the wallet holder to save their private PIN.',
       approved:'Wallet approved. Check the wallet label, then prepare its card.',prepared:'Card prepared. Confirm the intended card, then write it. If a write was interrupted, read it back first.',
       issued:'Card verified and issued. You can now remove it.',cancelled:'Issuance cancelled.',expired:'Pairing expired. Start a new issuance.',revoked:'Card revoked. Start a new issuance.'};
     message(labels[state] || 'Check issuance status.');
@@ -70,7 +71,7 @@
         const result=await operation('card-status');
         if(run!==generation)return;
         render(result);
-        if(result.state!=='waiting')return;
+        if(!['waiting','pin_pending'].includes(result.state))return;
       }catch(_){if(run!==generation)return;message('Checking for wallet approval…');$('card-refresh').hidden=false;}
       timer=setTimeout(check,2000);
     }
@@ -82,12 +83,12 @@
     if(!requestKey){const candidate=crypto.randomUUID();sessionStorage.setItem(storageKey,candidate);requestKey=candidate;}
     message('Preparing pairing code…');
     const result=await operation('card-start');render(result);
-    if(result.state==='waiting')poll();
+    if(['waiting','pin_pending'].includes(result.state))poll();
   }
   $('issue-card').addEventListener('click',()=>work(open));
   $('card-prepare').addEventListener('click',()=>work(async()=>{stopPoll();render(await operation('card-prepare'));}));
   $('card-refresh').addEventListener('click',()=>work(async()=>{
-    const result=await operation('card-start');render(result);if(result.state==='waiting')poll();
+    const result=await operation('card-start');render(result);if(['waiting','pin_pending'].includes(result.state))poll();
   }));
   $('card-cancel').addEventListener('click',()=>work(async()=>{
     stopPoll();

@@ -549,3 +549,5 @@ body:not(.landing) > header { padding-block: 12px; gap: 12px; }
 
 .pos-activation-qr { width:min(100%,300px); margin:20px auto; padding:8px; border-radius:12px; background:#fff; color:#000; }
 .pos-activation-qr svg { display:block; width:100%; height:auto; aspect-ratio:1; }
+
+#card-pair input[type=checkbox] { width:22px; height:22px; vertical-align:middle; margin-right:.5rem; }

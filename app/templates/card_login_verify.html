@@ -1,0 +1,5 @@
+{% extends "base.html" %}{% block content %}
+<h1>{{ _('Enable card sign-in') }}</h1><section class="wallet-panel">
+<p>{{ _('Sign in again with Google or email to enable this card and PIN for login. This also resets its failed PIN attempts. Only enable cards you control.') }}</p>
+<a class="primary-action" href="{{ authorization_url }}" rel="noreferrer">{{ _('Continue to verify sign-in') }}</a>
+<a href="/account/cards">{{ _('Cancel') }}</a></section>{% endblock %}

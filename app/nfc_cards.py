@@ -1,7 +1,8 @@
 """Owner-approved POS issuance and read-only balance access with NFC credentials.
 
 No Acorn private key is read. The card's random secret is deliberately NOT an
-NWC signing key, login credential, or spending authorization in this version.
+NWC signing key or spending authorization. Explicitly enrolled cards can also
+be used with their server-verified PIN through app/nfc_login.py.
 """
 import base64
 import hashlib
@@ -80,6 +81,12 @@ class CardStore:
               terminal TEXT NOT NULL, verifier TEXT NOT NULL, payload_hash TEXT NOT NULL,
               payload BLOB, created INTEGER NOT NULL, expires INTEGER NOT NULL,
               activated INTEGER, revoked INTEGER);
+            CREATE TABLE IF NOT EXISTS nfc_card_pins (
+              pairing TEXT PRIMARY KEY, card_id TEXT UNIQUE,
+              verifier BLOB NOT NULL, disclosure BLOB, acknowledged INTEGER);
+            CREATE TABLE IF NOT EXISTS nfc_login_requests (
+              pairing TEXT PRIMARY KEY, card_id TEXT UNIQUE, identity BLOB NOT NULL,
+              requested INTEGER NOT NULL, state TEXT NOT NULL DEFAULT 'requested');
             CREATE INDEX IF NOT EXISTS nfc_card_owner ON nfc_cards(owner);
             ''')
             db.execute('BEGIN IMMEDIATE')
@@ -124,6 +131,7 @@ class CardStore:
             POSStore._wallet(db, row['owner'], row['wallet_id'])
 
     def _cleanup(self, db):
+        db.execute('UPDATE nfc_card_pins SET disclosure=NULL WHERE pairing IN (SELECT id FROM nfc_pairings WHERE expires<?)', (time.time(),))
         db.execute('UPDATE nfc_pairings SET invitation=NULL WHERE expires<?', (time.time(),))
         db.execute('UPDATE nfc_cards SET payload=NULL, revoked=COALESCE(revoked,?) WHERE activated IS NULL AND id IN (SELECT card_id FROM nfc_pairings WHERE expires<?)', (int(time.time()), time.time()))
 
@@ -151,11 +159,18 @@ class CardStore:
                 raise POSDenied
             terminal = self._terminal(db, row['terminal'])
             self._live(db, row)
-            if row['state'] not in {'waiting', 'approved'}:
+            if row['state'] not in {'waiting', 'pin_pending', 'approved'}:
                 raise POSDenied
             return {'terminal_name': terminal['name'], 'pair_code': row['id'][:6].upper(), 'expires': row['expires']}
 
-    def approve(self, code, owner):
+    def approve(self, code, owner, *, enroll=False, login_identity=None):
+        if type(enroll) is not bool:
+            raise POSDenied
+        if enroll:
+            from app.custody import identity_key
+            if (not isinstance(login_identity, dict) or not all(isinstance(login_identity.get(k), str) and login_identity[k] for k in ('iss','sub'))
+                    or identity_key(login_identity) != owner):
+                raise POSDenied
         ident, secret = pairing_code(code)
         with closing(self.custody.connect()) as db, db:
             db.execute('BEGIN IMMEDIATE')
@@ -165,11 +180,40 @@ class CardStore:
             self._terminal(db, row['terminal']); self._live(db, row)
             wallet = POSStore._wallet(db, owner)
             if row['state'] != 'waiting':
-                if row['owner'] == owner and row['wallet_id'] == wallet and row['state'] in {'approved', 'prepared', 'issued'}:
-                    return {'state': 'approved'}
+                if row['owner'] == owner and row['wallet_id'] == wallet:
+                    if row['state'] == 'pin_pending':
+                        saved = db.execute('SELECT disclosure FROM nfc_card_pins WHERE pairing=?', (ident,)).fetchone()
+                        return {'state': 'pin_pending', 'pin': self.custody.cipher.decrypt(saved['disclosure']).decode()}
+                    if row['state'] in {'approved', 'prepared', 'issued'}:
+                        return {'state': 'approved'}
                 raise POSDenied
             POSStore._limit(db, 'card-approve:' + owner, 10, 3600)
-            db.execute("UPDATE nfc_pairings SET state='approved',owner=?,wallet_id=?,invitation=NULL WHERE id=?", (owner, wallet, ident))
+            if enroll:
+                db.execute('INSERT INTO nfc_login_requests(pairing,identity,requested) VALUES(?,?,?)',
+                           (ident, self.custody.seal(owner, {k: login_identity[k] for k in ('iss','sub')}), int(time.time())))
+            pin = f'{secrets.randbelow(10000):04d}'
+            salt = secrets.token_bytes(16)
+            derived = hashlib.scrypt(pin.encode(), salt=salt, n=16384, r=8, p=1, dklen=32)
+            # Encrypt even the salted verifier: a DB-only theft must not permit a 10k-PIN search.
+            verifier = self.custody.cipher.encrypt(b'oakgate/card-pin/scrypt-v1\x00' + ident.encode() + salt + derived)
+            db.execute('INSERT INTO nfc_card_pins(pairing,verifier,disclosure) VALUES(?,?,?)',
+                       (ident, verifier, self.custody.cipher.encrypt(pin.encode())))
+            db.execute("UPDATE nfc_pairings SET state='pin_pending',owner=?,wallet_id=?,invitation=NULL WHERE id=?", (owner, wallet, ident))
+        return {'state': 'pin_pending', 'pin': pin}
+
+    def acknowledge_pin(self, code, owner):
+        ident, secret = pairing_code(code)
+        with closing(self.custody.connect()) as db, db:
+            db.execute('BEGIN IMMEDIATE')
+            row = db.execute('SELECT * FROM nfc_pairings WHERE id=?', (ident,)).fetchone()
+            if not row or not secrets.compare_digest(row['verifier'], digest(secret)) or row['owner'] != owner:
+                raise POSDenied
+            self._terminal(db, row['terminal']); self._live(db, row)
+            if row['state'] == 'pin_pending':
+                db.execute('UPDATE nfc_card_pins SET disclosure=NULL,acknowledged=? WHERE pairing=?', (int(time.time()),ident))
+                db.execute("UPDATE nfc_pairings SET state='approved' WHERE id=?", (ident,))
+            elif row['state'] not in {'approved','prepared','issued'}:
+                raise POSDenied
         return {'state': 'approved'}
 
     def status(self, terminal, request_key):
@@ -216,6 +260,8 @@ class CardStore:
                 db.execute('INSERT INTO nfc_cards VALUES(?,?,?,?,?,?,?,?,?,NULL,NULL)',
                            (ident.hex(),row['owner'],row['wallet_id'],terminal,hashlib.sha256(secret).hexdigest(),hashlib.sha256(raw).hexdigest(),self.custody.cipher.encrypt(raw),issued,expires))
                 db.execute("UPDATE nfc_pairings SET state='prepared',card_id=? WHERE id=?", (ident.hex(),row['id']))
+                db.execute('UPDATE nfc_card_pins SET card_id=? WHERE pairing=?', (ident.hex(),row['id']))
+                db.execute('UPDATE nfc_login_requests SET card_id=? WHERE pairing=?', (ident.hex(),row['id']))
         return self.status(terminal, request_key)
 
     def _decode(self, encoded):
@@ -280,15 +326,23 @@ class CardStore:
             if row['state']=='issued':
                 return {'state':'issued'}
             db.execute("UPDATE nfc_pairings SET state='cancelled',invitation=NULL WHERE id=?",(row['id'],))
+            db.execute('UPDATE nfc_card_pins SET disclosure=NULL WHERE pairing=?', (row['id'],))
             db.execute('UPDATE nfc_cards SET revoked=COALESCE(revoked,?),payload=NULL WHERE id=? AND activated IS NULL',(int(time.time()),row['card_id']))
         return {'state':'cancelled'}
 
     def listing(self, owner):
         with closing(self.custody.connect()) as db:
-            rows=db.execute('SELECT id,created,expires,activated,revoked FROM nfc_cards WHERE owner=? ORDER BY created DESC LIMIT 100',(owner,)).fetchall()
+            rows=db.execute('SELECT c.id,c.created,c.expires,c.activated,c.revoked,l.state AS login_request FROM nfc_cards c LEFT JOIN nfc_login_requests l ON l.card_id=c.id WHERE c.owner=? ORDER BY c.created DESC LIMIT 100',(owner,)).fetchall()
         return [dict(r) for r in rows]
 
     def revoke(self, owner, ident):
         with closing(self.custody.connect()) as db, db:
             if not db.execute('UPDATE nfc_cards SET revoked=COALESCE(revoked,?),payload=NULL WHERE owner=? AND id=?',(int(time.time()),owner,ident)).rowcount:
                 raise POSDenied
+
+
+    def withdraw_login_request(self, owner, ident):
+        with closing(self.custody.connect()) as db, db:
+            if not db.execute('SELECT id FROM nfc_cards WHERE owner=? AND id=?',(owner,ident)).fetchone():
+                raise POSDenied
+            db.execute("UPDATE nfc_login_requests SET state='withdrawn' WHERE card_id=?", (ident,))

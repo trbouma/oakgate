@@ -1,9 +1,54 @@
-# Pay to an NFC card
+# NFC cards and payment execution
 
 The wallet Send page supports a payment address or **Read NFC payment card**.
 This pays **to** the card holder. It does not debit the card, log in as its holder,
 or give the acquiring instance access to its balance, records or keys.
 No PIN is needed to receive a payment.
+
+## Purpose and participants
+
+An NFC card is a portable reference to a custodial Acorn, with a random credential
+that its issuing OakGate instance can authenticate. It is not a wallet stored on
+plastic. The issuer keeps the account mapping and encrypted custody material;
+the card never carries the user's nsec or recovery phrase.
+
+| Participant | Responsibility |
+| --- | --- |
+| Card holder | Approves issuance to their wallet; receives payments; can revoke the card. |
+| Issuing POS | Pairs with the holder, writes the prepared credential and reads it back. |
+| Issuing OakGate instance | Encrypts/authenticates the card, maintains its wallet binding, and signs recipient-resolution replies. |
+| Acquiring wallet instance | Reads the card through the payer's browser, signs the payment-resolution instruction and prepares the payer's transfer. |
+| Payer | Selects funds and amount, reviews the resolved recipient, and confirms payment from their own wallet. |
+| Safebox Acorn and Stroma | Acorn performs wallet/private-key operations; Stroma supplies Nostr signing and transport beneath the appropriate service or wallet boundary. |
+
+The POS that originally issued a card does not need to be present when someone
+pays to it. The payer and card holder can use different OakGate instances.
+
+## Issuance and the credential
+
+Issuance starts with a terminal pairing QR. The logged-in holder scans it and
+explicitly approves the terminal’s pairing code and privately saves a generated
+four-digit PIN on their wallet page. The POS never receives that PIN. OakGate binds the request to
+that holder's current Acorn. The terminal then prepares the credential, asks for
+permission to replace the physical card's contents, writes one NDEF MIME record
+(`application/vnd.oakgate.card`), and performs a separate read-back verification.
+An acknowledged write alone does not activate the card.
+
+The current `OGC2` payload exposes only routing and verification material: its
+version, issuer HTTPS origin and issuer service npub. AES-256-GCM encrypts the
+random card ID, random 256-bit secret, issue time and expiry. The complete public
+header is authenticated as additional data, so changing its URL or public key
+invalidates the encrypted credential. The issuer stores the wallet mapping and
+secret/payload verifiers; its card encryption key is separate from user keys.
+See [POS NFC card issuance](025-pos-nfc-cards.md) for the binary layout, lifecycle
+and backups.
+
+A normal NDEF card is copyable. Encryption conceals the credential's plaintext;
+it does not establish physical-card uniqueness. The payment protocol
+is limited to receiving payments and confirmed local POS balance disclosure.
+Optional [Keycloak NFC login](027-keycloak-nfc-login.md) adds account authentication
+only after explicit enrollment, fresh authentication and PIN verification. A card
+is not NWC authorization or permission to debit the holder's funds.
 
 ## User flow
 
@@ -53,7 +98,8 @@ and Acorn public key; it never returns a social npub.
 The issuer signs a reply with purpose `card-recipient`. Content contains
 `address`, `pubkey` and `request` (SHA-256 of the sorted, compact JSON request
 content). The acquirer first requires the issuer's `/info` identity to equal the public key
-pinned on the card, then verifies the reply against that pin itself and checks the request digest, including nonce, amount and asset. It then uses
+pinned on the card, then verifies the reply against that pin itself and checks
+the request digest, including nonce, amount and asset. It then uses
 normal wallet discovery and refuses preparation if `safebox.json` does not match
 the signed Acorn key. Card payments fail closed rather than falling back to an
 unbound Lightning invoice. Direct Cash and Clear transfer policies remain intact.
@@ -62,6 +108,69 @@ Same-instance resolution uses the same signed protocol without a network round
 trip. Cross-instance HTTP pins public DNS addresses to TLS, preserves hostname
 verification, rejects redirects and nonstandard ports, and bounds time and
 response size. The callback never accepts an arbitrary endpoint path.
+
+## Executing the payment
+
+The card instruction identifies **where a payment should go**. Actual movement
+of funds happens only after the payer confirms the prepared transfer:
+
+1. The browser submits the encrypted card bytes, selected asset and amount to
+   the acquiring instance through the authenticated, CSRF-protected Send form.
+2. The acquiring instance resolves the issuer and pinned key, signs the request,
+   and verifies the issuer's signed recipient reply as described above.
+3. The acquiring instance checks the returned receipt address against
+   `safebox.json` (or its own wallet directory for a local recipient). The Acorn
+   public key must equal the signed reply. NIP-05 social identity is not used.
+4. OakGate saves a prepared outgoing payment with its recipient key, relay,
+   amount, asset and applicable fee quote. The card bytes are not needed in this
+   journal. The user sees the resolved receipt address and terms for review.
+5. On confirmation, OakGate authorizes the payment ID against the payer, acquires
+   the payer's wallet lease, checks expiry and unresolved prior payments, and
+   atomically changes the journal state from `prepared` to `sending`. Cash fee
+   quotes are checked again; changed fees require a new review. Existing Clear
+   mint/instance restrictions still apply.
+6. The central Acorn adapter calls `Acorn.send_ecash_transfer` for Cash or
+   `Acorn.send_clear_transfer` for Clear. Cash passes the payment ID as its nonce
+   and the reviewed fee quote. Clear passes the exact mint and unit. Both use the
+   reviewed recipient Acorn key and relay. OakGate never signs a user event or
+   constructs a user transfer outside Acorn.
+7. Acorn carries out the transfer using its existing wallet logic and Stroma
+   transport. OakGate records `sent` on success; a timeout, cancellation or other
+   uncertain outcome after claiming the payment leaves it `unknown` for review.
+8. The recipient's inbox worker discovers and settles the incoming transfer
+   through Acorn, including its normal transaction history. A local recipient is
+   also woken immediately after sending; other instances use their own workers.
+
+A successful issuer reply means the destination was verified. A sender's `sent`
+state means its send operation completed. Neither alone proves that the recipient
+has finished redemption and credited the funds. These stages must remain distinct
+in status wording.
+
+Repeated confirmation of the same payment ID returns its existing state rather
+than submitting another transfer. Uncertain outcomes are never automatically
+resent or converted to Lightning. Starting an entirely new reviewed payment is
+a separate instruction; the signed resolution nonce is a request/reply binding,
+not a global payment deduplication ID.
+
+Card validity and revocation are checked during recipient resolution. Once a
+payment has been prepared, confirmation uses the reviewed destination and ordinary
+payment expiry; it does not tap the card again or re-run card resolution. Revoking
+a card is therefore not a recall of an already-prepared or sent transfer.
+
+## Confirmed balance lookup
+
+The POS **Available Balance** action is separate from the cross-instance payment
+endpoint. An activated terminal reads a card and the user confirms disclosure.
+OakGate validates the card, reads Cash and Clear balances through Acorn, and checks
+revocation again before returning the result. A compact dropdown selects Cash
+(local currency with sats underneath) or a Clear asset (friendly name and units).
+Clear lookup failure leaves Cash visible with a warning.
+
+This lookup uses the existing signed terminal API on the issuing instance. It
+does not expose a public cross-instance balance service. The display is cleared
+on Done, backgrounding, logout or after one minute. Browsers without secure Web
+NFC support hide NFC action buttons; runtime hardware and permission failures
+remain possible on otherwise supported browsers.
 
 ## Recovery and trust
 
@@ -84,6 +193,80 @@ OAKGATE_CARD_TRUSTED_INSTANCES=
 The list contains **service** identities, not social or wallet keys. Even with an
 empty list, unsigned, stale, forged or wrong-issuer requests are rejected. Incoming
 requests are bounded and rate-limited. No public card balance endpoint is added.
+
+## Comparison with virtual cards and payment tokenization
+
+OakGate's NFC card is closest to a **tokenized wallet reference**: a separately
+revocable random credential maps to an Acorn without exposing its private key.
+The current payment capability identifies where funds should be sent. It does
+not authorize debiting the holder's wallet.
+
+Virtualization, tokenization and NFC describe different layers and can coexist:
+
+| Approach | What it represents | Typical capability |
+| --- | --- | --- |
+| Virtual payment card | A digitally issued card credential, without requiring physical plastic | Purchases against an associated account, potentially subject to spending, merchant and expiry controls |
+| Payment tokenization | A substitute for an underlying payment-card number | Payments over existing card infrastructure, with token-specific restrictions |
+| OakGate NFC card | An encrypted random credential mapped to an Acorn, accompanied by an issuer URL and pinned service key | Receiving Cash and Clear payments and confirmed balance lookup |
+
+A virtual card can itself use tokenization. NFC is a way to present credentials;
+it does not determine the account model or authorization policy.
+[Visa's virtual card description](https://www.visa.com/en-us/business/cards/virtual-card)
+explains configurable spending controls, while
+[EMVCo's payment tokenization overview](https://www.emvco.com/emv-technologies/payment-tokenisation/)
+describes replacing the underlying primary account number with a restricted-use
+substitute. OakGate is not implementing an EMV payment token or claiming card-network
+interoperability.
+
+### Shared design principles
+
+OakGate shares the separation between an underlying account and the credential
+presented to another party. Each card has its own identity, expiry and revocation
+state. Revoking one card does not replace the Acorn or its recovery material.
+The issuer resolves the credential to the wallet and enforces its permitted use.
+
+The implementation combines **indirection and encryption**. The random card
+credential references a server-side wallet mapping; encryption protects its
+plaintext and authenticates the public issuer header. It is not an encrypted
+copy of the user's nsec. The current permission boundary remains independent of
+whether the credential is carried on a physical card or another presentation medium.
+
+### Different security mechanisms
+
+An ordinary NDEF card stores static bytes and can be copied. Encryption conceals
+the credential's plaintext but does not prevent copying the complete encrypted
+payload. The pinned issuer key authenticates the responding issuer; the signed
+instance request authenticates the acquiring instance and binds the request's
+terms. Neither establishes possession of the original physical card or consent
+by the card holder to a debit.
+
+EMV payment tokens use dynamic cryptograms and/or enforced domain restrictions
+that constrain where a token is usable. OakGate's instance-signed message is not
+a transaction cryptogram generated by a secure payment chip.
+[PCI SSC describes these token controls](https://www.pcisecuritystandards.org/faqs/1326/).
+No equivalent hardware assurance or EMV compliance is claimed here.
+
+Copying an OakGate card grants no spending authority. For explicitly enrolled
+cards, the separate [Keycloak NFC login](027-keycloak-nfc-login.md) flow also
+requires the PIN and enforces durable attempt limits; possession of both can
+allow account access.
+It can nevertheless expose the capabilities already permitted: resolving the
+recipient through an accepted instance and requesting balance disclosure through
+an activated issuing-instance POS. That privacy consequence remains relevant
+even though the card cannot debit its holder.
+
+### Implications for future spending
+
+Allowing spending from the holder's wallet would introduce a delegated payment
+credential and requires a separate authorization design. That design must cover
+explicit holder consent, transaction-bound authorization, spending limits,
+expiry, replay protection, revocation, uncertain outcomes and recovery. A PIN
+could contribute to that design, but would not by itself make static card data
+unclonable. NWC authorization must likewise be explicitly granted; existing cards
+must not silently acquire spending privileges.
+
+For the implemented scope, a suitable description is **“an issuer-verified wallet
+card for receiving funds and checking balances.”**
 
 ## Deployment
 

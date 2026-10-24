@@ -2,8 +2,10 @@
 
 OakGate POS can pair with a signed-in OakGate wallet, prepare an encrypted card
 credential, write an NDEF card and verify it by reading it back. This implements
-issuance and a confirmed, read-only cash balance lookup. Cards do not authorize login, spending, NWC calls or
-access to records. No PIN is used in this version.
+issuance and a confirmed, read-only Cash and Clear balance lookup. Issuance alone
+does not authorize login, spending, NWC calls or access to records. Optional
+[Keycloak NFC login](027-keycloak-nfc-login.md) requires separate activation and a PIN. New cards receive a private server-side PIN during issuance;
+current payments and balance lookup do not prompt for it.
 
 ## Operator flow
 
@@ -12,7 +14,9 @@ access to records. No PIN is used in this version.
    camera can also open its HTTPS link. Signed-out users sign in in another tab,
    return and continue; the pairing secret is never passed through OIDC.
 3. The wallet holder compares the terminal name and six-character pairing code,
-   then explicitly chooses **Approve card issuance**.
+   then explicitly chooses **Approve card issuance**. Their wallet displays a
+   randomly generated four-digit PIN. They memorize it or store it separately,
+   then choose **I have saved my PIN** before the POS can prepare the card.
 4. The POS polls OakGate's state and shows the approving wallet's handle. Check
    this label, then choose **Prepare card for this wallet**.
 5. Confirm replacement of the intended card's existing contents, choose **Write
@@ -27,8 +31,7 @@ The Web NFC adapter follows Safebox Web's gesture-triggered writes, bounded
 payloads, 30-second timeout, cancellation, page-background abort and separate
 read-back. A writable NDEF card with at least 496 usable bytes is the target.
 Browser writing requires Web NFC support; use a compatible NFC-enabled Android
-device with Chrome over HTTPS. Unsupported browsers show an explanation and do
-not start pairing. Physical device/card interoperability must be tested on the
+device with Chrome over HTTPS. Unsupported browsers hide NFC action buttons and do not start pairing. Physical device/card interoperability must be tested on the
 actual terminal. See [Chrome's Web NFC documentation](https://developer.chrome.com/docs/capabilities/nfc).
 
 ## Pairing and authority
@@ -57,6 +60,57 @@ checks. Wallet replacement invalidates pending issuance.
 This adds a narrow, owner-approved card-issuance operation to the POS. Its funds
 permissions remain receive-only. It grants no authority to manage the paired
 wallet, access its custody material, or revoke another user's issued cards.
+
+## Private PIN provisioning
+
+Approval generates a cryptographically random four-digit decimal PIN, including
+leading zeros. It is disclosed only through the signed-in holder's same-origin,
+CSRF-protected pairing page. The POS receives `pin_pending` status, never the PIN,
+and cannot prepare a card until the holder acknowledges saving it. The PIN is
+not encoded on the NFC card, sent to another instance, or included in card status.
+
+The `nfc_card_pins` table stores a salted scrypt verifier (N=16384, r=8, p=1,
+16-byte salt, 32-byte result), bound to the pairing ID and encrypted with the
+existing custody key. The row is linked to the card ID on preparation. During
+pairing only, a separately encrypted disclosure copy permits the same holder to
+retry a lost approval response without changing the PIN. Acknowledgement deletes
+that copy; cancellation deletes it too, and expired copies are removed lazily on
+subsequent issuance/status calls. The browser clears the PIN when hidden or left.
+If the holder loses the page before saving the PIN, cancel issuance at the POS
+and start a new pairing. No PIN retrieval or reset UI is implemented yet.
+
+Existing cards and already-approved legacy pairings are not silently assigned a
+PIN. Reissue for PIN provisioning. Back up the database and custody encryption
+key together. A database-only theft does not reveal the verifier or temporary
+PIN; compromise of both database and key still exposes a four-digit PIN to a
+small offline search. This is not equivalent to FIDO2 or an unclonable smart card.
+
+PIN provisioning does not enable spending or payment PIN prompts. Optional
+[Keycloak NFC login](027-keycloak-nfc-login.md) now verifies this PIN only after
+explicit enrollment and fresh authentication. A card without a PIN verifier
+cannot become eligible for card login.
+
+## Optional login enrollment request
+
+The private wallet approval screen offers an unchecked **Request card-and-PIN
+sign-in enrollment** option. Its explanatory text requires activation after
+issuance by verifying the normal Google/email sign-in. Approval stores the holder's initial choice; retrying approval
+cannot add, remove or silently change it. The POS cannot submit this choice.
+
+An opted-in request is saved in `nfc_login_requests`, linked first to the pairing
+and then to the prepared card. The existing authenticated OIDC issuer and subject
+are encrypted with custody storage and bound to the same account owner. No email
+matching or client-supplied account identity is used. The request timestamp is
+retained. Card read-back verification leaves the request in `requested` state;
+it never activates authentication. Cards issued without opt-in remain unchanged.
+
+**Your NFC cards** shows pending requests as not active and allows the holder to
+withdraw one without revoking the card's other capabilities. The request is not
+included in terminal status or card bytes. The optional Keycloak integration
+requires fresh authentication before activation, verifies the stable identity and
+current wallet/card binding, requires PIN acknowledgement and verified issuance,
+and checks expiry, revocation and withdrawal. This record is consent to enroll,
+not a login credential or proof of recent reauthentication.
 
 ## Card format, version 2
 
@@ -109,7 +163,7 @@ private-key operations must remain in Acorn.
 
 ## Persistence and recovery
 
-`nfc_issuer`, `nfc_pairings` and `nfc_cards` live in the existing custody SQLite
+`nfc_issuer`, `nfc_pairings`, `nfc_cards`, `nfc_card_pins` and `nfc_login_requests` live in the existing custody SQLite
 database. A dedicated random issuer encryption key is created once and encrypted
 at rest with the operator's custody encryption key. No new `.env` secret is
 required. Back up the custody database and its existing encryption key together;
@@ -140,7 +194,8 @@ Tests cover two-user approval, signed proxy calls, CSRF and origin rejection,
 terminal isolation, races, retries, expiry, tampered/wrong cards, wallet replacement,
 revocation and encrypted payload size. Mock hardware tests cover explicit consent,
 write-only versus verification, MIME/byte matching, timeouts and late callbacks.
-Real NFC hardware and future card spending/login are outside those test claims.
+Real NFC hardware and card spending are outside those test claims. See the separate
+Keycloak login note for login tests and deployment acceptance.
 
 ## Available Balance
 

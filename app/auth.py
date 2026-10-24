@@ -61,6 +61,14 @@ async def current_session(request):
     return None
 
 
+@router.get("/auth/options", include_in_schema=False)
+async def options(request: Request):
+    from app.nfc_login import enabled
+    if not enabled():
+        return await begin_login(request)
+    return request.app.state.templates.TemplateResponse(request=request, name='login_options.html', context={})
+
+
 @router.get("/auth/login", include_in_schema=False)
 async def login(request: Request):
     return await begin_login(request)
@@ -73,7 +81,11 @@ async def begin_login(request, extra=None):
                    "verifier": secrets.token_urlsafe(64)}
     transaction.update(extra or {})
     try:
-        url = await request.app.state.provider.authorize(transaction)
+        provider = request.app.state.provider
+        if transaction.get('purpose') == 'nfc-login':
+            from app.nfc_login import nfc_provider
+            provider = nfc_provider(request)
+        url = await provider.authorize(transaction)
         binding = secrets.token_urlsafe(32)
         await request.app.state.store.put(
             record_key("login", binding + transaction["state"]), transaction, LOGIN_TTL)
@@ -100,9 +112,18 @@ async def callback(request: Request):
             code = request.query_params.get("code")
             if not code or not request.app.state.settings.enabled:
                 raise ValueError("Missing code or client configuration")
-            claims = await request.app.state.provider.exchange(code, transaction)
+            provider = request.app.state.provider
+            if transaction.get('purpose') == 'nfc-login':
+                from app.nfc_login import nfc_provider
+                provider = nfc_provider(request)
+            claims = await provider.exchange(code, transaction)
             if claims["exp"] <= time.time():
                 raise ValueError("Expired identity")
+            if transaction.get('purpose') == 'nfc-enroll':
+                from app.nfc_login import finish_activation
+                response = await finish_activation(request, transaction, claims)
+                clear_cookie(request, response, "login")
+                return response
             if transaction.get('purpose') == 'recovery':
                 from app.recovery import finish_reauthentication
                 response = await finish_reauthentication(request, transaction, claims)

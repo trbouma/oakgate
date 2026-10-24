@@ -61,7 +61,8 @@ nav:
       - Receive-only POS design: 023-receive-only-pos.md
       - POS deployment: 024-pos-deployment.md
       - POS NFC cards: 025-pos-nfc-cards.md
-      - Pay to an NFC card: 026-nfc-card-payments.md
+      - NFC cards and payment execution: 026-nfc-card-payments.md
+      - Keycloak NFC login: 027-keycloak-nfc-login.md
       - Lightning payments and zaps: 009-lightning-receiving.md
       - Identity storage and backups: 008-identity-storage-backups.md
       - Storage latency incident: 022-storage-latency-incident.md

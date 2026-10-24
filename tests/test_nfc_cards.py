@@ -35,6 +35,7 @@ def pair(cards,key='pair-request-key-0001',owner='alice'):
     start=store.start(terminal,key)
     code=urlsplit(start['pair_url']).fragment
     store.approve(code,owner)
+    store.acknowledge_pin(code,owner)
     return store.prepare(terminal,key),code
 
 
@@ -140,7 +141,12 @@ def test_wallet_callback_scanner_and_pos_proxy(tmp_path,monkeypatch):
                 assert (await account.post('/account/cards/pair/approve',data={'csrf':'wrong','pair_code':code})).status_code==403
                 assert (await account.post('/account/cards/pair/approve',data={'csrf':'csrf-test','pair_code':code},headers={'Origin':'https://evil.example'})).status_code==403
                 assert (await call('card-prepare',data)).status_code==403
-                assert (await account.post('/account/cards/pair/approve',data={'csrf':'csrf-test','pair_code':code})).status_code==200
+                approval=await account.post('/account/cards/pair/approve',data={'csrf':'csrf-test','pair_code':code,'enroll_login':'yes'})
+                assert approval.status_code==200 and len(approval.json()['pin'])==4
+                assert 'no-store' in approval.headers['cache-control']
+                assert (await call('card-prepare',data)).status_code==403
+                assert (await account.post('/account/cards/pair/pin-saved',data={'csrf':'wrong','pair_code':code})).status_code==403
+                assert (await account.post('/account/cards/pair/pin-saved',data={'csrf':'csrf-test','pair_code':code})).status_code==200
                 prepared=await call('card-prepare',data)
                 assert prepared.status_code==200,prepared.text
                 assert not {'owner','wallet_id','nsec'} & prepared.json().keys()
@@ -170,6 +176,14 @@ def test_wallet_callback_scanner_and_pos_proxy(tmp_path,monkeypatch):
                 assert balance.json()['clear_unavailable'] is True
                 app.state.rates=None
                 assert prepared.json()['card_id'][:8] in (await account.get('/account/cards')).text
+                assert 'Sign-in enrollment requested' in (await account.get('/account/cards')).text
+                card_store=CardStore(wallets.store,app.state.settings.origin)
+                assert card_store.listing(alice)[0]['login_request']=='requested'
+                assert 'login_request' not in (await call('card-status',data)).json()
+                withdraw='/account/cards/'+prepared.json()['card_id']+'/login-request/withdraw'
+                assert (await account.post(withdraw,data={'csrf':'wrong'})).status_code==403
+                assert (await account.post(withdraw,data={'csrf':'csrf-test'})).status_code==303
+                assert card_store.listing(alice)[0]['login_request']=='withdrawn'
                 monkeypatch.setenv('OAKGATE_POS_ENABLED','false')
                 assert (await call('card-start',{'request_key':'pair-request-key-0002'})).status_code==503
                 assert (await account.post('/account/cards/'+prepared.json()['card_id']+'/revoke',data={'csrf':'csrf-test'})).status_code==303
@@ -216,6 +230,7 @@ def test_v2_pin_is_public_authenticated_and_required_for_new_cards(cards):
     with closing(store.custody.connect()) as db,db:db.execute('DELETE FROM service_identity')
     code=urlsplit(store.start(terminal,'another-request-key')['pair_url']).fragment
     store.approve(code,'alice')
+    store.acknowledge_pin(code,'alice')
     with pytest.raises(ValueError):store.prepare(terminal,'another-request-key')
 
 
@@ -238,3 +253,78 @@ def test_legacy_card_can_read_balance_but_cannot_resolve_payments(cards):
     assert store.balance_authority(terminal,encoded)['owner']=='alice'
     with pytest.raises(PaymentInputError,match='Reissue'):
         pinned_issuer(encoded)
+
+
+def test_private_pin_acknowledgement_verifier_and_retry(cards,monkeypatch):
+    store,_,terminal=cards
+    code=urlsplit(store.start(terminal,'private-pin-request')['pair_url']).fragment
+    monkeypatch.setattr('app.nfc_cards.secrets.randbelow',lambda bound:7)
+    result=store.approve(code,'alice')
+    assert result=={'state':'pin_pending','pin':'0007'}
+    assert store.approve(code,'alice')==result  # Lost response does not change the PIN.
+    assert 'pin' not in store.status(terminal,'private-pin-request')
+    with pytest.raises(POSDenied):store.prepare(terminal,'private-pin-request')
+    with pytest.raises(POSDenied):store.approve(code,'bob')
+    with pytest.raises(POSDenied):store.acknowledge_pin(code,'bob')
+    store.acknowledge_pin(code,'alice')
+    assert store.acknowledge_pin(code,'alice')=={'state':'approved'}
+    assert store.approve(code,'alice')=={'state':'approved'}
+    card=store.prepare(terminal,'private-pin-request')
+    assert 'pin' not in card
+    ident=code.split('.')[1]
+    with closing(store.custody.connect()) as db:
+        row=db.execute('SELECT * FROM nfc_card_pins WHERE pairing=?',(ident,)).fetchone()
+        assert row['disclosure'] is None and row['acknowledged'] and row['card_id']==card['card_id']
+        verifier=store.custody.cipher.decrypt(row['verifier'])
+        prefix=b'oakgate/card-pin/scrypt-v1\x00'+ident.encode()
+        assert verifier.startswith(prefix)
+        salt=verifier[len(prefix):len(prefix)+16]
+        assert verifier[len(prefix)+16:]==hashlib.scrypt(b'0007',salt=salt,n=16384,r=8,p=1,dklen=32)
+        assert '0007' not in row['verifier'].decode()
+
+
+def test_pending_pin_disclosure_is_removed_on_cancel_and_expiry(cards):
+    store,_,terminal=cards
+    for i in range(2):
+        key='private-pin-expire-'+str(i)
+        code=urlsplit(store.start(terminal,key)['pair_url']).fragment
+        store.approve(code,'alice')
+        if i==0:store.cancel(terminal,key)
+        else:
+            with closing(store.custody.connect()) as db,db:
+                db.execute('UPDATE nfc_pairings SET expires=0 WHERE id=?',(code.split('.')[1],))
+            store.status(terminal,key)
+        with closing(store.custody.connect()) as db:
+            assert db.execute('SELECT disclosure FROM nfc_card_pins WHERE pairing=?',(code.split('.')[1],)).fetchone()[0] is None
+        with pytest.raises(POSDenied):store.approve(code,'alice')
+
+
+def test_login_request_is_explicit_bound_pending_and_immutable(cards):
+    from app.custody import identity_key
+    store,_,terminal=cards
+    user={'iss':'https://keycloak.example/realms/oakgate','sub':'stable-id','email':'not-an-identity@example.com'}
+    owner=identity_key(user)
+    with closing(store.custody.connect()) as db,db:
+        db.execute("INSERT INTO wallets(owner,wallet_id,encrypted,status) VALUES(?,?,X'00','active')",(owner,'enrollment-wallet'))
+    code=urlsplit(store.start(terminal,'enrollment-request-01')['pair_url']).fragment
+    with pytest.raises(POSDenied):store.approve(code,owner,enroll=True,login_identity={'iss':user['iss'],'sub':'other'})
+    store.approve(code,owner,enroll=True,login_identity=user)
+    store.approve(code,owner,enroll=False)  # Retrying does not silently change initial consent.
+    store.acknowledge_pin(code,owner)
+    card=store.prepare(terminal,'enrollment-request-01')
+    with closing(store.custody.connect()) as db:
+        row=db.execute('SELECT * FROM nfc_login_requests WHERE card_id=?',(card['card_id'],)).fetchone()
+        assert row['state']=='requested'
+        saved=json.loads(store.custody.cipher.decrypt(row['identity']))
+        assert saved=={'owner':owner,'material':{'iss':user['iss'],'sub':user['sub']}}
+    store.verify(terminal,'enrollment-request-01',card['payload'])
+    assert store.listing(owner)[0]['login_request']=='requested'  # Verification is not login activation.
+    with pytest.raises(POSDenied):store.withdraw_login_request('bob',card['card_id'])
+    store.withdraw_login_request(owner,card['card_id'])
+    assert store.listing(owner)[0]['login_request']=='withdrawn'
+    assert store.balance_authority(terminal,card['payload'])['owner']==owner
+    other=urlsplit(store.start(terminal,'enrollment-request-02')['pair_url']).fragment
+    store.approve(other,owner)
+    store.approve(other,owner,enroll=True,login_identity=user)
+    with closing(store.custody.connect()) as db:
+        assert db.execute('SELECT 1 FROM nfc_login_requests WHERE pairing=?',(other.split('.')[1],)).fetchone() is None

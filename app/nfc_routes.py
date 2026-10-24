@@ -95,13 +95,17 @@ async def callback(request: Request, action: str):
     if not session:
         raise HTTPException(401, 'Sign in to OakGate, then scan this pairing code again.')
     form = await checked_form(request, session)
-    if set(form) != {'csrf','pair_code'} or not isinstance(form['pair_code'],str):
+    allowed = [{'csrf','pair_code'}, {'csrf','pair_code','enroll_login'}] if action == 'approve' else [{'csrf','pair_code'}]
+    if set(form) not in allowed or not isinstance(form['pair_code'],str) or form.get('enroll_login','no') not in ('yes','no'):
         raise HTTPException(400,'Invalid pairing request')
     store = await card_store(request)
     if action == 'details':
         result = await invoke(store.inspect, form['pair_code'])
+    elif action == 'pin-saved':
+        result = await invoke(store.acknowledge_pin, form['pair_code'], identity_key(session['user']))
     elif action == 'approve':
-        result = await invoke(store.approve, form['pair_code'], identity_key(session['user']))
+        result = await invoke(store.approve, form['pair_code'], identity_key(session['user']),
+                              enroll=form.get('enroll_login') == 'yes', login_identity=session['user'])
     else:
         raise HTTPException(404)
     return JSONResponse(result)
@@ -113,8 +117,9 @@ async def cards(request: Request):
         return RedirectResponse('/auth/login',303)
     store = await card_store(request, enabled=False)
     entries = await invoke(store.listing, identity_key(session['user']))
+    from app.nfc_login import enabled as login_enabled
     return request.app.state.templates.TemplateResponse(request=request,name='cards.html',
-        context={**session,'cards':entries,'active_page':'preferences'})
+        context={**session,'cards':entries,'nfc_login_enabled':login_enabled(),'active_page':'preferences'})
 
 @router.post('/account/cards/{ident}/revoke', include_in_schema=False)
 async def revoke(request: Request, ident: str):
@@ -124,4 +129,15 @@ async def revoke(request: Request, ident: str):
     await checked_form(request,session)
     store = await card_store(request, enabled=False)
     await invoke(store.revoke,identity_key(session['user']),ident)
+    return RedirectResponse('/account/cards',303)
+
+
+@router.post('/account/cards/{ident}/login-request/withdraw', include_in_schema=False)
+async def withdraw_login_request(request: Request, ident: str):
+    session = await current_session(request)
+    if not session:
+        return RedirectResponse('/auth/login',303)
+    await checked_form(request, session)
+    store = await card_store(request, enabled=False)
+    await invoke(store.withdraw_login_request, identity_key(session['user']), ident)
     return RedirectResponse('/account/cards',303)

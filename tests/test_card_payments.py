@@ -35,7 +35,7 @@ def test_cross_instance_signed_resolution_and_policies(tmp_path,monkeypatch):
         terminal=pos.provision('alice','Desk').split('.')[1]
         cards=CardStore(store,'https://issuer.example')
         code=urlsplit(cards.start(terminal,'request-key-00001')['pair_url']).fragment
-        cards.approve(code,'alice');card=cards.prepare(terminal,'request-key-00001')
+        cards.approve(code,'alice');cards.acknowledge_pin(code,'alice');card=cards.prepare(terminal,'request-key-00001')
         cards.verify(terminal,'request-key-00001',card['payload'])
         calls=[]
         async def fetch(url,**kwargs):

@@ -87,6 +87,8 @@ The included GitHub Pages workflow publishes on pushes to `main` once **Settings
 
 - [Receive-only POS terminals and browser-bound keys](docs/023-receive-only-pos.md)
 - [POS NFC card issuance](docs/025-pos-nfc-cards.md)
+- [NFC cards and payment execution](docs/026-nfc-card-payments.md)
+- [Keycloak NFC card and PIN login](docs/027-keycloak-nfc-login.md)
 
 - [Safebox discovery contract and migration](docs/018-safebox-address-discovery.md)
 

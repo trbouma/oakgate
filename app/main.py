@@ -93,6 +93,8 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
     app.include_router(pos_router())
     from app.nfc_routes import router as nfc_router
     app.include_router(nfc_router)
+    from app.nfc_login import router as nfc_login_router
+    app.include_router(nfc_login_router)
     from app.card_payments import router as card_payment_router
     app.include_router(card_payment_router)
 

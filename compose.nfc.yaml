@@ -1,0 +1,13 @@
+# Explicit opt-in: docker compose -f compose.yaml -f compose.nfc.yaml up -d --build keycloak
+services:
+  keycloak:
+    image: oakgate-keycloak-nfc:local
+    build:
+      context: .
+      dockerfile: keycloak/Dockerfile
+    environment:
+      OAKGATE_NFC_LOGIN_ENABLED: ${OAKGATE_NFC_LOGIN_ENABLED:-false}
+      OAKGATE_NFC_CLIENT_ID: ${OAKGATE_NFC_CLIENT_ID:-oakgate-nfc}
+      OAKGATE_OIDC_ISSUER: ${OAKGATE_OIDC_ISSUER:-https://keycloak.safebox.dev/realms/oakgate}
+      OAKGATE_NFC_BACKCHANNEL_SECRET: ${OAKGATE_NFC_BACKCHANNEL_SECRET:?Set OAKGATE_NFC_BACKCHANNEL_SECRET}
+      OAKGATE_NFC_API_URL: http://app:8000/api/cards/v1/login/verify

@@ -6,6 +6,10 @@ services:
       context: .
     restart: unless-stopped
     environment:
+      OAKGATE_NFC_LOGIN_ENABLED: ${OAKGATE_NFC_LOGIN_ENABLED:-false}
+      OAKGATE_NFC_CLIENT_ID: ${OAKGATE_NFC_CLIENT_ID:-oakgate-nfc}
+      OAKGATE_NFC_CLIENT_SECRET: ${OAKGATE_NFC_CLIENT_SECRET:-}
+      OAKGATE_NFC_BACKCHANNEL_SECRET: ${OAKGATE_NFC_BACKCHANNEL_SECRET:-}
       OAKGATE_POS_ENABLED: ${OAKGATE_POS_ENABLED:-false}
       OAKGATE_POS_PUBLIC_URL: ${OAKGATE_POS_PUBLIC_URL:-https://pos.oakgate.safebox.dev}
       OAKGATE_PUBLIC_URL: ${OAKGATE_PUBLIC_URL:-https://oakgate.safebox.dev}
