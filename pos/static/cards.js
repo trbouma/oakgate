@@ -2,6 +2,7 @@
 (() => {
   const $=id=>document.getElementById(id);
   const supported=()=>isSecureContext && typeof window.NDEFReader==='function';
+  $('issue-card').hidden=!supported();
   const MIME='application/vnd.oakgate.card';
   let signed, storageKey, requestKey, prepared, active, timer, generation=0, busy=false, state='', deadline=0;
   function message(text){$('card-status').textContent=text;}
@@ -140,6 +141,6 @@
   window.refreshPOSCardControls=controls;
   window.startPOSCards=async(call,terminal)=>{
     signed=call;storageKey='oakgate-pos-card:'+terminal;requestKey=sessionStorage.getItem(storageKey);
-    if(requestKey)await work(open);
+    if(requestKey && supported())await work(open);
   };
 })();

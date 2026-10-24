@@ -1,6 +1,7 @@
 'use strict';
 (() => {
   const $=id=>document.getElementById(id);
+  $('available-balance').hidden=!(isSecureContext && typeof window.NDEFReader==='function');
   let signed, active, payload, timeout, generation=0, busy=false, visible=false;
   const message=text=>$('card-balance-status').textContent=text;
   function stop(){if(active){active.abort();active=null;}clearTimeout(timeout);}

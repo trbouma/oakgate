@@ -1,6 +1,7 @@
 'use strict';
 (() => {
  const $=id=>document.getElementById(id),button=$('send-card-read');if(!button)return;
+ button.hidden=!(isSecureContext && typeof window.NDEFReader==='function');
  let active=null,timer;
  const status=text=>$('send-card-status').textContent=text;
  function stop(){if(active){active.abort();active=null;}clearTimeout(timer);button.disabled=false;}

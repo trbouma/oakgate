@@ -36,7 +36,7 @@
 <input type="hidden" name="csrf" value="{{ csrf }}">
 <label for="asset">{{ _('Balance to send') }}</label>
 <select id="asset" name="asset"><option value="">{{ _('Cash (sats)') }}</option>{% for asset in assets %}<option value="{{ asset.id }}"{% if selected_asset == asset.id %} selected{% endif %}>{{ asset.display_name }} — {{ '{:,}'.format(asset.amount) }} {{ asset.display_unit }} · {{ asset.mint }}</option>{% endfor %}</select>
-<button type="button" id="send-card-read">Read NFC payment card</button>
+<button type="button" id="send-card-read" hidden>Read NFC payment card</button>
 <button type="button" id="send-card-cancel" hidden>Use payment address instead</button>
 <p id="send-card-status" role="status" aria-live="polite"></p>
 <input type="hidden" name="card_payload" id="send-card-payload" value="">
