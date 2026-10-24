@@ -30,7 +30,8 @@ sufficient rationale. No user-key-operation exceptions are currently approved.
 
 The operator-owned service key is distinct from every user key. As explicitly
 requested by the owner, `app/identity.py` may use Stroma to derive the service
-public identity and sign/publish zap receipts. Its only secret source is
+public identity, sign/publish zap receipts, and sign/verify NFC card payment
+recipient-resolution messages. Its only secret source is
 OAKGATE_SERVICE_NSEC; it must never accept user custody material. This does not
 relax the Acorn boundary for user-key operations.
 

@@ -1,5 +1,7 @@
 """Operator service identity and public-only social key validation. No custody keys."""
 import asyncio
+import json
+import time
 import os
 import ipaddress
 from contextlib import closing
@@ -50,6 +52,15 @@ class ServiceIdentity:
             'operator': None,
         }
 
+    def card_message(self, payload, purpose):
+        if not self._keys:
+            raise ValueError('Service identity is not configured')
+        event = Event(kind=27235, pub_key=self.pubkey, created_at=int(time.time()),
+                      tags=[['t', 'oakgate-card-v1'], ['purpose', purpose]],
+                      content=json.dumps(payload, sort_keys=True, separators=(',', ':')))
+        event.sign(self._keys)
+        return event.data()
+
     def receipt(self, item):
         if not self._keys or item.get('service_pubkey') != self.pubkey:
             raise ValueError('Zap was not issued by this OakGate service identity')
@@ -95,3 +106,17 @@ def social_public_identity(value):
         return {'npub': key.public_key_bech32(), 'hex': key.public_key_hex()}
     except Exception:
         raise ValueError('Enter a valid public npub, not a private key.') from None
+
+
+def verify_card_message(value, purpose, npub):
+    """Public-only Stroma validation against an HTTPS-discovered instance identity."""
+    event = Event.load(value)
+    if (event.kind != 27235 or not event.is_valid()
+            or event.pub_key != social_public_identity(npub)['hex']
+            or abs(event.created_at - int(time.time())) > 90
+            or list(event.tags) != [['t', 'oakgate-card-v1'], ['purpose', purpose]]):
+        raise ValueError('Invalid card message')
+    payload = json.loads(event.content)
+    if not isinstance(payload, dict):
+        raise ValueError('Invalid card message')
+    return payload

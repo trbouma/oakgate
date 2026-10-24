@@ -18,10 +18,32 @@ from app.pos_store import POSDenied, POSStore, digest
 
 MIME = 'application/vnd.oakgate.card'
 DOMAIN = b'oakgate/nfc/credential/v1\x00'
+DOMAIN_V2 = b'oakgate/nfc/credential/v2\x00'
 PAIR_TTL = 600
 CARD_TTL = 365 * 86400
 MAX_BYTES = 400
 
+
+
+def card_header(encoded):
+    """Read bounded public routing data; issuer authenticates this header with AEAD."""
+    from app.identity import social_public_identity
+    if not isinstance(encoded, str) or len(encoded) > 536:
+        raise ValueError('Invalid card')
+    raw = base64.b64decode(encoded, validate=True)
+    if not 100 <= len(raw) <= MAX_BYTES or raw[:4] not in (b'OGC1', b'OGC2'):
+        raise ValueError('Invalid card')
+    size = int.from_bytes(raw[4:6], 'big')
+    end = 6 + size
+    pinned = raw[:4] == b'OGC2'
+    header_end = end + (63 if pinned else 0)
+    if not 1 <= size <= 200 or len(raw) != header_end + 92:
+        raise ValueError('Invalid card length')
+    origin = raw[6:end].decode()
+    npub = raw[end:header_end].decode('ascii') if pinned else None
+    if pinned and social_public_identity(npub)['npub'] != npub:
+        raise ValueError('Invalid issuer public key')
+    return raw, origin, npub, header_end
 
 
 def pairing_code(value):
@@ -71,6 +93,15 @@ class CardStore:
                     raise ValueError('Invalid NFC issuer key')
                 key = value[len(DOMAIN):]
         self.cipher = AESGCM(key)
+
+    def _issuer_npub(self, db):
+        from app.identity import social_public_identity
+        if not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='service_identity'").fetchone():
+            raise ValueError('Configure OAKGATE_SERVICE_NSEC before issuing cards')
+        row = db.execute('SELECT npub FROM service_identity WHERE id=1').fetchone()
+        if not row:
+            raise ValueError('Configure OAKGATE_SERVICE_NSEC before issuing cards')
+        return social_public_identity(row['npub'])['npub']
 
     def _terminal(self, db, ident):
         row = db.execute('SELECT * FROM pos_terminals WHERE id=? AND revoked IS NULL', (ident,)).fetchone()
@@ -177,9 +208,9 @@ class CardStore:
             if row['state'] == 'approved':
                 ident, secret = secrets.token_bytes(16), secrets.token_bytes(32)
                 issued = int(time.time()); expires = issued + CARD_TTL
-                header = b'OGC1' + struct.pack('>H', len(self.origin.encode())) + self.origin.encode()
+                header = b'OGC2' + struct.pack('>H', len(self.origin.encode())) + self.origin.encode() + self._issuer_npub(db).encode('ascii')
                 nonce = secrets.token_bytes(12)
-                raw = header + nonce + self.cipher.encrypt(nonce, ident + secret + struct.pack('>QQ', issued, expires), DOMAIN + header)
+                raw = header + nonce + self.cipher.encrypt(nonce, ident + secret + struct.pack('>QQ', issued, expires), DOMAIN_V2 + header)
                 if len(raw) > MAX_BYTES:
                     raise ValueError('Card too large')
                 db.execute('INSERT INTO nfc_cards VALUES(?,?,?,?,?,?,?,?,?,NULL,NULL)',
@@ -189,15 +220,15 @@ class CardStore:
 
     def _decode(self, encoded):
         try:
-            if len(encoded)>536:
+            raw, origin, npub, header_end = card_header(encoded)
+            if origin != self.origin:
                 raise ValueError()
-            raw=base64.b64decode(encoded,validate=True)
-            if not 100 <= len(raw) <= MAX_BYTES or raw[:4] != b'OGC1':
-                raise ValueError()
-            size=struct.unpack('>H',raw[4:6])[0]; header=raw[:6+size]
-            if header[6:] != self.origin.encode():
-                raise ValueError()
-            data=self.cipher.decrypt(raw[6+size:18+size],raw[18+size:],DOMAIN+header)
+            if npub:
+                with closing(self.custody.connect()) as db:
+                    if npub != self._issuer_npub(db):
+                        raise ValueError('Issuer identity changed')
+            domain = DOMAIN_V2 if npub else DOMAIN
+            data = self.cipher.decrypt(raw[header_end:header_end+12], raw[header_end+12:], domain+raw[:header_end])
             if len(data)!=64:
                 raise ValueError()
             ident, secret=data[:16].hex(),data[16:48]
@@ -211,7 +242,8 @@ class CardStore:
     def balance_authority(self, terminal, encoded, *, limit=False):
         raw, ident, secret = self._decode(encoded)
         with closing(self.custody.connect()) as db, db:
-            self._terminal(db, terminal)
+            if terminal is not None:
+                self._terminal(db, terminal)
             card = db.execute('SELECT * FROM nfc_cards WHERE id=?', (ident,)).fetchone()
             if (not card or card['activated'] is None or card['revoked'] is not None
                     or card['expires'] <= time.time()

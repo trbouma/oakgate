@@ -36,6 +36,10 @@
 <input type="hidden" name="csrf" value="{{ csrf }}">
 <label for="asset">{{ _('Balance to send') }}</label>
 <select id="asset" name="asset"><option value="">{{ _('Cash (sats)') }}</option>{% for asset in assets %}<option value="{{ asset.id }}"{% if selected_asset == asset.id %} selected{% endif %}>{{ asset.display_name }} — {{ '{:,}'.format(asset.amount) }} {{ asset.display_unit }} · {{ asset.mint }}</option>{% endfor %}</select>
+<button type="button" id="send-card-read">Read NFC payment card</button>
+<button type="button" id="send-card-cancel" hidden>Use payment address instead</button>
+<p id="send-card-status" role="status" aria-live="polite"></p>
+<input type="hidden" name="card_payload" id="send-card-payload" value="">
 <label for="address">{{ _("Payment address") }}</label><input id="address" name="address" type="email" required maxlength="254" autocomplete="off" autocapitalize="none" placeholder="name@example.com" value="{{ values.address | default('') }}">
 <label for="amount">{{ _("Amount (whole units)") }}</label><input id="amount" name="amount" type="number" inputmode="numeric" min="1" step="1" required value="{{ values.amount | default('') }}">
 <label for="comment">{{ _("Comment (optional)") }}</label><input id="comment" name="comment" maxlength="255" value="{{ values.comment | default('') }}">
@@ -43,4 +47,5 @@
 </form>{% endif %}
 </section>
 {% if not payment or payment.route not in ['clear', 'clear-request'] %}<a class="back-link" href="/account/transactions">{{ _("Cash transactions") }}</a> · {% endif %}<a class="back-link" href="/account">{{ _("Back to balances") }}</a>
+<script src="/static/send-card.js" defer></script>
 {% endblock %}

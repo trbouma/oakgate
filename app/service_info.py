@@ -5,7 +5,7 @@ from app.version import APP_VERSION
 CAPABILITIES = (
     'oidc-authentication', 'custodial-acorn', 'recovery-disclosure',
     'acorn-records', 'cash-payments', 'clear-payments', 'lightning-address',
-    'nostr-zap-receipts', 'wallet-messaging',
+    'nostr-zap-receipts', 'wallet-messaging', 'nfc-card-recipient',
 )
 
 

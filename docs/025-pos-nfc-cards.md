@@ -58,7 +58,7 @@ This adds a narrow, owner-approved card-issuance operation to the POS. Its funds
 permissions remain receive-only. It grants no authority to manage the paired
 wallet, access its custody material, or revoke another user's issued cards.
 
-## Card format, version 1
+## Card format, version 2
 
 One MIME NDEF record uses `application/vnd.oakgate.card`. Its binary payload is
 bounded to 400 bytes and is deliberately distinct from Safebox Web's private-key
@@ -66,17 +66,35 @@ card format.
 
 | Field | Encoding |
 | --- | --- |
-| Magic/version | Four bytes, ASCII `OGC1` |
+| Magic/version | Four bytes, ASCII `OGC2` |
 | Issuer length | Unsigned 16-bit big-endian |
 | Issuer | Canonical UTF-8 OakGate HTTPS origin, at most 200 bytes |
+| Issuer service public key | 63 ASCII bytes, canonical `npub` from the instance identity |
 | Nonce | 12 random bytes |
-| Ciphertext and authentication tag | AES-256-GCM, with the header and `oakgate/nfc/credential/v1` domain bound as additional authenticated data |
+| Ciphertext and authentication tag | AES-256-GCM, with the header and `oakgate/nfc/credential/v2` domain bound as additional authenticated data |
 
 The encrypted plaintext is exactly 64 bytes: a random 16-byte card ID, a random
 32-byte secret, an unsigned 64-bit issued timestamp and an unsigned 64-bit expiry
 timestamp, both big-endian. Lifetime is 365 days. The server maps the card ID to
 the approved wallet and stores a SHA-256 secret verifier. There is **no nsec,
-recovery phrase, PIN, npub, account session or POS activation key** on the card.
+recovery phrase, PIN, user npub, account session or POS activation key** on the card.
+
+The public header includes both the issuer origin and its service npub. Both are
+bound into AES-GCM additional authenticated data. New issuance requires the
+existing configured `OAKGATE_SERVICE_NSEC` identity; no new key is generated for
+this pin. The complete payload remains bounded to 400 bytes (at most 361 bytes
+with a 200-byte origin).
+
+Changing the issuer's service key invalidates v2 card verification. Acquirers must
+match the key advertised by `/info` to the card pin and verify replies against the
+pin itself. There is no automatic key rotation or trust-on-first-use fallback.
+Reissue cards after a deliberate identity change. Operator service identity
+binding already prevents accidental changes during normal startup.
+
+Legacy `OGC1` cards remain readable for local balance lookup, read-back verification
+and revocation, but cannot be used for card payments. Reissue them as `OGC2`.
+Pending v1 preparations remain byte-for-byte unchanged on retry; cancel and start
+new issuance to obtain v2. Never rewrite an already-prepared credential silently.
 
 Encryption prevents reading the secret from the card without the issuer key;
 it does not make an ordinary NDEF card unclonable. Read-back proves that the
@@ -114,7 +132,8 @@ revocable by the holder.
 ## Deployment and validation
 
 After pushing, run `./refresh-app.sh` and then `./refresh-pos.sh` on Beelink.
-Keep the existing POS settings and cookie key; no new configuration is required.
+Keep the existing POS settings and cookie key; the existing OAKGATE_SERVICE_NSEC
+identity must be configured for new card issuance. No new secret is required.
 Both public origins must use HTTPS. The POS permits NFC only for its own origin.
 
 Tests cover two-user approval, signed proxy calls, CSRF and origin rejection,
@@ -143,3 +162,10 @@ The browser retains card bytes only in memory, requires confirmation, prevents
 double submission and clears the display on Done, logout, page backgrounding or
 after 60 seconds. NFC scanning stops after 30 seconds. No new configuration or
 card rewrite is needed; existing verified cards support this read-only action.
+
+## Receive a payment via card
+
+The wallet Send page can now resolve these cards as recipients, including across
+OakGate instances. See [Pay to an NFC card](026-nfc-card-payments.md) for the signed
+instance protocol and optional trust policy. This never authorizes spending from
+the card holder’s wallet.

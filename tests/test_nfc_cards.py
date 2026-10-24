@@ -21,6 +21,8 @@ from test_wallets import setup,login,form
 @pytest.fixture
 def cards(tmp_path):
     custody=CustodyStore(tmp_path,Fernet.generate_key())
+    from app.identity import ServiceIdentity
+    ServiceIdentity(custody,'11'*32)
     pos=POSStore(custody,'https://pos.example')
     with closing(custody.connect()) as db,db:
         for owner in ('merchant','alice','bob'):
@@ -41,7 +43,7 @@ def test_random_encrypted_card_idempotency_and_no_wallet_key_access(cards):
     result,code=pair(cards)
     raw=base64.b64decode(result['payload'])
     assert 100<len(raw)<=MAX_BYTES
-    assert raw.startswith(b'OGC1') and b'alice' not in raw and b'nsec' not in raw and b'wallet-alice' not in raw
+    assert raw.startswith(b'OGC2') and b'alice' not in raw and b'nsec' not in raw and b'wallet-alice' not in raw
     assert store.prepare(terminal,'pair-request-key-0001')['payload']==result['payload']
     assert store.status(terminal,'pair-request-key-0001')['state']=='prepared'
     # Reload issuer state: no re-keying and no new credential on retry.
@@ -106,6 +108,7 @@ def test_wrong_card_tampering_and_wrong_issuer(cards):
 
 
 def test_wallet_callback_scanner_and_pos_proxy(tmp_path,monkeypatch):
+    monkeypatch.setenv('OAKGATE_SERVICE_NSEC','11'*32)
     monkeypatch.setenv('OAKGATE_POS_ENABLED','true');monkeypatch.setenv('OAKGATE_POS_PUBLIC_URL','https://pos.example')
     async def run():
         account,sessions,wallets,_=setup(tmp_path)
@@ -176,3 +179,49 @@ def test_balance_authority_requires_issued_current_unrevoked_card(cards):
         db.execute("UPDATE wallets SET wallet_id='wallet-alice' WHERE owner='alice'")
     store.revoke('alice',result['card_id'])
     with pytest.raises(POSDenied):store.balance_authority(terminal,encoded)
+
+
+def test_v2_pin_is_public_authenticated_and_required_for_new_cards(cards):
+    from app.nfc_cards import card_header
+    from app.identity import ServiceIdentity
+    store,_,terminal=cards
+    result,_=pair(cards)
+    raw,origin,npub,end=card_header(result['payload'])
+    assert raw[:4]==b'OGC2' and origin==store.origin and len(npub)==63
+    assert npub.encode() in raw[:end]
+    with closing(store.custody.connect()) as db:
+        assert npub==db.execute('SELECT npub FROM service_identity').fetchone()[0]
+    # Substitute a valid different npub, not merely malformed bytes.
+    from stroma import Keys
+    other=Keys(priv_k='22'*32).public_key_bech32()
+    tampered=raw[:end-63]+other.encode()+raw[end:]
+    with pytest.raises(POSDenied):store.verify(terminal,'pair-request-key-0001',base64.b64encode(tampered).decode())
+    # Even if configuration is changed to match the substitution, AEAD fails.
+    with closing(store.custody.connect()) as db,db:db.execute('UPDATE service_identity SET npub=?',(other,))
+    with pytest.raises(POSDenied):store.verify(terminal,'pair-request-key-0001',base64.b64encode(tampered).decode())
+    with pytest.raises(POSDenied):store.verify(terminal,'pair-request-key-0001',result['payload'])
+    with closing(store.custody.connect()) as db,db:db.execute('DELETE FROM service_identity')
+    code=urlsplit(store.start(terminal,'another-request-key')['pair_url']).fragment
+    store.approve(code,'alice')
+    with pytest.raises(ValueError):store.prepare(terminal,'another-request-key')
+
+
+def test_legacy_card_can_read_balance_but_cannot_resolve_payments(cards):
+    from app.nfc_cards import card_header, DOMAIN, DOMAIN_V2
+    from app.card_payments import pinned_issuer
+    from app.send import PaymentInputError
+    store,_,terminal=cards
+    result,_=pair(cards)
+    raw,_,_,end=card_header(result['payload'])
+    plaintext=store.cipher.decrypt(raw[end:end+12],raw[end+12:],DOMAIN_V2+raw[:end])
+    header=b'OGC1'+raw[4:end-63]
+    nonce=raw[end:end+12]
+    legacy=header+nonce+store.cipher.encrypt(nonce,plaintext,DOMAIN+header)
+    encoded=base64.b64encode(legacy).decode()
+    with closing(store.custody.connect()) as db,db:
+        db.execute('UPDATE nfc_cards SET payload_hash=?,payload=? WHERE id=?',
+                   (hashlib.sha256(legacy).hexdigest(),store.custody.cipher.encrypt(legacy),result['card_id']))
+    store.verify(terminal,'pair-request-key-0001',encoded)
+    assert store.balance_authority(terminal,encoded)['owner']=='alice'
+    with pytest.raises(PaymentInputError,match='Reissue'):
+        pinned_issuer(encoded)

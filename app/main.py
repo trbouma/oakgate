@@ -93,6 +93,8 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
     app.include_router(pos_router())
     from app.nfc_routes import router as nfc_router
     app.include_router(nfc_router)
+    from app.card_payments import router as card_payment_router
+    app.include_router(card_payment_router)
 
     @app.middleware("http")
     async def private_responses(request, call_next):
@@ -111,10 +113,12 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
             response.headers['Referrer-Policy'] = 'strict-origin'
             response.headers['X-Frame-Options'] = 'DENY'
             response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'none'"
-        if request.url.path.startswith(('/account/pos', '/api/pos/')):
+        if request.url.path.startswith(('/account/pos', '/api/pos/', '/api/cards/')):
             response.headers['Cache-Control'] = 'no-store, private'
             response.headers['Referrer-Policy'] = 'no-referrer'
             response.headers['X-Frame-Options'] = 'DENY'
+        if request.url.path == '/account/send':
+            response.headers['Permissions-Policy'] = 'nfc=(self)'
         response.headers["Content-Language"] = getattr(request.state, "language", "en")
         response.headers["X-Content-Type-Options"] = "nosniff"
         return response

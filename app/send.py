@@ -28,7 +28,7 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
-async def public_json(url, params=None):
+async def public_json(url, params=None, *, body=None):
     """Pin a public DNS result to the TLS connection; never follow redirects."""
     parsed = urlsplit(url)
     if (parsed.scheme != 'https' or not parsed.hostname or parsed.username is not None
@@ -42,7 +42,7 @@ async def public_json(url, params=None):
             raise ValueError('Payment endpoint must be public')
         target = httpx.URL(url).copy_with(host=ips[0])
         async with httpx.AsyncClient(timeout=10, follow_redirects=False, trust_env=False) as client:
-            async with client.stream('GET', target, params=params, headers={'Host': hostname},
+            async with client.stream('POST' if body is not None else 'GET', target, params=params, json=body, headers={'Host': hostname},
                                      extensions={'sni_hostname': hostname}) as response:
                 response.raise_for_status()
                 body = bytearray()
@@ -81,7 +81,7 @@ class SendService:
             return []
         return payment_assets(await self.wallets.clear_balances(record['material']))
 
-    async def prepare(self, owner, address, amount, comment, asset=''):
+    async def prepare(self, owner, address, amount, comment, asset='', expected_pubkey=None):
         if not re.fullmatch(r'[1-9][0-9]{0,15}', amount):
             raise PaymentInputError('Enter a positive whole-number amount.')
         selected = None
@@ -144,6 +144,8 @@ class SendService:
                     and relay and advertised
                     and getattr(self.wallets.backend, 'direct_sending_available', False)):
                 payment.update(route='ecash', pubkey=pubkey.lower(), relay=relay)
+        if expected_pubkey and (payment.get('route') not in {'ecash', 'clear'} or payment.get('pubkey') != expected_pubkey):
+            raise PaymentInputError('The card wallet does not match payment discovery. No payment was sent.')
         if payment.get('route') not in {'ecash', 'clear'}:
             metadata = await self.fetch(f'https://{domain}/.well-known/lnurlp/{name}')
             msat = payment['amount'] * 1000
@@ -513,7 +515,13 @@ async def prepare(request: Request):
         return render(request, session, message='Connect an Acorn first.', status=400)
     try:
         async with asyncio.timeout(35):
-            payment = await service.prepare(owner, str(form.get('address', '')), str(form.get('amount', '')), str(form.get('comment', '')), asset=str(form.get('asset', '')))
+            address = str(form.get('address', ''))
+            expected = None
+            if form.get('card_payload'):
+                from app.card_payments import resolve_card
+                destination = await resolve_card(request, owner, str(form['card_payload']), str(form.get('amount', '')), str(form.get('asset', '')))
+                address, expected = destination['address'], destination['pubkey']
+            payment = await service.prepare(owner, address, str(form.get('amount', '')), str(form.get('comment', '')), asset=str(form.get('asset', '')), expected_pubkey=expected)
         return RedirectResponse('/account/send?payment='+payment['id'], 303)
     except Exception as exc:
         # Preparation has not submitted a payment. Keep the authenticated shell
