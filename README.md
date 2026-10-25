@@ -210,3 +210,12 @@ transaction behavior and real-database tests. Keycloak's database is unchanged.
 The [controlled import and cutover guide](docs/033-postgresql-cutover.md) provides
 an offline exact-copy importer, independent verification, SQLite restart fencing
 and the Beelink checklist. No live cutover happens automatically.
+
+### Optional Keycloak PostgreSQL migration
+
+The base Keycloak configuration remains H2. A separate, explicit
+`compose.keycloak-postgres.yaml` override selects production mode and a dedicated
+database in the existing PostgreSQL service, preserving the NFC provider override.
+Do not activate it until following the [Keycloak migration checklist](docs/034-keycloak-postgresql.md).
+No users or realms are imported automatically; rehearsal and identity-continuity
+checks are required before live cutover.

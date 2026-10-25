@@ -15,6 +15,7 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 from app.migrations.baseline import OBJECTS
+from app.db_diagnostics import diagnostic
 
 # Serialize short write transactions across every process sharing this database.
 # Preserve SQLite's conservative exclusion first; narrower locking is future work.
@@ -82,12 +83,14 @@ class Database:
         if url:
             from app.postgres_migrations import verify
             self.engine = postgres_engine(url)
+            phase = 'connection'
             try:
                 with self.engine.connect() as connection:
+                    phase = 'schema_and_permissions'
                     verify(connection, runtime=True)
-            except Exception:
+            except Exception as error:
                 self.engine.dispose()
-                raise StorageError('PostgreSQL schema or runtime role is not ready; use the migration guide') from None
+                raise StorageError('PostgreSQL schema or runtime role is not ready; ' + diagnostic(error, phase)) from None
         else:
             directory = Path(directory)
             refuse_sqlite_cutover(directory / 'custody.sqlite3')

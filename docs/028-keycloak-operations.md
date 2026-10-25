@@ -321,7 +321,7 @@ After a change:
 The current Compose command is `start-dev` with file-backed H2. The development
 mode warning is accurate: HTTPS and successful tests do not turn this into a
 production-hardened Keycloak deployment. Moving to production mode and a supported
-production database is a separate planned change, requiring a tested migration.
+production database requires the separate [PostgreSQL migration checklist](034-keycloak-postgresql.md). Its opt-in override is prepared; the actual migration must be rehearsed and explicitly performed.
 
 ## Troubleshooting quick reference
 

@@ -48,6 +48,7 @@ nav:
       - FastAPI app: 003-fastapi-app.md
       - Public service contract: 017-public-service-contract.md
       - Keycloak operations and flows: 028-keycloak-operations.md
+      - Keycloak PostgreSQL migration: 034-keycloak-postgresql.md
       - Connect sign-in: 005-keycloak-sign-in.md
       - Connect an Acorn: 007-acorn-custody.md
       - Recovery disclosure: 016-recovery-disclosure.md
