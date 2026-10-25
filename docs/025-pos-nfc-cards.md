@@ -1,10 +1,12 @@
 # POS NFC card issuance
 
+See [Everyday NFC cards: trust and security](029-nfc-card-trust.md) for the NTAG215 trade-offs, loss response and holder/terminal trust boundaries.
+
 OakGate POS can pair with a signed-in OakGate wallet, prepare an encrypted card
 credential, write an NDEF card and verify it by reading it back. This implements
 issuance and a confirmed, read-only Cash and Clear balance lookup. Issuance alone
 does not authorize login, spending, NWC calls or access to records. Optional
-[Keycloak NFC login](027-keycloak-nfc-login.md) requires separate activation and a PIN. New cards receive a private server-side PIN during issuance;
+[Keycloak NFC login](027-keycloak-nfc-login.md) requires separate activation and, by default, a PIN; card-only login is an explicit per-card exception. New cards receive a private server-side PIN during issuance;
 current payments and balance lookup do not prompt for it.
 
 ## Operator flow

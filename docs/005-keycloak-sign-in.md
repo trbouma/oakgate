@@ -1,5 +1,7 @@
 # Connect OakGate sign-in
 
+For the consolidated current setup, see [Keycloak operations and sign-in flows](028-keycloak-operations.md).
+
 OakGate now uses Keycloak's authorization-code flow with PKCE. The **Sign in** button opens the `oakgate` realm login page, where the existing Google provider is available. Google credentials belong only in Keycloak.
 
 ## Create the application client
@@ -70,7 +72,7 @@ docker compose up -d --build app
 docker compose ps app sessions
 ```
 
-Compose starts a private Redis session service with no published port. Session persistence is disabled and `/data` is temporary memory storage; no external-drive directory is needed for sessions. Restarting Redis logs everyone out. Existing Keycloak data stays in `/mnt/bitcoin/keycloak`.
+Compose starts a private Redis session service with no published port. Session persistence is disabled and `/data` is temporary memory storage; no external-drive directory is needed for sessions. Restarting Redis logs everyone out. Existing Keycloak data stays in `/mnt/lexar/keycloak`.
 
 OakGate's public URL determines callback URLs and secure cookies; incoming Host and forwarded headers cannot change them. Keep the existing HTTPS Nginx proxy to port 8801. Uvicorn access logging is disabled to avoid logging authorization codes. Also exclude the callback query string from Nginx access logs, or disable logging for that exact location. For the current separate proxy host, an example inside OakGate's HTTPS server block is:
 

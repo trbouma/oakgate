@@ -33,10 +33,10 @@ Set `KC_BOOTSTRAP_ADMIN_PASSWORD` in `.env` to the generated password. Set the r
 Before the first start, confirm the external drive is mounted and prepare the existing directory for Keycloak's container user:
 
 ```sh
-mountpoint /mnt/bitcoin
+mountpoint /mnt/lexar
 # Continue only if the mount check succeeds.
-sudo chown 1000:0 /mnt/bitcoin/keycloak
-sudo chmod 700 /mnt/bitcoin/keycloak
+sudo chown 1000:0 /mnt/lexar/keycloak
+sudo chmod 700 /mnt/lexar/keycloak
 ```
 
 Then run:
@@ -87,7 +87,9 @@ The included GitHub Pages workflow publishes on pushes to `main` once **Settings
 
 - [Receive-only POS terminals and browser-bound keys](docs/023-receive-only-pos.md)
 - [POS NFC card issuance](docs/025-pos-nfc-cards.md)
+- [Everyday NFC card trust and security](docs/029-nfc-card-trust.md)
 - [NFC cards and payment execution](docs/026-nfc-card-payments.md)
+- [Keycloak operations and sign-in flows](docs/028-keycloak-operations.md)
 - [Keycloak NFC card and PIN login](docs/027-keycloak-nfc-login.md)
 
 - [Safebox discovery contract and migration](docs/018-safebox-address-discovery.md)
@@ -178,3 +180,13 @@ Users can provision a terminal in Preferences, activate its browser-bound key,
 and revoke it. Terminals receive Cash and Clear using a currency-aware keypad,
 QR codes and payment detection, without account or spending access. See the
 [POS deployment guide](docs/024-pos-deployment.md) for environment settings and Nginx setup.
+
+### Private PostgreSQL (infrastructure stage)
+
+Before refreshing this version, add the PostgreSQL settings and create its dedicated
+SSD directory using [the PostgreSQL setup checklist](docs/030-postgresql-foundation.md).
+`OAKGATE_POSTGRES_DATA_DIR` and `OAKGATE_POSTGRES_PASSWORD` are required, including
+when Compose validates an app-only refresh. PostgreSQL has no published port.
+Full-stack startup waits for its health and includes its logs on failure;
+`refresh-app.sh` leaves it running. OakGate still uses SQLite and Keycloak still
+uses H2. Alembic and data migration are a separate next step.

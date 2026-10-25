@@ -1,5 +1,7 @@
 # OakGate authentication design
 
+For the consolidated current setup, see [Keycloak operations and sign-in flows](028-keycloak-operations.md).
+
 Status: Draft proposal  
 Date: 2026-10-17
 

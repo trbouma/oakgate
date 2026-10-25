@@ -37,15 +37,15 @@ fi
 
 startup_failed() {
     printf '%s\n' "Startup failed or did not become healthy within ${health_timeout}s." >&2
-    docker compose ps --all app sessions keycloak >&2 || true
-    for service in app sessions keycloak; do
+    docker compose ps --all app sessions keycloak postgres >&2 || true
+    for service in app sessions keycloak postgres; do
         container=$(docker compose ps --all --quiet "$service") || continue
         case "$container" in ''|*[!a-zA-Z0-9]*) continue ;; esac
         printf '%s\n' "Diagnostics for $service:" >&2
         docker inspect --format '{{.State.Status}} exit={{.State.ExitCode}} oom={{.State.OOMKilled}} error={{.State.Error}}' "$container" >&2 || true
         docker inspect --format '{{if .State.Health}}{{range .State.Health.Log}}health exit={{.ExitCode}}: {{.Output}}{{end}}{{end}}' "$container" >&2 || true
     done
-    docker compose logs --no-color --tail=100 app sessions keycloak >&2 || true
+    docker compose logs --no-color --tail=100 app sessions keycloak postgres >&2 || true
     exit 1
 }
 
@@ -78,7 +78,7 @@ fi
 
 docker compose ps
 printf '%s\n' \
-    'OakGate app, Redis and Keycloak passed their health checks.' \
+    'OakGate app, Redis, Keycloak and PostgreSQL passed their health checks.' \
     'Verify public HTTPS, login and payments separately.' \
     'App: OAKGATE_PUBLIC_URL from .env (default https://oakgate.safebox.dev)' \
     'Admin console: KC_HOSTNAME from .env followed by /admin/master/console/'

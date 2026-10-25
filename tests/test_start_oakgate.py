@@ -76,8 +76,8 @@ def test_wait_failure_reports_all_services_even_if_logs_fail(tmp_path):
     assert result.returncode == 1 and 'within 7s' in result.stderr
     assert 'synthetic health diagnostic' in result.stderr
     assert 'synthetic service logs' in result.stderr
-    assert ['docker', 'compose', 'logs', '--no-color', '--tail=100', 'app', 'sessions', 'keycloak'] in calls
-    for service in ('app', 'sessions', 'keycloak'):
+    assert ['docker', 'compose', 'logs', '--no-color', '--tail=100', 'app', 'sessions', 'keycloak', 'postgres'] in calls
+    for service in ('app', 'sessions', 'keycloak', 'postgres'):
         assert ['docker', 'compose', 'ps', '--all', '--quiet', service] in calls
 
 

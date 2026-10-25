@@ -1,5 +1,7 @@
 # First Keycloak server on Beelink
 
+For the consolidated current setup, see [Keycloak operations and sign-in flows](028-keycloak-operations.md).
+
 Status: Initial development setup, 2026-10-17
 
 ## Scope
@@ -95,7 +97,7 @@ After creating the `oakgate` realm, run on your computer:
 curl --fail https://keycloak.safebox.dev/realms/oakgate/.well-known/openid-configuration
 ```
 
-The response should be JSON with issuer `https://keycloak.safebox.dev/realms/oakgate`. Restart Keycloak with `docker compose restart keycloak` on Beelink and confirm that the realm and administrator still exist. `docker compose ps` and container logs help diagnose startup problems; this initial file does not define a readiness probe.
+The response should be JSON with issuer `https://keycloak.safebox.dev/realms/oakgate`. Restart Keycloak with `docker compose restart keycloak` on Beelink and confirm that the realm and administrator still exist. `docker compose ps` and container logs help diagnose startup problems; Compose checks Keycloak readiness internally on port 9000 at `/health/ready`.
 
 ## Next step
 

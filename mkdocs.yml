@@ -47,6 +47,7 @@ nav:
   - Build and deploy:
       - FastAPI app: 003-fastapi-app.md
       - Public service contract: 017-public-service-contract.md
+      - Keycloak operations and flows: 028-keycloak-operations.md
       - Connect sign-in: 005-keycloak-sign-in.md
       - Connect an Acorn: 007-acorn-custody.md
       - Recovery disclosure: 016-recovery-disclosure.md
@@ -61,9 +62,11 @@ nav:
       - Receive-only POS design: 023-receive-only-pos.md
       - POS deployment: 024-pos-deployment.md
       - POS NFC cards: 025-pos-nfc-cards.md
+      - Everyday NFC card trust: 029-nfc-card-trust.md
       - NFC cards and payment execution: 026-nfc-card-payments.md
       - Keycloak NFC login: 027-keycloak-nfc-login.md
       - Lightning payments and zaps: 009-lightning-receiving.md
+      - PostgreSQL foundation: 030-postgresql-foundation.md
       - Identity storage and backups: 008-identity-storage-backups.md
       - Storage latency incident: 022-storage-latency-incident.md
       - Keycloak on Beelink: 002-keycloak-beelink.md

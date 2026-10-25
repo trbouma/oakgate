@@ -1,5 +1,7 @@
 # Identity mapping storage and backups
 
+For the consolidated current setup, see [Keycloak operations and sign-in flows](028-keycloak-operations.md).
+
 Date: 2026-10-18  
 Status: Current implementation and recovery design
 
@@ -39,10 +41,10 @@ Deleting and recreating a Keycloak user normally creates a different subject. Ch
 
 ## SQLite holds durable application state
 
-On the current Beelink deployment, `OAKGATE_DATA_DIR=/var/lib/oakgate` selects the internal SSD directory mounted at `/app/data`. The database is:
+On the current Beelink deployment, `OAKGATE_DATA_DIR=/mnt/lexar/oakgate` selects the Lexar SSD directory mounted at `/app/data`. The database is:
 
 ```text
-/var/lib/oakgate/custody.sqlite3
+/mnt/lexar/oakgate/custody.sqlite3
 ```
 
 | Table | Contents | Protection and constraints |
@@ -80,7 +82,7 @@ Restarting only the app preserves unexpired Redis sessions. Restarting Redis inv
 | --- | --- | --- |
 | OakGate database | A consistent SQLite backup, including preferences, address reservations, pending setup rows, and the complete incoming payment journal | Preserves custody material, user associations, and handle claims |
 | Custody encryption key | The exact `OAKGATE_CUSTODY_KEY` used by that backup | Required to decrypt wallet rows and payment recovery material |
-| Keycloak persistence | A consistent backup of `/mnt/bitcoin/keycloak` for the current file-backed development deployment, with the matching Keycloak version recorded | Preserves users and their IDs, Google identity links, realm/client configuration, and associated secrets |
+| Keycloak persistence | A consistent backup of `/mnt/lexar/keycloak` for the current file-backed development deployment, with the matching Keycloak version recorded | Preserves users and their IDs, Google identity links, realm/client configuration, and associated secrets |
 | Deployment configuration | Protected copies of required `.env` settings, Compose configuration, application revision, Poetry lockfile, and container versions | Restores the same issuer, client, storage paths, relay configuration, and compatible application |
 | Google project administration | Recoverable administrative access and a record of OAuth client configuration and authorized redirects | The Google project and OAuth client are external dependencies; local database backups do not restore them |
 | Proxy and DNS configuration | Nginx configuration and a way to restore DNS and TLS | Keeps the issuer and application origins reachable at their configured HTTPS addresses |

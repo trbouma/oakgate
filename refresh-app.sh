@@ -8,7 +8,7 @@ cd "$repo_dir"
 usage() {
     printf '%s\n' 'Usage: ./refresh-app.sh [--timeout SECONDS]' \
         'Pull updates, rebuild/recreate only app, and wait for Docker health (default: 120 seconds).' \
-        'Keycloak and Redis are left running. Requires the existing session service.'
+        'Keycloak, Redis and PostgreSQL are left running. Requires the existing session service.'
 }
 
 health_timeout=120
@@ -29,7 +29,7 @@ fi
 app_container=
 startup_failed() {
     printf '%s\n' "$1" >&2
-    printf '%s\n' 'App status and recent logs (Keycloak and Redis were not restarted):' >&2
+    printf '%s\n' 'App status and recent logs (Keycloak, Redis and PostgreSQL were not restarted):' >&2
     docker compose ps --all app >&2 || true
     if [ -n "$app_container" ]; then
         docker inspect --format '{{.State.Status}} exit={{.State.ExitCode}} oom={{.State.OOMKilled}} error={{.State.Error}}' "$app_container" >&2 || true
@@ -82,7 +82,7 @@ while :; do
     case "$status" in
         'running healthy')
             docker compose ps app
-            printf '%s\n' 'OakGate app is healthy. Keycloak and Redis were left running.'
+            printf '%s\n' 'OakGate app is healthy. Keycloak, Redis and PostgreSQL were left running.'
             exit 0
             ;;
         *' missing') startup_failed 'The app container has no Docker health check.' ;;

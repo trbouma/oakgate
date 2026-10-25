@@ -83,6 +83,34 @@ services:
     security_opt: [no-new-privileges:true]
     stop_grace_period: 30s
 
+  # Infrastructure only: SQLite/H2 remain authoritative until a separate migration.
+  postgres:
+    image: postgres:17-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${OAKGATE_POSTGRES_DB:-oakgate}
+      POSTGRES_USER: ${OAKGATE_POSTGRES_USER:-oakgate_admin}
+      POSTGRES_PASSWORD: ${OAKGATE_POSTGRES_PASSWORD:?Set OAKGATE_POSTGRES_PASSWORD in .env}
+      POSTGRES_INITDB_ARGS: --data-checksums --auth-host=scram-sha-256
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+    volumes:
+      - type: bind
+        source: ${OAKGATE_POSTGRES_DATA_DIR:?Set OAKGATE_POSTGRES_DATA_DIR in .env to the PostgreSQL data directory}
+        target: /var/lib/postgresql/data
+        bind:
+          create_host_path: false
+    # No host port, public proxy, or access from POS/default-network services.
+    networks: [database]
+    shm_size: 128mb
+    security_opt: [no-new-privileges:true]
+    stop_grace_period: 60s
+    healthcheck:
+      test: ["CMD-SHELL", 'pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 3s
+      start_period: 30s
+      retries: 12
+
   sessions:
     image: redis:7.4-alpine
     tmpfs:
@@ -127,3 +155,7 @@ services:
         target: /opt/keycloak/data
         bind:
           create_host_path: false
+
+networks:
+  database:
+    internal: true

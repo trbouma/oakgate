@@ -1,5 +1,7 @@
 # Keycloak NFC card and PIN login
 
+See [Everyday NFC cards: trust and security](029-nfc-card-trust.md) for the NTAG215 trade-offs, loss response and holder/terminal trust boundaries.
+
 OakGate's optional NFC login uses a custom Keycloak authenticator. It does not
 create an OakGate session from a card directly, register new users, or link
 accounts by email. Keycloak remains the OIDC issuer. The validated issuer/subject
@@ -17,14 +19,14 @@ to that dedicated flow. Never bind it as the realm's browser flow or use it for
 1. During issuance, the signed-in holder explicitly requests card-and-PIN login.
    The POS cannot make this choice. The generated PIN stays off the card and POS.
 2. The holder saves the PIN, and the POS writes and reads back the card.
-3. Under Preferences → Your NFC cards, choose **Enable or unlock card sign-in**.
+3. Under Preferences → Your NFC cards, choose **Verify sign-in and save**.
 4. Reauthenticate through the normal Google/email client (`prompt=login`,
    `max_age=0`). OakGate requires a recent `auth_time`, the same issuer/subject,
    and the same current browser session. The OIDC state is one-use. Card issuance
    alone never enables login. Google may apply its own upstream session policy;
    this is fresh Keycloak authentication, not a guarantee of an upstream password prompt.
 5. On a compatible device, choose **Sign in → NFC card and PIN**, read the card,
-   and enter the four-digit PIN. Keycloak's server submits these credentials to
+   and enter the four-digit PIN unless the holder explicitly disabled it for that card. Keycloak's server submits these credentials to
    OakGate over an authenticated backchannel, bound to a short-lived Keycloak
    authentication-session challenge.
 6. OakGate checks the encrypted card, pinned instance key, activated status,
@@ -45,7 +47,7 @@ Only OGC2 cards qualify. No Nostr event or Acorn private-key operation is needed
 Five wrong four-digit PIN attempts block that card's login. Counts are durable in
 SQLite, updated atomically across concurrent requests, survive restart, and do
 not reset after successful card logins. No automatic retry follows a timeout.
-Only fresh normal-client reauthentication through **Enable or unlock card sign-in**
+Only fresh normal-client reauthentication through **Verify sign-in and save**
 clears the counter. This does not reveal or change the PIN; a forgotten PIN needs
 a new card. There is deliberately no public PIN-reset endpoint.
 
@@ -120,7 +122,7 @@ Do not overwrite `OAKGATE_OIDC_CLIENT_SECRET` (the normal client).
 
 In **Authentication → Flows**, create a new basic flow, `oakgate-nfc`.
 Add the execution **OakGate NFC card and PIN**, set it to **REQUIRED**.
-There should be exactly one execution. Under the `oakgate-nfc` client's
+There should be exactly one execution. Under **Clients → oakgate-nfc → Advanced**, near the bottom, in
 **Authentication flow overrides**, select it as the **Browser flow**.
 Leave the realm's global browser binding and `oakgate-web` override unchanged.
 

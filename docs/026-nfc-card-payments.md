@@ -1,5 +1,7 @@
 # NFC cards and payment execution
 
+See [Everyday NFC cards: trust and security](029-nfc-card-trust.md) for the NTAG215 trade-offs, loss response and holder/terminal trust boundaries.
+
 The wallet Send page supports a payment address or **Read NFC payment card**.
 This pays **to** the card holder. It does not debit the card, log in as its holder,
 or give the acquiring instance access to its balance, records or keys.
@@ -47,7 +49,7 @@ A normal NDEF card is copyable. Encryption conceals the credential's plaintext;
 it does not establish physical-card uniqueness. The payment protocol
 is limited to receiving payments and confirmed local POS balance disclosure.
 Optional [Keycloak NFC login](027-keycloak-nfc-login.md) adds account authentication
-only after explicit enrollment, fresh authentication and PIN verification. A card
+only after explicit enrollment and fresh authentication; login requires PIN verification by default, with an explicit per-card exception. A card
 is not NWC authorization or permission to debit the holder's funds.
 
 ## User flow
