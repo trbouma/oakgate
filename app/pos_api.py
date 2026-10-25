@@ -1,4 +1,4 @@
-"""Receive-only POS authorization; no spending or account operations exposed."""
+"""POS authorization; card debit additionally requires a presented bearer card."""
 from pos.protocol import CARD_OPS
 import json
 import asyncio
@@ -93,16 +93,20 @@ def create_router():
             token = auth[7:]
             if operation == 'challenges':
                 result = await invoke(store.challenge, token, data['operation'], data.get('payload', '{}'))
-            elif operation in CARD_OPS:
+            elif operation in CARD_OPS and operation != 'card-pay':
                 actor = await invoke(store.receiving_authority, token, operation, data['challenge'], data['signature'], data['payload'])
                 from app.nfc_routes import card_operation
                 result = await card_operation(request, actor, operation, data['payload'])
-            elif operation in {'receive-config', 'receive', 'receipt'}:
+            elif operation in {'receive-config', 'receive', 'receipt', 'card-pay'}:
                 actor = await invoke(store.receiving_authority, token, operation, data['challenge'], data['signature'], data['payload'])
                 from app.pos_receiving import receive
                 # Keep request creation alive if the terminal disconnects. The journal
                 # prevents another request on retry; shutdown drains these tasks.
-                task = asyncio.create_task(receive(request, actor, operation, data['payload']))
+                if operation == 'card-pay':
+                    from app.pos_card_payment import pay
+                    task = asyncio.create_task(pay(request, actor, data['payload']))
+                else:
+                    task = asyncio.create_task(receive(request, actor, operation, data['payload']))
                 request.app.state.pos_tasks.add(task)
                 def done(task):
                     request.app.state.pos_tasks.discard(task)
@@ -115,6 +119,8 @@ def create_router():
                     raise HTTPException(403, 'Terminal authorization failed.') from None
                 except POSLimited:
                     raise HTTPException(429, 'Too many requests. Please wait before creating another.') from None
+                except ValueError:
+                    raise HTTPException(400, 'Card payment could not be completed. Check the paying wallet before trying again.') from None
                 except (TimeoutError,) + DATABASE_ERRORS:
                     raise HTTPException(503, 'Receipt service is busy. Retry the same request.') from None
             else:

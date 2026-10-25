@@ -2,7 +2,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
-function fixture(storage=new Map()) {
+function fixture(storage=new Map(), nfc=false) {
   const nodes={}, timers=new Map(); let counter=0;
   const make=id=>nodes[id]||= {value:'',hidden:false,disabled:false,dataset:{},options:[],listeners:{},
     addEventListener(name,fn){this.listeners[name]=fn;}, setAttribute(){},removeAttribute(){},dispatchEvent(){},
@@ -15,8 +15,14 @@ function fixture(storage=new Map()) {
     crypto:{randomUUID:()=>`request-number-${++counter}`},Event:function(){},addEventListener(){},matchMedia:()=>({matches:true}),
     setTimeout:fn=>{const id=++counter;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id),
     setInterval:()=>++counter,clearInterval(){},navigator:{clipboard:{writeText:async()=>{}}}};
+  const readers=[];
+  context.AbortController=AbortController; context.Uint8Array=Uint8Array;
+  context.btoa=value=>Buffer.from(value,'binary').toString('base64');
+  context.DOMParser=class {parseFromString(){return {documentElement:{localName:'svg',getAttribute:()=> '0 0 100 100',querySelectorAll:()=>[]}};}};
+  context.document.createElementNS=()=>({setAttribute(){},append(){}});
+  if(nfc){context.window.isSecureContext=true;context.window.NDEFReader=class {constructor(){readers.push(this);}async scan(options){this.signal=options.signal;}};}
   vm.runInNewContext(fs.readFileSync('pos/static/receiving.js','utf8'),context);
-  return {nodes,make,timers,storage,start:context.window.startPOSReceiving,submit:()=>make('receive-form').listeners.submit({preventDefault(){}})};
+  return {nodes,make,timers,storage,readers,start:context.window.startPOSReceiving,submit:()=>make('receive-form').listeners.submit({preventDefault(){}})};
 }
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 const config={cash_enabled:true,assets:[],currencies:[],currency:'SATS'};
@@ -52,4 +58,38 @@ test('detected receipts stop checking and offer a new request',async()=>{
   f.make('amount').value='1';f.submit();await flush();
   await [...f.timers.values()][0]();
   assert.equal(f.make('new-request').textContent,'New request');assert.equal(f.make('poll-progress').hidden,true);
+});
+
+const cardEvent=()=>({message:{records:[{recordType:'mime',mediaType:'application/vnd.oakgate.card',data:new DataView(new ArrayBuffer(200))}]}});
+test('NFC action hidden without browser support and shown for pending supported receipt',async()=>{
+  for(const supported of [false,true]){
+    const f=fixture(new Map(),supported);
+    await f.start(async op=>op==='receive-config'?config:{state:'pending',code:'invoice',qr:'svg'},'terminal');
+    f.make('amount').value='100';f.submit();await flush();
+    assert.equal(f.make('pay-nfc').hidden,!supported);
+  }
+});
+test('card tap submits only current receipt and only once without a PIN; receipt polling confirms',async()=>{
+  const f=fixture(new Map(),true), payments=[];let release;
+  await f.start(async(op,data)=>{
+    if(op==='receive-config')return config;
+    if(op==='card-pay'){payments.push(data);await new Promise(resolve=>release=resolve);return {state:'submitted'};}
+    return {state:op==='receipt'?'detected':'pending',code:'invoice',qr:'svg'};
+  },'terminal');
+  f.make('amount').value='100';f.submit();await flush();
+  await f.make('pay-nfc').listeners.click();const reader=f.readers[0];
+  reader.onreading(cardEvent());reader.onreading(cardEvent());await flush();
+  assert.equal(payments.length,1);assert.deepEqual(Object.keys(payments[0]).sort(),['card_payload','request_key']);
+  assert.equal(reader.signal.aborted,true);assert.equal(f.make('new-request').disabled,true);
+  assert.equal(f.make('receipt-code').hidden,true);
+  release();await flush();assert.match(f.make('pay-nfc-status').textContent,/confirming receipt/);
+  await [...f.timers.values()][0]();assert.equal(f.make('receipt-status').textContent,'Payment detected — confirming in background');
+});
+test('stopped NFC reader ignores a late card event',async()=>{
+  const f=fixture(new Map(),true), payments=[];
+  await f.start(async(op,data)=>op==='receive-config'?config:op==='card-pay'?(payments.push(data),{state:'submitted'}):{state:'pending',code:'invoice',qr:'svg'},'terminal');
+  f.make('amount').value='100';f.submit();await flush();
+  await f.make('pay-nfc').listeners.click();const reader=f.readers[0];
+  f.make('stop-pay-nfc').listeners.click();reader.onreading(cardEvent());await flush();
+  assert.equal(reader.signal.aborted,true);assert.equal(payments.length,0);
 });

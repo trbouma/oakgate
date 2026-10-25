@@ -32,6 +32,9 @@
 <h2 id="receipt-name"></h2><p id="receipt-amount" class="receipt-amount"></p>
 <p id="receipt-status" role="status" aria-live="polite"></p>
 <div id="receipt-code" hidden><button id="qr-copy" type="button" aria-label="Copy payment request"></button><p id="copy-note" class="note" role="status">Tap the QR code to copy the request.</p></div>
+<button id="pay-nfc" type="button" class="secondary" hidden>Pay by NFC</button>
+<button id="stop-pay-nfc" type="button" class="quiet" hidden>Stop reading card</button>
+<p id="pay-nfc-status" class="note" role="status" aria-live="polite"></p>
 <div id="poll-progress"><progress id="poll-bar" max="120" value="0" aria-label="Checking time elapsed"></progress><p id="poll-note" class="note"></p></div>
 <button id="retry-request" class="secondary" type="button" hidden>Check this request again</button>
 <button id="new-request" type="button">Cancel</button>
@@ -49,7 +52,7 @@
 <button id="card-stop" type="button" class="secondary" hidden>Stop NFC operation</button></div>
 <button id="card-refresh" type="button" class="secondary" hidden>Check issuance status</button>
 <button id="card-cancel" type="button" class="secondary">Cancel issuance</button>
-<p class="note">The card holds an encrypted random credential. Spending and sign-in are not enabled.</p>
+<p class="note">The card holds an encrypted random credential. Same-home POS payments do not ask for a PIN. Sign-in requires separate enrollment.</p>
 </section>
 <section id="card-balance-panel" hidden>
 <h2>Available Balance</h2>

@@ -2,6 +2,9 @@
 (() => {
   const $ = id => document.getElementById(id);
   let signed, current, timer, tick, generation = 0, code = '', storageKey, loaded = false, working = false, celebrated = false;
+  let nfcController, nfcTimer, nfcBusy = false, receiptState, nfcAttemptKey;
+  const nfcSupported = () => window.isSecureContext && 'NDEFReader' in window;
+  function stopNFC() { if(nfcController)nfcController.abort(); nfcController=null; clearTimeout(nfcTimer); $('stop-pay-nfc').hidden=true; }
   const labels = {pending:'Waiting for payment', unavailable:'Checking payment status', preparing:'Preparing request…',
     detected:'Payment detected — confirming in background', complete:'Received', expired:'Request expired',
     review:'Receipt needs review. Check transactions in OakGate.', unconfirmed:'Preparation could not be confirmed. No new request was created by retrying.'};
@@ -35,6 +38,9 @@
     $('qr-copy').replaceChildren(safe);
   }
   function display(result) {
+    receiptState=result.state;
+    $('pay-nfc').hidden=!nfcSupported() || !result.code && !code || result.state!=='pending' || nfcBusy || nfcAttemptKey===current?.request_key;
+    if(result.state!=='pending')stopNFC();
     $('receive-form').hidden=true; $('receipt').hidden=false;
     $('receipt-status').textContent=labels[result.state] || labels.unavailable;
     if (result.code && result.code !== code) { qr(result.qr); code=result.code; }
@@ -42,7 +48,7 @@
     $('receipt-amount').textContent=result.amount ? `${Number(result.amount).toLocaleString()} ${result.display_unit}` : '';
     const received=['detected','complete'].includes(result.state);
     const ended=received || ['review','expired','unconfirmed'].includes(result.state);
-    $('receipt-code').hidden=!code || received;
+    $('receipt-code').hidden=!code || received || nfcAttemptKey===current?.request_key;
     $('new-request').textContent=ended ? 'New request' : 'Cancel';
     $('cancel-note').hidden=received;
     if (ended) {
@@ -123,6 +129,7 @@
   $('refresh-options').addEventListener('click',()=>work(options));
   $('new-request').addEventListener('click',()=>{
     if (working) return;
+    stopNFC(); $('pay-nfc-status').textContent='';
     stop(); celebrated=false; remember(null); code=''; $('qr-copy').replaceChildren(); $('receipt').hidden=true; $('receive-form').hidden=false;
     $('amount').value=''; $('amount').dispatchEvent(new Event('input')); $('error').textContent='';
   });
@@ -130,7 +137,49 @@
     try { await navigator.clipboard.writeText(code); $('copy-note').textContent='Copied.'; }
     catch (_) { $('copy-note').textContent='Copy unavailable. Scan the QR code instead.'; }
   });
-  addEventListener('pagehide',stop);
+  $('pay-nfc').addEventListener('click',async()=>{
+    if(working || nfcBusy || !current || receiptState!=='pending' || !nfcSupported())return;
+    stopNFC(); const requestKey=current.request_key;
+    const controller=new AbortController(); nfcController=controller;
+    const reader=new window.NDEFReader();
+    $('pay-nfc-status').textContent='Tap a card issued by this OakGate home to pay the displayed amount. No PIN is requested.';
+    $('stop-pay-nfc').hidden=false;
+    nfcTimer=setTimeout(()=>{stopNFC();$('pay-nfc-status').textContent='Card reading timed out.';},30000);
+    reader.onreading=event=>{
+      if(nfcController!==controller || !current || current.request_key!==requestKey)return;
+      const records=event.message?.records, record=records?.[0]; stopNFC();
+      if(records?.length!==1 || record.recordType!=='mime' || record.mediaType!=='application/vnd.oakgate.card' || !record.data || record.data.byteLength<100 || record.data.byteLength>400){
+        $('pay-nfc-status').textContent='This is not an OakGate payment card.';return;
+      }
+      const bytes=new Uint8Array(record.data.buffer,record.data.byteOffset,record.data.byteLength);
+      const payload=btoa(String.fromCharCode(...bytes));
+      nfcAttemptKey=requestKey; nfcBusy=true; $('pay-nfc').hidden=true; $('receipt-code').hidden=true;
+      work(async()=>{
+        $('pay-nfc-status').textContent='Processing card payment…';
+        try {
+          const result=await signed('card-pay',{request_key:requestKey,card_payload:payload});
+          if(result.state==='submitted') {
+            $('pay-nfc-status').textContent='Payment sent — confirming receipt.';
+            polling();
+          } else {
+            $('pay-nfc-status').textContent=result.state==='processing' ? 'Payment is processing. Do not tap another card.' : 'Payment needs review. Check the paying wallet before another payment.';
+          }
+        } catch(_) {
+          $('pay-nfc-status').textContent='Card payment could not be confirmed. Check the paying wallet before trying another payment. Cards from other homes are not supported yet.';
+        }
+      }).finally(()=>{nfcBusy=false;});
+    };
+    reader.onreadingerror=()=>{if(nfcController===controller){stopNFC();$('pay-nfc-status').textContent='Could not read the card. Try tapping again.';}};
+    try {await reader.scan({signal:controller.signal});}
+    catch(_){if(nfcController===controller){stopNFC();$('pay-nfc-status').textContent='NFC unavailable. Check browser permissions or scan the QR code.';}}
+  });
+  $('stop-pay-nfc').addEventListener('click',()=>{stopNFC();$('pay-nfc-status').textContent='Card reading stopped.';});
+  addEventListener('pagehide',()=>{stop();stopNFC();});
+  // Stop hardware access when leaving the page or ending the terminal session.
+  if(document.addEventListener){
+    document.addEventListener('visibilitychange',()=>{if(document.hidden)stopNFC();});
+    document.addEventListener('pos-session-end',()=>{stopNFC();stop();});
+  }
   window.startPOSReceiving=async (caller, terminal)=>{
     signed=caller; storageKey='oakgate-pos-request:'+terminal;
     await options();

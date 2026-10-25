@@ -230,3 +230,45 @@ The wallet Send page can now resolve these cards as recipients, including across
 OakGate instances. See [Pay to an NFC card](026-nfc-card-payments.md) for the signed
 instance protocol and optional trust policy. This never authorizes spending from
 the card holder’s wallet.
+
+## Pay a POS request by NFC
+
+On a secure browser exposing Web NFC (typically Chrome on an NFC-capable Android
+device), the POS shows **Pay by NFC** beneath a pending request's QR code. Browser
+API availability is only a capability hint; permissions or missing hardware can
+still prevent scanning. Unsupported browsers keep the QR flow and hide the action.
+
+The terminal operator selects Pay by NFC and the customer taps their card to pay
+the displayed amount. This first version requests no PIN. Possession of a valid,
+activated, unexpired, unrevoked card is the bearer authority for this debit; it is
+not cryptographic proof of physical presence. Existing valid cards are eligible.
+A terminal that captures a card credential could misuse it while it remains valid;
+revoke a lost or compromised card. Separate login PIN requirements are unchanged.
+
+This version accepts only cards issued by the same OakGate home, with a pinned
+issuer key. Cross-home debit is not implemented; the signed pay-to-card recipient
+lookup is a different, read-only protocol and cannot authorize spending.
+
+The device-signed request supplies only the original receipt key and presented
+card credential. The home looks up the terminal-owned receipt and its immutable
+code; the terminal cannot supply a new amount, destination or arbitrary invoice
+in this operation. The terminal owner's wallet cannot pay itself. Cash invoices
+remain Lightning invoices, while Clear requests use the existing Acorn Clear
+payment path. Mint fees and backend Lightning restrictions still apply.
+
+The home stores an encrypted receipt-wide debit reservation in `wallet_requests`
+before preparing a payment and links it to the existing outgoing-payment journal.
+Repeated requests, including another card on the same receipt, cannot initiate
+another debit. Existing SendService locks and uncertainty holds remain in force;
+user-key operations stay in Acorn. Browser disconnects do not cancel the payment
+task. Interrupted preparation or an uncertain send requires review, never an
+automatic second payment. No schema migration is needed for these tickets.
+
+A successful send says **Payment sent — confirming receipt**. Existing receipt
+polling alone determines **Payment detected** or **Received**. The QR is hidden
+after a card is submitted, but an already copied invoice/request can still be paid
+externally: never pay the same request by QR and card simultaneously. Cancelling
+a screen does not undo a submitted payment. A timeout is not proof of nonpayment.
+
+Deploy both the app and POS images. Test Cash and Clear with small amounts on a
+physical supported device; automated tests cannot establish hardware compatibility.
