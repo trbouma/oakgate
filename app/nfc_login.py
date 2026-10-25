@@ -10,7 +10,7 @@ import logging
 import os
 import re
 import secrets
-import sqlite3
+from app.database import DATABASE_ERRORS
 import time
 from contextlib import closing
 from dataclasses import replace
@@ -51,13 +51,8 @@ def nfc_provider(request):
 
 
 def schema(store):
-    with closing(store.custody.connect()) as db, db:
-        db.executescript("""
-        CREATE TABLE IF NOT EXISTS nfc_login_attempts (
-          card_id TEXT PRIMARY KEY, failures INTEGER NOT NULL DEFAULT 0);
-        CREATE TABLE IF NOT EXISTS nfc_login_nonces (
-          nonce TEXT PRIMARY KEY, expires REAL NOT NULL);
-        """)
+    # Compatibility entry point: schema is validated/initialized by CustodyStore.
+    return None
 
 
 def enrolled(db, store, card_id, issuer):
@@ -116,7 +111,7 @@ def verify_card(store, payload, pin, nonce, issuer):
         row, user = enrolled(db, store, card_id, issuer)
         if row['enrollment'] != 'active' or row['owner'] != authority['owner']:
             raise LoginDenied('enrollment_not_active')
-        db.execute('INSERT OR IGNORE INTO nfc_login_attempts(card_id) VALUES(?)', (card_id,))
+        db.execute('INSERT INTO nfc_login_attempts(card_id) VALUES(?) ON CONFLICT DO NOTHING', (card_id,))
         failures = db.execute('SELECT failures FROM nfc_login_attempts WHERE card_id=?', (card_id,)).fetchone()[0]
         policy = db.execute('SELECT require_pin FROM nfc_login_policy WHERE card_id=?', (card_id,)).fetchone()
         require_pin = policy is None or policy['require_pin'] != 0
@@ -180,7 +175,7 @@ async def verify(request: Request):
     except (ValueError, TypeError, KeyError, POSDenied) as exc:
         logger.warning('NFC login rejected phase=request_or_binding error_type=%s', type(exc).__name__)
         raise HTTPException(401, 'Card sign-in could not be verified.') from None
-    except sqlite3.Error as exc:
+    except DATABASE_ERRORS as exc:
         logger.warning('NFC login unavailable phase=storage error_type=%s', type(exc).__name__)
         raise HTTPException(503, 'Card sign-in is temporarily unavailable.') from None
 

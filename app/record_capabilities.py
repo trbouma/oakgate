@@ -6,8 +6,6 @@ from contextlib import closing
 class RecordCapabilities:
     def __init__(self, store):
         self.store = store
-        with closing(store.connect()) as db, db:
-            db.execute("CREATE TABLE IF NOT EXISTS record_capabilities (id TEXT PRIMARY KEY, owner TEXT NOT NULL, encrypted BLOB NOT NULL)")
 
     def save(self, owner, data):
         ident = secrets.token_hex(16)

@@ -1,0 +1,10 @@
+# Explicit opt-in AFTER a tested data import/cutover. Never enable on an empty
+# target for a live deployment. Keep compose.nfc.yaml when NFC login is enabled.
+services:
+  app:
+    environment:
+      OAKGATE_DATABASE_URL: ${OAKGATE_DATABASE_URL:?Set the restricted PostgreSQL runtime URL only for a prepared target}
+    networks: [default, database]
+    depends_on:
+      postgres:
+        condition: service_healthy

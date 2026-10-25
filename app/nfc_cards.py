@@ -69,28 +69,6 @@ class CardStore:
         if urlsplit(self.origin).scheme != 'https' or len(self.origin.encode()) > 200:
             raise ValueError('Card issuance requires a short HTTPS OakGate origin')
         with closing(custody.connect()) as db, db:
-            db.executescript('''
-            CREATE TABLE IF NOT EXISTS nfc_issuer (id INTEGER PRIMARY KEY, encrypted BLOB NOT NULL);
-            CREATE TABLE IF NOT EXISTS nfc_pairings (
-              id TEXT PRIMARY KEY, terminal TEXT NOT NULL, request_key TEXT NOT NULL,
-              verifier TEXT NOT NULL, invitation BLOB, created REAL NOT NULL, expires REAL NOT NULL,
-              state TEXT NOT NULL, owner TEXT, wallet_id TEXT, card_id TEXT,
-              UNIQUE(terminal,request_key));
-            CREATE TABLE IF NOT EXISTS nfc_cards (
-              id TEXT PRIMARY KEY, owner TEXT NOT NULL, wallet_id TEXT NOT NULL,
-              terminal TEXT NOT NULL, verifier TEXT NOT NULL, payload_hash TEXT NOT NULL,
-              payload BLOB, created INTEGER NOT NULL, expires INTEGER NOT NULL,
-              activated INTEGER, revoked INTEGER);
-            CREATE TABLE IF NOT EXISTS nfc_card_pins (
-              pairing TEXT PRIMARY KEY, card_id TEXT UNIQUE,
-              verifier BLOB NOT NULL, disclosure BLOB, acknowledged INTEGER);
-            CREATE TABLE IF NOT EXISTS nfc_login_requests (
-              pairing TEXT PRIMARY KEY, card_id TEXT UNIQUE, identity BLOB NOT NULL,
-              requested INTEGER NOT NULL, state TEXT NOT NULL DEFAULT 'requested');
-            CREATE TABLE IF NOT EXISTS nfc_login_policy (
-              card_id TEXT PRIMARY KEY, require_pin INTEGER NOT NULL CHECK(require_pin IN (0,1)));
-            CREATE INDEX IF NOT EXISTS nfc_card_owner ON nfc_cards(owner);
-            ''')
             db.execute('BEGIN IMMEDIATE')
             row = db.execute('SELECT encrypted FROM nfc_issuer WHERE id=1').fetchone()
             if not row:
@@ -105,8 +83,6 @@ class CardStore:
 
     def _issuer_npub(self, db):
         from app.identity import social_public_identity
-        if not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='service_identity'").fetchone():
-            raise ValueError('Configure OAKGATE_SERVICE_NSEC before issuing cards')
         row = db.execute('SELECT npub FROM service_identity WHERE id=1').fetchone()
         if not row:
             raise ValueError('Configure OAKGATE_SERVICE_NSEC before issuing cards')

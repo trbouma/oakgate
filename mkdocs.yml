@@ -68,6 +68,8 @@ nav:
       - Lightning payments and zaps: 009-lightning-receiving.md
       - SQLite Alembic baseline: 031-sqlite-alembic-baseline.md
       - PostgreSQL foundation: 030-postgresql-foundation.md
+      - PostgreSQL storage: 032-postgresql-storage.md
+      - PostgreSQL import and cutover: 033-postgresql-cutover.md
       - Identity storage and backups: 008-identity-storage-backups.md
       - Storage latency incident: 022-storage-latency-incident.md
       - Keycloak on Beelink: 002-keycloak-beelink.md

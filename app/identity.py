@@ -34,7 +34,6 @@ class ServiceIdentity:
         # Like Clear, bind the public identity to the database in one transaction.
         with closing(store.connect()) as db, db:
             db.execute('BEGIN IMMEDIATE')
-            db.execute('CREATE TABLE IF NOT EXISTS service_identity (id INTEGER PRIMARY KEY CHECK(id=1), npub TEXT NOT NULL)')
             row = db.execute('SELECT npub FROM service_identity WHERE id=1').fetchone()
             if row and row['npub'] != self.npub:
                 raise RuntimeError('OAKGATE_SERVICE_NSEC is missing or does not match the identity bound to this database')

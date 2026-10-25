@@ -63,6 +63,8 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
                 with suppress(asyncio.CancelledError):
                     await ecash_worker
             await store.close()
+            if app.state.wallets and hasattr(app.state.wallets.store, 'database'):
+                app.state.wallets.store.database.close()
 
     app = FastAPI(title="OakGate", description="OpenID Access Gate — part of the Mainstay family.",
                   version=APP_VERSION, servers=[{"url": settings.origin}], lifespan=lifespan)

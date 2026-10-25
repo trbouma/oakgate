@@ -8,11 +8,11 @@ schema: **28 tables and five explicit indexes**, plus SQLite's implicit primary-
 and unique indexes. This stage does not switch to PostgreSQL, modify wallet
 ownership, decrypt data, contact a relay/mint or send/retry a payment.
 
-Application queries still use the existing SQLite stores. Their legacy bootstrap
-DDL remains in place for compatibility during this first stage. No automatic
-migration runs on app startup and no deployment script silently stamps a database.
-The next persistence-layer stage must replace bootstrap DDL with controlled
-migrations; merely adding Alembic does not make the application PostgreSQL-ready.
+SQLite remains the default. Its legacy bootstrap DDL is now centralized in
+`app/database.py`, including historical compatibility columns; it does not stamp
+a revision. PostgreSQL uses explicit migrations and no runtime DDL. See the
+[storage compatibility stage](032-postgresql-storage.md); data import and live
+cutover are still separate. No deployment script silently stamps a database.
 
 The operator command checks an **explicit existing file**, refuses a missing path
 rather than creating an empty database, and requires an initialized `wallets`

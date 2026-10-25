@@ -30,13 +30,6 @@ class EcashReceiver:
         self.interval = int(os.getenv('OAKGATE_ECASH_POLL_SECONDS', '30'))
         if not 10 <= self.interval <= 3600:
             raise ValueError('Ecash polling interval must be 10–3600 seconds')
-        with closing(wallets.store.connect()) as db, db:
-            db.execute('BEGIN IMMEDIATE')
-            db.execute('CREATE TABLE IF NOT EXISTS ecash_inboxes (owner TEXT PRIMARY KEY, next_poll REAL NOT NULL DEFAULT 0)')
-
-            columns = {row['name'] for row in db.execute('PRAGMA table_info(ecash_inboxes)')}
-            if 'failures' not in columns:
-                db.execute('ALTER TABLE ecash_inboxes ADD COLUMN failures INTEGER NOT NULL DEFAULT 0')
 
     @property
     def cash_available(self):
@@ -95,7 +88,7 @@ class EcashReceiver:
 
     def due(self):
         with closing(self.wallets.store.connect()) as db, db:
-            db.execute("INSERT OR IGNORE INTO ecash_inboxes(owner) SELECT owner FROM wallets WHERE status='active'")
+            db.execute("INSERT INTO ecash_inboxes(owner) SELECT owner FROM wallets WHERE status='active' ON CONFLICT DO NOTHING")
             return [r['owner'] for r in db.execute(
                 "SELECT e.owner FROM ecash_inboxes e JOIN wallets w ON w.owner=e.owner WHERE w.status='active' AND e.next_poll<=? AND w.lease_until<? ORDER BY e.next_poll,e.owner LIMIT 4",
                 (time.time(), time.time()))]

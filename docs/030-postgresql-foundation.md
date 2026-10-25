@@ -139,21 +139,16 @@ Never delete the SQLite source as part of provisioning this container.
 
 ## Next stage: Alembic and application migration
 
-The subsequent [SQLite Alembic baseline](031-sqlite-alembic-baseline.md) now supplies explicit schema adoption. It does not yet implement PostgreSQL persistence or cutover.
-The next stage needs:
+The [SQLite Alembic baseline](031-sqlite-alembic-baseline.md) supplies explicit
+schema adoption. The [PostgreSQL storage stage](032-postgresql-storage.md) adds
+the adapter, restricted runtime-role checks, empty-target schema initialization
+and concurrency/recovery tests. SQLite remains the deployment default.
 
-- An explicit SQLAlchemy/PostgreSQL persistence layer and Alembic baseline,
-  covering all custody, preference, card and payment-recovery tables.
-- A least-privilege runtime role and controlled migration execution, rather than
-  every web/worker process independently modifying schema on startup.
-- Review of SQLite-specific SQL, concurrency, leases, uniqueness and transaction
-  semantics, preserving issuer/subject ownership and all encryption keys.
-- A quiesced, backed-up import and verification procedure with no concurrent old
-  and new settlement workers and no replay of already-sent payments.
-- Tests for duplicate confirmation, interrupted settlement, recovery, NFC
-  revocation and user continuity against PostgreSQL before cutover.
-- A cutover/rollback plan that accounts for writes after cutover; a stale SQLite
-  copy cannot simply be restarted as an authoritative wallet database.
+The remaining stage needs a quiesced, backed-up import and verified cutover,
+without concurrent old/new settlement workers. Validate against PostgreSQL 17
+staging, preserve all identities and recovery state, and plan for reconciliation
+if any writes occur after cutover. A stale SQLite copy cannot simply be restarted
+as an authoritative wallet database.
 
 Keycloak's H2-to-PostgreSQL move is a separate identity migration with separate
 roles/database and backups. Provisioning this service does not perform it.

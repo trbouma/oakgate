@@ -509,8 +509,11 @@ def test_history_schema_upgrade_preserves_old_rows(tmp_path):
     custody = CustodyStore(tmp_path, Fernet.generate_key())
     item = {'id': 'old-payment', 'owner': 'owner', 'state': 'complete', 'amount': 1}
     with closing(custody.connect()) as db, db:
+        db.execute("DROP TABLE incoming_payments")
         db.execute("CREATE TABLE incoming_payments (id TEXT PRIMARY KEY, owner TEXT NOT NULL, zap_id TEXT UNIQUE, created REAL NOT NULL, state TEXT NOT NULL, encrypted BLOB NOT NULL, next_check REAL NOT NULL DEFAULT 0, lease TEXT, lease_until REAL NOT NULL DEFAULT 0)")
         db.execute("INSERT INTO incoming_payments(id,owner,created,state,encrypted) VALUES(?,?,0,'complete',?)", (item['id'], item['owner'], custody.seal('owner', item)))
+    from app.database import initialize_sqlite
+    initialize_sqlite(custody.path)
     store = PaymentStore(custody)
     assert store.get('old-payment')['amount'] == 1
     assert not store.get('old-payment')['history_written']

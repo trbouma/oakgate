@@ -28,18 +28,11 @@ def contents(path):
                 for item in OBJECTS if item['type'] == 'table'}
 
 
-def test_inventory_matches_all_current_store_ddl():
-    # A future constructor/schema change must be an intentional migration decision.
-    ddl = []
-    for path in (Path(__file__).parents[1] / 'app').glob('*.py'):
-        for node in ast.walk(ast.parse(path.read_text())):
-            if isinstance(node, ast.Constant) and isinstance(node.value, str) and node.value.lstrip().upper().startswith(('CREATE TABLE', 'CREATE INDEX', 'CREATE UNIQUE INDEX', 'ALTER TABLE')):
-                ddl.extend(s.strip() for s in node.value.split(';') if s.strip())
-    with closing(sqlite3.connect(':memory:')) as db:
-        for prefix in ('CREATE TABLE', 'ALTER TABLE', 'CREATE INDEX', 'CREATE UNIQUE INDEX'):
-            for sql in ddl:
-                if sql.upper().startswith(prefix):
-                    db.execute(sql)
+def test_central_sqlite_bootstrap_matches_frozen_inventory(tmp_path):
+    from app.database import initialize_sqlite
+    path = tmp_path / 'schema.sqlite3'
+    initialize_sqlite(path)
+    with closing(sqlite3.connect(path)) as db:
         assert validate(db) == []
 
 

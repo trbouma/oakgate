@@ -4,12 +4,10 @@ from app.currency_rates import CURRENCY_METADATA
 import hashlib
 import re
 import json
-import os
 import secrets
-import sqlite3
+from app.database import Database, INTEGRITY_ERRORS
 import time
 from contextlib import closing
-from pathlib import Path
 
 from cryptography.fernet import Fernet
 from app.localization import SUPPORTED_LANGUAGES, supported_language
@@ -32,26 +30,12 @@ def identity_key(user):
 
 
 class CustodyStore:
-    def __init__(self, directory, encryption_key):
+    def __init__(self, directory, encryption_key, *, database_url=None):
         self.cipher = Fernet(encryption_key)
-        directory = Path(directory)
-        directory.mkdir(parents=True, exist_ok=True, mode=0o700)
-        self.path = directory / 'custody.sqlite3'
-        # Create with restrictive permissions before SQLite opens the file.
-        fd = os.open(self.path, os.O_CREAT | os.O_WRONLY, 0o600)
-        os.close(fd)
+        self.database = Database(directory, database_url)
+        self.path = self.database.path
         with closing(self.connect()) as db, db:
-            db.execute('''CREATE TABLE IF NOT EXISTS wallets (
-                owner TEXT PRIMARY KEY, wallet_id TEXT NOT NULL UNIQUE,
-                encrypted BLOB NOT NULL, status TEXT NOT NULL,
-                lease TEXT, lease_until REAL NOT NULL DEFAULT 0)''')
-
-            db.execute('CREATE TABLE IF NOT EXISTS user_social_preferences (owner TEXT PRIMARY KEY, npub TEXT NOT NULL)')
-            db.execute('CREATE TABLE IF NOT EXISTS user_currency_preferences (owner TEXT PRIMARY KEY, currency TEXT NOT NULL)')
-            db.execute('CREATE TABLE IF NOT EXISTS user_display_preferences (owner TEXT PRIMARY KEY, language TEXT NOT NULL)')
-            db.execute('CREATE TABLE IF NOT EXISTS lightning_handles (normalized_handle TEXT PRIMARY KEY, owner TEXT NOT NULL)')
-            db.execute('CREATE TABLE IF NOT EXISTS user_preferences (owner TEXT PRIMARY KEY, handle TEXT NOT NULL, normalized_handle TEXT NOT NULL UNIQUE)')
-            db.execute("INSERT OR IGNORE INTO lightning_handles(normalized_handle,owner) SELECT p.normalized_handle,p.owner FROM user_preferences p JOIN wallets w ON p.owner=w.owner WHERE w.status='active'")
+            db.execute("INSERT INTO lightning_handles(normalized_handle,owner) SELECT p.normalized_handle,p.owner FROM user_preferences p JOIN wallets w ON p.owner=w.owner WHERE w.status='active' ON CONFLICT DO NOTHING")
 
     def preference(self, owner):
         with closing(self.connect()) as db:
@@ -89,7 +73,7 @@ class CustodyStore:
                     continue
                 db.execute('INSERT INTO user_preferences(owner,handle,normalized_handle) VALUES(?,?,?)',
                            (owner, handle, handle))
-                db.execute("INSERT OR IGNORE INTO lightning_handles(normalized_handle,owner) SELECT ?,owner FROM wallets WHERE owner=? AND status='active'", (handle, owner))
+                db.execute("INSERT INTO lightning_handles(normalized_handle,owner) SELECT ?,owner FROM wallets WHERE owner=? AND status='active' ON CONFLICT DO NOTHING", (handle, owner))
                 return handle
             raise HandleTaken
 
@@ -130,8 +114,8 @@ class CustodyStore:
                     db.execute('INSERT INTO user_preferences(owner,handle,normalized_handle) VALUES(?,?,?) '
                                'ON CONFLICT(owner) DO UPDATE SET handle=excluded.handle,normalized_handle=excluded.normalized_handle',
                                (owner, handle, handle.lower()))
-                    db.execute("INSERT OR IGNORE INTO lightning_handles(normalized_handle,owner) SELECT ?,owner FROM wallets WHERE owner=? AND status='active'", (handle.lower(), owner))
-        except sqlite3.IntegrityError:
+                    db.execute("INSERT INTO lightning_handles(normalized_handle,owner) SELECT ?,owner FROM wallets WHERE owner=? AND status='active' ON CONFLICT DO NOTHING", (handle.lower(), owner))
+        except INTEGRITY_ERRORS:
             raise HandleTaken from None
 
     def address_owner(self, handle):
@@ -142,16 +126,14 @@ class CustodyStore:
             row = db.execute("SELECT p.owner FROM user_preferences p JOIN wallets w ON p.owner=w.owner WHERE p.normalized_handle=? AND w.status='active'", (handle,)).fetchone()
             if not row:
                 return None
-            db.execute('INSERT OR IGNORE INTO lightning_handles(normalized_handle,owner) VALUES(?,?)', (handle, row['owner']))
+            db.execute('INSERT INTO lightning_handles(normalized_handle,owner) VALUES(?,?) ON CONFLICT DO NOTHING', (handle, row['owner']))
             reserved = db.execute('SELECT owner FROM lightning_handles WHERE normalized_handle=?', (handle,)).fetchone()
             if reserved['owner'] != row['owner']:
                 raise HandleTaken
             return row['owner']
 
     def connect(self):
-        db = sqlite3.connect(self.path, timeout=5)
-        db.row_factory = sqlite3.Row
-        return db
+        return self.database.connect()
 
     def seal(self, owner, material):
         return self.cipher.encrypt(json.dumps({'owner': owner, 'material': material}).encode())
@@ -173,8 +155,8 @@ class CustodyStore:
                 db.execute('INSERT INTO wallets(owner,wallet_id,encrypted,status) VALUES(?,?,?,?)',
                            (owner, wallet_id, self.seal(owner, material), status))
                 if status == 'active':
-                    db.execute('INSERT OR IGNORE INTO lightning_handles(normalized_handle,owner) SELECT normalized_handle,owner FROM user_preferences WHERE owner=?', (owner,))
-        except sqlite3.IntegrityError:
+                    db.execute('INSERT INTO lightning_handles(normalized_handle,owner) SELECT normalized_handle,owner FROM user_preferences WHERE owner=? ON CONFLICT DO NOTHING', (owner,))
+        except INTEGRITY_ERRORS:
             raise AlreadyConnected from None
 
     def acquire(self, owner):
@@ -198,6 +180,6 @@ class CustodyStore:
 
     def release(self, owner, token, active=False):
         with closing(self.connect()) as db, db:
-            db.execute("UPDATE wallets SET lease=NULL,lease_until=0,status=CASE WHEN ? THEN 'active' ELSE status END WHERE owner=? AND lease=?",
-                       (active, owner, token))
-            db.execute("INSERT OR IGNORE INTO lightning_handles(normalized_handle,owner) SELECT p.normalized_handle,p.owner FROM user_preferences p JOIN wallets w ON p.owner=w.owner WHERE p.owner=? AND w.status='active'", (owner,))
+            db.execute("UPDATE wallets SET lease=NULL,lease_until=0,status=CASE WHEN ? <> 0 THEN 'active' ELSE status END WHERE owner=? AND lease=?",
+                       (int(active), owner, token))
+            db.execute("INSERT INTO lightning_handles(normalized_handle,owner) SELECT p.normalized_handle,p.owner FROM user_preferences p JOIN wallets w ON p.owner=w.owner WHERE p.owner=? AND w.status='active' ON CONFLICT DO NOTHING", (owner,))

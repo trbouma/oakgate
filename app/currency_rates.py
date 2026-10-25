@@ -43,7 +43,6 @@ class CurrencyRates:
         if self.interval < 60 or self.stale_seconds < 60:
             raise ValueError('Currency refresh/stale intervals must be at least 60 seconds')
         with closing(store.connect()) as db, db:
-            db.execute('CREATE TABLE IF NOT EXISTS currency_rates (code TEXT PRIMARY KEY, symbol TEXT NOT NULL, description TEXT NOT NULL, fiat_per_btc TEXT, fetched_at REAL, source TEXT)')
             for code, (symbol, description) in CURRENCY_METADATA.items():
                 db.execute('INSERT INTO currency_rates(code,symbol,description) VALUES(?,?,?) '
                            'ON CONFLICT(code) DO UPDATE SET symbol=excluded.symbol,description=excluded.description',

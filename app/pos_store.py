@@ -62,26 +62,6 @@ class POSStore:
     def __init__(self, custody, audience):
         self.connect = custody.connect
         self.audience = audience
-        with closing(self.connect()) as db, db:
-            db.executescript('''
-            CREATE TABLE IF NOT EXISTS pos_terminals (
-                id TEXT PRIMARY KEY, owner TEXT NOT NULL, wallet_id TEXT NOT NULL,
-                name TEXT NOT NULL, verifier TEXT NOT NULL, created REAL NOT NULL,
-                activation_until REAL NOT NULL, public_key TEXT, fingerprint TEXT,
-                activated REAL, last_seen REAL, revoked REAL);
-            CREATE INDEX IF NOT EXISTS pos_terminal_owner ON pos_terminals(owner);
-            CREATE TABLE IF NOT EXISTS pos_sessions (
-                id TEXT PRIMARY KEY, terminal TEXT NOT NULL, verifier TEXT NOT NULL UNIQUE,
-                expires REAL NOT NULL);
-            CREATE TABLE IF NOT EXISTS pos_challenges (
-                id TEXT PRIMARY KEY, terminal TEXT NOT NULL, session TEXT NOT NULL,
-                operation TEXT NOT NULL, public_key TEXT NOT NULL,
-                message TEXT NOT NULL, expires REAL NOT NULL);
-            CREATE TABLE IF NOT EXISTS pos_limits (
-                bucket TEXT PRIMARY KEY, count INTEGER NOT NULL, expires REAL NOT NULL);
-            CREATE TABLE IF NOT EXISTS pos_audit (
-                id INTEGER PRIMARY KEY, terminal TEXT NOT NULL, action TEXT NOT NULL, at REAL NOT NULL);
-            ''')
 
     @staticmethod
     def _limit(db, name, maximum, window):
@@ -90,7 +70,7 @@ class POSStore:
         row = db.execute('SELECT count FROM pos_limits WHERE bucket=?', (name,)).fetchone()
         if row and row['count'] >= maximum:
             raise POSLimited
-        db.execute('INSERT INTO pos_limits VALUES(?,1,?) ON CONFLICT(bucket) DO UPDATE SET count=count+1',
+        db.execute('INSERT INTO pos_limits VALUES(?,1,?) ON CONFLICT(bucket) DO UPDATE SET count=pos_limits.count+1',
                    (name, now + window))
 
     def limit_source(self, source, receiving=False):

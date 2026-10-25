@@ -7,8 +7,6 @@ from contextlib import closing
 class RequestStore:
     def __init__(self, custody):
         self.custody = custody
-        with closing(custody.connect()) as db, db:
-            db.execute('CREATE TABLE IF NOT EXISTS wallet_requests (id TEXT PRIMARY KEY, owner TEXT NOT NULL, state TEXT NOT NULL, created REAL NOT NULL, encrypted BLOB NOT NULL)')
 
     def save(self, owner, data):
         ident = secrets.token_hex(16)

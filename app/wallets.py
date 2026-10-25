@@ -541,7 +541,8 @@ def configured_service():
     if not key or key.startswith('<'):
         return None
     return WalletService(
-        CustodyStore(os.getenv('OAKGATE_DATA_DIR', '.oakgate'), key),
+        CustodyStore(os.getenv('OAKGATE_DATA_DIR', '.oakgate'), key,
+                    database_url=os.getenv('OAKGATE_DATABASE_URL') or None),
         backend=AcornBackend(os.getenv('OAKGATE_BOOTSTRAP_MINT', DEFAULT_MINT)),
         default_relay=os.getenv('OAKGATE_BOOTSTRAP_RELAY', DEFAULT_RELAY),
         allowed_relays=[r.strip() for r in os.getenv('OAKGATE_ALLOWED_RELAYS', os.getenv('OAKGATE_BOOTSTRAP_RELAY', DEFAULT_RELAY)).split(',') if r.strip()],

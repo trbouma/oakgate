@@ -3,7 +3,7 @@ import asyncio
 import hashlib
 import json
 import secrets
-import sqlite3
+from app.database import INTEGRITY_ERRORS
 import time
 from contextlib import closing
 from datetime import datetime, timezone
@@ -108,11 +108,10 @@ async def send(request: Request):
         # No plaintext or recipient stored. A consumed form cannot be replayed,
         # including after a crash or uncertain publication outcome.
         with closing(service.store.connect()) as db, db:
-            db.execute('CREATE TABLE IF NOT EXISTS wallet_message_submissions (token TEXT PRIMARY KEY, created REAL NOT NULL)')
             db.execute('DELETE FROM wallet_message_submissions WHERE created < ?', (time.time()-86400,))
             try:
                 db.execute('INSERT INTO wallet_message_submissions VALUES (?,?)', (digest, time.time()))
-            except sqlite3.IntegrityError:
+            except INTEGRITY_ERRORS:
                 return error_page(request, 'This message was already submitted. Check with the recipient before sending again.', 409)
         handle = service.store.preference(owner)
         sender = f'{handle}@{urlsplit(request.app.state.settings.origin).hostname}' if handle else None

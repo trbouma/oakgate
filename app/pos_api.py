@@ -3,7 +3,7 @@ from pos.protocol import CARD_OPS
 import json
 import asyncio
 import os
-import sqlite3
+from app.database import DATABASE_ERRORS
 from functools import partial
 
 from fastapi import APIRouter, Request, HTTPException
@@ -41,7 +41,7 @@ async def invoke(fn, *args, **kwargs):
         raise HTTPException(403, 'Terminal authorization failed. Check the key, device or revocation status.') from None
     except POSLimited:
         raise HTTPException(429, 'Too many attempts or terminals. Please wait or revoke an unused terminal.') from None
-    except sqlite3.Error:
+    except DATABASE_ERRORS:
         raise HTTPException(503, 'Terminal storage is unavailable. Try again shortly.') from None
 
 
@@ -115,7 +115,7 @@ def create_router():
                     raise HTTPException(403, 'Terminal authorization failed.') from None
                 except POSLimited:
                     raise HTTPException(429, 'Too many requests. Please wait before creating another.') from None
-                except (TimeoutError, sqlite3.Error):
+                except (TimeoutError,) + DATABASE_ERRORS:
                     raise HTTPException(503, 'Receipt service is busy. Retry the same request.') from None
             else:
                 result = await invoke(store.authorized, token, operation, data['challenge'], data['signature'])

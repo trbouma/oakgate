@@ -28,11 +28,6 @@ class TerminalRequests:
     def __init__(self, custody):
         self.custody = custody
         self.tickets = RequestStore(custody)
-        with closing(custody.connect()) as db, db:
-            db.execute('''CREATE TABLE IF NOT EXISTS pos_receipts (
-                terminal TEXT NOT NULL, request_key TEXT NOT NULL, body_hash TEXT NOT NULL,
-                id TEXT NOT NULL UNIQUE, owner TEXT NOT NULL, created REAL NOT NULL,
-                PRIMARY KEY(terminal, request_key))''')
 
     def find(self, actor, key, payload=None):
         with closing(self.custody.connect()) as db:
@@ -64,7 +59,7 @@ class TerminalRequests:
         # The ticket ID is reserved before any external operation. A crash between
         # invoice creation and this commit can recover that exact invoice by ID.
         with closing(self.custody.connect()) as db, db:
-            db.execute('INSERT OR IGNORE INTO wallet_requests VALUES(?,?,?,?,?)',
+            db.execute('INSERT INTO wallet_requests VALUES(?,?,?,?,?) ON CONFLICT DO NOTHING',
                        (row['id'], row['owner'], 'ready', row['created'],
                         self.custody.seal(row['owner'], {**item, 'id': row['id']})))
 

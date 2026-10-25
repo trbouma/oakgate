@@ -12,19 +12,6 @@ class PaymentBusy(Exception):
 class PaymentStore:
     def __init__(self, custody):
         self.custody = custody
-        with closing(custody.connect()) as db, db:
-            db.execute('BEGIN IMMEDIATE')
-            db.execute('''CREATE TABLE IF NOT EXISTS incoming_payments (
-                id TEXT PRIMARY KEY, owner TEXT NOT NULL, zap_id TEXT UNIQUE,
-                created REAL NOT NULL, state TEXT NOT NULL, encrypted BLOB NOT NULL,
-                next_check REAL NOT NULL DEFAULT 0, lease TEXT, lease_until REAL NOT NULL DEFAULT 0)''')
-            # Existing completed payments need a history-only delivery after
-            # upgrade. This flag schedules that work without minting again.
-            columns = {row['name'] for row in db.execute('PRAGMA table_info(incoming_payments)')}
-            if 'history_written' not in columns:
-                db.execute('ALTER TABLE incoming_payments ADD COLUMN history_written INTEGER NOT NULL DEFAULT 0')
-            db.execute('CREATE INDEX IF NOT EXISTS incoming_due ON incoming_payments(state,next_check)')
-            db.execute('CREATE INDEX IF NOT EXISTS incoming_owner ON incoming_payments(owner,created)')
 
     def decode(self, row):
         if row is None:

@@ -66,14 +66,8 @@ class SendService:
         self.discover = discover
         with closing(wallets.store.connect()) as db, db:
             db.execute('BEGIN IMMEDIATE')
-            db.execute('CREATE TABLE IF NOT EXISTS outgoing_payments (id TEXT PRIMARY KEY, owner TEXT NOT NULL, state TEXT NOT NULL, encrypted BLOB NOT NULL, created REAL NOT NULL)')
-            if 'request_key' not in {row['name'] for row in db.execute('PRAGMA table_info(outgoing_payments)')}:
-                db.execute('ALTER TABLE outgoing_payments ADD COLUMN request_key TEXT')
-            if 'started_at' not in {row['name'] for row in db.execute('PRAGMA table_info(outgoing_payments)')}:
-                db.execute('ALTER TABLE outgoing_payments ADD COLUMN started_at REAL')
             # Legacy interrupted attempts receive a conservative grace period.
             db.execute("UPDATE outgoing_payments SET started_at=? WHERE state='sending' AND started_at IS NULL", (time.time(),))
-            db.execute('CREATE UNIQUE INDEX IF NOT EXISTS outgoing_request ON outgoing_payments(owner,request_key) WHERE request_key IS NOT NULL')
 
     async def clear_assets(self, owner):
         record = self.wallets.store.get(owner)

@@ -197,3 +197,16 @@ An explicit, backed-up Alembic adoption command is available; app startup still
 uses SQLite and never runs migrations automatically. Follow the
 [SQLite baseline maintenance procedure](docs/031-sqlite-alembic-baseline.md),
 including stopping every writer, before adopting an existing deployment.
+
+### PostgreSQL storage compatibility (opt-in staging)
+
+A PostgreSQL adapter, restricted runtime-role checks and explicit Alembic target
+schema are available. **SQLite remains the default; no live data is imported or
+switched by this release.** Do not enable `compose.postgres.yaml` for production
+until the controlled import and verification procedure has completed. See the
+[PostgreSQL storage guide](docs/032-postgresql-storage.md) for staging configuration,
+transaction behavior and real-database tests. Keycloak's database is unchanged.
+
+The [controlled import and cutover guide](docs/033-postgresql-cutover.md) provides
+an offline exact-copy importer, independent verification, SQLite restart fencing
+and the Beelink checklist. No live cutover happens automatically.
