@@ -21,7 +21,10 @@ import org.keycloak.util.JsonSerialization;
 public final class NfcAuthenticator implements Authenticator {
     private static final org.jboss.logging.Logger LOG = org.jboss.logging.Logger.getLogger(NfcAuthenticator.class);
     private static final String NOTE = "oakgate.nfc.challenge";
+    // Uvicorn serves HTTP/1.1. Java's cleartext HTTP/2 upgrade can cause an
+    // empty ASGI request body; never negotiate h2c on the credential POST.
     private static final HttpClient HTTP = HttpClient.newBuilder()
+        .version(HttpClient.Version.HTTP_1_1)
         .connectTimeout(Duration.ofSeconds(3)).followRedirects(HttpClient.Redirect.NEVER).build();
     private final java.util.function.Function<String,String> environment;
     private final HttpClient transport;
@@ -78,7 +81,7 @@ public final class NfcAuthenticator implements Authenticator {
             String issuer = env("OAKGATE_OIDC_ISSUER");
             String body = JsonSerialization.writeValueAsString(Map.of("card",card,"pin",pin,"nonce",nonce,
                 "issuer",issuer,"client_id",env("OAKGATE_NFC_CLIENT_ID")));
-            HttpRequest request = HttpRequest.newBuilder(endpoint).timeout(Duration.ofSeconds(8))
+            HttpRequest request = HttpRequest.newBuilder(endpoint).version(HttpClient.Version.HTTP_1_1).timeout(Duration.ofSeconds(8))
                 .header("Authorization", "Bearer " + env("OAKGATE_NFC_BACKCHANNEL_SECRET"))
                 .header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(body)).build();
             // Never retry credentials automatically after a timeout or ambiguous response.

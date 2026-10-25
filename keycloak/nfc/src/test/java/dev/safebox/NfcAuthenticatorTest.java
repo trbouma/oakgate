@@ -41,6 +41,34 @@ class NfcAuthenticatorTest {
       verify(c.getAuthenticationSession()).removeAuthNote("oakgate.nfc.challenge");
       verify(http,times(1)).send(any(),any(HttpResponse.BodyHandler.class));
     }
+    @Test void credentialRequestUsesHttp11AndKeepsJsonBody() throws Exception {
+      var c=context(); var http=transport("{}",401);
+      new NfcAuthenticator(env::get,http).action(c);
+      var captor=org.mockito.ArgumentCaptor.forClass(HttpRequest.class);
+      verify(http).send(captor.capture(),any(HttpResponse.BodyHandler.class));
+      var request=captor.getValue();
+      assertEquals(HttpClient.Version.HTTP_1_1,request.version().orElseThrow());
+      assertEquals("application/json",request.headers().firstValue("Content-Type").orElseThrow());
+      // Exercise real Java HTTP framing, not only a mock's serialized response.
+      var server=com.sun.net.httpserver.HttpServer.create(new java.net.InetSocketAddress("127.0.0.1",0),0);
+      var received=new java.util.concurrent.CompletableFuture<String>();
+      server.createContext("/verify",exchange -> {
+        String body=new String(exchange.getRequestBody().readAllBytes(),java.nio.charset.StandardCharsets.UTF_8);
+        if (exchange.getRequestHeaders().getFirst("Upgrade") != null) received.completeExceptionally(new AssertionError("Unexpected h2c upgrade"));
+        else received.complete(body);
+        exchange.sendResponseHeaders(204,-1); exchange.close();
+      });
+      server.start();
+      try (var client=HttpClient.newHttpClient()) {
+        var actual=HttpRequest.newBuilder(java.net.URI.create("http://127.0.0.1:"+server.getAddress().getPort()+"/verify"))
+          .version(request.version().orElseThrow()).timeout(java.time.Duration.ofSeconds(3))
+          .header("Content-Type","application/json").POST(request.bodyPublisher().orElseThrow()).build();
+        assertEquals(204,client.send(actual,HttpResponse.BodyHandlers.discarding()).statusCode());
+        Map<?,?> body=org.keycloak.util.JsonSerialization.readValue(received.get(3,java.util.concurrent.TimeUnit.SECONDS),Map.class);
+        assertEquals("opaque",body.get("card")); assertEquals("0123",body.get("pin"));
+        assertEquals(nonce,body.get("nonce")); assertEquals("oakgate-nfc",body.get("client_id"));
+      } finally { server.stop(0); }
+    }
     @Test void blankPinIsCheckedByBackendNotAssumedAuthorized() throws Exception {
       var c=context(); var http=transport("{}",401);
       c.getHttpRequest().getDecodedFormParameters().putSingle("pin", "");

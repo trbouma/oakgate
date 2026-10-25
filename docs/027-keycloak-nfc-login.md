@@ -244,3 +244,14 @@ login enrollment or revoking the card blocks both PIN and card-only login.
 Deploy the app **and rebuild Keycloak** for the optional-PIN form and plugin;
 no new environment variable or card rewrite is required. This preference does
 not bypass a backchannel connection/configuration error.
+
+
+### Empty JSON body on the internal connection
+
+The Java verifier explicitly uses HTTP/1.1 for its credential POST. Java's default
+cleartext HTTP/2 upgrade (`h2c`) was reproduced against Uvicorn: ASGI received an
+empty body, followed by an invalid HTTP request, despite a valid Java JSON body.
+This caused `JSONDecodeError` before card/PIN verification. The identical request
+using HTTP/1.1 delivered the full body. Do not enable h2c negotiation for this hop.
+After updating, rebuild only the Keycloak provider/container; no secret changes,
+card reissuance or PIN-policy changes are required for this transport fix.
