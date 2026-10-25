@@ -87,6 +87,8 @@ class CardStore:
             CREATE TABLE IF NOT EXISTS nfc_login_requests (
               pairing TEXT PRIMARY KEY, card_id TEXT UNIQUE, identity BLOB NOT NULL,
               requested INTEGER NOT NULL, state TEXT NOT NULL DEFAULT 'requested');
+            CREATE TABLE IF NOT EXISTS nfc_login_policy (
+              card_id TEXT PRIMARY KEY, require_pin INTEGER NOT NULL CHECK(require_pin IN (0,1)));
             CREATE INDEX IF NOT EXISTS nfc_card_owner ON nfc_cards(owner);
             ''')
             db.execute('BEGIN IMMEDIATE')
@@ -332,7 +334,7 @@ class CardStore:
 
     def listing(self, owner):
         with closing(self.custody.connect()) as db:
-            rows=db.execute('SELECT c.id,c.created,c.expires,c.activated,c.revoked,l.state AS login_request FROM nfc_cards c LEFT JOIN nfc_login_requests l ON l.card_id=c.id WHERE c.owner=? ORDER BY c.created DESC LIMIT 100',(owner,)).fetchall()
+            rows=db.execute('SELECT c.id,c.created,c.expires,c.activated,c.revoked,l.state AS login_request, COALESCE(p.require_pin,1) AS require_pin FROM nfc_cards c LEFT JOIN nfc_login_requests l ON l.card_id=c.id LEFT JOIN nfc_login_policy p ON p.card_id=c.id WHERE c.owner=? ORDER BY c.created DESC LIMIT 100',(owner,)).fetchall()
         return [dict(r) for r in rows]
 
     def revoke(self, owner, ident):

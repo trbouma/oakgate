@@ -2863,3 +2863,30 @@ msgstr "Connectez-vous à nouveau avec Google ou par courriel pour activer la co
 
 msgid "Optional. After issuance, enable card sign-in in Your NFC cards by verifying your Google or email sign-in. You will need your card and PIN to log in."
 msgstr "Facultatif. Après émission, activez la connexion par carte dans Vos cartes NFC en vérifiant votre connexion Google ou par courriel. Vous aurez besoin de votre carte et de votre NIP."
+
+msgid "These cards contain random credentials, not wallet private keys. Card sign-in requires enrollment. A PIN is required by default."
+msgstr "Ces cartes contiennent des identifiants aléatoires, pas les clés privées du portefeuille. La connexion par carte nécessite une inscription. Un NIP est requis par défaut."
+
+msgid "Require PIN for sign-in"
+msgstr "Exiger le NIP pour la connexion"
+
+msgid "On — card and PIN"
+msgstr "Activé — carte et NIP"
+
+msgid "Off — card only"
+msgstr "Désactivé — carte seule"
+
+msgid "Without a PIN, anyone holding or copying this card can access your account."
+msgstr "Sans NIP, toute personne détenant ou copiant cette carte peut accéder à votre compte."
+
+msgid "I understand the risk of card-only sign-in if I select Off."
+msgstr "Je comprends le risque de connexion par carte seule si je choisis Désactivé."
+
+msgid "Verify sign-in and save"
+msgstr "Vérifier la connexion et enregistrer"
+
+msgid "You are enabling card-only account access. Anyone holding or copying this card can sign in without a PIN."
+msgstr "Vous activez l’accès au compte par carte seule. Toute personne détenant ou copiant cette carte peut se connecter sans NIP."
+
+msgid "Sign in again with Google or email to save this card’s sign-in settings. This also resets its failed PIN attempts. Only enable cards you control."
+msgstr "Connectez-vous à nouveau avec Google ou par courriel pour enregistrer les paramètres de connexion de cette carte. Cela réinitialise aussi les tentatives de NIP échouées. Activez uniquement les cartes dont vous avez le contrôle."

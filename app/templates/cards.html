@@ -1,10 +1,21 @@
 {% extends "base.html" %}{% block content %}
 <h1 class="account-page-title">{{ _('Your NFC cards') }}</h1><section class="wallet-panel">
-<p>{{ _('These cards contain random credentials, not wallet private keys. Card sign-in requires enrollment and your PIN.') }}</p>
+<p>{{ _('These cards contain random credentials, not wallet private keys. Card sign-in requires enrollment. A PIN is required by default.') }}</p>
 {% for card in cards %}<article><p><strong>{{ _('Card') }} {{ card.id[:8] }}</strong> · {{ _('Revoked') if card.revoked else _('Verified') if card.activated else _('Not verified') }}</p>
 {% if not card.revoked and card.login_request in ['requested', 'active'] %}
 <p>{{ _('Card sign-in enabled') if card.login_request == 'active' else _('Sign-in enrollment requested — not active') }}</p>
-{% if card.activated and nfc_login_enabled %}<form action="/account/cards/{{ card.id }}/login/activate" method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit">{{ _('Enable or unlock card sign-in') }}</button></form>{% endif %}
+{% if card.activated and nfc_login_enabled %}
+<form class="nfc-pin-policy" action="/account/cards/{{ card.id }}/login/activate" method="post">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label for="pin-policy-{{ card.id }}">{{ _('Require PIN for sign-in') }}</label>
+<select id="pin-policy-{{ card.id }}" name="require_pin">
+<option value="yes" {% if card.require_pin %}selected{% endif %}>{{ _('On — card and PIN') }}</option>
+<option value="no" {% if not card.require_pin %}selected{% endif %}>{{ _('Off — card only') }}</option>
+</select>
+<p>{{ _('Without a PIN, anyone holding or copying this card can access your account.') }}</p>
+<label><input type="checkbox" name="acknowledge_card_only" value="yes"> {{ _('I understand the risk of card-only sign-in if I select Off.') }}</label>
+<button type="submit">{{ _('Verify sign-in and save') }}</button>
+</form>{% endif %}
 <form action="/account/cards/{{ card.id }}/login-request/withdraw" method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit">{{ _('Withdraw sign-in request') }}</button></form>
 {% endif %}
 {% if not card.revoked %}<form action="/account/cards/{{ card.id }}/revoke" method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit">{{ _('Revoke card') }}</button></form>{% endif %}</article>

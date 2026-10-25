@@ -131,8 +131,9 @@ import re
 from urllib.parse import parse_qs
 
 
+@pytest.mark.parametrize('require_pin', [True, False])
 @pytest.mark.parametrize('failure', [None, 'stale', 'other-account', 'missing', 'session'])
-def test_enrollment_requires_fresh_normal_oidc(tmp_path, signing_key, monkeypatch, failure):
+def test_enrollment_requires_fresh_normal_oidc(tmp_path, signing_key, monkeypatch, failure, require_pin):
     monkeypatch.setenv('OAKGATE_NFC_LOGIN_ENABLED','true')
     async def run():
         c, identity, sessions, session, material, wallets = await connected(tmp_path, signing_key)
@@ -148,7 +149,9 @@ def test_enrollment_requires_fresh_normal_oidc(tmp_path, signing_key, monkeypatc
             card=store.prepare(terminal,key); store.verify(terminal,key,card['payload'])
             path='/account/cards/'+card['card_id']+'/login/activate'
             assert (await c.post(path,data={'csrf':'wrong'})).status_code == 403
-            page=await c.post(path,data={'csrf':session['csrf']})
+            assert (await c.post(path,data={'csrf':session['csrf'],'require_pin':'no'})).status_code == 400
+            page=await c.post(path,data={'csrf':session['csrf'],'require_pin':'yes' if require_pin else 'no','acknowledge_card_only':'yes'})
+            assert store.listing(owner)[0]['require_pin'] == 1
             assert page.status_code == 200
             url=unescape(re.search(r'href="(https://identity.example[^"]+)"',page.text)[1])
             identity.authorization=parse_qs(urlsplit(url).query)
@@ -165,6 +168,7 @@ def test_enrollment_requires_fresh_normal_oidc(tmp_path, signing_key, monkeypatc
             response=await c.get('/auth/callback',params=args)
             assert response.status_code == (400 if failure else 303)
             assert store.listing(owner)[0]['login_request'] == ('requested' if failure else 'active')
+            assert store.listing(owner)[0]['require_pin'] == (1 if failure else int(require_pin))
             assert (await c.get('/auth/callback',params=args)).status_code==400
     asyncio.run(run())
 
@@ -233,3 +237,32 @@ def test_diagnostics_do_not_expose_credentials(cards, monkeypatch, caplog):
             for sensitive in (pin,wrong,secret,card['payload'],owner,USER['sub']):
                 assert sensitive not in caplog.text
     asyncio.run(run())
+
+
+def test_card_only_is_explicit_persistent_and_reversible(cards):
+    store, owner, card, pin = issued(cards)
+    activate(store, card['card_id'], owner, ISSUER)
+    with pytest.raises(POSDenied): attempt(store, card, '')
+    with pytest.raises(POSDenied): activate(store, card['card_id'], 'another-user', ISSUER, require_pin=False)
+    assert store.listing(owner)[0]['require_pin'] == 1
+    activate(store, card['card_id'], owner, ISSUER, require_pin=False)
+    restarted = CardStore(store.custody,store.origin)
+    assert restarted.listing(owner)[0]['require_pin'] == 0
+    nonce = secrets.token_hex(32)
+    assert attempt(restarted,card,'',nonce) == USER['sub']
+    with pytest.raises(POSDenied): attempt(restarted,card,'',nonce)
+    activate(store,card['card_id'],owner,ISSUER,require_pin=True)
+    with pytest.raises(POSDenied): attempt(store,card,'')
+    assert attempt(store,card,pin) == USER['sub']
+
+
+@pytest.mark.parametrize('change',['withdrawn','revoked','expired','wallet'])
+def test_card_only_preserves_authority_checks(cards,change):
+    store,owner,card,pin=issued(cards)
+    activate(store,card['card_id'],owner,ISSUER,require_pin=False)
+    with closing(store.custody.connect()) as db,db:
+        if change=='withdrawn': db.execute("UPDATE nfc_login_requests SET state='withdrawn'")
+        if change=='revoked': db.execute('UPDATE nfc_cards SET revoked=1')
+        if change=='expired': db.execute('UPDATE nfc_cards SET expires=0')
+        if change=='wallet': db.execute("UPDATE wallets SET wallet_id='replaced' WHERE owner=?",(owner,))
+    with pytest.raises(POSDenied): attempt(store,card,'')

@@ -25,14 +25,14 @@
         const data = records[0].data;
         card.value = btoa(String.fromCharCode(...new Uint8Array(data.buffer, data.byteOffset, data.byteLength)));
         stop(); read.disabled = false; submit.disabled = false;
-        status.textContent = 'Card read. Enter your PIN.'; pin.focus();
+        status.textContent = 'Card read. Enter your PIN, or leave it blank if you enabled card-only sign-in.'; pin.focus();
       };
       reader.onreadingerror = () => { status.textContent = 'Could not read the card. Hold it still and try again.'; };
       await reader.scan({signal});
     } catch (_) { stop(); read.disabled = false; status.textContent = 'NFC unavailable. Try again or use your usual sign-in.'; }
   });
   form.addEventListener('submit', event => {
-    if (submitting || !card.value || !/^[0-9]{4}$/.test(pin.value)) { event.preventDefault(); return; }
+    if (submitting || !card.value || (pin.value !== '' && !/^[0-9]{4}$/.test(pin.value))) { event.preventDefault(); return; }
     submitting = true; stop(); read.disabled = true; submit.disabled = true;
     status.textContent = 'Checking card and PIN…';
   });

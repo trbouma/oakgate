@@ -41,6 +41,13 @@ class NfcAuthenticatorTest {
       verify(c.getAuthenticationSession()).removeAuthNote("oakgate.nfc.challenge");
       verify(http,times(1)).send(any(),any(HttpResponse.BodyHandler.class));
     }
+    @Test void blankPinIsCheckedByBackendNotAssumedAuthorized() throws Exception {
+      var c=context(); var http=transport("{}",401);
+      c.getHttpRequest().getDecodedFormParameters().putSingle("pin", "");
+      new NfcAuthenticator(env::get,http).action(c);
+      verify(http,times(1)).send(any(),any(HttpResponse.BodyHandler.class));
+      verify(c,never()).success();
+    }
     @Test void disabledOrMissingUserCannotLogin() throws Exception {
       for (boolean missing : List.of(true,false)) {
         var c=context(); var http=transport(reply("stable-id"),200);

@@ -64,7 +64,7 @@ public final class NfcAuthenticator implements Authenticator {
             var fields = c.getHttpRequest().getDecodedFormParameters();
             String card = fields.getFirst("card"), pin = fields.getFirst("pin");
             if (nonce == null || started == null || System.currentTimeMillis()-Long.parseLong(started)>120000
-                || card == null || card.length()>536 || pin == null || !pin.matches("[0-9]{4}")) {
+                || card == null || card.length()>536 || pin == null || (!pin.isEmpty() && !pin.matches("[0-9]{4}"))) {
                 LOG.warn("NFC login rejected phase=form_or_expired_challenge");
                 page(c, true); return;
             }

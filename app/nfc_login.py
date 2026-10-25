@@ -78,7 +78,9 @@ def enrolled(db, store, card_id, issuer):
     return row, user
 
 
-def activate(store, card_id, owner, issuer):
+def activate(store, card_id, owner, issuer, *, require_pin=None):
+    if require_pin is not None and type(require_pin) is not bool:
+        raise POSDenied
     schema(store)
     with closing(store.custody.connect()) as db, db:
         db.execute('BEGIN IMMEDIATE')
@@ -86,6 +88,8 @@ def activate(store, card_id, owner, issuer):
         if row['owner'] != owner:
             raise POSDenied
         db.execute("UPDATE nfc_login_requests SET state='active' WHERE card_id=?", (card_id,))
+        if require_pin is not None:
+            db.execute('INSERT INTO nfc_login_policy(card_id,require_pin) VALUES(?,?) ON CONFLICT(card_id) DO UPDATE SET require_pin=excluded.require_pin', (card_id, int(require_pin)))
         db.execute('DELETE FROM nfc_login_attempts WHERE card_id=?', (card_id,))
 
 
@@ -95,7 +99,7 @@ def verify_card(store, payload, pin, nonce, issuer):
         raw, card_id, _ = store._decode(payload)
     except POSDenied:
         raise LoginDenied('card_decode') from None
-    if not raw.startswith(b'OGC2') or not re.fullmatch(r'[0-9]{4}', pin):
+    if not raw.startswith(b'OGC2') or (pin != '' and not re.fullmatch(r'[0-9]{4}', pin)):
         raise LoginDenied('card_version_or_pin_format')
     try:
         authority = store.balance_authority(None, payload)
@@ -114,7 +118,13 @@ def verify_card(store, payload, pin, nonce, issuer):
             raise LoginDenied('enrollment_not_active')
         db.execute('INSERT OR IGNORE INTO nfc_login_attempts(card_id) VALUES(?)', (card_id,))
         failures = db.execute('SELECT failures FROM nfc_login_attempts WHERE card_id=?', (card_id,)).fetchone()[0]
-        if failures < 5:
+        policy = db.execute('SELECT require_pin FROM nfc_login_policy WHERE card_id=?', (card_id,)).fetchone()
+        require_pin = policy is None or policy['require_pin'] != 0
+        if not require_pin:
+            accepted = user['sub']
+        elif pin == '':
+            raise LoginDenied('pin_required')
+        elif failures < 5:
             # Commit the failed attempt even when denying. Exceptions inside this
             # transaction would roll back the very guard that prevents guessing.
             value = store.custody.cipher.decrypt(row['pin_verifier'])
@@ -180,16 +190,21 @@ async def activate_start(request: Request, ident: str):
     session = await current_session(request)
     if not session:
         return RedirectResponse('/auth/login', 303)
-    await checked_form(request, session)
+    form = await checked_form(request, session)
+    if (set(form) - {'csrf', 'require_pin', 'acknowledge_card_only'}
+            or form.get('require_pin') not in (None, 'yes', 'no')
+            or (form.get('require_pin') == 'no' and form.get('acknowledge_card_only') != 'yes')):
+        raise HTTPException(400, 'Confirm the risk before enabling card-only sign-in.')
+    require_pin = None if 'require_pin' not in form else form['require_pin'] == 'yes'
     if not enabled() or not re.fullmatch(r'[a-f0-9]{32}', ident):
         raise HTTPException(403, 'Card sign-in is unavailable.')
-    response = await begin_login(request, {'purpose': 'nfc-enroll', 'card_id': ident,
+    response = await begin_login(request, {'purpose': 'nfc-enroll', 'card_id': ident, 'require_pin': require_pin,
         'owner': identity_key(session['user']), 'session_binding': session_binding(request),
         'started_at': time.time()})
     if response.status_code != 303:
         return response
     page = request.app.state.templates.TemplateResponse(request=request, name='card_login_verify.html',
-        context={**session, 'authorization_url': response.headers['location']})
+        context={**session, 'card_only': require_pin is False, 'authorization_url': response.headers['location']})
     page.raw_headers.extend((k, v) for k, v in response.raw_headers if k == b'set-cookie')
     return page
 
@@ -205,7 +220,7 @@ async def finish_activation(request, transaction, claims):
         raise ValueError('Fresh same-account authentication required')
     store = await card_store(request, enabled=False)
     try:
-        await run_in_threadpool(activate, store, transaction['card_id'], transaction['owner'], claims['iss'])
+        await run_in_threadpool(activate, store, transaction['card_id'], transaction['owner'], claims['iss'], require_pin=transaction.get('require_pin'))
     except POSDenied:
         raise ValueError('Card enrollment unavailable') from None
     return RedirectResponse('/account/cards', 303)

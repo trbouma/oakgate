@@ -34,3 +34,9 @@ test('timeout aborts reader and permits an explicit retry',async()=>{
  const f=fixture();await f.read();f.timeout();assert.equal(f.reader().signal.aborted,true);assert.equal(f.node('nfc-read').disabled,false);
  assert.equal(f.node('nfc-card').value,'');assert.equal(f.node('nfc-submit').disabled,true);
 });
+
+test('blank PIN is submitted for server-side policy enforcement',()=>{
+ const f=fixture();f.node('nfc-card').value='encoded-card';f.node('nfc-pin').value='';
+ f.node('oakgate-nfc').listeners.submit({preventDefault(){assert.fail('Blank PIN should reach the server');}});
+ assert.equal(f.node('nfc-submit').disabled,true);
+});

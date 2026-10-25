@@ -28,7 +28,8 @@ to that dedicated flow. Never bind it as the realm's browser flow or use it for
    OakGate over an authenticated backchannel, bound to a short-lived Keycloak
    authentication-session challenge.
 6. OakGate checks the encrypted card, pinned instance key, activated status,
-   expiry, revocation, enrollment, current wallet binding and PIN verifier.
+   expiry, revocation, enrollment, current wallet binding and, by default, PIN
+   verifier. The explicit per-card exception is described below.
    The nonce is consumed once. Keycloak then looks up the returned **existing user
    ID in its own realm** and requires that user to be enabled.
 7. Keycloak performs the normal authorization-code exchange. OakGate verifies
@@ -212,3 +213,34 @@ PINs, headers, subjects, response bodies or exception messages:
   selected Keycloak realm. Do not create a replacement user or link by email.
 
 Public responses remain generic; diagnostic detail is for the operator only.
+
+
+## Optional card-only sign-in
+
+In **Preferences → Your NFC cards**, each verified, enrolled card has **Require
+PIN for sign-in**, default **On**. Existing cards without a policy row also require
+PIN; issuing another card does not inherit an earlier card's preference.
+
+To choose **Off — card only**, explicitly acknowledge that anyone holding or
+copying the card can access the account, then choose **Verify sign-in and save**.
+The change is applied only after fresh Google/email authentication by the same
+owner in the same session. Cancellation, stale authentication or a different
+account leaves the setting unchanged. Turning the requirement back on uses the
+same fresh-authentication flow. The PIN itself is retained, not reset or disclosed.
+
+When Off, leave the PIN field blank on Keycloak's card login screen. The browser
+and plugin allow a blank field, but OakGate's server alone decides whether that
+specific card can log in without a PIN. A blank PIN never bypasses an On policy.
+Enrollment, card expiry/revocation, wallet binding, issuer identity, challenge
+replay protection and Keycloak user checks still apply. Payments are unchanged.
+This grants full account login, not merely receive-only POS access. POS devices
+that have read the card credential could also use it for login when PIN is Off.
+
+The `nfc_login_policy` table is included in custody database backups. Missing
+policy means PIN required. Policy changes use the existing activation mechanism
+and reset failed PIN attempts only after fresh authentication. Withdrawing
+login enrollment or revoking the card blocks both PIN and card-only login.
+
+Deploy the app **and rebuild Keycloak** for the optional-PIN form and plugin;
+no new environment variable or card rewrite is required. This preference does
+not bypass a backchannel connection/configuration error.
