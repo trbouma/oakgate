@@ -6,6 +6,7 @@ PIN failure counts are durable and never reset by a successful card login.
 import hashlib
 import json
 import math
+import logging
 import os
 import re
 import secrets
@@ -26,6 +27,14 @@ from app.recovery import session_binding
 from app.wallet_routes import checked_form
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
+
+
+class LoginDenied(POSDenied):
+    """Operator-only fixed reason; never include credentials or identity data."""
+    def __init__(self, reason):
+        self.reason = reason
+
 
 
 def enabled():
@@ -59,13 +68,13 @@ def enrolled(db, store, card_id, issuer):
     if (not row or row['activated'] is None or row['revoked'] is not None
             or row['expires'] <= time.time() or row['acknowledged'] is None
             or row['enrollment'] not in ('requested', 'active')):
-        raise POSDenied
+        raise LoginDenied('card_or_enrollment_inactive')
     POSStore._wallet(db, row['owner'], row['wallet_id'])
     identity = json.loads(store.custody.cipher.decrypt(row['identity']))
     user = identity['material']
     if (identity['owner'] != row['owner'] or identity_key(user) != row['owner']
             or user['iss'] != issuer):
-        raise POSDenied
+        raise LoginDenied('identity_binding')
     return row, user
 
 
@@ -82,21 +91,27 @@ def activate(store, card_id, owner, issuer):
 
 def verify_card(store, payload, pin, nonce, issuer):
     # Only OGC2 cards pin the issuer identity. Card parsing never contacts a relay.
-    raw, card_id, _ = store._decode(payload)
+    try:
+        raw, card_id, _ = store._decode(payload)
+    except POSDenied:
+        raise LoginDenied('card_decode') from None
     if not raw.startswith(b'OGC2') or not re.fullmatch(r'[0-9]{4}', pin):
-        raise POSDenied
-    authority = store.balance_authority(None, payload)
+        raise LoginDenied('card_version_or_pin_format')
+    try:
+        authority = store.balance_authority(None, payload)
+    except POSDenied:
+        raise LoginDenied('card_or_wallet_inactive') from None
     schema(store)
     accepted = None
     with closing(store.custody.connect()) as db, db:
         db.execute('BEGIN IMMEDIATE')
         db.execute('DELETE FROM nfc_login_nonces WHERE expires < ?', (time.time(),))
         if db.execute('SELECT 1 FROM nfc_login_nonces WHERE nonce=?', (nonce,)).fetchone():
-            raise POSDenied
+            raise LoginDenied('replayed_challenge')
         db.execute('INSERT INTO nfc_login_nonces VALUES(?,?)', (nonce, time.time()+600))
         row, user = enrolled(db, store, card_id, issuer)
         if row['enrollment'] != 'active' or row['owner'] != authority['owner']:
-            raise POSDenied
+            raise LoginDenied('enrollment_not_active')
         db.execute('INSERT OR IGNORE INTO nfc_login_attempts(card_id) VALUES(?)', (card_id,))
         failures = db.execute('SELECT failures FROM nfc_login_attempts WHERE card_id=?', (card_id,)).fetchone()[0]
         if failures < 5:
@@ -105,7 +120,7 @@ def verify_card(store, payload, pin, nonce, issuer):
             value = store.custody.cipher.decrypt(row['pin_verifier'])
             prefix = b'oakgate/card-pin/scrypt-v1\x00' + row['pairing'].encode()
             if not value.startswith(prefix) or len(value) != len(prefix)+48:
-                raise POSDenied
+                raise LoginDenied('pin_verifier_invalid')
             salt, expected = value[len(prefix):len(prefix)+16], value[-32:]
             actual = hashlib.scrypt(pin.encode(), salt=salt, n=16384, r=8, p=1, dklen=32)
             if secrets.compare_digest(actual, expected):
@@ -113,7 +128,7 @@ def verify_card(store, payload, pin, nonce, issuer):
             else:
                 db.execute('UPDATE nfc_login_attempts SET failures=failures+1 WHERE card_id=?', (card_id,))
     if accepted is None:
-        raise POSDenied
+        raise LoginDenied('pin_locked' if failures >= 5 else 'pin_incorrect')
     return accepted
 
 
@@ -131,6 +146,7 @@ async def verify(request: Request):
     secret = os.getenv('OAKGATE_NFC_BACKCHANNEL_SECRET', '')
     if (not enabled() or len(secret) < 32 or not secrets.compare_digest(
             request.headers.get('authorization', ''), 'Bearer ' + secret)):
+        logger.warning('NFC login rejected phase=backchannel_auth')
         raise HTTPException(401, 'Card sign-in could not be verified.')
     body = bytearray()
     async for chunk in request.stream():
@@ -148,9 +164,14 @@ async def verify(request: Request):
         store = await card_store(request, enabled=False)
         sub = await run_in_threadpool(verify_card, store, data['card'], data['pin'], data['nonce'], data['issuer'])
         return JSONResponse({'sub': sub, 'nonce': data['nonce'], 'issuer': data['issuer']})
-    except (ValueError, TypeError, KeyError, POSDenied):
+    except LoginDenied as exc:
+        logger.warning('NFC login rejected phase=%s', exc.reason)
         raise HTTPException(401, 'Card sign-in could not be verified.') from None
-    except sqlite3.Error:
+    except (ValueError, TypeError, KeyError, POSDenied) as exc:
+        logger.warning('NFC login rejected phase=request_or_binding error_type=%s', type(exc).__name__)
+        raise HTTPException(401, 'Card sign-in could not be verified.') from None
+    except sqlite3.Error as exc:
+        logger.warning('NFC login unavailable phase=storage error_type=%s', type(exc).__name__)
         raise HTTPException(503, 'Card sign-in is temporarily unavailable.') from None
 
 

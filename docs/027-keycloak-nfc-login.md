@@ -184,3 +184,31 @@ revocation, expiry, pending/withdrawn enrollment, fresh same-user OIDC activatio
 and the separate client audience. Java tests cover client isolation, disabled and
 missing users, malformed/mismatched backend replies, timeout and fail-closed config.
 The plugin follows Keycloak's [Authentication SPI](https://www.keycloak.org/docs/latest/server_development/#_auth_spi).
+
+## Troubleshooting card verification
+
+If the error stays on Keycloak's card/PIN screen, verification failed before the
+OIDC callback. Do not repeatedly guess the PIN. After deploying diagnostic
+changes to both app and the Keycloak provider, make one attempt and inspect:
+
+```sh
+docker compose logs --since=5m --tail=100 app keycloak
+```
+
+The operator logs use fixed `NFC login` phases and never include card bytes,
+PINs, headers, subjects, response bodies or exception messages:
+
+- `backchannel_auth` (app): login disabled, secret missing/too short, or the
+  Keycloak/app backchannel secrets differ. Recreate both containers after an env change.
+- `backchannel` (Keycloak): HTTP status or exception class identifies endpoint or
+  connection failure. A 401 needs the corresponding app rejection phase.
+- `form_or_expired_challenge`: missing input or more than two minutes on the form.
+- `card_decode`, `card_or_wallet_inactive`: invalid card or changed issuer/card/wallet state.
+- `enrollment_not_active`: issuance succeeded but login enrollment is not active.
+- `identity_binding`: stored enrollment does not match the configured identity.
+- `pin_incorrect`, `pin_locked`: incorrect PIN or five failures. Use ordinary
+  sign-in and fresh reauthentication to unlock; do not edit failure counters.
+- `user_missing_or_disabled`: the returned subject is not an enabled user in the
+  selected Keycloak realm. Do not create a replacement user or link by email.
+
+Public responses remain generic; diagnostic detail is for the operator only.

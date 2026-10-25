@@ -19,6 +19,7 @@ import org.keycloak.util.JsonSerialization;
 
 /** Only for the dedicated oakgate-nfc client. Never creates or links users. */
 public final class NfcAuthenticator implements Authenticator {
+    private static final org.jboss.logging.Logger LOG = org.jboss.logging.Logger.getLogger(NfcAuthenticator.class);
     private static final String NOTE = "oakgate.nfc.challenge";
     private static final HttpClient HTTP = HttpClient.newBuilder()
         .connectTimeout(Duration.ofSeconds(3)).followRedirects(HttpClient.Redirect.NEVER).build();
@@ -58,13 +59,16 @@ public final class NfcAuthenticator implements Authenticator {
         String started = c.getAuthenticationSession().getAuthNote(NOTE + ".time");
         c.getAuthenticationSession().removeAuthNote(NOTE);
         c.getAuthenticationSession().removeAuthNote(NOTE + ".time");
+        String phase = "form";
         try {
             var fields = c.getHttpRequest().getDecodedFormParameters();
             String card = fields.getFirst("card"), pin = fields.getFirst("pin");
             if (nonce == null || started == null || System.currentTimeMillis()-Long.parseLong(started)>120000
                 || card == null || card.length()>536 || pin == null || !pin.matches("[0-9]{4}")) {
+                LOG.warn("NFC login rejected phase=form_or_expired_challenge");
                 page(c, true); return;
             }
+            phase = "endpoint_configuration";
             URI endpoint = URI.create(env("OAKGATE_NFC_API_URL"));
             // HTTP is permitted only on this fixed Compose service hop. Remote hops require TLS.
             if (!("https".equals(endpoint.getScheme()) ||
@@ -78,19 +82,30 @@ public final class NfcAuthenticator implements Authenticator {
                 .header("Authorization", "Bearer " + env("OAKGATE_NFC_BACKCHANNEL_SECRET"))
                 .header("Content-Type", "application/json").POST(HttpRequest.BodyPublishers.ofString(body)).build();
             // Never retry credentials automatically after a timeout or ambiguous response.
+            phase = "backchannel";
             HttpResponse<String> response = transport.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode()!=200 || response.body().length()>2048) { page(c,true); return; }
+            if (response.statusCode()!=200 || response.body().length()>2048) {
+                LOG.warnf("NFC login rejected phase=backchannel http_status=%d", response.statusCode());
+                page(c,true); return;
+            }
+            phase = "response_validation";
             Map<?,?> result = JsonSerialization.readValue(response.body(), Map.class);
             if (!nonce.equals(result.get("nonce")) || !issuer.equals(result.get("issuer"))
-                || !(result.get("sub") instanceof String sub)) { page(c,true); return; }
+                || !(result.get("sub") instanceof String sub)) {
+                LOG.warn("NFC login rejected phase=response_binding"); page(c,true); return;
+            }
+            phase = "user_lookup";
             UserModel user = c.getSession().users().getUserById(c.getRealm(), sub);
-            if (user == null || !user.isEnabled()) { page(c,true); return; }
+            if (user == null || !user.isEnabled()) {
+                LOG.warn("NFC login rejected phase=user_missing_or_disabled"); page(c,true); return;
+            }
             c.setUser(user);
             c.success();
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt(); c.failure(AuthenticationFlowError.INTERNAL_ERROR);
         } catch (Exception ex) {
             // Do not log payloads, PINs, headers, response bodies or exception messages.
+            LOG.warnf("NFC login failed phase=%s error_type=%s", phase, ex.getClass().getSimpleName());
             page(c, true);
         }
     }

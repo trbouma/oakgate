@@ -204,3 +204,32 @@ def test_login_choice_is_opt_in(signing_key, monkeypatch):
             page=await c.get('/auth/options')
             assert page.status_code==200 and 'href="/auth/nfc"' in page.text and 'href="/auth/login"' in page.text
     asyncio.run(run())
+
+
+def test_diagnostics_do_not_expose_credentials(cards, monkeypatch, caplog):
+    import httpx
+    from types import SimpleNamespace
+    from app.main import create_app
+    from app.config import AuthSettings
+    from app.sessions import MemoryStore
+    store, owner, card, pin = issued(cards)
+    activate(store, card['card_id'], owner, ISSUER)
+    monkeypatch.setenv('OAKGATE_NFC_LOGIN_ENABLED','true')
+    secret = 'private-backchannel-secret-'*3
+    monkeypatch.setenv('OAKGATE_NFC_BACKCHANNEL_SECRET',secret)
+    app = create_app(settings=AuthSettings(store.origin,client_secret='test'),store=MemoryStore())
+    app.state.wallets = SimpleNamespace(store=store.custody)
+    wrong = '0000' if pin != '0000' else '0001'
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app),base_url=store.origin) as c:
+            body={'card':card['payload'],'pin':wrong,'nonce':secrets.token_hex(32),'issuer':ISSUER,'client_id':'oakgate-nfc'}
+            assert (await c.post('/api/cards/v1/login/verify',json=body)).status_code == 401
+            assert 'phase=backchannel_auth' in caplog.text
+            caplog.clear()
+            c.headers['Authorization']='Bearer '+secret
+            r=await c.post('/api/cards/v1/login/verify',json=body)
+            assert r.status_code==401 and 'pin_incorrect' not in r.text
+            assert 'phase=pin_incorrect' in caplog.text
+            for sensitive in (pin,wrong,secret,card['payload'],owner,USER['sub']):
+                assert sensitive not in caplog.text
+    asyncio.run(run())
