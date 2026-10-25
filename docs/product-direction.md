@@ -36,3 +36,11 @@ The FastAPI app supports Keycloak sign-in, connecting or creating an Acorn, encr
 ## Mainstay commitments
 
 Custody is a choice, community operation is a first-class deployment model, and Google is a replaceable upstream sign-in provider. The [Mainstay principles and review](010-mainstay-principles.md) records these requirements, the safe provider-transition boundary, and the gaps still to close. The user must retain a path to independence; the complete workflow is not implemented yet.
+
+## Home and satellite deployment
+
+A home can serve one user population through multiple branded satellite sites.
+Satellites extend access through scoped APIs and shared sign-in; the home retains
+custody, handle uniqueness, storage and recovery responsibility. This is planned
+architecture, not deployed satellite support. See
+[Home and satellite instances](037-home-and-satellite-instances.md).

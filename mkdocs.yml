@@ -40,11 +40,13 @@ nav:
   - Understand OakGate:
       - Product direction: product-direction.md
       - Mainstay client roles: 021-mainstay-client-roles.md
+      - Home and satellite instances: 037-home-and-satellite-instances.md
       - Mainstay principles: 010-mainstay-principles.md
       - Custody models: 006-custody-models.md
       - Go Independent: 004-go-independent.md
       - Project status: project-status.md
   - Build and deploy:
+      - New PostgreSQL instance: 035-new-instance.md
       - FastAPI app: 003-fastapi-app.md
       - Public service contract: 017-public-service-contract.md
       - Keycloak operations and flows: 028-keycloak-operations.md
@@ -71,6 +73,7 @@ nav:
       - PostgreSQL foundation: 030-postgresql-foundation.md
       - PostgreSQL storage: 032-postgresql-storage.md
       - PostgreSQL import and cutover: 033-postgresql-cutover.md
+      - Backup and recovery plan: 036-backup-and-recovery-plan.md
       - Identity storage and backups: 008-identity-storage-backups.md
       - Storage latency incident: 022-storage-latency-incident.md
       - Keycloak on Beelink: 002-keycloak-beelink.md

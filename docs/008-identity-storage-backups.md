@@ -1,5 +1,11 @@
 # Identity mapping storage and backups
 
+For deployments where both OakGate and Keycloak use PostgreSQL, follow the
+[PostgreSQL backup and recovery plan](036-backup-and-recovery-plan.md).
+The SQLite/H2 backup procedures below apply only to installations that still use
+those stores; migration snapshots do not protect ongoing PostgreSQL activity.
+
+
 For the consolidated current setup, see [Keycloak operations and sign-in flows](028-keycloak-operations.md).
 
 Date: 2026-10-18  

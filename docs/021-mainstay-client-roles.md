@@ -89,3 +89,5 @@ how it will stop or transfer responsibility when the user goes independent.
 - [Go Independent](004-go-independent.md)
 - [Recovery disclosure](016-recovery-disclosure.md)
 - [Safebox address discovery](018-safebox-address-discovery.md)
+
+- [Home and satellite instances](037-home-and-satellite-instances.md)

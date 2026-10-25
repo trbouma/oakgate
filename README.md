@@ -105,6 +105,7 @@ The included GitHub Pages workflow publishes on pushes to `main` once **Settings
 - [Connect an Acorn and configure custody storage](docs/007-acorn-custody.md)
 
 - [Identity mapping, storage, and backups](docs/008-identity-storage-backups.md)
+- [PostgreSQL backup and recovery plan](docs/036-backup-and-recovery-plan.md)
 
 ### Receiving payments
 
@@ -219,3 +220,23 @@ database in the existing PostgreSQL service, preserving the NFC provider overrid
 Do not activate it until following the [Keycloak migration checklist](docs/034-keycloak-postgresql.md).
 No users or realms are imported automatically; rehearsal and identity-continuity
 checks are required before live cutover.
+
+### Commission a fresh instance
+
+For a **new deployment only**, use `./init-instance.sh prepare`, then `check` and
+`bootstrap` on the deployment host. The wizard generates private configuration,
+asks before building/starting, and uses PostgreSQL for both OakGate and Keycloak.
+Configure the Keycloak realm/sign-in clients, then run `./init-instance.sh activate`
+to enter client secrets and start OakGate/POS. Existing `.env` files, nonempty
+storage and existing project containers are refused; this is not a migration tool.
+See the [new-instance checklist](docs/035-new-instance.md) for prerequisites,
+Keycloak setup, interruption handling and acceptance tests.
+
+### Commissioning a production home
+
+New production homes use PostgreSQL for both OakGate and Keycloak. Start with the
+[home readiness checklist](docs/035-new-instance.md#home-instance-readiness), then
+use the staged `init-instance.sh` workflow. Keycloak setup, enabled-feature tests
+and a tested off-host backup are required commissioning work; container health
+alone is not production readiness. Never run fresh initialization on an existing
+instance. Satellite support is not required to operate a standalone home.

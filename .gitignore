@@ -230,3 +230,9 @@ client_secret_311971727961-a49c2ue79f58oigbotlcpq6csg4ffjjf.apps.googleuserconte
 !app/locales/**/messages.mo
 
 keycloak/nfc/target/
+
+# Local new-instance commissioning state (not a migration marker).
+.instance-init.json
+.instance-init.json.new-*
+.env.new-*
+.instance-init.lock

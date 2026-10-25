@@ -192,9 +192,16 @@ Require **zero tables** for this first import. Then run the one-off import while
 Keycloak stays stopped:
 
 ```sh
-docker compose run --rm --no-deps keycloak import \
-  --dir /opt/keycloak/data/migration-import --override true
+docker compose run --rm --no-deps --entrypoint /bin/bash keycloak -ec \
+  'unset KC_BOOTSTRAP_ADMIN_USERNAME KC_BOOTSTRAP_ADMIN_PASSWORD KEYCLOAK_ADMIN KEYCLOAK_ADMIN_PASSWORD;
+   exec /opt/keycloak/bin/kc.sh import --dir /opt/keycloak/data/migration-import --override true'
 ```
+
+Unset bootstrap-admin variables only in this temporary import process: the export
+already contains the master administrator. Otherwise bootstrap can attempt to
+create that user again and abort, even after logging "Import finished successfully".
+Require a clean process exit and verify persisted realms/users. A fresh installation
+without an imported admin still needs its bootstrap credentials.
 
 `--override true` is deliberate for the fresh target, including master realm
 initialization. Never reuse this command against an already active/imported target:
@@ -264,3 +271,6 @@ Test restoration to an isolated environment. Retain the cold H2 backup and expor
 securely for an agreed recovery period. The work directory is **not** the active
 identity database. See [Keycloak database configuration](https://www.keycloak.org/server/db)
 and [existing Keycloak operations](028-keycloak-operations.md).
+
+The ongoing [backup and recovery plan](036-backup-and-recovery-plan.md) covers
+both PostgreSQL databases, secret custody, retention and isolated restore drills.
