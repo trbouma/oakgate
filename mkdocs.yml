@@ -66,6 +66,7 @@ nav:
       - NFC cards and payment execution: 026-nfc-card-payments.md
       - Keycloak NFC login: 027-keycloak-nfc-login.md
       - Lightning payments and zaps: 009-lightning-receiving.md
+      - SQLite Alembic baseline: 031-sqlite-alembic-baseline.md
       - PostgreSQL foundation: 030-postgresql-foundation.md
       - Identity storage and backups: 008-identity-storage-backups.md
       - Storage latency incident: 022-storage-latency-incident.md

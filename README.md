@@ -189,4 +189,11 @@ SSD directory using [the PostgreSQL setup checklist](docs/030-postgresql-foundat
 when Compose validates an app-only refresh. PostgreSQL has no published port.
 Full-stack startup waits for its health and includes its logs on failure;
 `refresh-app.sh` leaves it running. OakGate still uses SQLite and Keycloak still
-uses H2. Alembic and data migration are a separate next step.
+uses H2. The [SQLite Alembic baseline](docs/031-sqlite-alembic-baseline.md) is now available as an explicit maintenance step; PostgreSQL data migration remains separate.
+
+### SQLite schema baseline
+
+An explicit, backed-up Alembic adoption command is available; app startup still
+uses SQLite and never runs migrations automatically. Follow the
+[SQLite baseline maintenance procedure](docs/031-sqlite-alembic-baseline.md),
+including stopping every writer, before adopting an existing deployment.

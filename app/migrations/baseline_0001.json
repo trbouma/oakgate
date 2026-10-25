@@ -1,0 +1,200 @@
+[
+  {
+    "type": "table",
+    "name": "currency_rates",
+    "table": "currency_rates",
+    "sql": "CREATE TABLE currency_rates (code TEXT PRIMARY KEY, symbol TEXT NOT NULL, description TEXT NOT NULL, fiat_per_btc TEXT, fetched_at REAL, source TEXT)"
+  },
+  {
+    "type": "table",
+    "name": "ecash_inboxes",
+    "table": "ecash_inboxes",
+    "sql": "CREATE TABLE ecash_inboxes (owner TEXT PRIMARY KEY, next_poll REAL NOT NULL DEFAULT 0, failures INTEGER NOT NULL DEFAULT 0)"
+  },
+  {
+    "type": "table",
+    "name": "incoming_payments",
+    "table": "incoming_payments",
+    "sql": "CREATE TABLE incoming_payments (\n                id TEXT PRIMARY KEY, owner TEXT NOT NULL, zap_id TEXT UNIQUE,\n                created REAL NOT NULL, state TEXT NOT NULL, encrypted BLOB NOT NULL,\n                next_check REAL NOT NULL DEFAULT 0, lease TEXT, lease_until REAL NOT NULL DEFAULT 0, history_written INTEGER NOT NULL DEFAULT 0)"
+  },
+  {
+    "type": "table",
+    "name": "lightning_handles",
+    "table": "lightning_handles",
+    "sql": "CREATE TABLE lightning_handles (normalized_handle TEXT PRIMARY KEY, owner TEXT NOT NULL)"
+  },
+  {
+    "type": "table",
+    "name": "nfc_card_pins",
+    "table": "nfc_card_pins",
+    "sql": "CREATE TABLE nfc_card_pins (\n              pairing TEXT PRIMARY KEY, card_id TEXT UNIQUE,\n              verifier BLOB NOT NULL, disclosure BLOB, acknowledged INTEGER)"
+  },
+  {
+    "type": "table",
+    "name": "nfc_cards",
+    "table": "nfc_cards",
+    "sql": "CREATE TABLE nfc_cards (\n              id TEXT PRIMARY KEY, owner TEXT NOT NULL, wallet_id TEXT NOT NULL,\n              terminal TEXT NOT NULL, verifier TEXT NOT NULL, payload_hash TEXT NOT NULL,\n              payload BLOB, created INTEGER NOT NULL, expires INTEGER NOT NULL,\n              activated INTEGER, revoked INTEGER)"
+  },
+  {
+    "type": "table",
+    "name": "nfc_issuer",
+    "table": "nfc_issuer",
+    "sql": "CREATE TABLE nfc_issuer (id INTEGER PRIMARY KEY, encrypted BLOB NOT NULL)"
+  },
+  {
+    "type": "table",
+    "name": "nfc_login_attempts",
+    "table": "nfc_login_attempts",
+    "sql": "CREATE TABLE nfc_login_attempts (\n          card_id TEXT PRIMARY KEY, failures INTEGER NOT NULL DEFAULT 0)"
+  },
+  {
+    "type": "table",
+    "name": "nfc_login_nonces",
+    "table": "nfc_login_nonces",
+    "sql": "CREATE TABLE nfc_login_nonces (\n          nonce TEXT PRIMARY KEY, expires REAL NOT NULL)"
+  },
+  {
+    "type": "table",
+    "name": "nfc_login_policy",
+    "table": "nfc_login_policy",
+    "sql": "CREATE TABLE nfc_login_policy (\n              card_id TEXT PRIMARY KEY, require_pin INTEGER NOT NULL CHECK(require_pin IN (0,1)))"
+  },
+  {
+    "type": "table",
+    "name": "nfc_login_requests",
+    "table": "nfc_login_requests",
+    "sql": "CREATE TABLE nfc_login_requests (\n              pairing TEXT PRIMARY KEY, card_id TEXT UNIQUE, identity BLOB NOT NULL,\n              requested INTEGER NOT NULL, state TEXT NOT NULL DEFAULT 'requested')"
+  },
+  {
+    "type": "table",
+    "name": "nfc_pairings",
+    "table": "nfc_pairings",
+    "sql": "CREATE TABLE nfc_pairings (\n              id TEXT PRIMARY KEY, terminal TEXT NOT NULL, request_key TEXT NOT NULL,\n              verifier TEXT NOT NULL, invitation BLOB, created REAL NOT NULL, expires REAL NOT NULL,\n              state TEXT NOT NULL, owner TEXT, wallet_id TEXT, card_id TEXT,\n              UNIQUE(terminal,request_key))"
+  },
+  {
+    "type": "table",
+    "name": "outgoing_payments",
+    "table": "outgoing_payments",
+    "sql": "CREATE TABLE outgoing_payments (id TEXT PRIMARY KEY, owner TEXT NOT NULL, state TEXT NOT NULL, encrypted BLOB NOT NULL, created REAL NOT NULL, request_key TEXT, started_at REAL)"
+  },
+  {
+    "type": "table",
+    "name": "pos_audit",
+    "table": "pos_audit",
+    "sql": "CREATE TABLE pos_audit (\n                id INTEGER PRIMARY KEY, terminal TEXT NOT NULL, action TEXT NOT NULL, at REAL NOT NULL)"
+  },
+  {
+    "type": "table",
+    "name": "pos_challenges",
+    "table": "pos_challenges",
+    "sql": "CREATE TABLE pos_challenges (\n                id TEXT PRIMARY KEY, terminal TEXT NOT NULL, session TEXT NOT NULL,\n                operation TEXT NOT NULL, public_key TEXT NOT NULL,\n                message TEXT NOT NULL, expires REAL NOT NULL)"
+  },
+  {
+    "type": "table",
+    "name": "pos_limits",
+    "table": "pos_limits",
+    "sql": "CREATE TABLE pos_limits (\n                bucket TEXT PRIMARY KEY, count INTEGER NOT NULL, expires REAL NOT NULL)"
+  },
+  {
+    "type": "table",
+    "name": "pos_receipts",
+    "table": "pos_receipts",
+    "sql": "CREATE TABLE pos_receipts (\n                terminal TEXT NOT NULL, request_key TEXT NOT NULL, body_hash TEXT NOT NULL,\n                id TEXT NOT NULL UNIQUE, owner TEXT NOT NULL, created REAL NOT NULL,\n                PRIMARY KEY(terminal, request_key))"
+  },
+  {
+    "type": "table",
+    "name": "pos_sessions",
+    "table": "pos_sessions",
+    "sql": "CREATE TABLE pos_sessions (\n                id TEXT PRIMARY KEY, terminal TEXT NOT NULL, verifier TEXT NOT NULL UNIQUE,\n                expires REAL NOT NULL)"
+  },
+  {
+    "type": "table",
+    "name": "pos_terminals",
+    "table": "pos_terminals",
+    "sql": "CREATE TABLE pos_terminals (\n                id TEXT PRIMARY KEY, owner TEXT NOT NULL, wallet_id TEXT NOT NULL,\n                name TEXT NOT NULL, verifier TEXT NOT NULL, created REAL NOT NULL,\n                activation_until REAL NOT NULL, public_key TEXT, fingerprint TEXT,\n                activated REAL, last_seen REAL, revoked REAL)"
+  },
+  {
+    "type": "table",
+    "name": "record_capabilities",
+    "table": "record_capabilities",
+    "sql": "CREATE TABLE record_capabilities (id TEXT PRIMARY KEY, owner TEXT NOT NULL, encrypted BLOB NOT NULL)"
+  },
+  {
+    "type": "table",
+    "name": "service_identity",
+    "table": "service_identity",
+    "sql": "CREATE TABLE service_identity (id INTEGER PRIMARY KEY CHECK(id=1), npub TEXT NOT NULL)"
+  },
+  {
+    "type": "table",
+    "name": "user_currency_preferences",
+    "table": "user_currency_preferences",
+    "sql": "CREATE TABLE user_currency_preferences (owner TEXT PRIMARY KEY, currency TEXT NOT NULL)"
+  },
+  {
+    "type": "table",
+    "name": "user_display_preferences",
+    "table": "user_display_preferences",
+    "sql": "CREATE TABLE user_display_preferences (owner TEXT PRIMARY KEY, language TEXT NOT NULL)"
+  },
+  {
+    "type": "table",
+    "name": "user_preferences",
+    "table": "user_preferences",
+    "sql": "CREATE TABLE user_preferences (owner TEXT PRIMARY KEY, handle TEXT NOT NULL, normalized_handle TEXT NOT NULL UNIQUE)"
+  },
+  {
+    "type": "table",
+    "name": "user_social_preferences",
+    "table": "user_social_preferences",
+    "sql": "CREATE TABLE user_social_preferences (owner TEXT PRIMARY KEY, npub TEXT NOT NULL)"
+  },
+  {
+    "type": "table",
+    "name": "wallet_message_submissions",
+    "table": "wallet_message_submissions",
+    "sql": "CREATE TABLE wallet_message_submissions (token TEXT PRIMARY KEY, created REAL NOT NULL)"
+  },
+  {
+    "type": "table",
+    "name": "wallet_requests",
+    "table": "wallet_requests",
+    "sql": "CREATE TABLE wallet_requests (id TEXT PRIMARY KEY, owner TEXT NOT NULL, state TEXT NOT NULL, created REAL NOT NULL, encrypted BLOB NOT NULL)"
+  },
+  {
+    "type": "table",
+    "name": "wallets",
+    "table": "wallets",
+    "sql": "CREATE TABLE wallets (\n                owner TEXT PRIMARY KEY, wallet_id TEXT NOT NULL UNIQUE,\n                encrypted BLOB NOT NULL, status TEXT NOT NULL,\n                lease TEXT, lease_until REAL NOT NULL DEFAULT 0)"
+  },
+  {
+    "type": "index",
+    "name": "incoming_due",
+    "table": "incoming_payments",
+    "sql": "CREATE INDEX incoming_due ON incoming_payments(state,next_check)"
+  },
+  {
+    "type": "index",
+    "name": "incoming_owner",
+    "table": "incoming_payments",
+    "sql": "CREATE INDEX incoming_owner ON incoming_payments(owner,created)"
+  },
+  {
+    "type": "index",
+    "name": "nfc_card_owner",
+    "table": "nfc_cards",
+    "sql": "CREATE INDEX nfc_card_owner ON nfc_cards(owner)"
+  },
+  {
+    "type": "index",
+    "name": "outgoing_request",
+    "table": "outgoing_payments",
+    "sql": "CREATE UNIQUE INDEX outgoing_request ON outgoing_payments(owner,request_key) WHERE request_key IS NOT NULL"
+  },
+  {
+    "type": "index",
+    "name": "pos_terminal_owner",
+    "table": "pos_terminals",
+    "sql": "CREATE INDEX pos_terminal_owner ON pos_terminals(owner)"
+  }
+]

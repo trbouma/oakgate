@@ -139,7 +139,7 @@ Never delete the SQLite source as part of provisioning this container.
 
 ## Next stage: Alembic and application migration
 
-Alembic is planned, not installed or wired in by this infrastructure change.
+The subsequent [SQLite Alembic baseline](031-sqlite-alembic-baseline.md) now supplies explicit schema adoption. It does not yet implement PostgreSQL persistence or cutover.
 The next stage needs:
 
 - An explicit SQLAlchemy/PostgreSQL persistence layer and Alembic baseline,
