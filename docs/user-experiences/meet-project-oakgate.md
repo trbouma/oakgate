@@ -34,7 +34,7 @@ and **Messages**. She has a receipt address that looks like an email address.
 She can show a payment request, receive Everyday Funds or Community Credits, and open a shared record.
 At an OakGate terminal, she can also present her `whoami` or `myinfo` record:
 she approves a QR request in her wallet or taps a same-home NFC card. Staff use
-**Present Record** to view it temporarily, including a supported image attachment
+**Show Record** to view it temporarily, including a supported image attachment
 and OpenETR information. [See the record presentation flow](../038-pos-record-requests.md).
 
 She does not need to understand the protocols before using these features.

@@ -28,7 +28,7 @@ has also prepared a **whoami** record with her photo and resort membership, and 
 ## A tap to show membership
 
 At the surf desk, the attendant opens **Check a Record**, selects **whoami** and
-creates a request. Kai taps her bracelet. The attendant selects **Present Record**
+creates a request. Kai taps her bracelet. The attendant selects **Show Record**
 and sees the membership record and its original image. Where an attached artifact
 has OpenETR information, the terminal shows that verification information too.
 The resort decides whether the evidence satisfies its membership policy.

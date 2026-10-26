@@ -23,7 +23,7 @@
   for(const path of root.querySelectorAll('path')){const d=path.getAttribute('d');if(!d||!/^[MmLlHhVvZz\d.,\s-]+$/.test(d))throw Error();const p=document.createElementNS(svg.namespaceURI,'path');p.setAttribute('d',d);p.setAttribute('fill','#000');svg.append(p);}
   $('record-qr').replaceChildren(svg);$('record-qr').hidden=false;
  }
- function ready(){stopNFC();clearTimeout(timer);$('record-present').hidden=false;$('record-present').disabled=false;$('record-nfc').hidden=true;$('record-qr').hidden=true;message('Presentation ready. Select Present Record to display it.');}
+ function ready(){stopNFC();clearTimeout(timer);$('record-present').hidden=false;$('record-present').disabled=false;$('record-nfc').hidden=true;$('record-qr').hidden=true;message('Presentation ready. Select Show Record to display it.');}
  async function poll(run){
   if(run!==generation||!id)return;
   try{const result=await signed('record-status',{request_id:id});if(run!==generation)return;

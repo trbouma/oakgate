@@ -63,13 +63,13 @@ his wallet. They switch from **Point of Sale** to **Check a Record**, choose
 
 A customer scans the request and approves in their OakGate wallet, or presents
 a same-home NFC card when staff select **Request by NFC**. Staff then choose
-**Present Record** to see the text, supported image attachment and available
+**Show Record** to see the text, supported image attachment and available
 OpenETR verification information. The customer decides what to keep in these
 records: `whoami` for the information they use to introduce themselves, and
 `myinfo` for additional information they wish to present.
 
 Starting the next request clears the previous customer's display. Staff can also
-select **Stop Request**; requests expire after two minutes. The terminal views a
+select **Close Request**; requests expire after two minutes. The terminal views a
 temporary presentation rather than adding the record to Sam's Acorn. Staff must
 still judge whether the evidence meets their needs—record presentation is not
 automatic identity verification or permission to enter an event.

@@ -57,14 +57,14 @@ The staff member opens **Check a Record**, selects **whoami**, and chooses
 and requested label, then approve. With her card, the staff member instead chooses
 **Request by NFC** and Maya taps it on the terminal.
 
-Once the presentation is ready, the staff member selects **Present Record**.
+Once the presentation is ready, the staff member selects **Show Record**.
 The terminal displays the record text and its supported image attachment, so
 Maya's photo can appear alongside her information. OpenETR verification information
 is available for the attachment. Staff still need to assess what the record says;
 a presentation alone does not prove identity or entitlement.
 
 If additional information is needed, staff start a new request for **myinfo**.
-Maya's previous record disappears from the display. **Stop Request** also removes
+Maya's previous record disappears from the display. **Close Request** also removes
 the display, and requests expire after two minutes. The record stays in Maya's
 Acorn; it is not imported into the café's wallet.
 

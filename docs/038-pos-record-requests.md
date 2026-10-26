@@ -73,9 +73,9 @@ and [One wallet, several counters](user-experiences/one-wallet-several-counters.
 3. Alternatively, on a compatible secure NFC browser, choose **Request by NFC**
    and ask the holder to tap their valid, activated OakGate card. This first
    iteration supports same-home cards only and does not ask for a PIN.
-4. When ready, choose **Present Record**. Acorn retrieves the presentation for
+4. When ready, choose **Show Record**. Acorn retrieves the presentation for
    display, without importing it into the merchant's wallet.
-5. Create a new request or select **Stop Request** to remove the display.
+5. Create a new request or select **Close Request** to remove the display.
 
 Requests last two minutes. The display also clears on expiry, when leaving the
 record tab, or when the browser becomes hidden. Late responses cannot restore a
