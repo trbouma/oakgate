@@ -37,3 +37,11 @@
   .oakgate-mark { width: 7rem; height: 7rem; }
   .oakgate-hero .md-button { display: block; margin: .6rem 0; }
 }
+
+.oakgate-experience-preview { display:grid; grid-template-columns:minmax(120px,180px) minmax(0,1fr); align-items:center; gap:1.5rem; padding:1.2rem; border:1px solid var(--oakgate-border); border-radius:10px; background:var(--oakgate-panel); }
+.oakgate-experience-preview > p { margin:0; }
+.oakgate-experience-preview img { display:block; width:100%; height:auto; border-radius:6px; }
+.md-typeset .oakgate-experience-preview h2 { margin-top:0; }
+.oakgate-experience-image { display:block; max-width:44rem; margin:1.5rem auto; }
+.oakgate-experience-image img { display:block; width:100%; height:auto; border-radius:8px; border:1px solid var(--oakgate-border); }
+@media(max-width:36rem) { .oakgate-experience-preview { grid-template-columns:1fr; gap:1rem; } .oakgate-experience-preview > p { max-width:200px; margin-inline:auto; } }

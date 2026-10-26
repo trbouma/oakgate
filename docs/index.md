@@ -73,6 +73,16 @@ Recover your safebox outside OakGate, then end the relationship and request dele
 
 </section>
 
+## User Experiences
+
+See how OakGate fits into everyday life: a wallet holder pairs a card and pays
+with a tap, while a small merchant equips several counters to receive Cash and
+Clear into one wallet.
+
+[From a wallet to a card](user-experiences/card-pairing-and-payments.md){ .md-button .md-button--primary }
+[One wallet, several counters](user-experiences/one-wallet-several-counters.md){ .md-button }
+[Explore User Experiences](user-experiences/index.md){ .md-button }
+
 ## One family, different responsibilities
 
 OakGate adds a managed experience around Acorn's capabilities. Safebox Web represents the approach where the application does not retain the user's `nsec`; OakGate intentionally takes on that custody. These are different choices about responsibility, not interchangeable interfaces.
