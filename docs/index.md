@@ -84,6 +84,7 @@ and `myinfo` records through QR approval or NFC.
 [Meet Project OakGate](user-experiences/meet-project-oakgate.md){ .md-button .md-button--primary }
 [From a wallet to a card](user-experiences/card-pairing-and-payments.md){ .md-button }
 [One wallet, several counters](user-experiences/one-wallet-several-counters.md){ .md-button }
+[A city-backed food network](user-experiences/food-hamper-network.md){ .md-button }
 [Explore User Experiences](user-experiences/index.md){ .md-button }
 
 ## One family, different responsibilities

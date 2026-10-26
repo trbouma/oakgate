@@ -81,3 +81,22 @@ for surfing and present emergency information with a contact-wallet access notic
 </div>
 
 </article>
+
+<article class="oakgate-experience-preview" markdown>
+
+[![A city-backed food hamper credit moving through a community network](../assets/user-experiences/food-hamper-network.png)](food-hamper-network.md)
+
+<div markdown>
+
+## A hamper. A choice. A little dignity.
+
+A city funds food hamper credits. Aid workers distribute them, families pay at
+participating food banks, and treasurers redeem the credits to keep food moving.
+Follow one family's experience of support without another personal interview at
+the counter.
+
+[Follow the experience →](food-hamper-network.md){ .md-button .md-button--primary }
+
+</div>
+
+</article>
