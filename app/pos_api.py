@@ -1,5 +1,5 @@
 """POS authorization; card debit additionally requires a presented bearer card."""
-from pos.protocol import CARD_OPS
+from pos.protocol import CARD_OPS, RECORD_OPS
 import json
 import asyncio
 import os
@@ -75,7 +75,7 @@ def create_router():
                   'activate': {'credential', 'public_key', 'challenge', 'signature'},
                   'challenges': {'operation'}, 'config': {'challenge', 'signature'},
                   'logout': {'challenge', 'signature'},
-                  **{op: {'payload', 'challenge', 'signature'} for op in ('receive-config', 'receive', 'receipt', *CARD_OPS)}}
+                  **{op: {'payload', 'challenge', 'signature'} for op in ('receive-config', 'receive', 'receipt', *CARD_OPS, *RECORD_OPS)}}
         if operation not in fields:
             raise HTTPException(503, 'POS operation is unavailable.')
         if operation == 'challenges':
@@ -93,6 +93,17 @@ def create_router():
             token = auth[7:]
             if operation == 'challenges':
                 result = await invoke(store.challenge, token, data['operation'], data.get('payload', '{}'))
+            elif operation in RECORD_OPS:
+                actor = await invoke(store.receiving_authority, token, operation, data['challenge'], data['signature'], data['payload'])
+                from app.pos_records import operation as record_operation
+                try:
+                    result = await record_operation(request, actor, operation, data['payload'])
+                except HTTPException:
+                    raise
+                except POSDenied:
+                    raise HTTPException(403, 'Record authorization failed.') from None
+                except Exception:
+                    raise HTTPException(503, 'Record request unavailable. Create a new request.') from None
             elif operation in CARD_OPS and operation != 'card-pay':
                 actor = await invoke(store.receiving_authority, token, operation, data['challenge'], data['signature'], data['payload'])
                 from app.nfc_routes import card_operation

@@ -14,6 +14,7 @@
       notice.textContent = 'Finish or cancel the current Point of Sale activity before switching tabs.';
       return;
     }
+    document.dispatchEvent(new CustomEvent('pos-tab-change', {detail: index}));
     notice.textContent = '';
     tabs.forEach((tab, i) => {
       tab.setAttribute('aria-selected', String(i === index));

@@ -86,6 +86,7 @@
     await window.startPOSReceiving(signed, terminalID);
     await window.startPOSCards(signed, terminalID);
     window.startPOSCardBalance(signed);
+    window.startPOSRecords(signed);
   }
   async function busy(action) {
     if (operationBusy) return;
@@ -99,6 +100,7 @@
       operationBusy = false;
       $('activation').removeAttribute('aria-busy');
       document.querySelectorAll('button').forEach(button => {button.disabled=false;});
+      window.refreshPOSRecordControls();
       if (!$('terminal').hidden) {
         $('create-request').disabled = !$('asset').options.length;
         window.refreshPOSCardControls();

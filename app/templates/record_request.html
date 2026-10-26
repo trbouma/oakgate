@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="account-page-title">Present a Record</h1>
+<section class="wallet-panel nfc-panel" id="record-request" data-signed-in="{{ 'yes' if request_signed_in else 'no' }}" data-csrf="{{ csrf or '' }}">
+{% if request_signed_in %}
+<p id="record-request-details">Checking request…</p>
+<p>Approve only if you want this terminal to view your matching record and its attachment. This does not transfer the record or authorize a payment.</p>
+<button id="record-request-approve" class="primary-action nfc-action" type="button" disabled>Present whoami</button>
+{% else %}
+<p>Sign in in another tab, then return here and continue.</p>
+<a class="primary-action nfc-action" href="/auth/login" target="_blank" rel="noopener">Sign in</a>
+<button class="primary-action nfc-action" id="record-request-reload" type="button">Continue</button>
+{% endif %}
+<p id="record-request-status" role="status" aria-live="polite"></p>
+<a href="/account/records">Back to Records</a>
+</section><script src="/static/record-request.js" defer></script>
+{% endblock %}

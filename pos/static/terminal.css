@@ -14,3 +14,5 @@ body{padding:14px 16px}main{width:min(100%,540px)}header{margin-bottom:12px}sect
 .terminal-tabs button[aria-selected="true"]{background:#c3dc9f;color:#17200f;border-color:#c3dc9f}
 #tab-notice:empty{display:none}
 #panel-record h1{margin-bottom:16px}
+
+#panel-record{text-align:center}#panel-record label{text-align:left}#record-image{display:block;max-width:100%;max-height:360px;margin:12px auto;border-radius:10px}#record-contents,#record-verification{white-space:pre-wrap;overflow-wrap:anywhere;text-align:left;font:14px/1.5 system-ui}#record-result details{text-align:left}

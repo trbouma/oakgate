@@ -7,7 +7,7 @@ function fixture(){
  const el=id=>nodes[id]||=( {hidden:true,disabled:false,attrs:{},listeners:{},
  setAttribute(k,v){this.attrs[k]=v;},addEventListener(k,v){this.listeners[k]=v;},focus(){this.focused=true;}} );
  el('terminal').hidden=false;el('panel-sale').hidden=false;
- vm.runInNewContext(fs.readFileSync('pos/static/tabs.js','utf8'),{document:{getElementById:el}});
+ vm.runInNewContext(fs.readFileSync('pos/static/tabs.js','utf8'),{CustomEvent:function(){},document:{getElementById:el,dispatchEvent(){}}});
  return {el,choose:()=>el('tab-record').listeners.click()};
 }
 test('switching tabs preserves the existing sale content and returns with keyboard navigation',()=>{

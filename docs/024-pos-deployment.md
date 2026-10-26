@@ -8,8 +8,8 @@ POS uses the same repository and Dockerfile, with its own application entry poin
 
 The terminal opens on **Point of Sale**, which contains the existing activation,
 receiving, NFC card issuance, available-balance and terminal settings controls.
-**Check a Record** is a placeholder for future record presentation and verification;
-it does not request records or grant additional terminal permissions.
+**Check a Record** requests a short-lived presentation of a `whoami` record by
+wallet QR approval or a same-instance NFC card. See [POS record requests](038-pos-record-requests.md).
 
 Tabs switch within the page without reloading or resetting the terminal. Finish
 or cancel an active payment, card operation or activation scan before switching.

@@ -1,5 +1,5 @@
 """Durable receive-only terminal authority; never reads or decrypts wallet material."""
-from pos.protocol import CARD_OPS
+from pos.protocol import CARD_OPS, RECORD_OPS
 import base64
 import hashlib
 import json
@@ -208,7 +208,7 @@ class POSStore:
             return {'session': token, 'expires_in': SESSION_TTL}
 
     def challenge(self, token, operation, payload='{}'):
-        if operation not in ({'config', 'logout', 'receive-config', 'receive', 'receipt'} | CARD_OPS):
+        if operation not in ({'config', 'logout', 'receive-config', 'receive', 'receipt'} | CARD_OPS | RECORD_OPS):
             raise POSDenied
         with closing(self.connect()) as db, db:
             db.execute('BEGIN IMMEDIATE')
@@ -233,7 +233,7 @@ class POSStore:
 
     def receiving_authority(self, token, operation, challenge, signature, payload):
         """Internal authority only; never serialize this result to the terminal."""
-        if operation not in ({'receive-config', 'receive', 'receipt'} | CARD_OPS):
+        if operation not in ({'receive-config', 'receive', 'receipt'} | CARD_OPS | RECORD_OPS):
             raise POSDenied
         with closing(self.connect()) as db, db:
             db.execute('BEGIN IMMEDIATE')

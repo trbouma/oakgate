@@ -76,6 +76,11 @@ async def scan(request: Request):
         card_destination = pairing_destination(code, request.app.state.settings.origin)
         if card_destination:
             return RedirectResponse(card_destination, 303)
+        record_url = urlsplit(code)
+        if (record_url.scheme + '://' + record_url.netloc == request.app.state.settings.origin
+                and record_url.path == '/account/record-request' and not record_url.query
+                and re.fullmatch(r'[A-Za-z0-9_-]{43}', record_url.fragment)):
+            return RedirectResponse('/account/record-request#' + record_url.fragment, 303)
         recognized_payment = code.lower().startswith(('lnbc', 'lightning:lnbc', 'creqa', 'creqb1', 'bitcoin:'))
         if recognized_payment:
             async with asyncio.timeout(40):

@@ -1,5 +1,5 @@
 """Isolated POS browser app: encrypted terminal sessions, no account or wallet keys."""
-from pos.protocol import CARD_OPS
+from pos.protocol import CARD_OPS, RECORD_OPS
 import json
 from pathlib import Path
 
@@ -18,7 +18,7 @@ FIELDS = {'activation-challenges': {'credential', 'public_key'},
           'activate': {'credential', 'public_key', 'challenge', 'signature'},
           'challenges': {'operation'}, 'config': {'challenge', 'signature'},
           'logout': {'challenge', 'signature'},
-          **{op: {'payload', 'challenge', 'signature'} for op in ('receive-config', 'receive', 'receipt', *CARD_OPS)}}
+          **{op: {'payload', 'challenge', 'signature'} for op in ('receive-config', 'receive', 'receipt', *CARD_OPS, *RECORD_OPS)}}
 
 
 def create_app(settings=None, transport=None):
@@ -44,7 +44,7 @@ def create_app(settings=None, transport=None):
         response.headers.update({'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer',
             'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY',
             'Permissions-Policy': 'camera=(self), nfc=(self), microphone=()',
-            'Content-Security-Policy': "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; worker-src 'self' blob:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"})
+            'Content-Security-Policy': "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' blob:; connect-src 'self'; worker-src 'self' blob:; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"})
         return response
 
     def token(request):
@@ -77,6 +77,9 @@ def create_app(settings=None, transport=None):
                 if rejection == {'code': 'same-wallet'}:
                     raise HTTPException(400, {'code': 'same-wallet', 'message':
                         'This card belongs to the receiving wallet. Use a different card. No payment was sent.'})
+            if path in RECORD_OPS and result.status_code >= 400:
+                raise HTTPException(result.status_code if result.status_code in {400,403,404,409,413,429} else 503,
+                                    'Record request unavailable, expired, or no matching record was found. Create a new request.')
             if result.status_code in {400, 403, 404, 409, 429, 503}:
                 detail = {400: 'Check the amount and currency, or refresh the receiving options.', 404: 'Request not found on this terminal.', 409: 'This request already has a different amount. Start a new request.', 403: 'Authorization failed. Check the key, device or revocation status.',
                           429: 'Too many attempts. Please wait a minute.', 503: 'OakGate POS is unavailable. Please try again shortly.'}
@@ -157,6 +160,7 @@ def create_app(settings=None, transport=None):
                    'config': {'name', 'fingerprint', 'scope', 'payments_available'}, 'logout': {'status'},
                    'receive-config': {'assets', 'currencies', 'currency', 'cash_enabled', 'cash_min', 'cash_max', 'clear_max', 'clear_unavailable'},
                    **{op: {'state', 'request_key', 'code', 'qr', 'amount', 'display_name', 'display_unit'} for op in ('receive', 'receipt')},
+                   **{op: {'state', 'request_id', 'expires', 'qr', 'label', 'contents', 'attachment', 'attachment_note', 'verification'} for op in RECORD_OPS},
                    **{op: {'state','pair_code','pair_url','qr','expires','wallet_label','payload','mime','byte_count','card_id','sats','local','clear','clear_unavailable'} for op in CARD_OPS}}[operation]
         if operation == 'card-pay':
             allowed = {'state'}

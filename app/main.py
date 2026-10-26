@@ -93,6 +93,8 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
     app.include_router(scan_router)
     app.include_router(receive_router)
     app.include_router(pos_router())
+    from app.pos_records import router as pos_records_router
+    app.include_router(pos_records_router)
     from app.nfc_routes import router as nfc_router
     app.include_router(nfc_router)
     from app.nfc_login import router as nfc_login_router
