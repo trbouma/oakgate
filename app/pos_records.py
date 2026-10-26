@@ -24,7 +24,7 @@ from pos.config import pos_enabled
 router = APIRouter()
 TTL = 120
 # Deliberate disclosure scope. Never accept arbitrary/internal Acorn labels.
-LABELS = {'whoami', 'myinfo', 'emergency'}
+LABELS = {'whoami', 'myinfo', 'emergency', 'member', 'pass'}
 
 
 def key(kind, ident):

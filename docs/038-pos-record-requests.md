@@ -1,10 +1,50 @@
 # POS record requests
 
-The **Check a Record** tab lets an activated terminal request a `whoami`, `myinfo` or `emergency` record.
+The **Check a Record** tab lets an activated terminal request a `whoami`, `myinfo`, `emergency`, `member` or `pass` record.
 This is a presentation for viewing, not a record transfer or a payment instruction.
 `whoami` is the default. `myinfo` holds additional information the wallet holder
-chooses to present beyond their `whoami` record. All three labels are explicitly
+chooses to present beyond their `whoami` record. All five labels are explicitly
 enabled in the dropdown and server allowlist.
+
+## Default record meanings and naming decision
+
+| Label | Meaning | Typical content |
+| --- | --- | --- |
+| `whoami` | Introduce myself. | Identity information the holder chooses to present |
+| `myinfo` | Share more about me. | Additional information, presented separately |
+| `emergency` | Information when help is needed. | Emergency information and optional contact directive |
+| `member` | **I belong.** | Membership or affiliation, without necessarily including a name or other identity details |
+| `pass` | **I have access.** | Admission, access or another entitlement |
+
+`pass` was chosen over `admission` because it is broader and does not imply
+an event-specific workflow. `admission` is not an alias or a supported request
+label. These are conventional record names, not new record types or schemas.
+The dropdown starts with `whoami`; adding choices does not create records in a
+wallet automatically.
+
+A holder can update `pass` through the existing record editor to reflect its
+current use. An attached original record can be backed by OpenETR verification:
+the POS uses the same attachment digest lookup and verification display as other
+presentations. This change adds no automatic entitlement decision. An operator
+still interprets the record and verification evidence; OpenETR results alone do
+not prove entitlement or the truth of every claim.
+
+`member` can omit identifying content, and requesting it does not also request
+`whoami`. This is a content choice, not an anonymity guarantee: existing wallet,
+card, custody and presentation-receipt behaviour is unchanged. No selective
+disclosure or additional privacy mechanism is introduced.
+
+Both choices use existing case-insensitive unique-label matching, QR approval,
+same-home NFC presentation, two-minute expiry, and holder receipts through Acorn.
+The emergency-contact notification remains exclusive to `emergency`; a contact
+directive inside `member` or `pass` does not trigger it.
+
+Event rules, usage tracking, consuming a pass, entitlement revocation and more
+sophisticated privacy behaviour are outside this change. Existing card/terminal
+revocation checks and presentation expiry continue to apply.
+
+Rebuild **app and POS** to enable both choices. No settings, database migration,
+Acorn changes or terminal re-provisioning are required.
 
 ## Prepare the records in your wallet
 
@@ -12,7 +52,9 @@ Create a record labeled **whoami** with the information you want to use to
 introduce yourself. You may attach an image, such as a photo, for the terminal to
 preview. Create **myinfo** separately for additional information you wish to
 present. The terminal requests one selected record at a time; choosing `myinfo`
-does not automatically disclose `whoami` as well.
+does not automatically disclose `whoami` as well. Create **member** or **pass**
+with the membership or entitlement information you want to present. Matching is
+case-insensitive, including `Member` and `PASS`; keep only one record per label.
 
 Keep only information you intend to present in these records. NFC presentation
 does not currently require a PIN. The card points to the Acorn; record contents
@@ -23,7 +65,7 @@ and [One wallet, several counters](user-experiences/one-wallet-several-counters.
 
 ## Operator experience
 
-1. Select **whoami**, **myinfo** or **emergency**, then **Create Request**. A new request clears the previous
+1. Select **whoami**, **myinfo**, **emergency**, **member** or **pass**, then **Create Request**. A new request clears the previous
    displayed record and invalidates the previous request on this terminal.
 2. The holder scans the QR using their OakGate wallet or phone camera. The wallet
    displays the terminal name and requested label and asks for approval. A holder
@@ -64,7 +106,7 @@ authenticated wallet session and CSRF validation. The QR contains a random invit
 in its URL fragment, not a record, wallet key or external callback destination.
 OakGate's scanner recognizes this same-home request URL directly.
 
-An NFC tap authorizes disclosure of the selected `whoami` or `myinfo` record in this iteration.
+An NFC tap authorizes disclosure of the selected allowlisted record in this iteration.
 This is an additional bearer-card capability: holders should keep only information
 they intend to present in that record. A lost or copied card can disclose that
 record until revoked. The card and wallet are checked again after preparation and
@@ -142,7 +184,7 @@ See [A day at the beach](user-experiences/a-day-at-the-beach.md) for the illustr
 
 ## Holder presentation receipts
 
-When the POS acquires any supported record (`whoami`, `myinfo` or `emergency`)
+When the POS acquires any supported record (`whoami`, `myinfo`, `emergency`, `member` or `pass`)
 for display, it schedules a private message to the holder's Acorn. This happens
 for both QR approval and NFC presentation. The terminal owner's Acorn sends the
 receipt through the existing Acorn/Stroma wallet messaging method. The destination

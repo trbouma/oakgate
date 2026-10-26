@@ -17,7 +17,7 @@ that every integration and failure mode has been tested.
 | Zaps | Receipt handling implemented; independent end-to-end verification remains a deployment check rather than inferred from a successful ordinary Lightning payment |
 | Records | Creation, attachment preview, update, deletion, sharing and presentation through Acorn; operator reported attachment display and accepted sharing working |
 | POS | Browser-bound activation, receiving, NFC issuance, balance lookup and card payment flows implemented; operator reported activation, card issuance and balance lookup working |
-| POS record presentation | `whoami`, `myinfo` and `emergency` requests through QR approval or same-home NFC; temporary display and OpenETR information; operator reported NFC presentation working |
+| POS record presentation | `whoami`, `myinfo`, `emergency`, `member` and `pass` requests through QR approval or same-home NFC; temporary display and OpenETR information; operator reported NFC presentation working |
 | Presentation notices | Emergency contact-wallet notifications and holder presentation receipts implemented with duplicate protection and local tests; live delivery verification pending |
 | Messages | Compact newest-first received-message list, expandable details, compose hidden; reads Acorn messages, including available presentation receipts |
 | Application storage | PostgreSQL runtime and Alembic migration tooling implemented; operator reported verified data migration and healthy application startup |

@@ -31,7 +31,7 @@ def setup_records(env, monkeypatch, label="WhoAmI"):
     return SimpleNamespace(app=app), calls
 
 
-@pytest.mark.parametrize("requested,label", [("whoami","WhoAmI"),("myinfo","MyInfo"),("emergency","Emergency")])
+@pytest.mark.parametrize("requested,label", [("whoami","WhoAmI"),("myinfo","MyInfo"),("emergency","Emergency"),("member","Member"),("pass","PASS")])
 def test_start_approve_present_and_replace(env,monkeypatch,requested,label):
     request,calls=setup_records(env,monkeypatch,label)
     async def run():
@@ -159,4 +159,26 @@ def test_wallet_scanner_recognizes_only_same_home_record_request(tmp_path):
             assert response.headers['location']=='/account/record-request#'+'a'*43
             response=await client.post('/account/scan',data=form(lightning_payment='https://other.example/account/record-request#'+'a'*43))
             assert response.status_code==200 and 'Open website' in response.text
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize('label', ['member', 'pass'])
+def test_membership_and_pass_use_existing_nfc_presentation(env, monkeypatch, label):
+    request,_=setup_records(env,monkeypatch,label.upper())
+    class Cards:
+        def balance_authority(self,*args,**kwargs):
+            return {'owner':'owner','wallet_id':'wallet'}
+    async def card_store(request):return Cards()
+    monkeypatch.setattr('app.nfc_routes.card_store',card_store)
+    async def no_emergency_notice(*args):
+        pytest.fail('Only emergency records may notify a contact')
+    monkeypatch.setattr('app.emergency_contacts.notify_contact',no_emergency_notice)
+    async def run():
+        ident=(await call(env,'record-start',{'label':label})).json()['request_id']
+        response=await call(env,'record-nfc',{'request_id':ident,'card_payload':'test-card'})
+        assert response.status_code==200 and response.json()['state']=='ready'
+        response=await call(env,'record-present',{'request_id':ident})
+        assert response.status_code==200 and response.json()['label']==label.upper()
+        assert 'notification' not in response.json()
+        assert (await call(env,'record-start',{'label':'admission'})).status_code==400
     asyncio.run(run())
