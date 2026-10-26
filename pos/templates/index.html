@@ -74,7 +74,7 @@
 <section id="panel-record" role="tabpanel" aria-labelledby="tab-record" hidden>
 <p class="eyebrow">RECORD VERIFICATION</p>
 <h1>Check a Record</h1>
-<label for="record-type">Record</label><select id="record-type"><option value="whoami">whoami</option></select>
+<label for="record-type">Record</label><select id="record-type"><option value="whoami">whoami</option><option value="myinfo">myinfo</option></select>
 <button id="record-start" type="button" disabled>Create Request</button>
 <p id="record-status" role="status" aria-live="polite">Activate this terminal in Point of Sale to request a record.</p>
 <div id="record-qr" class="card-qr" hidden></div>
@@ -83,6 +83,6 @@
 <div id="record-result" hidden><h2 id="record-label"></h2><img id="record-image" alt="Presented record attachment" hidden>
 <pre id="record-contents"></pre><p class="note" id="record-attachment-note"></p>
 <p id="record-verification-summary" class="note"></p><details><summary>OpenETR verification details</summary><pre id="record-verification"></pre></details></div>
-<button id="record-cancel" class="secondary" type="button" hidden>Clear request</button>
-<p class="note">Requests expire after two minutes. The holder approves by wallet or presents their same-instance card. Only the matching whoami record is requested.</p>
+<button id="record-cancel" class="secondary" type="button" hidden>Stop Request</button>
+<p class="note">Requests expire after two minutes. The holder approves by wallet or presents their same-instance card. Only the selected matching record is requested.</p>
 </section><footer>Dedicated device. Limited access.</footer></main></body></html>

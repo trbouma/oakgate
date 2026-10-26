@@ -1,12 +1,14 @@
 # POS record requests
 
-The **Check a Record** tab lets an activated terminal request a `whoami` record.
+The **Check a Record** tab lets an activated terminal request a `whoami` or `myinfo` record.
 This is a presentation for viewing, not a record transfer or a payment instruction.
-Only `whoami` is enabled in the dropdown and server allowlist in this first version.
+`whoami` is the default. `myinfo` holds additional information the wallet holder
+chooses to present beyond their `whoami` record. Both labels are explicitly
+enabled in the dropdown and server allowlist.
 
 ## Operator experience
 
-1. Select **whoami**, then **Create Request**. A new request clears the previous
+1. Select **whoami** or **myinfo**, then **Create Request**. A new request clears the previous
    displayed record and invalidates the previous request on this terminal.
 2. The holder scans the QR using their OakGate wallet or phone camera. The wallet
    displays the terminal name and requested label and asks for approval. A holder
@@ -16,7 +18,7 @@ Only `whoami` is enabled in the dropdown and server allowlist in this first vers
    iteration supports same-home cards only and does not ask for a PIN.
 4. When ready, choose **Present Record**. Acorn retrieves the presentation for
    display, without importing it into the merchant's wallet.
-5. Create a new request or select **Clear request** to remove the display.
+5. Create a new request or select **Stop Request** to remove the display.
 
 Requests last two minutes. The display also clears on expiry, when leaving the
 record tab, or when the browser becomes hidden. Late responses cannot restore a
@@ -24,7 +26,7 @@ cleared display. Switching back to Point of Sale does not change a payment journ
 
 ## Record selection and verification
 
-Labels are compared in lowercase: `whoami`, `WhoAmI` and `WHOAMI` match. A missing
+Labels are compared in lowercase: `whoami`, `WhoAmI` and `WHOAMI` match; `myinfo` and `MyInfo` also match. A missing
 record or multiple matching labels produces an unavailable result rather than
 selecting an arbitrary record. Only user records returned through Acorn's existing
 record-listing methods are eligible; the terminal cannot request internal wallet
@@ -47,7 +49,7 @@ authenticated wallet session and CSRF validation. The QR contains a random invit
 in its URL fragment, not a record, wallet key or external callback destination.
 OakGate's scanner recognizes this same-home request URL directly.
 
-An NFC tap authorizes disclosure of the designated `whoami` record in this iteration.
+An NFC tap authorizes disclosure of the selected `whoami` or `myinfo` record in this iteration.
 This is an additional bearer-card capability: holders should keep only information
 they intend to present in that record. A lost or copied card can disclose that
 record until revoked. The card and wallet are checked again after preparation and

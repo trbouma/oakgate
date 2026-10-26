@@ -24,7 +24,7 @@ from pos.config import pos_enabled
 router = APIRouter()
 TTL = 120
 # Deliberate disclosure scope. Never accept arbitrary/internal Acorn labels.
-LABELS = {'whoami'}
+LABELS = {'whoami', 'myinfo'}
 
 
 def key(kind, ident):
@@ -88,7 +88,7 @@ async def fulfil(request, ident, owner, card_check=None, card_payload=None):
         matches = [row for row in rows if row['label'].lower() == item['label']]
         # A duplicate case-variant is ambiguous: do not disclose an arbitrary record.
         if len(matches) != 1:
-            raise HTTPException(404, 'A unique matching whoami record was not found.')
+            raise HTTPException(404, 'A unique matching record was not found.')
         lease = await invoke(service.store.acquire, owner)
         result = await service.record_action(material, 'create_record_capability', matches[0]['ref'], 'present',
                                             await invoke(service.store.preference, owner) or None)

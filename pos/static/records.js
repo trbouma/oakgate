@@ -1,7 +1,7 @@
 'use strict';
 (() => {
  const $=id=>document.getElementById(id);
- let signed, id, expires=0, generation=0, timer, expiryTimer, reader, imageURL, busy=false;
+ let signed, id, requestedLabel, expires=0, generation=0, timer, expiryTimer, reader, imageURL, busy=false;
  const message=text=>$('record-status').textContent=text;
  const nfc=()=>isSecureContext && typeof window.NDEFReader==='function';
  function stopNFC(){if(reader){reader.abort();reader=null;}}
@@ -35,9 +35,10 @@
  $('record-start').addEventListener('click',async()=>{
   if(!signed||busy)return;
   clear();busy=true;$('record-start').disabled=true;const run=generation;
+  const label=$('record-type').value;
   message('Creating request…');
-  try{const result=await signed('record-start',{label:$('record-type').value});if(run!==generation)return;
-   id=result.request_id;expires=result.expires;qr(result.qr);$('record-cancel').hidden=false;$('record-nfc').hidden=!nfc();$('record-nfc').disabled=false;
+  try{const result=await signed('record-start',{label});if(run!==generation)return;
+   requestedLabel=label;id=result.request_id;expires=result.expires;qr(result.qr);$('record-cancel').hidden=false;$('record-nfc').hidden=!nfc();$('record-nfc').disabled=false;
    message('Ask the wallet holder to scan and approve, or request using their NFC card.');
    expiryTimer=setTimeout(()=>{if(run===generation){clear();message('Request expired. Create a new request.');}},Math.max(0,expires*1000-Date.now()));
    poll(run);
@@ -47,7 +48,7 @@
  $('record-nfc').addEventListener('click',async()=>{
   if(!id||busy||!nfc())return;
   busy=true;const run=generation,requestID=id;reader=new AbortController();const controller=reader;
-  $('record-nfc').disabled=true;message('Ask the holder to tap their card to present their whoami record.');
+  $('record-nfc').disabled=true;message(`Ask the holder to tap their card to present their ${requestedLabel} record.`);
   const scan=new window.NDEFReader();
   scan.onreading=async({message:read})=>{
    if(run!==generation||reader!==controller)return;

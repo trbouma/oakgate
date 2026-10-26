@@ -5,7 +5,7 @@
 {% if request_signed_in %}
 <p id="record-request-details">Checking request…</p>
 <p>Approve only if you want this terminal to view your matching record and its attachment. This does not transfer the record or authorize a payment.</p>
-<button id="record-request-approve" class="primary-action nfc-action" type="button" disabled>Present whoami</button>
+<button id="record-request-approve" class="primary-action nfc-action" type="button" disabled>Present Record</button>
 {% else %}
 <p>Sign in in another tab, then return here and continue.</p>
 <a class="primary-action nfc-action" href="/auth/login" target="_blank" rel="noopener">Sign in</a>

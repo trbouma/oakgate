@@ -12,29 +12,30 @@ from app.pos_records import fulfil, key, load, router
 from test_pos_receiving import env, call
 
 
-def setup_records(env, monkeypatch):
+def setup_records(env, monkeypatch, label="WhoAmI"):
     app=env[0]; app.state.store=MemoryStore(); app.state.settings=SimpleNamespace(origin='https://oakgate.example', secure=True)
     app.include_router(router)
     service=app.state.wallets
     calls=[]
     async def records(material):
-        return [{'label':'WhoAmI','ref':'a'*64}]
+        return [{'label':label,'ref':'a'*64}]
     async def action(material, name, *args):
         calls.append((name,args))
         return {'descriptor':'acorn:record-presentation:test','expires_at':9999999999}
     async def inspect(material, code, presentation):
         assert presentation is True
-        return {'label':'WhoAmI','payload':{'name':'Alice','text':'<script>never execute</script>'},'blob_data':None,'expires_at':9999999999}
+        return {'label':label,'payload':{'name':'Alice','text':'<script>never execute</script>'},'blob_data':None,'expires_at':9999999999}
     monkeypatch.setattr(service,'records',records)
     monkeypatch.setattr(service,'record_action',action)
     monkeypatch.setattr(service.backend,'inspect_scanned_record',inspect,raising=False)
     return SimpleNamespace(app=app), calls
 
 
-def test_start_approve_present_and_replace(env,monkeypatch):
-    request,calls=setup_records(env,monkeypatch)
+@pytest.mark.parametrize("requested,label", [("whoami","WhoAmI"),("myinfo","MyInfo")])
+def test_start_approve_present_and_replace(env,monkeypatch,requested,label):
+    request,calls=setup_records(env,monkeypatch,label)
     async def run():
-        start=await call(env,'record-start',{'label':'whoami'});assert start.status_code==200
+        start=await call(env,'record-start',{'label':requested});assert start.status_code==200
         ident=start.json()['request_id'];assert '/account/record-request' not in start.json().get('url','')
         assert (await call(env,'record-status',{'request_id':ident})).json()['state']=='waiting'
         assert (await call(env,'record-present',{'request_id':ident})).status_code==409
@@ -42,7 +43,7 @@ def test_start_approve_present_and_replace(env,monkeypatch):
         assert calls[0][0]=='create_record_capability' and calls[0][1][1]=='present'
         assert (await call(env,'record-status',{'request_id':ident})).json()['state']=='ready'
         shown=await call(env,'record-present',{'request_id':ident})
-        assert shown.status_code==200 and shown.json()['label']=='WhoAmI'
+        assert shown.status_code==200 and shown.json()['label']==label
         assert 'Alice' in shown.json()['contents'] and 'descriptor' not in shown.json()
         encrypted=await request.app.state.store.get(key('result',ident));assert 'Alice' not in encrypted
         with pytest.raises(HTTPException):await fulfil(request,ident,'owner')
