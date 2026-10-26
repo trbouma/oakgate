@@ -164,8 +164,17 @@
           } else {
             $('pay-nfc-status').textContent=result.state==='processing' ? 'Payment is processing. Do not tap another card.' : 'Payment needs review. Check the paying wallet before another payment.';
           }
-        } catch(_) {
-          $('pay-nfc-status').textContent='Card payment could not be confirmed. Check the paying wallet before trying another payment. Cards from other homes are not supported yet.';
+        } catch(error) {
+          if(error.code==='same-wallet') {
+            // This rejection happens before reservation or debit. The original
+            // receipt remains usable, so permit a different card without a new invoice.
+            nfcAttemptKey=null;
+            $('pay-nfc-status').textContent='This card belongs to the receiving wallet. Use a different card. No payment was sent.';
+            $('pay-nfc').hidden=receiptState!=='pending';
+            $('receipt-code').hidden=!code || ['detected','complete'].includes(receiptState);
+          } else {
+            $('pay-nfc-status').textContent='Card payment could not be confirmed. Check the paying wallet before trying another payment. Cards from other homes are not supported yet.';
+          }
         }
       }).finally(()=>{nfcBusy=false;});
     };

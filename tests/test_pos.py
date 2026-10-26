@@ -112,3 +112,21 @@ def test_pos_does_not_import_custody_application():
         "import sys; import pos.main; assert 'app.main' not in sys.modules; assert 'app.wallets' not in sys.modules; assert 'acorn.acorn' not in sys.modules"],
         capture_output=True, text=True, timeout=15)
     assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize('detail,expected', [
+    ({'code':'same-wallet'}, {'code':'same-wallet','message':'This card belongs to the receiving wallet. Use a different card. No payment was sent.'}),
+    ({'code':'unknown','message':'private backend detail'}, 'Check the amount and currency, or refresh the receiving options.'),
+])
+def test_card_rejection_proxy_allowlist(detail, expected):
+    from pos.main import COOKIE
+    settings=enabled_settings()
+    def backend(request):
+        return httpx.Response(400,json={'detail':detail})
+    with TestClient(create_app(settings,httpx.MockTransport(backend)),base_url=settings.public_url) as client:
+        cookie=Fernet(settings.cookie_key.encode()).encrypt(b'oakgate-pos-session-v1:test').decode()
+        client.cookies.set(COOKIE,cookie)
+        response=client.post('/api/card-pay',headers={'Origin':settings.public_url},
+                             json={'payload':'{}','challenge':'test','signature':'test'})
+        assert response.status_code==400
+        assert response.json()['detail']==expected

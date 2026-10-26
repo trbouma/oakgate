@@ -553,3 +553,21 @@ body:not(.landing) > header { padding-block: 12px; gap: 12px; }
 #card-pair input[type=checkbox] { width:22px; height:22px; vertical-align:middle; margin-right:.5rem; }
 
 .nfc-pin-policy input[type="checkbox"] { width: 22px; height: 22px; vertical-align: middle; margin-right: .5rem; }
+
+/* Wallet NFC enrollment uses the same action treatment as Funds and Records. */
+.nfc-panel .nfc-action {
+  display:flex; align-items:center; justify-content:center;
+  width:100%; min-height:56px; margin:12px 0 0; padding:14px 20px;
+  font:inherit; font-size:18px; font-weight:600; line-height:1.4;
+  text-align:center; white-space:normal; overflow-wrap:anywhere;
+  border-radius:6px; cursor:pointer; touch-action:manipulation;
+}
+.nfc-panel button.secondary-action { background:transparent; }
+.nfc-panel button.secondary-action:hover { background:var(--surface-soft); }
+.nfc-panel .nfc-action:disabled { opacity:.55; cursor:not-allowed; }
+.nfc-panel .nfc-action[hidden] { display:none; }
+.nfc-panel article + article { margin-top:24px; padding-top:20px; border-top:1px solid var(--border); }
+.nfc-panel .nfc-pin-policy select {
+  width:100%; min-height:48px; padding:10px 12px; font:inherit;
+  background:var(--control); color:var(--text); border:1px solid var(--border); border-radius:6px;
+}

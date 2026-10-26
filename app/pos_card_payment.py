@@ -48,7 +48,7 @@ async def pay(request, actor, payload):
     # authorizes this debit. No PIN prompt in this initial same-home flow.
     authority = await invoke(cards.balance_authority, actor['id'], data['card_payload'], limit=True)
     if authority['owner'] == actor['owner']:
-        raise HTTPException(400, 'Use a different wallet to pay this request.')
+        raise HTTPException(400, {'code': 'same-wallet'})
     tickets = TerminalRequests(custody)
     row = await invoke(tickets.find, actor, data['request_key'])
     if not row:

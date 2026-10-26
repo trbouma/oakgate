@@ -67,6 +67,16 @@ def create_app(settings=None, transport=None):
                     result = await client.get(settings.api_url + '/api/pos/v1/' + path)
                 else:
                     result = await client.post(settings.api_url + '/api/pos/v1/' + path, json=data, headers=headers)
+            if path == 'card-pay' and result.status_code == 400:
+                # Allow only a known pre-debit rejection across the service boundary.
+                # Never relay arbitrary backend error text or classify timeouts as safe.
+                try:
+                    rejection = result.json().get('detail')
+                except (ValueError, AttributeError):
+                    rejection = None
+                if rejection == {'code': 'same-wallet'}:
+                    raise HTTPException(400, {'code': 'same-wallet', 'message':
+                        'This card belongs to the receiving wallet. Use a different card. No payment was sent.'})
             if result.status_code in {400, 403, 404, 409, 429, 503}:
                 detail = {400: 'Check the amount and currency, or refresh the receiving options.', 404: 'Request not found on this terminal.', 409: 'This request already has a different amount. Start a new request.', 403: 'Authorization failed. Check the key, device or revocation status.',
                           429: 'Too many attempts. Please wait a minute.', 503: 'OakGate POS is unavailable. Please try again shortly.'}

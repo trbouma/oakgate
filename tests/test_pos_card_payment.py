@@ -130,3 +130,20 @@ def test_card_pay_requires_signed_body_and_one_use_challenge(env, monkeypatch):
 
 
 from test_pos_receiving import env
+
+
+def test_same_wallet_rejected_before_reservation_or_send(payment, monkeypatch):
+    from contextlib import closing
+    async def run():
+        request, actor, payload, sender, store, _ = payment
+        monkeypatch.setattr('app.pos_card_payment.CardStore.balance_authority',
+                            lambda *args, **kwargs: {'owner':actor['owner'],'wallet_id':actor['wallet_id']})
+        with pytest.raises(HTTPException) as exc:
+            await pay(request, actor, payload)
+        assert exc.value.status_code == 400
+        assert exc.value.detail == {'code':'same-wallet'}
+        sender.prepare_code.assert_not_awaited()
+        sender.send.assert_not_awaited()
+        with closing(store.custody.connect()) as db:
+            assert db.execute("SELECT count(*) FROM wallet_requests WHERE state='processing'").fetchone()[0] == 0
+    asyncio.run(run())

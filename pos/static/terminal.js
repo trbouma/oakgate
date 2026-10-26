@@ -51,7 +51,12 @@
     const response = await fetch('/api/' + operation, {method:'POST', headers:{'Content-Type':'application/json'},
       credentials:'same-origin', cache:'no-store', body:JSON.stringify(data)});
     const result = await response.json();
-    if (!response.ok) throw new Error(result.detail || 'Please try again shortly.');
+    if (!response.ok) {
+      const detail=result.detail;
+      const error=new Error(typeof detail==='string' ? detail : detail?.message || 'Please try again shortly.');
+      if(detail?.code==='same-wallet')error.code='same-wallet';
+      throw error;
+    }
     return result;
   }
   async function proof(challenge, operation, publicKey, payload = '{}') {

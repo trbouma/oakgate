@@ -93,3 +93,30 @@ test('stopped NFC reader ignores a late card event',async()=>{
   f.make('stop-pay-nfc').listeners.click();reader.onreading(cardEvent());await flush();
   assert.equal(reader.signal.aborted,true);assert.equal(payments.length,0);
 });
+
+test('same-wallet rejection restores the original QR and allows a different card',async()=>{
+  const f=fixture(new Map(),true), requests=[];
+  await f.start(async(op,data)=>{
+    if(op==='receive-config')return config;
+    if(op==='card-pay'){requests.push(data);throw Object.assign(new Error('rejected'),{code:'same-wallet'});}
+    return {state:'pending',code:'invoice',qr:'svg'};
+  },'terminal');
+  f.make('amount').value='100';f.submit();await flush();
+  await f.make('pay-nfc').listeners.click();f.readers[0].onreading(cardEvent());await flush();
+  assert.match(f.make('pay-nfc-status').textContent,/belongs to the receiving wallet/);
+  assert.equal(f.make('pay-nfc').hidden,false);assert.equal(f.make('receipt-code').hidden,false);
+  await f.make('pay-nfc').listeners.click();f.readers[1].onreading(cardEvent());await flush();
+  assert.equal(requests.length,2);assert.equal(requests[0].request_key,requests[1].request_key);
+});
+test('unknown card failure does not unlock another debit attempt',async()=>{
+  const f=fixture(new Map(),true);
+  await f.start(async op=>{
+    if(op==='receive-config')return config;
+    if(op==='card-pay')throw new Error('timeout');
+    return {state:'pending',code:'invoice',qr:'svg'};
+  },'terminal');
+  f.make('amount').value='100';f.submit();await flush();
+  await f.make('pay-nfc').listeners.click();f.readers[0].onreading(cardEvent());await flush();
+  assert.equal(f.make('pay-nfc').hidden,true);assert.equal(f.make('receipt-code').hidden,true);
+  assert.match(f.make('pay-nfc-status').textContent,/could not be confirmed/);
+});
