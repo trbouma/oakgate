@@ -4,7 +4,7 @@
 <section class="wallet-panel preferences-panel">
 <form method="post" action="/account/add-record" enctype="multipart/form-data" class="record-form" data-progress-message="{{ _('Saving your record. Please wait…') }}">
 <input type="hidden" name="csrf" value="{{ csrf }}">
-<label for="record-label">{{ _('Label') }}</label><input id="record-label" name="label" required maxlength="200" autocomplete="off">
+<label for="record-label">{{ _('Label') }}</label><input type="text" id="record-label" name="label" required maxlength="200" autocomplete="off">
 <label for="record-format">{{ _('Format') }}</label><select id="record-format" name="format"><option value="text">{{ _('Text') }}</option><option value="json">{{ _('JSON') }}</option></select>
 <label for="record-payload">{{ _('Contents') }}</label><textarea id="record-payload" name="payload" rows="8"></textarea>
 <label for="record-attachment">{{ _('Attach a file') }} {{ _('(optional, up to 25 MiB)') }}</label><input type="file" id="record-attachment" name="attachment">

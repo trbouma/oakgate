@@ -16,3 +16,10 @@ body{padding:14px 16px}main{width:min(100%,540px)}header{margin-bottom:12px}sect
 #panel-record h1{margin-bottom:16px}
 
 #panel-record{text-align:center}#panel-record label{text-align:left}#record-image{display:block;max-width:100%;max-height:360px;margin:12px auto;border-radius:10px}#record-contents,#record-verification{white-space:pre-wrap;overflow-wrap:anywhere;text-align:left;font:14px/1.5 system-ui}#record-result details{text-align:left}
+
+/* Give Clear asset names the space released by the hidden currency selector. */
+.selectors:has([data-receive-currency][hidden]){grid-template-columns:minmax(0,1fr)}
+@media(min-width:740px) and (max-height:700px){
+  #receive-form:has([data-receive-currency][hidden]) .selectors{grid-column:1/-1}
+  #receive-form:has([data-receive-currency][hidden]) .receive-keypad{grid-row:2/5}
+}
