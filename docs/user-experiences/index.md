@@ -37,7 +37,7 @@ individual independence built into its direction.
 ## From a wallet to a card
 
 At a community café, Maya pairs her wallet with the counter terminal, approves
-her own card, and pays with a tap. Her phone doesn't need to write NFC cards—the
+her own card, pays with a tap, and presents a record at the terminal. Her phone doesn't need to write NFC cards—the
 terminal takes care of that.
 
 [Follow the experience →](card-pairing-and-payments.md){ .md-button .md-button--primary }
@@ -56,7 +56,8 @@ terminal takes care of that.
 
 Sam equips his shop and market kiosks with affordable Android phones. Each
 accepts Cash or Clear into his wallet, with its own activation and revocation.
-Staff can collect payments without receiving his wallet login.
+Staff can collect payments and request customer record presentations without
+receiving his wallet login.
 
 [Follow the experience →](one-wallet-several-counters.md){ .md-button .md-button--primary }
 

@@ -6,6 +6,21 @@ This is a presentation for viewing, not a record transfer or a payment instructi
 chooses to present beyond their `whoami` record. Both labels are explicitly
 enabled in the dropdown and server allowlist.
 
+## Prepare the records in your wallet
+
+Create a record labeled **whoami** with the information you want to use to
+introduce yourself. You may attach an image, such as a photo, for the terminal to
+preview. Create **myinfo** separately for additional information you wish to
+present. The terminal requests one selected record at a time; choosing `myinfo`
+does not automatically disclose `whoami` as well.
+
+Keep only information you intend to present in these records. NFC presentation
+does not currently require a PIN. The card points to the Acorn; record contents
+and attachments are not written onto the card.
+
+For an illustrated example, see [From a wallet to a card](user-experiences/card-pairing-and-payments.md#a-record-with-the-same-card)
+and [One wallet, several counters](user-experiences/one-wallet-several-counters.md#one-terminal-for-payments-and-record-checks).
+
 ## Operator experience
 
 1. Select **whoami** or **myinfo**, then **Create Request**. A new request clears the previous
@@ -72,7 +87,8 @@ a presentation is not a claim of physical deletion of all media-server copies.
 ## Deployment and checks
 
 Rebuild and refresh **both the OakGate app and POS service**. There are no new
-environment variables or database migrations. The existing record transfer server,
+environment variables or database migrations. Existing activated terminals do
+not need to be re-provisioned; reload the terminal after deploying both services. The existing record transfer server,
 allowed storage servers and OpenETR settings apply. Redis must be available for
 production; losing ephemeral request state requires a new request, not recovery of
 a payment or a change to the user's Acorn.
@@ -80,4 +96,5 @@ a payment or a change to the user's Acorn.
 Test an ordinary QR approval and NFC tap on the actual terminal. Also test a missing
 record, a revoked card, expiry and starting a new request while a previous lookup
 is pending. Automated tests cover these authorization and stale-response boundaries;
-physical NFC and live relay/media behavior still need deployment verification.
+the operator has reported successful NFC presentation on the deployed terminal.
+Repeat the QR, NFC and expiry checks on each target deployment and browser.

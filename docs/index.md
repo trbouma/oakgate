@@ -78,7 +78,8 @@ Recover your safebox outside OakGate, then end the relationship and request dele
 Meet Project OakGate, the custodial version of Safebox, then see how it fits
 into everyday life: a wallet holder pairs a card and pays
 with a tap, while a small merchant equips several counters to receive Cash and
-Clear into one wallet.
+Clear into one wallet. The same terminals can now request and display `whoami`
+and `myinfo` records through QR approval or NFC.
 
 [Meet Project OakGate](user-experiences/meet-project-oakgate.md){ .md-button .md-button--primary }
 [From a wallet to a card](user-experiences/card-pairing-and-payments.md){ .md-button }

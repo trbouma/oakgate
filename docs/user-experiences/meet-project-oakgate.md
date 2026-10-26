@@ -32,6 +32,11 @@ connect an existing one using its recovery information.
 Once connected, the everyday interface is straightforward: **Funds**, **Records**
 and **Messages**. She has a receipt address that looks like an email address.
 She can show a payment request, receive Cash or Clear, and open a shared record.
+At an OakGate terminal, she can also present her `whoami` or `myinfo` record:
+she approves a QR request in her wallet or taps a same-home NFC card. Staff use
+**Present Record** to view it temporarily, including a supported image attachment
+and OpenETR information. [See the record presentation flow](../038-pos-record-requests.md).
+
 She does not need to understand the protocols before using these features.
 
 OakGate's custody also allows it to receive and settle supported payments while

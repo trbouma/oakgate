@@ -55,6 +55,28 @@ also offer **Pay by NFC**. The current card-payment flow is limited to the same
 OakGate home and does not request a payment PIN. QR receiving does not require NFC
 hardware. [See the card experience](card-pairing-and-payments.md).
 
+## One terminal for payments and record checks
+
+At the community market, Sam's staff can also request a record without opening
+his wallet. They switch from **Point of Sale** to **Check a Record**, choose
+**whoami** or **myinfo**, and select **Create Request**.
+
+A customer scans the request and approves in their OakGate wallet, or presents
+a same-home NFC card when staff select **Request by NFC**. Staff then choose
+**Present Record** to see the text, supported image attachment and available
+OpenETR verification information. The customer decides what to keep in these
+records: `whoami` for the information they use to introduce themselves, and
+`myinfo` for additional information they wish to present.
+
+Starting the next request clears the previous customer's display. Staff can also
+select **Stop Request**; requests expire after two minutes. The terminal views a
+temporary presentation rather than adding the record to Sam's Acorn. Staff must
+still judge whether the evidence meets their needs—record presentation is not
+automatic identity verification or permission to enter an event.
+
+Existing activated terminals can use this feature after both the app and POS
+are updated. They do not need new activation keys.
+
 ## A missing terminal does not mean a missing wallet
 
 At closing time, the pop-up phone cannot be found. Sam opens Preferences on his
@@ -87,7 +109,10 @@ or general spending access. A lost device therefore has a smaller scope of acces
 than an unlocked merchant wallet. It should still be revoked promptly.
 
 Today's POS also offers card issuance, confirmed card-balance lookups and
-customer-card-authorized payment collection. Those are additional limited
+customer-card-authorized payment collection, and `whoami`/`myinfo` record
+presentations through QR approval or a card tap. NFC record requests do not ask
+for a PIN, so a lost or copied card can expose those records at an authorized
+terminal until revoked. These are additional limited
 capabilities: describing the device as completely harmless or incapable of any
 data access would be misleading. Protect activation credentials, use a device
 screen lock, and do not leave the merchant's signed-in wallet open on a staff POS.
@@ -100,4 +125,5 @@ rollouts need operator review rather than a promise of unlimited devices.
 
 [POS setup and activation](../024-pos-deployment.md) ·
 [Card payment details](../025-pos-nfc-cards.md) ·
+[POS record presentation](../038-pos-record-requests.md) ·
 [Explore User Experiences](index.md)

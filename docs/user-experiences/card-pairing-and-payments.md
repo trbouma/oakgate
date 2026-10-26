@@ -1,6 +1,6 @@
 ---
 title: From a wallet to a card
-description: Visually confirm a pairing, issue an NFC card at the POS, and pay with a tap.
+description: Visually confirm a pairing, issue an NFC card at the POS, pay with a tap, and present a record at the terminal.
 ---
 
 # From a wallet to a card
@@ -46,6 +46,32 @@ For this first version, payments do not prompt for a PIN. Maya keeps her card
 safe and can revoke it from her wallet if it is lost. Card sign-in is a separate,
 optional enrollment flow.
 
+## A record with the same card
+
+The café also hosts a community event. Maya has prepared a `whoami` record in
+her wallet with a photo and the information she wants to show at the desk.
+Her `myinfo` record contains additional information she chooses to present separately.
+
+The staff member opens **Check a Record**, selects **whoami**, and chooses
+**Create Request**. Maya can scan the QR with her wallet, check the terminal name
+and requested label, then approve. With her card, the staff member instead chooses
+**Request by NFC** and Maya taps it on the terminal.
+
+Once the presentation is ready, the staff member selects **Present Record**.
+The terminal displays the record text and its supported image attachment, so
+Maya's photo can appear alongside her information. OpenETR verification information
+is available for the attachment. Staff still need to assess what the record says;
+a presentation alone does not prove identity or entitlement.
+
+If additional information is needed, staff start a new request for **myinfo**.
+Maya's previous record disappears from the display. **Stop Request** also removes
+the display, and requests expire after two minutes. The record stays in Maya's
+Acorn; it is not imported into the café's wallet.
+
+NFC presentation currently uses the same-home card without a PIN. Maya therefore
+puts only information she is comfortable presenting in these two records and
+revokes a lost card promptly. QR presentation asks for approval in her wallet.
+
 ## Quietly in the background
 
 Maya sees her wallet, a pairing code, a card and a payment indication. The
@@ -74,4 +100,5 @@ If a payment cannot be confirmed, check its status before trying another payment
 
 [Card provisioning and payment details](../025-pos-nfc-cards.md) ·
 [Card trust and security](../029-nfc-card-trust.md) ·
+[POS record presentation](../038-pos-record-requests.md) ·
 [Explore User Experiences](index.md)

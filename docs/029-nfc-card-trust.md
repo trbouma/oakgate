@@ -66,11 +66,12 @@ The following describes the implementation today, not future NWC or debit powers
 | --- | --- | --- |
 | Receive Cash or Clear through pay-to-card | Payer is signed in, reviews recipient/asset/amount and confirms spending from their own Acorn; issuer validates the card and signs destination resolution | Copy can identify the same recipient; it does not directly authorize debiting that recipient |
 | Available Balance | Activated issuing-instance POS and confirmed disclosure; card validity checked, including revocation before returning balances | An attacker with a copy and access to an authorized terminal could see balances; UI confirmation is not independent holder authentication |
+| POS record presentation | Activated same-home terminal, valid card and a request limited to `whoami` or `myinfo`; card and wallet rechecked before retrieval | A lost or copied card can disclose those records without a PIN; clearing the screen cannot erase information already seen |
 | Keycloak login with PIN | Explicit holder enrollment, fresh normal authentication to activate, valid card, server-verified PIN and existing enabled Keycloak user | Copy alone is insufficient while PIN checking is enabled; copy plus PIN can authenticate |
 | Keycloak card-only login | Explicit per-card policy choice, risk acknowledgement and fresh normal authentication | Copy alone can authenticate; this is a substantially stronger capability than receiving payments |
 | Direct debit/NWC from card | Not currently granted by this card protocol | Must receive a separate capability and risk design before implementation |
 
-**Payment and balance operations do not currently prompt for the PIN.** Generating
+**Payment, balance and POS record-presentation operations do not currently prompt for the PIN.** Generating
 a PIN during issuance does not automatically protect every card capability.
 Conversely, successful card login creates a normal OakGate session, with the
 wallet actions that session permits, including sending payments. Describing the
