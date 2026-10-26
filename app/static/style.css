@@ -590,3 +590,17 @@ body:not(.landing) > header { padding-block: 12px; gap: 12px; }
   font-weight:600; cursor:pointer;
 }
 .record-form input[type=file]::file-selector-button:hover { background:#334729; }
+
+/* Compact inbox: one preview and metadata line, tap for full contents. */
+.message-list { text-align:left; min-width:0; }
+.message-row { border-bottom:1px solid var(--border, #8885); margin:0; padding:0; }
+.message-row > summary { cursor:pointer; min-height:44px; padding:.55rem .25rem; list-style:none; }
+.message-row > summary::-webkit-details-marker { display:none; }
+.message-row > summary:focus-visible { outline:2px solid currentColor; outline-offset:2px; }
+.message-preview { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; }
+.message-meta { display:flex; gap:.75rem; justify-content:space-between; font-size:.75rem; opacity:.75; margin-top:.15rem; }
+.message-sender { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.message-meta time { flex-shrink:0; }
+.message-detail { padding:0 .25rem .5rem; }
+.message-detail p { margin:.35rem 0; }
+.message-detail .note { font-size:.75rem; }

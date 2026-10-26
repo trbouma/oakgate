@@ -1,25 +1,24 @@
 {% extends "base.html" %}
 {% block content %}
 <h2>{{ _('Your Messages') }}</h2>
-<p class="note">{{ _('Private messages between Acorn wallets. Your wallet key is used, not your social NIP-05 identity.') }}</p>
 {% if notice %}<p role="status">{{ _(notice) }}</p>{% endif %}
-{% if not connected %}<p>{{ _('Connect or create an Acorn first.') }}</p><a href="/account">{{ _('Balances') }}</a>
+{% if not connected %}<p>{{ _('Connect or create an Acorn first.') }}</p><a href="/account">{{ _('Funds') }}</a>
 {% elif not enabled %}<p>{{ _('Wallet messaging requires the updated Safebox Acorn component.') }}</p>
 {% else %}
-<section class="wallet-panel preferences-panel">
-<form method="post" action="/account/messages" data-progress-message="{{ _('Sending wallet message. Please wait and do not submit again.') }}">
-<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="submission" value="{{ submission }}">
-<label for="recipient">{{ _('Recipient wallet address') }}</label><input id="recipient" name="recipient" type="email" maxlength="254" required autocomplete="off" autocapitalize="none" placeholder="name@example.com">
-<label for="message">{{ _('Message') }}</label><textarea id="message" name="message" maxlength="4000" rows="5" required></textarea>
-<button class="primary-action" type="submit">{{ _('Send wallet message') }}</button>
-</form></section>
-<h2>{{ _('Inbox') }}</h2><p class="note">{{ _('Recent messages only. Open this page again to refresh. Messages never trigger payments or other actions.') }}</p>
 {% if failed %}<p role="status">{{ _('Wallet messages are unavailable. Please try again later.') }}</p>
 {% elif not messages %}<p>{{ _('No messages yet.') }}</p>{% endif %}
-{% for message in messages %}<article class="wallet-panel wallet-message">
-<p class="breakable"><strong>{{ _('Sender wallet key') }}</strong><br>{{ message.sender }}</p>
-{% if message.claimed_sender %}<p class="breakable">{{ message.claimed_sender }} · {% if message.verification == 'verified' %}{{ _('Wallet address verified') }}{% elif message.verification == 'mismatch' %}{{ _('Address does not match sender wallet') }}{% else %}{{ _('Unverified wallet address') }}{% endif %}</p>{% endif %}
-<small>{{ message.date }}</small><p class="message-content">{{ message.content }}</p>
-</article>{% endfor %}
+<div class="message-list">
+{% for message in messages %}<details class="message-row">
+<summary>
+<span class="message-preview">{{ message.content.splitlines()[0] if message.content.splitlines() else _('Message') }}</span>
+<span class="message-meta"><span class="message-sender">{% if message.claimed_sender and message.verification == 'verified' %}{{ message.claimed_sender }}{% else %}{{ message.sender[:12] }}…{% endif %}</span><time>{{ message.date }}</time></span>
+</summary>
+<div class="message-detail">
+<p class="message-content">{{ message.content }}</p>
+{% if message.claimed_sender %}<p class="note breakable">{{ message.claimed_sender }} · {% if message.verification == 'verified' %}{{ _('Wallet address verified') }}{% elif message.verification == 'mismatch' %}{{ _('Address does not match sender wallet') }}{% else %}{{ _('Unverified wallet address') }}{% endif %}</p>{% endif %}
+<p class="note breakable">{{ _('Sender wallet key') }}: {{ message.sender }}</p>
+</div>
+</details>{% endfor %}
+</div>
 {% endif %}
 {% endblock %}

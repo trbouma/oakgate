@@ -1,5 +1,7 @@
 import asyncio
 import re
+import json
+import secrets
 from unittest.mock import AsyncMock
 import pytest
 from stroma import Keys
@@ -8,8 +10,8 @@ from test_wallets import setup, login, form
 from app.wallets import AcornBackend
 
 
-def submission(page):
-    return re.search(r'name="submission" value="([^"]+)"', page.text).group(1)
+def submission(service, owner):
+    return service.store.cipher.encrypt(json.dumps({'owner':owner,'nonce':secrets.token_urlsafe(24)}).encode()).decode()
 
 
 def test_wallet_messages_auth_csrf_and_replay(tmp_path):
@@ -28,9 +30,11 @@ def test_wallet_messages_auth_csrf_and_replay(tmp_path):
             service.store.save_handle(owner,'alice')
             page = await client.get('/account/messages')
             assert page.headers['cache-control'] == 'no-store'
+            assert 'action="/account/messages"' not in page.text and 'name="recipient"' not in page.text
+            assert 'message-row' in page.text
             assert '&lt;script&gt;' in page.text and '<script>private' not in page.text
             assert 'Address does not match sender wallet' in page.text
-            data = form(recipient='alice@oakgate.example',message='hello',submission=submission(page))
+            data = form(recipient='alice@oakgate.example',message='hello',submission=submission(service, owner))
             assert (await client.post('/account/messages',data={**data,'csrf':'bad'})).status_code == 403
             result = await client.post('/account/messages',data=data)
             assert result.status_code == 303
@@ -56,7 +60,7 @@ def test_uncertain_send_consumes_form_and_hides_errors(tmp_path):
             owner = await login(client,sessions)
             await client.post('/account/acorn/create',data=form())
             service.store.save_handle(owner,'alice')
-            data = form(recipient='alice@oakgate.example',message='hello',submission=submission(await client.get('/account/messages')))
+            data = form(recipient='alice@oakgate.example',message='hello',submission=submission(service, owner))
             response = await client.post('/account/messages',data=data)
             assert response.status_code == 502 and 'SECRET-NSEC' not in response.text
             assert (await client.post('/account/messages',data=data)).status_code == 409

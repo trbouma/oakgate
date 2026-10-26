@@ -2,7 +2,6 @@
 import asyncio
 import hashlib
 import json
-import secrets
 from app.database import INTEGRITY_ERRORS
 import time
 from contextlib import closing
@@ -46,20 +45,20 @@ async def page(request, session, notice=None, status=200):
     record = service.store.get(owner) if service else None
     connected = bool(record and record['status'] == 'active')
     enabled = available(service)
-    rows, failed, token = [], False, ''
+    rows, failed = [], False
     if connected and enabled:
         try:
             service.relay(record['material']['relay'])
             async with asyncio.timeout(30):
                 rows = await service.backend.wallet_messages(record['material'], resolver(request))
+            rows = sorted(rows, key=lambda row: row['created_at'], reverse=True)
             for row in rows:
                 row['date'] = datetime.fromtimestamp(row['created_at'], timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
         except Exception:
             failed = True
-        token = service.store.cipher.encrypt(json.dumps({'owner': owner, 'nonce': secrets.token_urlsafe(24)}).encode()).decode()
     return request.app.state.templates.TemplateResponse(request=request, name='messages.html', status_code=status,
         context={**session, 'active_page': 'messages', 'connected': connected, 'enabled': enabled,
-                 'messages': rows, 'failed': failed, 'notice': notice, 'submission': token})
+                 'messages': rows, 'failed': failed, 'notice': notice})
 
 
 @router.get('/account/messages', include_in_schema=False)

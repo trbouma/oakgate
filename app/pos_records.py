@@ -224,6 +224,8 @@ async def operation(request, actor, operation, payload):
         from app.emergency_contacts import notify_contact
         result['notification'] = await notify_contact(request, ident, source, text)
         await sealed_put(request, 'result', ident, item, result)
+    from app.presentation_receipts import schedule_receipt
+    schedule_receipt(request, ident, actor, source, detail['label'])
     return result
 
 

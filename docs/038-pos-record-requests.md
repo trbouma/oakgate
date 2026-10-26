@@ -138,3 +138,38 @@ Notification lookup/publication has a bounded wait of up to about 21 seconds.
 Rebuild the app and POS to add the `emergency` choice. No new environment variables,
 database migration or terminal enrollment are required. There is no email integration.
 See [A day at the beach](user-experiences/a-day-at-the-beach.md) for the illustrated story.
+
+
+## Holder presentation receipts
+
+When the POS acquires any supported record (`whoami`, `myinfo` or `emergency`)
+for display, it schedules a private message to the holder's Acorn. This happens
+for both QR approval and NFC presentation. The terminal owner's Acorn sends the
+receipt through the existing Acorn/Stroma wallet messaging method. The destination
+is the holder's known Acorn public key and bootstrap relay, without an address or
+social NIP-05 lookup. No wallet handle is required for the holder.
+
+The receipt includes the record label, terminal name, access time in UTC and a
+request reference. It contains no record contents, attachment or presentation
+capability. The holder sees it under **Your Messages**, newest first. Tap a compact
+row to expand its full text and sender details. Only a verified wallet address is
+used as the collapsed sender label; otherwise a shortened wallet public key is
+shown. Compose is hidden for now; the existing protected send endpoint remains.
+
+Receipts are sent in the background and do not delay presentation. A durable
+one-use submission marker prevents duplicate messages for the same request,
+including concurrent accesses and uncertain publication. Emergency contact notices
+and holder receipts have separate markers and recipients. Opening a new request
+represents another access and may produce another receipt.
+
+This is a recent, best-effort presentation history, not a complete audit archive.
+The inbox reads up to 50 recent wallet messages from Acorn's bounded relay window.
+A crash, busy wallet, relay outage or revoked terminal can prevent a receipt;
+uncertain publication is not automatically retried. A receipt reports server-side
+access for presentation, not proof that a person viewed the screen. Other wallet
+messages can make claims too: sender signatures identify their wallet, not the
+truth of their contents. This flow covers POS record requests, not every possible
+record view or sharing flow elsewhere.
+
+Deploy the rebuilt app for the compact inbox and holder receipts. No schema,
+configuration or terminal enrollment changes are needed.
