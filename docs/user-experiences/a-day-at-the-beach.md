@@ -21,7 +21,7 @@ NFC credential written into a neoprene bracelet. The bracelet works like her car
 it gives the terminal a way to reach her wallet, without storing her wallet's private
 key or her records on the bracelet.
 
-Her wallet has Cash for purchases and the resort's supported Clear credits. She
+Her wallet has Everyday Funds for purchases and the resort's supported Community Credits. She
 has also prepared a **whoami** record with her photo and resort membership, and an
 **emergency** record containing information she chooses to make available.
 
@@ -39,8 +39,8 @@ Request** removes the display, and the request expires after two minutes.
 
 ## A second tap to pay
 
-The attendant switches to **Point of Sale**, enters the amount and chooses Cash
-or the appropriate Clear balance. Kai taps to pay for the surf session. The
+The attendant switches to **Point of Sale**, enters the amount and selects Cash for Everyday Funds
+or the appropriate Community Credits asset using its friendly name. Kai taps to pay for the surf session. The
 terminal follows the payment through its existing receipt flow; a detected payment
 and a finalized credit are different states. Her phone is still in the room.
 
@@ -83,3 +83,5 @@ concept: the chosen tag and enclosure must be tested for the intended water expo
 
 See [POS record requests](../038-pos-record-requests.md) for setup, notification
 limits and the supported record labels.
+
+*Terminology: Everyday Funds means Cash; Community Credits means Clear balances. Some illustrations and payment controls retain Cash/Clear. See [user-facing language](../product-direction.md#user-facing-language).*

@@ -97,7 +97,9 @@ including setup, payment review, recovery warnings, records, sharing, scanner,
 PDF previews and OpenETR explanations. Static messages passed to `error_page`
 are also translated; include `-k error_page:2` during extraction to retain them.
 Recovery placeholders and record-preview accessibility labels now use gettext.
-Cash balance wording is consistently “Solde en espèces”; Clear remains a product
+The current balance headings are **Everyday Funds** (“Fonds du quotidien”) and
+**Community Credits** (“Crédits communautaires”). Older Cash balance entries remain
+in the catalogs for controls that still use them; Clear remains a technical product
 name. User content and public identifiers are unchanged.
 
 A regression test checks that every marked template message, marked Python

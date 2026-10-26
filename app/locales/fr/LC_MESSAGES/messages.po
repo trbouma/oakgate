@@ -2890,3 +2890,9 @@ msgstr "Vous activez l’accès au compte par carte seule. Toute personne déten
 
 msgid "Sign in again with Google or email to save this card’s sign-in settings. This also resets its failed PIN attempts. Only enable cards you control."
 msgstr "Connectez-vous à nouveau avec Google ou par courriel pour enregistrer les paramètres de connexion de cette carte. Cela réinitialise aussi les tentatives de NIP échouées. Activez uniquement les cartes dont vous avez le contrôle."
+
+msgid "Everyday Funds"
+msgstr "Fonds du quotidien"
+
+msgid "Community Credits"
+msgstr "Crédits communautaires"

@@ -31,7 +31,7 @@ connect an existing one using its recovery information.
 
 Once connected, the everyday interface is straightforward: **Funds**, **Records**
 and **Messages**. She has a receipt address that looks like an email address.
-She can show a payment request, receive Cash or Clear, and open a shared record.
+She can show a payment request, receive Everyday Funds or Community Credits, and open a shared record.
 At an OakGate terminal, she can also present her `whoami` or `myinfo` record:
 she approves a QR request in her wallet or taps a same-home NFC card. Staff use
 **Present Record** to view it temporarily, including a supported image attachment
@@ -111,3 +111,5 @@ herself.**
 [Custody models](../006-custody-models.md) ·
 [Recovery disclosure today](../016-recovery-disclosure.md) ·
 [Go Independent design](../004-go-independent.md)
+
+*Terminology: Everyday Funds means Cash; Community Credits means Clear balances. Some illustrations and payment controls retain Cash/Clear. See [user-facing language](../product-direction.md#user-facing-language).*

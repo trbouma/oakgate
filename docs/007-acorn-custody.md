@@ -2,7 +2,7 @@
 
 Date: 2026-10-17
 
-After signing in, a user can connect an existing Acorn with its recovery phrase and bootstrap relay, or create a new Acorn. Each Keycloak identity can hold one connection. The account page reads the connected Acorn's cash balance in sats and displays Clear balances separately.
+After signing in, a user can connect an existing Acorn with its recovery phrase and bootstrap relay, or create a new Acorn. Each Keycloak identity can hold one connection. The account page shows **Everyday Funds** (Acorn's Cash balance, denominated in sats) and **Community Credits** (Clear balances) separately. Local-currency display is described in the [currency guide](013-local-currency.md).
 
 ## User experience
 
@@ -10,7 +10,7 @@ After signing in, a user can connect an existing Acorn with its recovery phrase 
 
 **Create a new Acorn** defaults to `wss://spurline.safebox.dev`. OakGate uses Acorn to generate a 24-word phrase and native wallet metadata. It encrypts and saves that material before publishing to the relay. An interrupted setup remains pending; **Retry setup** uses the same identity and metadata, even after an app restart. Relay readback must succeed before the connection is marked active.
 
-Both choices require the user to acknowledge custody. Once connected, the choices are replaced by the cash balance and a refresh link. A relay failure shows an unavailable balance, not zero. The displayed amount is Acorn's relay-loaded cash-proof balance; OakGate does not check spendability with each mint or combine Clear balances with cash.
+Both choices require the user to acknowledge custody. Once connected, the choices are replaced by Everyday Funds, Community Credits and a refresh link. A relay failure shows an unavailable balance, not zero. The displayed amount is Acorn's relay-loaded cash-proof balance; OakGate does not check spendability with each mint or combine Clear balances with cash.
 
 ## Local development
 
@@ -71,9 +71,9 @@ OakGate pins safebox-acorn to revision `20c0663c55ddd188e1486f7ebdb540c173c19527
 
 Automated tests cover real offline Acorn generation and derivation, encrypted restart recovery, ownership isolation, duplicate connections, pending setup retries, unavailable balances, and request protections. Relay operations are simulated in the suite. A live create/connect/readback test on your relay remains part of deployment verification; no funded wallet or recovery phrase is used by these tests.
 
-This slice does not implement payments, Nostr Wallet Connect, secret revelation, connection replacement, deletion, or Go Independent. Stored recovery material keeps the [Go Independent design](004-go-independent.md) possible, but the full independent recovery and deletion workflow is still to be built. Additional Acorn recovery state may be required as further capabilities are introduced.
+The original custody slice did not implement payments or secret disclosure. Payments and recovery disclosure have since been added; see [project status](project-status.md) for current scope. The full Go Independent workflow remains planned. Stored recovery material keeps the [Go Independent design](004-go-independent.md) possible, but the full independent recovery and deletion workflow is still to be built. Additional Acorn recovery state may be required as further capabilities are introduced.
 
-## Clear balances and friendly units
+## Community Credits and friendly units
 
 The account page calls Acorn's `get_clear_balances()` to read held Clear proofs. Each mint, canonical unit, and keyset remains a separate balance, even if friendly labels happen to be identical. Clear amounts are never added to cash or to other units. Pending receipts are not included, and displaying a balance does not perform a payment or check mint spendability.
 
@@ -85,7 +85,7 @@ Cash and Clear reads run independently. A Clear relay failure displays “Clear 
 
 ## Records
 
-The signed-in account navigation switches between **Balances**, **Records**, and **Preferences**. Records lists user-record labels in descending event-timestamp order, with alphabetical ordering for ties. It reads Acorn's standard stored user records (kind 37375); Acorn filters its internal wallet records. The list shows labels only. Clicking a label opens a read-only detail page with the record payload rendered as escaped text or indented JSON. HTML is not executed, and external content is not fetched. There is no editing or deletion.
+The signed-in account navigation switches between **Funds**, **Records**, **Messages**, and **Preferences**. Records lists user-record labels in descending event-timestamp order, with alphabetical ordering for ties. It reads Acorn's standard stored user records (kind 37375); Acorn filters its internal wallet records. The list shows labels. Clicking a label opens its detail view with safe content rendering and supported attachment previews. Record creation, editing, deletion, presentation and sharing have since been added through Acorn; see [POS record requests](038-pos-record-requests.md) for terminal presentations.
 
 Detail URLs contain an opaque record reference and resolve only against the signed-in user's Acorn user-record listing, not arbitrary internal labels. Missing records return 404; unavailable reads return 503 without exposing provider errors.
 
@@ -116,7 +116,7 @@ See [Identity mapping storage and backups](008-identity-storage-backups.md) for 
 
 ## Cash transaction history
 
-Click the cash balance to open **Cash transactions**. The page shows the current balance and the ten newest transactions as cards, read only from the user’s Acorn relay history. OakGate’s local payment journal is not included. A received payment appears here only when a transaction-history entry exists in the Acorn. OakGate now calls Acorn’s `add_tx_history()` to write that native entry after crediting each incoming Lightning payment or zap, and backfills retained completed payments after upgrade. History writes are verified and retried without repeating the payment. Cards show direction, date (UTC), sats, fees, available historical balance and notes; a missing historical balance is shown as a dash. Sent amounts include fees, following Safebox Web's presentation.
+Click **Everyday Funds** to open **Cash transactions** (the current transaction-page title). The page shows the current balance and the ten newest transactions as cards, read only from the user’s Acorn relay history. OakGate’s local payment journal is not included. A received payment appears here only when a transaction-history entry exists in the Acorn. OakGate now calls Acorn’s `add_tx_history()` to write that native entry after crediting each incoming Lightning payment or zap, and backfills retained completed payments after upgrade. History writes are verified and retried without repeating the payment. Cards show direction, date (UTC), sats, fees, available historical balance and notes; a missing historical balance is shown as a dash. Sent amounts include fees, following Safebox Web's presentation.
 
 Click the balance on the transaction page to return to the main Balances page. Cash history is read-only, protected by the existing account session, and never includes private keys, proofs or payment preimages. If Acorn history is unavailable, the page shows an error rather than substituting local journal entries or reporting an empty history. Clear balance headings, amounts and details are centred on the main page.
 

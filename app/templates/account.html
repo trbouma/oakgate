@@ -10,7 +10,7 @@
 {% elif wallet %}
 <section class="wallet-panel" aria-labelledby="wallet-title">
 {% if wallet.status == 'active' %}
-<h3 class="balance-heading">{{ _("Cash Balance") }}</h3>
+<h3 class="balance-heading">{{ _("Everyday Funds") }}</h3>
 {% if balance_error %}<p role="status">{{ _("Balance unavailable right now.") }}</p><p class="note">{{ _("Your Acorn is still connected. Try refreshing in a moment.") }}</p>
 {% else %}<a class="balance-link" href="/account/transactions" aria-label="{{ _('%(amount)s sats. View recent transactions') % {'amount': '{:,}'.format(balance)} }}">{% include "cash_balance.html" %}</a>{% endif %}
 <section class="receive-payment" aria-labelledby="receive-title">
@@ -24,7 +24,7 @@
 {% else %}<p class="note">{{ _("Choose a") }} <a href="/account/preferences">{{ _("handle in Preferences") }}</a> {{ _("to receive payments at your OakGate address. Receiving requires this instance’s HTTPS domain.") }}</p>{% endif %}
 </section>
 <section class="clear-balances" aria-labelledby="clear-title">
-<h3 id="clear-title" class="balance-heading">{{ _("Clear Balances") }}</h3>
+<h3 id="clear-title" class="balance-heading">{{ _("Community Credits") }}</h3>
 {% if clear_error %}<p role="status">{{ _("Clear balances unavailable right now. Try refreshing in a moment.") }}</p>
 {% elif clear_balances %}
 {% for item in clear_balances %}

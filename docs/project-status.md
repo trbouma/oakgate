@@ -1,27 +1,67 @@
 # Project status
 
-OakGate is an early-stage project. This page separates working foundations from intended capabilities.
+OakGate is in active development. This page distinguishes implemented features,
+operator-reported results on the existing deployment, and checks still required
+for a new home instance. Deployment reports are not a certification or a guarantee
+that every integration and failure mode has been tested.
+
+## Implemented and exercised
 
 | Area | Current state |
 | --- | --- |
-| FastAPI app | Landing page, logo, `/health`, and `/docs` implemented |
-| Local development | Python 3.12, Poetry lockfile, automatic reload, HTTP tests |
-| Container deployment | Dockerfile and Compose service prepared; build on deployment host |
-| Keycloak | Instance running behind Nginx HTTPS; `oakgate` realm created |
-| Google provider | Configured in Keycloak; realm login tested |
-| App sign-in | Code flow with PKCE, server-side sessions, account page and logout implemented; application client setup and live verification required |
-| Acorn integration and custody | Create/connect, encrypted recovery storage, and cash and Clear balance display with friendly units implemented; live relay verification pending |
-| Lightning receiving and zaps | Direct-to-Acorn receiving and durable restart recovery implemented; compatibility mode default; live paid settlement and client verification pending |
-| POS record presentation | `whoami`/`myinfo`/`emergency` requests through QR approval or same-home NFC, temporary display and OpenETR information implemented; NFC presentation reported working on the deployed terminal; emergency contact-wallet notices implemented and locally tested, deployment test pending |
-| Recovery information | Encrypted custody; fresh-authenticated phrase, relay and recovery-mode disclosure implemented; independent restoration verification pending |
-| Go Independent | Design note agreed; implementation deferred |
-| Documentation | MkDocs site prepared; publication depends on GitHub Pages deployment |
+| Wallet app | Funds, Records, Messages and Preferences; Everyday Funds and Community Credits with friendly units and local-currency display |
+| Local development | Python 3.12, Poetry, automatic reload and automated tests; containers built on the deployment host |
+| Sign-in | Keycloak with Google, email registration and recovery, and enrolled NFC card authentication; operator reported successful login flows and logout |
+| Acorn custody | Create/connect, encrypted custody storage and balance readback; operator confirmed an existing Acorn's displayed balance matched |
+| Payments | Cash and Clear sending/receiving, direct ecash, Lightning and recovery journals implemented; operator reported successful external-wallet Lightning payments and Clear requests with history on both sides |
+| Zaps | Receipt handling implemented; independent end-to-end verification remains a deployment check rather than inferred from a successful ordinary Lightning payment |
+| Records | Creation, attachment preview, update, deletion, sharing and presentation through Acorn; operator reported attachment display and accepted sharing working |
+| POS | Browser-bound activation, receiving, NFC issuance, balance lookup and card payment flows implemented; operator reported activation, card issuance and balance lookup working |
+| POS record presentation | `whoami`, `myinfo` and `emergency` requests through QR approval or same-home NFC; temporary display and OpenETR information; operator reported NFC presentation working |
+| Presentation notices | Emergency contact-wallet notifications and holder presentation receipts implemented with duplicate protection and local tests; live delivery verification pending |
+| Messages | Compact newest-first received-message list, expandable details, compose hidden; reads Acorn messages, including available presentation receipts |
+| Application storage | PostgreSQL runtime and Alembic migration tooling implemented; operator reported verified data migration and healthy application startup |
+| Keycloak storage | Separate PostgreSQL database and role; operator reported import verification preserving realm user IDs and identity links, then healthy startup and working sign-in |
+| Deployment | Environment-based storage paths, health checks and refresh scripts; operator reported healthy services on SSD-backed storage |
+| Documentation | MkDocs site and illustrated User Experiences; new changes still require publication |
 
-## Next milestones
+**Everyday Funds** is the user-facing name for Cash; **Community Credits** is the
+user-facing name for Clear balances. Technical names and some payment controls
+retain Cash/Clear. See [user-facing language](product-direction.md#user-facing-language).
 
-1. Configure the `oakgate-web` client and verify app login/logout using the [setup guide](005-keycloak-sign-in.md).
-2. Verify create/connect and balance readback against the deployed bootstrap relay.
-3. Extend the initial custody inventory and independently verify recovery before adding further capabilities.
-4. Keep Go Independent requirements visible as identity, storage, background jobs, and backups are introduced.
+## Incomplete or requiring further verification
 
-These are development intentions, not a release schedule. The application now stores and operates user Acorns custodially. Recovery disclosure is implemented. Go Independent and rehearsed disaster recovery remain incomplete. See the [Mainstay principles review](010-mainstay-principles.md#review-findings-and-follow-up-work) for the alignment gaps and acceptance requirements.
+- Recovery disclosure is implemented. Independent Acorn restoration and a complete
+  disaster-recovery rehearsal still need verification; a backup plan is not a
+  demonstrated restore.
+- The complete **Go Independent** departure and deletion workflow remains planned.
+  Displaying recovery information does not end custody or prove erasure.
+- Home/satellite deployment is a documented architecture, not deployed satellite
+  support.
+- Presentation receipts and emergency notifications are best-effort messages,
+  not a complete audit archive or guaranteed emergency alert service.
+- Municipal credit programs in User Experiences are illustrative. Their funding,
+  participation and reimbursement processes require separate operational setup.
+
+## Acceptance checks for every new home
+
+1. Plan the identity, database, storage, domain and backup choices using
+   [Planning for OakGate](planning-for-oakgate.md). Confirm the configured mounts
+   and service health before enabling use.
+2. Configure the Keycloak realm and application client, then test the enabled
+   sign-in, registration, recovery and logout flows. Use the
+   [sign-in guide](005-keycloak-sign-in.md); an existing home's successful test
+   does not configure another home.
+3. Create or connect a test Acorn and verify balances and friendly units against
+   its relay and mints. Test small incoming and outgoing payments, receipts and
+   transaction history, including recovery from an uncertain outcome without
+   resending blindly.
+4. If enabled, test POS activation and revocation, NFC issuance and payments,
+   QR/NFC record presentation, expiry and message delivery to the correct wallets.
+   Check supported devices and issuer/relay boundaries.
+5. Protect and back up configuration and secrets separately from public docs.
+   Rehearse restoration before relying on the service for production custody.
+
+These checks remain necessary after relevant configuration or infrastructure
+changes. See the [Mainstay principles review](010-mainstay-principles.md#review-findings-and-follow-up-work)
+for architectural boundaries and outstanding acceptance requirements.

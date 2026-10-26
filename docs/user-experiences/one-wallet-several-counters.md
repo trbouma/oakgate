@@ -1,6 +1,6 @@
 ---
 title: One wallet, several counters
-description: A small merchant turns affordable Android phones into individually revocable Cash and Clear payment terminals.
+description: A merchant equips affordable Android terminals to receive Everyday Funds and Community Credits.
 ---
 
 # One wallet, several counters
@@ -35,13 +35,13 @@ Clear asset, enter the amount, and display a request for the customer. They do
 not need Sam's Google or email login, his recovery phrase, or access to his Funds
 page. Sam keeps account administration on his own device.
 
-## Cash at the shop, Clear at the market
+## Everyday Funds at the shop, Community Credits at the market
 
 At the shop, a customer buys a loaf of bread. The cashier selects Cash and enters
 the price in local currency. OakGate shows the satoshi amount used to generate
 the invoice. The customer scans the payment QR with a compatible wallet.
 
-At the market, another customer pays using community-issued Clear credits. The
+At the market, another customer pays using Community Credits, backed by a community-issued Clear asset. The
 staff member selects the matching Clear balance and enters a whole-number amount
 in that credit's units. Cash and Clear stay distinct: community credits are not
 automatically converted to bitcoin or treated as having the same value.
@@ -127,3 +127,5 @@ rollouts need operator review rather than a promise of unlimited devices.
 [Card payment details](../025-pos-nfc-cards.md) ·
 [POS record presentation](../038-pos-record-requests.md) ·
 [Explore User Experiences](index.md)
+
+*Terminology: Everyday Funds means Cash; Community Credits means Clear balances. Some illustrations and payment controls retain Cash/Clear. See [user-facing language](../product-direction.md#user-facing-language).*

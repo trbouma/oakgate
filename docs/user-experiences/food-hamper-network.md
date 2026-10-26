@@ -133,3 +133,5 @@ families and food banks can keep their doors open.
 
 [One wallet, several counters](one-wallet-several-counters.md) ·
 [Explore User Experiences](index.md)
+
+*Terminology: Everyday Funds means Cash; Community Credits means Clear balances. Some illustrations and payment controls retain Cash/Clear. See [user-facing language](../product-direction.md#user-facing-language).*

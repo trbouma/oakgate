@@ -102,3 +102,5 @@ If a payment cannot be confirmed, check its status before trying another payment
 [Card trust and security](../029-nfc-card-trust.md) ·
 [POS record presentation](../038-pos-record-requests.md) ·
 [Explore User Experiences](index.md)
+
+*Terminology: Everyday Funds means Cash; Community Credits means Clear balances. Some illustrations and payment controls retain Cash/Clear. See [user-facing language](../product-direction.md#user-facing-language).*

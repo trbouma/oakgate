@@ -45,3 +45,14 @@
 .oakgate-experience-image { display:block; max-width:44rem; margin:1.5rem auto; }
 .oakgate-experience-image img { display:block; width:100%; height:auto; border-radius:8px; border:1px solid var(--oakgate-border); }
 @media(max-width:36rem) { .oakgate-experience-preview { grid-template-columns:1fr; gap:1rem; } .oakgate-experience-preview > p { max-width:200px; margin-inline:auto; } }
+
+/* The person and their story introduce OakGate before deployment details. */
+.oakgate-community-story { margin:1.4rem auto 2rem; max-width:48rem; }
+.oakgate-community-image { display:block; width:100%; height:auto; border-radius:10px; border:1px solid var(--oakgate-border); }
+.md-typeset .oakgate-community-story h2 { color:var(--oakgate-ink); font-size:clamp(1.35rem, 3vw, 1.8rem); line-height:1.25; font-weight:650; margin:1.2rem auto .7rem; }
+.oakgate-community-story > p:first-child { max-width:none; }
+.oakgate-community-story p { max-width:34rem; margin:.7rem auto; line-height:1.65; }
+@media(max-width:36rem) {
+  .oakgate-community-story { margin-top:1rem; }
+  .oakgate-community-image { border-radius:6px; }
+}

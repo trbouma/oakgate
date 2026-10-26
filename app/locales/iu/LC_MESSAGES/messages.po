@@ -2422,3 +2422,11 @@ msgstr "ᑲᔪᓯᒋᑦ"
 #. Provisional demonstration UI adaptation; fluent Inuktitut speaker review required.
 msgid "Copied"
 msgstr "ᐊᔾᔨᓕᐅᖅᑕᐅᔪᖅ"
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+msgid "Everyday Funds"
+msgstr "ᖃᐅᑕᒫᑦ ᑮᓇᐅᔭᐃᑦ"
+
+# Provisional UI adaptation; fluent Inuktitut speaker review required.
+msgid "Community Credits"
+msgstr "ᓄᓇᓕᐅᑉ ᑮᓇᐅᔭᖏᑦ"

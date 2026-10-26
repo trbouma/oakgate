@@ -2354,3 +2354,9 @@ msgstr "Volver a tus fondos"
 
 msgid "Continue"
 msgstr "Continuar"
+
+msgid "Everyday Funds"
+msgstr "Fondos cotidianos"
+
+msgid "Community Credits"
+msgstr "Créditos comunitarios"

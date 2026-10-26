@@ -1,6 +1,6 @@
 ---
 title: OakGate
-description: A welcoming way into your safebox. Managed by default, with a path to independence.
+description: More freedom in everyday life. Managed by default, with a path to independence.
 hide:
   - toc
 ---
@@ -13,7 +13,24 @@ hide:
 
 # OakGate
 
-<p class="oakgate-tagline">A welcoming way into your safebox.</p>
+<p class="oakgate-tagline">More freedom in everyday life.</p>
+
+<div class="oakgate-community-story" markdown>
+
+<img class="oakgate-community-image" width="1536" height="1024" src="assets/oakgate-community-hero.png" alt="Leah stands confidently in a lively neighbourhood market, holding her phone and a grocery bag as neighbours exchange goods and help with a community event." fetchpriority="high">
+
+## Connected to your community.
+
+Leah stops at the market, pays for her groceries and greets a neighbour. Her community credits, everyday funds and membership records are close at hand and safe at home. A phone—or a paired card at a participating terminal—helps her get
+on with her day.
+
+OakGate brings these everyday exchanges into a familiar place: **Funds, Records
+and Messages**, with a trusted provider looking after the technical details.
+Leah can focus on being part of her community.
+
+[Meet Leah and discover OakGate](user-experiences/meet-project-oakgate.md){ .md-button .md-button--primary }
+
+</div>
 
 <p class="oakgate-intro">A custodial app built around safebox-acorn. Familiar sign-in, recovery kept close, and a path to independence when you choose.</p>
 
@@ -23,11 +40,11 @@ hide:
 </section>
 
 !!! note "Early development"
-    The FastAPI app and Keycloak deployment are in place. App sign-in is implemented and needs the [Keycloak client setup](005-keycloak-sign-in.md). [Acorn creation, connection, encrypted custody storage, and cash-balance display](007-acorn-custody.md) are implemented; live relay verification remains part of deployment. Go Independent remains planned.
+    OakGate supports sign-in, Acorn custody, Everyday Funds, Community Credits, records, wallet messages and POS workflows. Features have been exercised on the existing deployment; every new instance still needs configuration and acceptance checks. See [project status](project-status.md) for confirmed results and remaining work. The complete Go Independent workflow remains planned.
 
 ## Managed by default. Independent by choice.
 
-OakGate is being designed for people who want to use their safebox without managing keys and relay settings in everyday life. It will hold the information needed to operate and recover their safebox, and make that information available when they ask.
+OakGate lets people use their safebox without managing keys and relay settings in everyday life. It retains encrypted wallet secrets and recovery material, and provides recovery disclosure after fresh authentication. Independent restoration still needs verification; disclosing recovery material does not end custody.
 
 <div class="oakgate-grid" markdown>
 
@@ -35,7 +52,7 @@ OakGate is being designed for people who want to use their safebox without manag
 
 ### A familiar entrance
 
-Sign in through Keycloak, with Google as the intended first identity provider. Keep the everyday experience approachable.
+Sign in through Keycloak using the options your provider enables: Google, email and password, or an enrolled NFC card. Google is optional and replaceable.
 
 [Authentication design →](001-authentication-design.md)
 
@@ -55,7 +72,7 @@ Retain the keys, recovery phrase, bootstrap relay, and additional information ne
 
 ### Go Independent
 
-Recover your safebox outside OakGate, then end the relationship and request deletion of the information OakGate holds about you.
+The planned workflow will help you recover your safebox outside OakGate, end the relationship and request deletion of the information OakGate holds about you. Recovery disclosure is available now; the complete departure workflow is not.
 
 [Read the design note →](004-go-independent.md)
 
@@ -77,9 +94,9 @@ Recover your safebox outside OakGate, then end the relationship and request dele
 
 Meet Project OakGate, the custodial version of Safebox, then see how it fits
 into everyday life: a wallet holder pairs a card and pays
-with a tap, while a small merchant equips several counters to receive Cash and
-Clear into one wallet. The same terminals can now request and display `whoami`
-and `myinfo` records through QR approval or NFC.
+with a tap, while a small merchant equips several counters to receive Everyday Funds and
+Community Credits into one wallet. The same terminals can now request and display `whoami`,
+`myinfo` and `emergency` records through QR approval or NFC.
 
 [Meet Project OakGate](user-experiences/meet-project-oakgate.md){ .md-button .md-button--primary }
 [From a wallet to a card](user-experiences/card-pairing-and-payments.md){ .md-button }

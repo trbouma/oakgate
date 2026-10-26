@@ -1,16 +1,17 @@
 # Local currency and exchange rates
 
 Choose **Preferences → Local currency**, then save. OakGate stores the currency
-in `user_currency_preferences` in the instance's existing `custody.sqlite3`, keyed
+in `user_currency_preferences` in the instance's configured application database
+(PostgreSQL in the deployed home, or SQLite where configured), keyed
 by issuer/subject identity, alongside the account's language preference. It is
 not a cookie, an Acorn field, or a Google/Keycloak setting. It persists across
 sessions and devices even if the user clears their handle. Language, currency
 and handle changes are committed together, or all rolled back on validation failure.
 
-The cash balance shows an approximate currency amount prominently, with the
+**Everyday Funds** (the Cash balance) shows an approximate currency amount prominently, with the
 Bitcoin symbol and exact sats underneath. The same display appears at the top of
-the cash transactions page. Existing balance links retain their behavior. Clear
-assets keep their own friendly units; they are not converted as if they were sats.
+the cash transactions page. Existing balance links retain their behavior. **Community Credits** (Clear
+assets) keep their own friendly units; they are not converted as if they were sats.
 Cash transactions remain exclusively Acorn's history; current exchange rates do
 not rewrite historical values or change existing invoices.
 

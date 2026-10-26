@@ -55,7 +55,7 @@ terminal takes care of that.
 ## One wallet, several counters
 
 Sam equips his shop and market kiosks with affordable Android phones. Each
-accepts Cash or Clear into his wallet, with its own activation and revocation.
+accepts Everyday Funds or Community Credits into his wallet, with its own activation and revocation.
 Staff can collect payments and request customer record presentations without
 receiving his wallet login.
 
@@ -96,6 +96,23 @@ Follow one family's experience of support without another personal interview at
 the counter.
 
 [Follow the experience →](food-hamper-network.md){ .md-button .md-button--primary }
+
+</div>
+
+</article>
+
+<article class="oakgate-experience-preview" markdown>
+
+[![OakGate full-page advertising concept](../assets/advertising/oakgate-full-page-ad.png)](ad-example.md)
+
+<div markdown>
+
+## Ad example
+
+Everyday Funds, Community Credits and Records that Matter. A full-page advertising
+concept about everyday exchanges, community and the company we keep.
+
+[View the ad →](ad-example.md){ .md-button .md-button--primary }
 
 </div>
 

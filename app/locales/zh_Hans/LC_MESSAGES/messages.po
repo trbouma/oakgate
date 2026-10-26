@@ -2338,3 +2338,9 @@ msgstr "返回您的资金"
 
 msgid "Continue"
 msgstr "继续"
+
+msgid "Everyday Funds"
+msgstr "日常资金"
+
+msgid "Community Credits"
+msgstr "社区积分"

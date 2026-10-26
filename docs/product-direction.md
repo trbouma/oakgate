@@ -4,20 +4,35 @@ OakGate is a custodial application around safebox-acorn. Its purpose is to make 
 
 OakGate is positioned as the primary Mainstay client for everyday use, with Safebox Web as the experimental non-custodial client. Both retain the shared Acorn architecture and the commitment to user independence. See [Mainstay client roles](021-mainstay-client-roles.md) for the product responsibilities and implementation boundaries.
 
+## User-facing language
+
+**Everyday Funds** is the user-facing name for Cash; **Community Credits** is the
+user-facing name for Clear balances. Both appear under **Your Funds**. Everyday
+Funds are bitcoin-denominated, with an approximate local-currency display;
+Community Credits retain each issuer's friendly name and unit. They are not
+combined or automatically converted into one another.
+
+Use these names in introductions, stories and balance descriptions. Keep **Cash**
+and **Clear** for protocol, product and configuration references, and when quoting
+controls that still display those terms, such as the POS asset selector.
+Existing infographics may use the earlier names; their accompanying text explains
+the correspondence. Configuration keys, API fields, record labels and asset
+identifiers are unchanged.
+
 ## What OakGate takes responsibility for
 
-The intended service associates an authenticated user with their safebox and retains the material needed to use and recover it. The expected recovery inventory includes the `nsec`, recovery phrase, bootstrap relay, and any additional state needed by Acorn. That inventory still needs to be verified against Acorn's implementation.
+The service associates an authenticated user with their Acorn and retains encrypted custody material, including the private key and recovery information. Recovery disclosure is implemented. A complete independent restoration rehearsal remains necessary to verify that the retained inventory is sufficient.
 
 Keys and recovery details should stay out of the normal interface until the user requests them. A familiar login should open the user's existing safebox rather than require the user to handle secrets on each visit.
 
 ## A distinct custody model
 
-| Responsibility | Safebox Web model described for this project | OakGate's intended model |
+| Responsibility | Safebox Web model described for this project | OakGate model |
 | --- | --- | --- |
 | Retained user `nsec` | Not retained by the app | Protected and retained by the service |
 | Everyday access | User manages key access | User signs in through Keycloak |
 | Recovery | User responsibility | Managed recovery information |
-| Leaving | User already holds responsibility | Explicit Go Independent process |
+| Leaving | User already holds responsibility | Recovery disclosure available; full Go Independent process planned |
 
 Custody introduces responsibilities for account recovery, protection of stored secrets, and ending access. Authentication alone does not implement these responsibilities.
 
@@ -31,7 +46,7 @@ The complete [Go Independent design note](004-go-independent.md) records the int
 
 ## What exists today
 
-The FastAPI app supports Keycloak sign-in, connecting or creating an Acorn, encrypted recovery storage, and cash-balance display. See [Connect an Acorn](007-acorn-custody.md) for setup and verification limits. Complete independent recovery and Go Independent remain future work; see [project status](project-status.md).
+The FastAPI app supports Keycloak sign-in, connecting or creating an Acorn, encrypted recovery storage, Everyday Funds and Community Credits, payments, records, wallet messages and POS workflows. See [Connect an Acorn](007-acorn-custody.md) for setup and verification limits. Complete independent recovery and Go Independent remain future work; see [project status](project-status.md).
 
 ## Mainstay commitments
 

@@ -2357,3 +2357,9 @@ msgstr "Zurück zu deinem Guthaben"
 
 msgid "Continue"
 msgstr "Weiter"
+
+msgid "Everyday Funds"
+msgstr "Geld für den Alltag"
+
+msgid "Community Credits"
+msgstr "Gemeinschaftsguthaben"
