@@ -17,7 +17,7 @@ hide:
 
 <p class="oakgate-intro">A custodial app built around safebox-acorn. Familiar sign-in, recovery kept close, and a path to independence when you choose.</p>
 
-[Get started](getting-started.md){ .md-button .md-button--primary }
+[Plan a deployment](planning-for-oakgate.md){ .md-button .md-button--primary }
 [Explore the direction](product-direction.md){ .md-button }
 
 </section>
@@ -75,11 +75,13 @@ Recover your safebox outside OakGate, then end the relationship and request dele
 
 ## User Experiences
 
-See how OakGate fits into everyday life: a wallet holder pairs a card and pays
+Meet Project OakGate, the custodial version of Safebox, then see how it fits
+into everyday life: a wallet holder pairs a card and pays
 with a tap, while a small merchant equips several counters to receive Cash and
 Clear into one wallet.
 
-[From a wallet to a card](user-experiences/card-pairing-and-payments.md){ .md-button .md-button--primary }
+[Meet Project OakGate](user-experiences/meet-project-oakgate.md){ .md-button .md-button--primary }
+[From a wallet to a card](user-experiences/card-pairing-and-payments.md){ .md-button }
 [One wallet, several counters](user-experiences/one-wallet-several-counters.md){ .md-button }
 [Explore User Experiences](user-experiences/index.md){ .md-button }
 

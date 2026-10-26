@@ -12,6 +12,24 @@ current features from future possibilities.
 
 <article class="oakgate-experience-preview" markdown>
 
+[![Project OakGate and the shared Acorn foundation](../assets/user-experiences/meet-project-oakgate.png)](meet-project-oakgate.md)
+
+<div markdown>
+
+## Meet Project OakGate
+
+Leah starts with familiar sign-in, Funds and Records. Discover how the custodial
+version of Safebox wraps convenience around safebox-acorn, with a path to
+individual independence built into its direction.
+
+[Start here →](meet-project-oakgate.md){ .md-button .md-button--primary }
+
+</div>
+
+</article>
+
+<article class="oakgate-experience-preview" markdown>
+
 [![Card pairing and payment infographic](../assets/user-experiences/card-pairing-and-payments.png)](card-pairing-and-payments.md)
 
 <div markdown>

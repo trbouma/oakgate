@@ -7,3 +7,10 @@ body{padding:14px 16px}main{width:min(100%,540px)}header{margin-bottom:12px}sect
 #card-issuance{padding:0;border:0;box-shadow:none;background:none;text-align:center}.card-qr{background:#fff;width:min(100%,300px);aspect-ratio:1;margin:12px auto;border-radius:12px;overflow:hidden}.card-qr svg{display:block;width:100%;height:100%}#card-pair-code{font:600 22px ui-monospace,monospace;letter-spacing:.12em}#card-overwrite{width:auto;min-height:0;accent-color:#c3dc9f}#card-hardware label{font-size:14px;line-height:1.5;text-align:left}#card-wallet{overflow-wrap:anywhere}
 
 #card-balance-panel{text-align:center} .card-balance-amount{font-size:2.5rem;font-weight:700;margin:.6rem 0}
+
+/* Keep both terminal activities within thumb reach without reloading the POS. */
+.terminal-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.terminal-tabs button{margin:0;min-height:52px;padding:12px 8px;background:#22271f;color:#d6e4c3;border:1px solid #61704f}
+.terminal-tabs button[aria-selected="true"]{background:#c3dc9f;color:#17200f;border-color:#c3dc9f}
+#tab-notice:empty{display:none}
+#panel-record h1{margin-bottom:16px}

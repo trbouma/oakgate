@@ -1,5 +1,8 @@
 # Commission a new PostgreSQL instance
 
+Before running the wizard, complete [Planning for OakGate](planning-for-oakgate.md)
+to choose infrastructure, identity, storage and recovery responsibilities.
+
 ## Fresh installations only
 
 Use `./init-instance.sh` **on the Linux deployment host** with Python 3 and a local

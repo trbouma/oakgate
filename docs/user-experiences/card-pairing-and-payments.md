@@ -5,6 +5,12 @@ description: Visually confirm a pairing, issue an NFC card at the POS, and pay w
 
 # From a wallet to a card
 
+[![OakGate card journey: the POS displays a pairing QR; the wallet holder checks the terminal and code, approves issuance and saves a PIN; the POS writes and verifies the card; a later Cash or Clear request is paid by tapping the card.](../assets/user-experiences/card-pairing-and-payments.png)](../assets/user-experiences/card-pairing-and-payments.png){ .oakgate-experience-image }
+
+[Open the full-size infographic](../assets/user-experiences/card-pairing-and-payments.png){ .md-button }
+
+*Illustrated screens explain the flow; they are not exact application screenshots.*
+
 Maya visits a community café that uses OakGate. She already has a wallet with
 funds, but would like a card she can tap at the counter. The café's POS and her
 wallet belong to the same OakGate home.
@@ -39,14 +45,6 @@ wallet's transaction history provides a place to check the outcome later.
 For this first version, payments do not prompt for a PIN. Maya keeps her card
 safe and can revoke it from her wallet if it is lost. Card sign-in is a separate,
 optional enrollment flow.
-
-## See the whole experience
-
-[![OakGate card journey: the POS displays a pairing QR; the wallet holder checks the terminal and code, approves issuance and saves a PIN; the POS writes and verifies the card; a later Cash or Clear request is paid by tapping the card.](../assets/user-experiences/card-pairing-and-payments.png)](../assets/user-experiences/card-pairing-and-payments.png){ .oakgate-experience-image }
-
-[Open the full-size infographic](../assets/user-experiences/card-pairing-and-payments.png){ .md-button }
-
-*Illustrated screens explain the flow; they are not exact application screenshots.*
 
 ## Quietly in the background
 

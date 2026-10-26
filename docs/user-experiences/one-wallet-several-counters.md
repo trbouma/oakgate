@@ -5,6 +5,12 @@ description: A small merchant turns affordable Android phones into individually 
 
 # One wallet, several counters
 
+[![One merchant wallet connected to a shop counter, market stall and pop-up kiosk. Each affordable Android phone has its own activation key, accepts Cash or Clear over Wi-Fi or mobile data, and can be individually revoked without granting access to spend the merchant's funds.](../assets/user-experiences/one-wallet-several-counters.png)](../assets/user-experiences/one-wallet-several-counters.png){ .oakgate-experience-image }
+
+[Open the full-size infographic](../assets/user-experiences/one-wallet-several-counters.png){ .md-button }
+
+*Illustrated screens explain the experience; they are not exact application screenshots.*
+
 Sam runs a small neighbourhood shop. On Saturdays, one colleague takes a stall
 at the farmers' market while another sells at a nearby pop-up kiosk. Sam wants
 all three counters to accept payments into the same merchant wallet, without
@@ -60,14 +66,6 @@ Revocation does not undo payments already submitted or invalidate every request
 already copied by a customer. Those payments still need normal status checks and
 settlement. Sam replaces the phone, creates a new terminal credential and activates
 the new browser; he does not need to replace his wallet.
-
-## See the merchant's network
-
-[![One merchant wallet connected to a shop counter, market stall and pop-up kiosk. Each affordable Android phone has its own activation key, accepts Cash or Clear over Wi-Fi or mobile data, and can be individually revoked without granting access to spend the merchant's funds.](../assets/user-experiences/one-wallet-several-counters.png)](../assets/user-experiences/one-wallet-several-counters.png){ .oakgate-experience-image }
-
-[Open the full-size infographic](../assets/user-experiences/one-wallet-several-counters.png){ .md-button }
-
-*Illustrated screens explain the experience; they are not exact application screenshots.*
 
 ## His terminals, shared infrastructure
 

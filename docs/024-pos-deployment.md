@@ -4,6 +4,17 @@ The separate `pos` service supports browser-bound device activation, encrypted t
 
 POS uses the same repository and Dockerfile, with its own application entry point and independently built service image. It has no custody volume, wallet keys, OIDC secrets or settlement worker. The Compose `pos` profile keeps it out of the default deployment.
 
+## Terminal activities
+
+The terminal opens on **Point of Sale**, which contains the existing activation,
+receiving, NFC card issuance, available-balance and terminal settings controls.
+**Check a Record** is a placeholder for future record presentation and verification;
+it does not request records or grant additional terminal permissions.
+
+Tabs switch within the page without reloading or resetting the terminal. Finish
+or cancel an active payment, card operation or activation scan before switching.
+The tab controls support touch and keyboard navigation.
+
 ## Configure Beelink
 
 After committing and pushing these changes, add these values to the deployment `.env`:

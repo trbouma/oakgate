@@ -8,13 +8,15 @@ site_dir: site
 
 theme:
   name: material
+  custom_dir: overrides
   language: en
   font: false
   logo: assets/oakgate-logo.png
   favicon: assets/oakgate-logo.png
   features:
+    - navigation.tabs
+    - navigation.tabs.sticky
     - navigation.top
-    - navigation.sections
     - search.suggest
     - search.highlight
     - content.code.copy
@@ -36,9 +38,9 @@ theme:
 
 nav:
   - Home: index.md
-  - Getting started: getting-started.md
   - User Experiences:
       - Overview: user-experiences/index.md
+      - Meet Project OakGate: user-experiences/meet-project-oakgate.md
       - From a wallet to a card: user-experiences/card-pairing-and-payments.md
       - One wallet, several counters: user-experiences/one-wallet-several-counters.md
   - Understand OakGate:
@@ -50,6 +52,8 @@ nav:
       - Go Independent: 004-go-independent.md
       - Project status: project-status.md
   - Build and deploy:
+      - Planning for OakGate: planning-for-oakgate.md
+      - Local development and documentation: getting-started.md
       - New PostgreSQL instance: 035-new-instance.md
       - FastAPI app: 003-fastapi-app.md
       - Public service contract: 017-public-service-contract.md

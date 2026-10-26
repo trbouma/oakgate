@@ -1,6 +1,8 @@
-# Getting started
+# Local development and documentation
 
-OakGate currently provides a branded FastAPI landing page, API documentation, a health endpoint, and a separate Keycloak deployment. It also supports [creating or connecting an Acorn](007-acorn-custody.md), with encrypted recovery storage and cash-balance display.
+Use this page for a development checkout and documentation preview. For a new
+production home, start with [Planning for OakGate](planning-for-oakgate.md), then
+follow [PostgreSQL commissioning](035-new-instance.md).
 
 ## Run the app locally
 
@@ -22,21 +24,16 @@ poetry run pytest
 
 [More about the FastAPI app](003-fastapi-app.md)
 
-## Deploy on your server
+## Deploy a home instance
 
-On Beelink, configure `.env`, confirm the external storage mount, and prepare the [Acorn data directory and custody key](007-acorn-custody.md#deploy-on-beelink), then run:
+A fresh production deployment starts with PostgreSQL for both OakGate and
+home-managed Keycloak. Follow [Planning for OakGate](planning-for-oakgate.md)
+before the staged [new-instance commissioning guide](035-new-instance.md).
+Do not use the local development setup as a production installation procedure.
 
-```sh
-docker compose up -d --build
-```
-
-The app uses port 8801 by default. Keycloak uses port 8800 behind the existing HTTPS proxy. Follow the [Keycloak setup guide](002-keycloak-beelink.md) for storage permissions, credentials, and proxy configuration before starting a fresh deployment.
-
-For subsequent updates:
-
-```sh
-./refresh-containers.sh
-```
+For existing installations, use the documented refresh workflow with the
+instance's configured storage paths and Compose overrides. Fresh-instance
+commissioning is not an upgrade or migration tool.
 
 ## Preview this documentation
 

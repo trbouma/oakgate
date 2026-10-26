@@ -1,8 +1,13 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>OakGate POS</title>
-<link rel="stylesheet" href="/static/terminal.css"><script src="/static/cards.js" defer></script><script src="/static/card-balance.js" defer></script><script src="/static/receiving.js" defer></script><script src="/static/terminal.js" defer></script><script type="module" src="/static/activation-scan.js"></script></head>
+<link rel="stylesheet" href="/static/terminal.css"><script src="/static/cards.js" defer></script><script src="/static/card-balance.js" defer></script><script src="/static/receiving.js" defer></script><script src="/static/terminal.js" defer></script><script src="/static/tabs.js" defer></script><script type="module" src="/static/activation-scan.js"></script></head>
 <body><main><header><img src="/logo.png" alt=""><span>MAINSTAY / OAKGATE POS</span></header>
-<section><p class="eyebrow">YOUR POINT OF SALE</p><h1 id="heading">Set up this terminal</h1>
+<div class="terminal-tabs" role="tablist" aria-label="Terminal activities">
+<button id="tab-sale" type="button" role="tab" aria-selected="true" aria-controls="panel-sale">Point of Sale</button>
+<button id="tab-record" type="button" role="tab" aria-selected="false" aria-controls="panel-record" tabindex="-1">Check a Record</button>
+</div>
+<p id="tab-notice" class="note" role="status" aria-live="polite"></p>
+<section id="panel-sale" role="tabpanel" aria-labelledby="tab-sale"><p class="eyebrow">YOUR POINT OF SALE</p><h1 id="heading">Set up this terminal</h1>
 <p id="status" role="status" aria-live="polite">Checking terminal…</p>
 <form id="activation" hidden>
 <div id="activation-scanner">
@@ -65,4 +70,10 @@
 </div>
 <button id="forget" type="button" class="secondary" hidden>Clear local session</button>
 <p id="error" role="alert"></p><noscript>JavaScript is required to securely activate this device.</noscript>
+</section>
+<section id="panel-record" role="tabpanel" aria-labelledby="tab-record" hidden>
+<p class="eyebrow">RECORD VERIFICATION</p>
+<h1>Check a Record</h1>
+<p>Request a record presentation and review its verification information here.</p>
+<p class="note">Coming soon. Record requests and verification are not available on this terminal yet.</p>
 </section><footer>Dedicated device. Limited access.</footer></main></body></html>
