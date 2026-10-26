@@ -26,6 +26,12 @@ def test_scan_routes_and_csrf(tmp_path):
             page = await client.get('/account')
             assert page.text.index('account-nav') < page.text.index('href="/account/scan"')
             assert 'href="/account/receive"' in page.text
+            scanner_page = await client.get('/account/scan')
+            assert 'class="account-nav"' not in scanner_page.text
+            assert 'class="wallet-actions"' not in scanner_page.text
+            assert 'class="brand-disclosure"' not in scanner_page.text
+            assert 'class="brand-icon" href="/account"' in scanner_page.text
+            assert 'data-scanner-video' in scanner_page.text
             response = await client.post('/account/scan', data={'lightning_payment': 'alice@example.com'})
             assert response.status_code == 403
             for address in ['alice@example.com', 'lightning:alice@example.com', encode_lnurl('https://example.com/.well-known/lnurlp/alice')]:

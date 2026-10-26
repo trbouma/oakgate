@@ -67,6 +67,17 @@ if (
       highlightScanRegion: true,
       highlightCodeOutline: true,
       maxScansPerSecond: 10,
+      calculateScanRegion: (video) => {
+        // Keep the familiar aiming region, but retain more detail in dense codes.
+        const size = Math.round(2 / 3 * Math.min(video.videoWidth, video.videoHeight));
+        const resolution = Math.min(800, size);
+        return {
+          x: Math.round((video.videoWidth - size) / 2),
+          y: Math.round((video.videoHeight - size) / 2),
+          width: size, height: size,
+          downScaledWidth: resolution, downScaledHeight: resolution,
+        };
+      },
       returnDetailedScanResult: true,
       onDecodeError: (error) => {
         if (accepted || !cameraRunning) return;
