@@ -77,7 +77,7 @@
     const bytes=Uint8Array.from(atob(result.attachment.data),c=>c.charCodeAt(0));
     imageURL=URL.createObjectURL(new Blob([bytes],{type:result.attachment.type}));$('record-image').src=imageURL;$('record-image').hidden=false;
    }
-   $('record-result').hidden=false;$('record-present').hidden=true;message('Record presented. Review the record and verification information.');
+   $('record-result').hidden=false;$('record-present').hidden=true;message('Record presented. Review the record and verification information.' + (result.notification ? ' ' + result.notification : ''));
   }catch(_){if(run===generation){message('Presentation unavailable or expired. Create a new request.');$('record-present').disabled=false;}}
   finally{if(run===generation)busy=false;}
  });

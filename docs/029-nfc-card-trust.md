@@ -66,7 +66,7 @@ The following describes the implementation today, not future NWC or debit powers
 | --- | --- | --- |
 | Receive Cash or Clear through pay-to-card | Payer is signed in, reviews recipient/asset/amount and confirms spending from their own Acorn; issuer validates the card and signs destination resolution | Copy can identify the same recipient; it does not directly authorize debiting that recipient |
 | Available Balance | Activated issuing-instance POS and confirmed disclosure; card validity checked, including revocation before returning balances | An attacker with a copy and access to an authorized terminal could see balances; UI confirmation is not independent holder authentication |
-| POS record presentation | Activated same-home terminal, valid card and a request limited to `whoami` or `myinfo`; card and wallet rechecked before retrieval | A lost or copied card can disclose those records without a PIN; clearing the screen cannot erase information already seen |
+| POS record presentation | Activated same-home terminal, valid card and a request limited to `whoami`, `myinfo` or `emergency`; card and wallet rechecked before retrieval | A lost or copied card can disclose those records without a PIN; clearing the screen cannot erase information already seen |
 | Keycloak login with PIN | Explicit holder enrollment, fresh normal authentication to activate, valid card, server-verified PIN and existing enabled Keycloak user | Copy alone is insufficient while PIN checking is enabled; copy plus PIN can authenticate |
 | Keycloak card-only login | Explicit per-card policy choice, risk acknowledgement and fresh normal authentication | Copy alone can authenticate; this is a substantially stronger capability than receiving payments |
 | Direct debit/NWC from card | Not currently granted by this card protocol | Must receive a separate capability and risk design before implementation |
@@ -220,3 +220,5 @@ permissions and loss response are made understandable to the holder.
 See also [issuance](025-pos-nfc-cards.md), [payment protocol](026-nfc-card-payments.md),
 [Keycloak NFC login](027-keycloak-nfc-login.md) and
 [Keycloak operations](028-keycloak-operations.md).
+
+Emergency records may include a `contact:<safebox address>` directive to authorize a best-effort access notice from the holder’s Acorn. A lost or copied card can also trigger such notices. No emergency contents are sent; publication does not establish reading or summon assistance. See [POS record requests](038-pos-record-requests.md#emergency-record-and-contact-notification).

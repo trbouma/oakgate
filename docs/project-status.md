@@ -12,7 +12,7 @@ OakGate is an early-stage project. This page separates working foundations from 
 | App sign-in | Code flow with PKCE, server-side sessions, account page and logout implemented; application client setup and live verification required |
 | Acorn integration and custody | Create/connect, encrypted recovery storage, and cash and Clear balance display with friendly units implemented; live relay verification pending |
 | Lightning receiving and zaps | Direct-to-Acorn receiving and durable restart recovery implemented; compatibility mode default; live paid settlement and client verification pending |
-| POS record presentation | `whoami`/`myinfo` requests through QR approval or same-home NFC, temporary display and OpenETR information implemented; NFC presentation reported working on the deployed terminal |
+| POS record presentation | `whoami`/`myinfo`/`emergency` requests through QR approval or same-home NFC, temporary display and OpenETR information implemented; NFC presentation reported working on the deployed terminal; emergency contact-wallet notices implemented and locally tested, deployment test pending |
 | Recovery information | Encrypted custody; fresh-authenticated phrase, relay and recovery-mode disclosure implemented; independent restoration verification pending |
 | Go Independent | Design note agreed; implementation deferred |
 | Documentation | MkDocs site prepared; publication depends on GitHub Pages deployment |

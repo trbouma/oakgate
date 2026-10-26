@@ -1,9 +1,9 @@
 # POS record requests
 
-The **Check a Record** tab lets an activated terminal request a `whoami` or `myinfo` record.
+The **Check a Record** tab lets an activated terminal request a `whoami`, `myinfo` or `emergency` record.
 This is a presentation for viewing, not a record transfer or a payment instruction.
 `whoami` is the default. `myinfo` holds additional information the wallet holder
-chooses to present beyond their `whoami` record. Both labels are explicitly
+chooses to present beyond their `whoami` record. All three labels are explicitly
 enabled in the dropdown and server allowlist.
 
 ## Prepare the records in your wallet
@@ -23,7 +23,7 @@ and [One wallet, several counters](user-experiences/one-wallet-several-counters.
 
 ## Operator experience
 
-1. Select **whoami** or **myinfo**, then **Create Request**. A new request clears the previous
+1. Select **whoami**, **myinfo** or **emergency**, then **Create Request**. A new request clears the previous
    displayed record and invalidates the previous request on this terminal.
 2. The holder scans the QR using their OakGate wallet or phone camera. The wallet
    displays the terminal name and requested label and asks for approval. A holder
@@ -98,3 +98,43 @@ record, a revoked card, expiry and starting a new request while a previous looku
 is pending. Automated tests cover these authorization and stale-response boundaries;
 the operator has reported successful NFC presentation on the deployed terminal.
 Repeat the QR, NFC and expiry checks on each target deployment and browser.
+
+
+## Emergency record and contact notification
+
+Create a record labeled `emergency` (case-insensitive), containing only information
+you intend to disclose without a PIN. Add exactly one `contact:<safebox address>`
+directive, for example on its own line:
+
+```text
+contact:alex@wallet.example
+```
+
+A JSON string containing the same directive is also accepted. The address must
+stand alone without trailing punctuation. Missing, invalid or multiple directives
+skip notification. Attachments are not searched for contact instructions.
+
+After an emergency presentation is acquired and authorized for display, OakGate
+attempts one access notice from the holder's Acorn through the existing wallet
+messaging adapter and Stroma giftwrap. The notice contains the access time and
+request reference, not record contents, medical details or attachments. It may
+identify the sender by their configured wallet handle. Creating a request, polling
+status or preparing a presentation alone does not send a notice. A lost response
+can mean an access notice was published even if the screen did not render.
+
+Contact resolution uses the existing same-home wallet lookup or `safebox.json`
+with the approved relay policy. There is no NIP-05/social-key fallback. The address
+may also be NIP-05 compliant; NIP-05 alone does not make it a wallet destination.
+
+A durable, one-use `wallet_message_submissions` entry is consumed before the
+notification attempt. Concurrent/repeated presentation calls do not send again for
+that request, including after uncertain publication. There is no automatic retry:
+a crash, busy wallet or network failure may leave a notice unsent. A new request
+is a new access and can generate another notice. This is best-effort notification,
+not a reliable emergency alarm. Publication does not confirm delivery or reading.
+The POS still displays the record if notification fails, with a separate status.
+Notification lookup/publication has a bounded wait of up to about 21 seconds.
+
+Rebuild the app and POS to add the `emergency` choice. No new environment variables,
+database migration or terminal enrollment are required. There is no email integration.
+See [A day at the beach](user-experiences/a-day-at-the-beach.md) for the illustrated story.

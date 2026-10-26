@@ -24,7 +24,7 @@ from pos.config import pos_enabled
 router = APIRouter()
 TTL = 120
 # Deliberate disclosure scope. Never accept arbitrary/internal Acorn labels.
-LABELS = {'whoami', 'myinfo'}
+LABELS = {'whoami', 'myinfo', 'emergency'}
 
 
 def key(kind, ident):
@@ -220,6 +220,10 @@ async def operation(request, actor, operation, payload):
     if result['expires'] <= time.time():
         raise HTTPException(404)
     await sealed_put(request, 'result', ident, item, result)
+    if item['label'] == 'emergency':
+        from app.emergency_contacts import notify_contact
+        result['notification'] = await notify_contact(request, ident, source, text)
+        await sealed_put(request, 'result', ident, item, result)
     return result
 
 

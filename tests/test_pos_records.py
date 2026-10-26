@@ -31,7 +31,7 @@ def setup_records(env, monkeypatch, label="WhoAmI"):
     return SimpleNamespace(app=app), calls
 
 
-@pytest.mark.parametrize("requested,label", [("whoami","WhoAmI"),("myinfo","MyInfo")])
+@pytest.mark.parametrize("requested,label", [("whoami","WhoAmI"),("myinfo","MyInfo"),("emergency","Emergency")])
 def test_start_approve_present_and_replace(env,monkeypatch,requested,label):
     request,calls=setup_records(env,monkeypatch,label)
     async def run():

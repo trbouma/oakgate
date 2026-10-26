@@ -64,3 +64,20 @@ receiving his wallet login.
 </div>
 
 </article>
+
+<article class="oakgate-experience-preview" markdown>
+
+[![A neoprene NFC bracelet at the beach](../assets/user-experiences/a-day-at-the-beach.png)](a-day-at-the-beach.md)
+
+<div markdown>
+
+## A day at the beach
+
+Kai leaves her phone behind. Her bracelet lets her show resort membership, pay
+for surfing and present emergency information with a contact-wallet access notice.
+
+[Follow the experience →](a-day-at-the-beach.md){ .md-button .md-button--primary }
+
+</div>
+
+</article>
