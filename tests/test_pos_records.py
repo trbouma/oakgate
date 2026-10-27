@@ -192,7 +192,7 @@ def test_present_includes_anchor_profile_and_statement(env, monkeypatch):
     async def history(*args, **kwargs):
         return {'verification': {'aggregate_state': 'anchored'}, 'candidate_graphs': [
             {'signer_profile': {'display_name': 'Community Centre', 'name': 'centre'},
-             'anchor': {'author': 'npub-example', 'content': 'Membership confirmed.'}},
+             'anchor': {'author': 'npub-example', 'content': 'Membership confirmed.', 'created_at': '2026-10-27 15:44 UTC'}},
             {'signer_profile': None,
              'anchor': {'author': 'npub-fallback', 'content': 'Second statement.'}},
         ]}
@@ -204,7 +204,11 @@ def test_present_includes_anchor_profile_and_statement(env, monkeypatch):
         response = await call(env, 'record-present', {'request_id': ident})
         assert response.status_code == 200
         assert response.json()['publishers'] == [
-            {'name': 'Community Centre', 'statement': 'Membership confirmed.'},
-            {'name': 'npub-fallback', 'statement': 'Second statement.'},
+            {'name': 'Community Centre', 'statement': 'Membership confirmed.',
+             'signer': 'npub-example', 'anchored_at': '2026-10-27 15:44 UTC',
+             'profile': {'display_name': 'Community Centre', 'name': 'centre', 'about': None, 'address': None}},
+            {'name': 'npub-fallback', 'statement': 'Second statement.',
+             'signer': 'npub-fallback', 'anchored_at': '',
+             'profile': {'display_name': None, 'name': None, 'about': None, 'address': None}},
         ]
     asyncio.run(run())

@@ -73,7 +73,16 @@
     ? `OpenETR: ${String(result.verification.aggregate_state || 'unverifiable').replaceAll('_',' ')}`
     : 'No attached artifact to check with OpenETR.';
    $('record-verification').textContent=result.verification?JSON.stringify(result.verification,null,2):'No attached artifact to check with OpenETR.';
-   $('record-publishers').textContent=(result.publishers || []).map(p=>`${p.name}\n${p.statement || ''}`).join('\n\n');
+   $('record-publishers').textContent=(result.publishers || []).map(p=>{
+    const lines=['Anchor signer', p.name];
+    if(p.signer && p.signer!==p.name)lines.push(p.signer);
+    if(p.anchored_at)lines.push('', 'Anchored at', p.anchored_at);
+    if(p.statement)lines.push('', 'Anchor statement', p.statement);
+    const profile=p.profile || {};
+    const fields=['name','display_name','about','address'].filter(field=>profile[field]);
+    if(fields.length)lines.push('', 'Anchor Signer Profile', ...fields.map(field=>`${field}: ${profile[field]}`));
+    return lines.join('\n');
+   }).join('\n\n');
    if(result.attachment && ['image/png','image/jpeg','image/webp','image/gif'].includes(result.attachment.type)){
     const bytes=Uint8Array.from(atob(result.attachment.data),c=>c.charCodeAt(0));
     imageURL=URL.createObjectURL(new Blob([bytes],{type:result.attachment.type}));$('record-image').src=imageURL;$('record-image').hidden=false;

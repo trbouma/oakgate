@@ -29,7 +29,7 @@ test('hiding or leaving the record tab clears sensitive display and cancels requ
 test('anchor publisher and statement render as text and clear with the request',async()=>{
  const f=fixture();f.start(async op=>op==='record-start'?request:op==='record-status'?{state:'ready'}:{label:'whoami',contents:'',verification:{aggregate_state:'anchored'},publishers:[{name:'Community Centre',statement:'<b>Membership confirmed</b>'}]});
  await f.click('record-start');await f.click('record-present');
- assert.equal(f.el('record-publishers').textContent,'Community Centre\n<b>Membership confirmed</b>');
+ assert.equal(f.el('record-publishers').textContent,'Anchor signer\nCommunity Centre\n\nAnchor statement\n<b>Membership confirmed</b>');
  assert.equal(f.el('record-verification-summary').textContent,'OpenETR: anchored');
  await f.click('record-cancel');assert.equal(f.el('record-publishers').textContent,'');
 });

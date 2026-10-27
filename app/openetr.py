@@ -194,6 +194,7 @@ def build_signer_profile(
         "display_name": display_name,
         "name": name if name != display_name else None,
         "about": _profile_text(payload.get("about"), limit=500),
+        "address": _profile_text(payload.get("address"), limit=500),
         "nip05": _profile_text(payload.get("nip05"), limit=254),
         "lightning_address": _profile_text(payload.get("lud16"), limit=254),
         "website": _profile_url(payload.get("website")),

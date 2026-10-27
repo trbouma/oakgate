@@ -221,6 +221,10 @@ async def operation(request, actor, operation, payload):
                         or (graph.get('signer_profile') or {}).get('name')
                         or graph['anchor']['author'],
                 'statement': graph['anchor']['content'],
+                'signer': graph['anchor']['author'],
+                'anchored_at': graph['anchor'].get('created_at', ''),
+                'profile': {field: (graph.get('signer_profile') or {}).get(field)
+                            for field in ('name', 'display_name', 'about', 'address')},
             }
             for graph in history.get('candidate_graphs', [])
         ]
