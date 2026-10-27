@@ -10,6 +10,8 @@ through everyday moments, with the technology explained only where it helps.
 The characters and settings are illustrative; the accompanying notes distinguish
 current features from future possibilities.
 
+[Watch the video shorts →](video-shorts.md){ .md-button .md-button--primary }
+
 <article class="oakgate-experience-preview" markdown>
 
 [![Project OakGate and the shared Acorn foundation](../assets/user-experiences/meet-project-oakgate.png)](meet-project-oakgate.md)

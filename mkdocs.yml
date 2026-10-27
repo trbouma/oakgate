@@ -40,6 +40,7 @@ nav:
   - Home: index.md
   - User Experiences:
       - Overview: user-experiences/index.md
+      - Video shorts: user-experiences/video-shorts.md
       - Meet Project OakGate: user-experiences/meet-project-oakgate.md
       - From a wallet to a card: user-experiences/card-pairing-and-payments.md
       - One wallet, several counters: user-experiences/one-wallet-several-counters.md
