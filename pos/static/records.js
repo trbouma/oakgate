@@ -8,7 +8,7 @@
  function clearDisplay(){
   if(imageURL)URL.revokeObjectURL(imageURL);imageURL=null;
   $('record-result').hidden=true;$('record-image').hidden=true;$('record-image').removeAttribute('src');
-  ['record-label','record-contents','record-verification','record-verification-summary','record-attachment-note'].forEach(name=>$(name).textContent='');
+  ['record-label','record-contents','record-verification','record-verification-summary','record-publishers','record-attachment-note'].forEach(name=>$(name).textContent='');
  }
  function clear(){
   generation++;clearTimeout(timer);clearTimeout(expiryTimer);stopNFC();clearDisplay();id=null;busy=false;
@@ -70,9 +70,10 @@
    clearDisplay();$('record-label').textContent=result.label;$('record-contents').textContent=result.contents;
    $('record-attachment-note').textContent=result.attachment_note || '';
    $('record-verification-summary').textContent=result.verification
-    ? `OpenETR: ${String(result.verification.aggregate_state || 'unverifiable').replaceAll('_',' ')}. This does not by itself verify the holder’s identity or the truth of the record.`
+    ? `OpenETR: ${String(result.verification.aggregate_state || 'unverifiable').replaceAll('_',' ')}`
     : 'No attached artifact to check with OpenETR.';
-   $('record-verification').textContent=result.verification?JSON.stringify(result.verification,null,2):'No attached artifact to check with OpenETR. Presentation is not proof that its claims are true.';
+   $('record-verification').textContent=result.verification?JSON.stringify(result.verification,null,2):'No attached artifact to check with OpenETR.';
+   $('record-publishers').textContent=(result.publishers || []).map(p=>`${p.name}\n${p.statement || ''}`).join('\n\n');
    if(result.attachment && ['image/png','image/jpeg','image/webp','image/gif'].includes(result.attachment.type)){
     const bytes=Uint8Array.from(atob(result.attachment.data),c=>c.charCodeAt(0));
     imageURL=URL.createObjectURL(new Blob([bytes],{type:result.attachment.type}));$('record-image').src=imageURL;$('record-image').hidden=false;

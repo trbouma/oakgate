@@ -196,7 +196,7 @@ async def operation(request, actor, operation, payload):
         raise HTTPException(413)
     result = {'state': 'displayed', 'label': detail['label'], 'contents': text,
               'expires': min(item['expires'], detail['expires_at']), 'attachment': None,
-              'attachment_note': '', 'verification': None}
+              'attachment_note': '', 'verification': None, 'publishers': []}
     blob = detail.get('blob_data')
     if blob:
         # Only raster images are embedded. Never execute HTML/SVG from a presented record.
@@ -215,6 +215,15 @@ async def operation(request, actor, operation, payload):
         except Exception:
             history = unavailable_openetr_history(digest, config.openetr_relays)
         result['verification'] = history.get('verification')
+        result['publishers'] = [
+            {
+                'name': (graph.get('signer_profile') or {}).get('display_name')
+                        or (graph.get('signer_profile') or {}).get('name')
+                        or graph['anchor']['author'],
+                'statement': graph['anchor']['content'],
+            }
+            for graph in history.get('candidate_graphs', [])
+        ]
     await load(request, ident, actor)
     await verify_source()
     if result['expires'] <= time.time():

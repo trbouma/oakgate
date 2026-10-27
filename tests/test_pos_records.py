@@ -182,3 +182,29 @@ def test_membership_and_pass_use_existing_nfc_presentation(env, monkeypatch, lab
         assert 'notification' not in response.json()
         assert (await call(env,'record-start',{'label':'admission'})).status_code==400
     asyncio.run(run())
+
+
+def test_present_includes_anchor_profile_and_statement(env, monkeypatch):
+    request, _ = setup_records(env, monkeypatch)
+    async def inspect(*args):
+        return {'label': 'whoami', 'payload': '', 'blob_data': b'example',
+                'blob_type': 'image/png', 'expires_at': 9999999999}
+    async def history(*args, **kwargs):
+        return {'verification': {'aggregate_state': 'anchored'}, 'candidate_graphs': [
+            {'signer_profile': {'display_name': 'Community Centre', 'name': 'centre'},
+             'anchor': {'author': 'npub-example', 'content': 'Membership confirmed.'}},
+            {'signer_profile': None,
+             'anchor': {'author': 'npub-fallback', 'content': 'Second statement.'}},
+        ]}
+    monkeypatch.setattr(request.app.state.wallets.backend, 'inspect_scanned_record', inspect)
+    monkeypatch.setattr('app.openetr.query_openetr_history', history)
+    async def run():
+        ident = (await call(env, 'record-start', {'label': 'whoami'})).json()['request_id']
+        await fulfil(request, ident, 'owner')
+        response = await call(env, 'record-present', {'request_id': ident})
+        assert response.status_code == 200
+        assert response.json()['publishers'] == [
+            {'name': 'Community Centre', 'statement': 'Membership confirmed.'},
+            {'name': 'npub-fallback', 'statement': 'Second statement.'},
+        ]
+    asyncio.run(run())
