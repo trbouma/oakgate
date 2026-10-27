@@ -74,8 +74,9 @@
     : 'No attached artifact to check with OpenETR.';
    $('record-verification').textContent=result.verification?JSON.stringify(result.verification,null,2):'No attached artifact to check with OpenETR.';
    $('record-publishers').textContent=(result.publishers || []).map(p=>{
-    const lines=['Anchor signer', p.name];
-    if(p.signer && p.signer!==p.name)lines.push(p.signer);
+    const shortKey=value=>typeof value==='string' && value.startsWith('npub1') && value.length>16 ? `${value.slice(0,9)}...${value.slice(-4)}` : value;
+    const lines=['Anchor signer', shortKey(p.name)];
+    if(p.signer && p.signer!==p.name)lines.push(shortKey(p.signer));
     if(p.anchored_at)lines.push('', 'Anchored at', p.anchored_at);
     if(p.statement)lines.push('', 'Anchor statement', p.statement);
     const profile=p.profile || {};
