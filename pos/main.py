@@ -162,6 +162,8 @@ def create_app(settings=None, transport=None):
                    **{op: {'state', 'request_key', 'code', 'qr', 'amount', 'display_name', 'display_unit'} for op in ('receive', 'receipt')},
                    **{op: {'state', 'request_id', 'expires', 'qr', 'label', 'contents', 'attachment', 'attachment_note', 'verification'} for op in RECORD_OPS},
                    **{op: {'state','pair_code','pair_url','qr','expires','wallet_label','payload','mime','byte_count','card_id','sats','local','clear','clear_unavailable'} for op in CARD_OPS}}[operation]
+        if operation == 'record-present':
+            allowed = allowed | {'publishers'}
         if operation == 'card-pay':
             allowed = {'state'}
         response = JSONResponse({k: v for k, v in payload.items() if k in allowed})

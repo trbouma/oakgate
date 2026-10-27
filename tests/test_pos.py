@@ -130,3 +130,26 @@ def test_card_rejection_proxy_allowlist(detail, expected):
                              json={'payload':'{}','challenge':'test','signature':'test'})
         assert response.status_code==400
         assert response.json()['detail']==expected
+
+
+def test_record_presentation_proxy_preserves_publishers_and_filters_private_fields():
+    from pos.main import COOKIE
+    settings = enabled_settings()
+    publishers = [{'name': 'Community Centre', 'statement': 'Membership confirmed.'}]
+    def backend(request):
+        return httpx.Response(200, json={
+            'state': 'displayed', 'label': 'whoami',
+            'verification': {'aggregate_state': 'anchored'},
+            'publishers': publishers, 'private_internal_data': 'must not pass',
+        })
+    with TestClient(create_app(settings, httpx.MockTransport(backend)),
+                    base_url=settings.public_url) as client:
+        cookie = Fernet(settings.cookie_key.encode()).encrypt(b'oakgate-pos-session-v1:test').decode()
+        client.cookies.set(COOKIE, cookie)
+        response = client.post('/api/record-present', headers={'Origin': settings.public_url},
+                               json={'payload': '{}', 'challenge': 'test', 'signature': 'test'})
+        assert response.status_code == 200
+        assert response.json() == {
+            'state': 'displayed', 'label': 'whoami',
+            'verification': {'aggregate_state': 'anchored'}, 'publishers': publishers,
+        }
