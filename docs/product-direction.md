@@ -87,3 +87,34 @@ Satellites extend access through scoped APIs and shared sign-in; the home retain
 custody, handle uniqueness, storage and recovery responsibility. This is planned
 architecture, not deployed satellite support. See
 [Home and satellite instances](037-home-and-satellite-instances.md).
+
+## Custody-key rotation roadmap
+
+A verified migration tool for rotating `OAKGATE_CUSTODY_KEY` is planned, with
+implementation deferred. Replacing the configured key alone makes existing
+ciphertext unreadable; rotation must re-encrypt existing data before the new
+configuration is used.
+
+The tool must inventory every use of the custody key, including wallet recovery
+material, payment recovery journals and other encrypted application state. It
+must explicitly handle temporary encrypted state by migration or safe
+invalidation, without discarding payment recovery information.
+
+The planned process must:
+
+- Quiesce all affected writers, including background workers and delegated POS
+  operations, and take a verified backup before changing encrypted data.
+- Use the old key to decrypt and the new key to re-encrypt, preserving owner
+  bindings, record identities and payment recovery state.
+- Detect partial or interrupted migrations and provide a controlled resume or
+  rollback path; never leave services writing with inconsistent keys.
+- Verify the full encrypted inventory before switching configuration, then test
+  wallet access, pending-payment recovery and restoration without sending duplicate
+  payments. Key rotation must not itself execute payments.
+- Keep secrets out of command-line arguments, logs and reports. Retain old keys
+  securely for as long as retained backups need them, or migrate those backups
+  through a separately verified process.
+
+This rotates the application's storage-encryption key, not users' Acorn private
+keys or the instance's public service identity. No rotation tool is implemented
+or required for the current deployment. See [project status](project-status.md).
