@@ -7,7 +7,7 @@ description: Scan this code to discover Project OakGate.
 
 <div class="oakgate-site-qr" markdown>
 
-[![QR code linking to https://trbouma.github.io/oakgate](assets/oakgate-site-qr.svg)](https://trbouma.github.io/oakgate)
+[![QR code linking to https://trbouma.github.io/oakgate](assets/oakgate-site-qr.svg)](https://trbouma.github.io/oakgate){ .oakgate-site-qr-code }
 
 Point your phone’s camera at the code to open the OakGate site.
 

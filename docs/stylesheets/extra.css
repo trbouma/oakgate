@@ -66,5 +66,6 @@
 
 /* A high-contrast, phone-sized code for sharing the public site in person. */
 .oakgate-site-qr { text-align:center; }
-.oakgate-site-qr img { display:block; width:min(100%, 400px); height:auto; margin:1rem auto; background:#fff; border-radius:0; }
+.md-typeset .oakgate-site-qr-code { display:block; width:min(100%, 400px); margin:1rem auto; }
+.md-typeset .oakgate-site-qr-code img { display:block; width:100%; max-width:100%; height:auto; margin:0 auto; background:#000; border-radius:24px; border:1px solid #333; box-sizing:border-box; }
 .oakgate-site-qr p { overflow-wrap:anywhere; }
