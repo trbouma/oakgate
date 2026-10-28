@@ -7,6 +7,18 @@ description: Short demonstrations of OakGate in everyday use.
 
 See OakGate in action through short demonstrations of the wallet and POS terminal.
 
+## Using a Card to Present a Proof and Make a Payment
+
+<div class="oakgate-video-wide">
+  <iframe src="https://www.youtube-nocookie.com/embed/-_NJW7VnoVA"
+    title="Using a Card to Present a Proof and Make a Payment"
+    width="640" height="360" loading="lazy"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+</div>
+
+[Watch on YouTube](https://www.youtube.com/watch?v=-_NJW7VnoVA){ .md-button }
+
 ## Point-of-Sale with Clear Payments
 
 <div class="oakgate-video-wide">

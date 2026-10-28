@@ -2,6 +2,9 @@
 
 OpenID Access Gate — part of the Mainstay family.
 
+Read [Security and custodial trust](SECURITY.md) for vulnerability reporting,
+operator responsibilities, user agency and the path to independence.
+
 ## Develop locally (no Docker build)
 
 Use Python 3.12 and Poetry 1.8.2 or newer. Dependencies are pinned in `poetry.lock`.
