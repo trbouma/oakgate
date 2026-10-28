@@ -21,10 +21,22 @@ from app.sessions import record_key
 from app.wallet_routes import checked_form
 from pos.config import pos_enabled
 
+def preview_attachment(blob, declared_type):
+    """Select a bounded preview; PDF.js still validates and parses PDF bytes."""
+    media = str(declared_type or '').split(';', 1)[0].strip().lower()
+    if media in {'', 'application/octet-stream', 'binary/octet-stream', 'application/x-pdf'} and blob.startswith(b'%PDF-'):
+        media = 'application/pdf'
+    if len(blob) > 5 * 1024 * 1024:
+        return None, 'This attachment exceeds the 5 MiB POS preview limit.'
+    if media not in {'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'}:
+        return None, 'This attachment format is not supported by the POS preview.'
+    return {'type': media, 'data': base64.b64encode(blob).decode()}, ''
+
+
 router = APIRouter()
 TTL = 120
 # Deliberate disclosure scope. Never accept arbitrary/internal Acorn labels.
-LABELS = {'whoami', 'myinfo', 'emergency', 'member', 'pass'}
+LABELS = {'whoami', 'myinfo', 'emergency', 'health', 'benefits', 'member', 'pass'}
 
 
 def key(kind, ident):
@@ -199,12 +211,7 @@ async def operation(request, actor, operation, payload):
               'attachment_note': '', 'verification': None, 'publishers': []}
     blob = detail.get('blob_data')
     if blob:
-        # Raster images and PDFs are previewed. Never execute HTML/SVG from a presented record.
-        media = detail.get('blob_type', '').split(';', 1)[0].strip().lower()
-        if media in {'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'} and len(blob) <= 5 * 1024 * 1024:
-            result['attachment'] = {'type': media, 'data': base64.b64encode(blob).decode()}
-        else:
-            result['attachment_note'] = 'This attachment cannot be previewed on this terminal.'
+        result['attachment'], result['attachment_note'] = preview_attachment(blob, detail.get('blob_type'))
         from app.openetr import query_openetr_history, unavailable_openetr_history
         config = RecordSettings()
         digest = hashlib.sha256(blob).hexdigest()

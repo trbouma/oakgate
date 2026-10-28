@@ -1,9 +1,9 @@
 # POS record requests
 
-The **Check a Record** tab lets an activated terminal request a `whoami`, `myinfo`, `emergency`, `member` or `pass` record.
+The **Check a Record** tab lets an activated terminal request a `whoami`, `myinfo`, `emergency`, `health`, `benefits`, `member` or `pass` record.
 This is a presentation for viewing, not a record transfer or a payment instruction.
 `whoami` is the default. `myinfo` holds additional information the wallet holder
-chooses to present beyond their `whoami` record. All five labels are explicitly
+chooses to present beyond their `whoami` record. All seven labels are explicitly
 enabled in the dropdown and server allowlist.
 
 ## Default record meanings and naming decision
@@ -13,6 +13,8 @@ enabled in the dropdown and server allowlist.
 | `whoami` | Introduce myself. | Identity information the holder chooses to present |
 | `myinfo` | Share more about me. | Additional information, presented separately |
 | `emergency` | Information when help is needed. | Emergency information and optional contact directive |
+| `health` | Health information I choose to share. | A separate holder-created health record; no emergency-contact notification |
+| `benefits` | Benefits information I choose to share. | A holder-provided benefits record; no automatic eligibility decision |
 | `member` | **I belong.** | Membership or affiliation, without necessarily including a name or other identity details |
 | `pass` | **I have access.** | Admission, access or another entitlement |
 
@@ -65,7 +67,7 @@ and [One wallet, several counters](user-experiences/one-wallet-several-counters.
 
 ## Operator experience
 
-1. Select **whoami**, **myinfo**, **emergency**, **member** or **pass**, then **Create Request**. A new request clears the previous
+1. Select **whoami**, **myinfo**, **emergency**, **health**, **benefits**, **member** or **pass**, then **Create Request**. A new request clears the previous
    displayed record and invalidates the previous request on this terminal.
 2. The holder scans the QR using their OakGate wallet or phone camera. The wallet
    displays the terminal name and requested label and asks for approval. A holder
@@ -218,3 +220,27 @@ record view or sharing flow elsewhere.
 
 Deploy the rebuilt app for the compact inbox and holder receipts. No schema,
 configuration or terminal enrollment changes are needed.
+
+
+## Health record requests
+
+Create a record labeled `health` to use this request. It follows the same
+case-insensitive, single-record QR approval or same-home NFC presentation flow,
+including attachment preview and available OpenETR evidence. It does not create
+or infer medical information, request other records, or notify an emergency
+contact. Only `emergency` triggers the contact directive.
+
+Include only information the holder intends to disclose at participating
+terminals. NFC presentation uses the existing card-possession policy without a
+PIN; selecting `health` does not add stronger authorization or a clinical
+verification claim.
+
+
+## Benefits record requests
+
+Create a record labeled `benefits` to use this request. The terminal requests
+only that record, with the same case-insensitive matching, QR approval or
+same-home NFC presentation, attachment previews and OpenETR information as other
+record requests. It does not determine eligibility, grant benefits or trigger
+emergency-contact notifications. The existing card-possession and disclosure
+rules apply; this label adds no new authorization policy.

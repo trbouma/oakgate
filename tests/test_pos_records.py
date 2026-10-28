@@ -31,7 +31,7 @@ def setup_records(env, monkeypatch, label="WhoAmI"):
     return SimpleNamespace(app=app), calls
 
 
-@pytest.mark.parametrize("requested,label", [("whoami","WhoAmI"),("myinfo","MyInfo"),("emergency","Emergency"),("member","Member"),("pass","PASS")])
+@pytest.mark.parametrize("requested,label", [("whoami","WhoAmI"),("myinfo","MyInfo"),("emergency","Emergency"),("member","Member"),("pass","PASS"),("health","HeAlTh"),("benefits","BeNeFiTs")])
 def test_start_approve_present_and_replace(env,monkeypatch,requested,label):
     request,calls=setup_records(env,monkeypatch,label)
     async def run():
@@ -162,7 +162,7 @@ def test_wallet_scanner_recognizes_only_same_home_record_request(tmp_path):
     asyncio.run(run())
 
 
-@pytest.mark.parametrize('label', ['member', 'pass'])
+@pytest.mark.parametrize('label', ['member', 'pass', 'health', 'benefits'])
 def test_membership_and_pass_use_existing_nfc_presentation(env, monkeypatch, label):
     request,_=setup_records(env,monkeypatch,label.upper())
     class Cards:
@@ -214,3 +214,20 @@ def test_present_includes_anchor_profile_and_statement(env, monkeypatch, media):
              'profile': {'display_name': None, 'name': None, 'about': None, 'address': None}},
         ]
     asyncio.run(run())
+
+
+@pytest.mark.parametrize('media', [None, '', 'application/octet-stream', 'binary/octet-stream', 'application/x-pdf', 'application/pdf; charset=binary'])
+def test_pdf_preview_recognizes_generic_content_types(media):
+    from app.pos_records import preview_attachment
+    attachment, note = preview_attachment(b'%PDF-1.7\nexample', media)
+    assert attachment['type'] == 'application/pdf'
+    assert note == ''
+
+
+def test_preview_rejection_distinguishes_size_and_format():
+    from app.pos_records import preview_attachment
+    assert '5 MiB' in preview_attachment(b'x' * (5 * 1024 * 1024 + 1), 'application/pdf')[1]
+    for blob, media in [(b'<html>test</html>', None), (b'%PDF-1.7', 'text/html')]:
+        attachment, note = preview_attachment(blob, media)
+        assert attachment is None
+        assert 'format' in note
