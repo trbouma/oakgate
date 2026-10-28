@@ -37,7 +37,7 @@ retain Cash/Clear. See [user-facing language](product-direction.md#user-facing-l
   demonstrated restore.
 - The complete **Go Independent** departure and deletion workflow remains planned.
   Displaying recovery information does not end custody or prove erasure.
-- Cross-home NFC operations require live acceptance with independent homes,
+- Cross-home NFC operations and wallet QR presentations require live acceptance with independent homes,
   devices, TLS/proxies, mints and relays. Automated coverage is not a live
   interoperability result. See [the checklist](039-cross-home-pos.md#acceptance-checks-before-relying-on-a-deployment).
 - Home/satellite deployment is a documented architecture, not deployed satellite

@@ -99,7 +99,7 @@ into everyday life: a wallet holder pairs a card and pays
 with a tap, while a small merchant equips several counters to receive Everyday Funds and
 Community Credits into one wallet. The same terminals can now request and display `whoami`,
 `myinfo`, `emergency`, `health`, `benefits`, `member` and `pass` records, including
-category descendants. QR wallet approval is home-local; NFC supports participating
+category descendants. QR wallet approval and NFC support participating
 remote homes.
 
 [Meet Project OakGate](user-experiences/meet-project-oakgate.md){ .md-button .md-button--primary }

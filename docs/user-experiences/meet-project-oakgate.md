@@ -120,5 +120,5 @@ The wallet and terminal can belong to independent OakGate homes. The terminal
 stays with its own home, which verifies and contacts the card issuer for the
 requested operation. The holder does not need a second account at the merchant's
 home. Acceptance policies, compatible credit assets and online connectivity still
-apply; card issuance and wallet QR approval remain home-local. See
+apply; card issuance remains home-local; record QR approval also works between participating homes. See
 [Independent homes, one connected experience](connected-homes.md).

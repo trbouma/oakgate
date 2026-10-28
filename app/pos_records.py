@@ -198,7 +198,7 @@ async def operation(request, actor, operation, payload):
         await invoke(terminal, request, actor)
         old = await store.get(key('current', actor['id']))
         if old:
-            for kind in ('request', 'claim', 'presentation', 'result', 'failed', 'remote'):
+            for kind in ('request', 'claim', 'presentation', 'result', 'failed', 'remote', 'wallet-remote'):
                 await store.delete(key(kind, old))
         ident = secrets.token_urlsafe(32)
         item = {'actor': actor, 'label': data['label'], 'expires': int(time.time()) + TTL}
@@ -209,6 +209,11 @@ async def operation(request, actor, operation, payload):
         return {'state': 'waiting', 'request_id': ident, 'expires': item['expires'], 'qr': str(_qr_svg(url))}
     ident = data['request_id']
     item = await load(request, ident, actor)
+    wallet_remote = await store.get(key('wallet-remote', ident))
+    if wallet_remote:
+        from app.record_federation import remote_operation
+        return await remote_operation(request, actor, operation, ident, item,
+                                      unseal(request, item, wallet_remote), data.get('record_id', ''))
     # Remote state is encrypted and retains the original local request lifetime.
     remote_sealed = await store.get(key('remote', ident))
     if remote_sealed:
@@ -218,7 +223,7 @@ async def operation(request, actor, operation, payload):
             if operation == 'record-cancel':
                 # Closing locally must work even when the issuer is offline. Its
                 # copy retains the original two-minute expiry, never extended.
-                for kind in ('request', 'claim', 'presentation', 'result', 'failed', 'remote'):
+                for kind in ('request', 'claim', 'presentation', 'result', 'failed', 'remote', 'wallet-remote'):
                     await store.delete(key(kind, ident))
                 try:
                     await call_remote(request, actor, source['card'], operation, ident, {'record_id': ''})
@@ -231,7 +236,7 @@ async def operation(request, actor, operation, payload):
             return result
         raise HTTPException(409, 'This request already has a presenter.')
     if operation == 'record-cancel':
-        for kind in ('request', 'claim', 'presentation', 'result', 'failed', 'remote'):
+        for kind in ('request', 'claim', 'presentation', 'result', 'failed', 'remote', 'wallet-remote'):
             await store.delete(key(kind, ident))
         return {'state': 'cancelled'}
     if operation == 'record-status':
@@ -337,6 +342,16 @@ async def callback(request: Request, action: str):
         raise HTTPException(503)
     form = await checked_form(request, session)
     try:
+        if form.get('remote') == '1':
+            if action not in {'details', 'approve'} or set(form) not in ({'csrf', 'request_id', 'remote'}, {'csrf', 'request_id', 'remote', 'selected'}):
+                raise HTTPException(400)
+            from app.record_federation import wallet_action
+            try:
+                selected = json.loads(form['selected']) if 'selected' in form else None
+                result = await wallet_action(request, identity_key(session['user']), form['request_id'], action, selected)
+                return JSONResponse(result, headers={'Cache-Control': 'no-store'})
+            except Exception:
+                raise HTTPException(400, 'Presentation unavailable. Scan a new request.') from None
         if set(form) not in ({'csrf', 'request_id'}, {'csrf', 'request_id', 'selected'}) or action not in {'details', 'approve'}:
             raise HTTPException(400)
         ident = form['request_id']

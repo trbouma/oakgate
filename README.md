@@ -248,7 +248,7 @@ instance. Satellite support is not required to operate a standalone home.
 ## Connected OakGate homes
 
 Independent homes support signed NFC POS payments, balance lookups and record
-requests across their boundaries. Apps, cards and participating terminals share
+requests across their boundaries, including [wallet-approved QR presentations](docs/039-cross-home-pos.md#wallet-qr-presentations-between-homes). Apps, cards and participating terminals share
 a familiar experience while users, custody and private keys stay with each home.
 See the [illustrated architecture](docs/user-experiences/connected-homes.md) and
 [deployment and acceptance checklist](docs/039-cross-home-pos.md).

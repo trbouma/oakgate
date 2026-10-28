@@ -144,7 +144,10 @@ def test_wallet_callback_requires_login_csrf_and_approval(env,monkeypatch):
     asyncio.run(run())
 
 
-def test_wallet_scanner_recognizes_only_same_home_record_request(tmp_path):
+def test_wallet_scanner_keeps_local_and_foreign_approval_on_own_home(tmp_path, monkeypatch):
+    from unittest.mock import AsyncMock
+    begin = AsyncMock(return_value="b"*43)
+    monkeypatch.setattr("app.record_federation.begin", begin)
     from test_wallets import setup, login, form
     from contextlib import aclosing
     async def run():
@@ -158,7 +161,9 @@ def test_wallet_scanner_recognizes_only_same_home_record_request(tmp_path):
             assert response.status_code==303
             assert response.headers['location']=='/account/record-request#'+'a'*43
             response=await client.post('/account/scan',data=form(lightning_payment='https://other.example/account/record-request#'+'a'*43))
-            assert response.status_code==200 and 'Open website' in response.text
+            assert response.status_code==303
+            assert response.headers['location']=='/account/record-request#remote.'+'b'*43
+            begin.assert_awaited_once()
     asyncio.run(run())
 
 

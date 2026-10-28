@@ -104,7 +104,7 @@ Existing wallet discovery and Acorn payment rules remain in effect underneath.
 | Check a Record | Issuer supplies an approved category's record choices and selected presentation, with attachment/PDF previews and OpenETR information. |
 | Pay to a card from the wallet | Existing signed recipient resolution identifies the receiving Acorn; the payer reviews and confirms spending from their own wallet. |
 | Issue a card | Remains home-local, including wallet approval and PIN disclosure. |
-| QR wallet approval for a record request | Remains home-local; this extension federates the NFC path. |
+| QR wallet approval for a record request | Scan in the holder’s own OakGate wallet, approve selected records there, and present to the requesting POS across homes. |
 | Card login | Remains with the issuing home's configured Keycloak flow. Federation grants no foreign account login. |
 
 Record categories are `whoami`, `myinfo`, `emergency`, `health`, `benefits`,
@@ -210,3 +210,50 @@ homes has already passed them.
 
 For exact messages, endpoint limits and journal behavior, see
 [the federated POS protocol](026-nfc-card-payments.md#federated-pos-card-operations).
+
+## Wallet QR presentations between homes
+
+A wallet holder can now use **Scan** in their own OakGate wallet to scan a foreign
+POS record-request QR. A native camera opening that URL directly still opens the
+requesting home; it cannot discover which home the user belongs to. Use the wallet
+scanner for the cross-home approval flow.
+
+1. Home A retrieves signed request terms from POS home B: terminal name, category
+   and the original two-minute deadline. The wallet shows B's domain alongside the
+   terminal name; the name is B's claim, not independent merchant verification.
+2. The authenticated user chooses records at A. A single matching record keeps
+   the simple approval button; multiple matches require explicit checkbox selection.
+3. A issues a short-lived grant bound to B's public identity, domain and request.
+   B atomically accepts one presenter across both QR and NFC flows. Duplicate
+   delivery of the same grant is idempotent; another grant cannot replace it.
+4. B requests only a selected approved record. A creates and inspects its
+   presentation through Acorn and returns a signed result for the existing POS
+   renderer, including supported attachments and OpenETR information.
+5. Close Request removes B's access and attempts to revoke A's grant. Expiry
+   remains the original deadline even if the other home is unreachable. A new
+   request makes the previous request inaccessible through the POS.
+
+The holder's home publishes the existing best-effort presentation receipt with
+remote terminal attribution, and handles emergency contact notices. These are
+access receipts, not proof of reading or a complete audit trail.
+
+The fixed endpoint is `POST /api/records/v1/presentation`, advertised as
+`wallet-record-federation-v1` in `/info`. Stroma signs purpose-separated messages;
+responses bind to the exact request digest. HTTPS discovery pins the peer identity
+for this interaction. Later changes to that identity fail verification. The existing
+`OAKGATE_CARD_TRUSTED_INSTANCES` acceptance list applies to these exchanges too.
+Public-only HTTPS transport, no redirects, bounded bodies, peer rate limits,
+CSRF-protected approval and encrypted expiring state are reused. No user private
+key leaves Acorn and no new payment authority is granted.
+
+Rebuild the **app** on both homes. The existing POS display API is unchanged;
+no terminal re-pairing, new environment variable or database migration is needed.
+Both homes need their existing service identity, POS enabled, and reachable public
+HTTPS endpoints. Old homes fail closed; there is no social NIP-05 fallback.
+
+Automated two-home checks cover selected-record disclosure, single-record approval,
+replays, cancellation, replacement, ownership and identity binding. Before rollout,
+test two real homes: scan in A's wallet, approve one or several records, display
+at B, check PDF/OpenETR and Receipts, then close/replace/expire the request. Also
+verify that the other wallet cannot approve A's local ticket. Live cross-home
+acceptance remains an operator deployment check.

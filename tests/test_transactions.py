@@ -32,6 +32,7 @@ def test_cash_page_authorization_links_and_partial_errors(tmp_path):
             assert page.status_code == 200 and page.headers['cache-control'] == 'no-store'
             assert page.text.count('<article class="transaction-card') == 10
             assert '1,234' in page.text and 'href="/account" aria-label="1,234 sats. Back' in page.text
+            assert 'Balance after' not in page.text
             assert '&lt;script&gt;note&lt;/script&gt;' in page.text and '<script>' not in page.text
             backend.transactions.side_effect = RuntimeError('PRIVATE-NSEC')
             page = await client.get('/account/transactions')
@@ -62,4 +63,21 @@ def test_local_journal_never_appears_even_when_acorn_is_empty_or_unavailable(tmp
             assert 'Acorn transaction history is unavailable' in page.text
             assert 'LOCAL JOURNAL ENTRY' not in page.text and 'No cash transactions yet.' not in page.text
             assert store.get(item['id'])['state'] == 'complete'
+    asyncio.run(run())
+
+
+def test_recorded_balance_including_zero_is_shown(tmp_path):
+    async def run():
+        client, sessions, service, backend = setup(tmp_path)
+        backend.transactions = AsyncMock(return_value=[
+            {'create_time': 100, 'tx_type': 'D', 'amount': 10, 'current_balance': 0},
+            {'create_time': 101, 'tx_type': 'C', 'amount': 10, 'current_balance': 1234},
+        ])
+        async with client:
+            await login(client, sessions)
+            await client.post('/account/acorn/create', data=form())
+            page = await client.get('/account/transactions')
+            assert page.text.count('Balance after') == 2
+            assert '<dd>0 sats</dd>' in page.text
+            assert '<dd>1,234 sats</dd>' in page.text
     asyncio.run(run())

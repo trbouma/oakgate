@@ -172,6 +172,14 @@ allowlist; the acquiring home authenticates its terminal. This is not a shared
 login or custody database. Remote homes can retain disclosed information. See
 [the cross-home operating model](docs/039-cross-home-pos.md).
 
+Wallet QR presentation uses explicit authenticated approval at the holder's own
+home, separate from NFC bearer authority. The holder selects records after seeing
+the requesting terminal and domain. Signed exchanges bind a short-lived grant to
+the peer identity and original request; only approved records may be retrieved.
+Expiry and cancellation prevent further access through the request, but cannot
+erase information already disclosed to a remote home. See the
+[wallet QR protocol](docs/039-cross-home-pos.md#wallet-qr-presentations-between-homes).
+
 Login enrollment is separate. PIN policy applies to the flows that actually
 check it; generating a PIN does not protect every card operation. Card-only login
 is a weaker option, and successful login grants the permissions of that account

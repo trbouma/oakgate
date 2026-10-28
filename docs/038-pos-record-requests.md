@@ -68,8 +68,11 @@ and [One wallet, several counters](user-experiences/one-wallet-several-counters.
 
 1. Select **whoami**, **myinfo**, **emergency**, **health**, **benefits**, **member** or **pass**, then **Create Request**. A new request clears the previous
    displayed record and invalidates the previous request on this terminal.
-2. The holder scans the QR using their OakGate wallet or phone camera. The wallet
-   displays the terminal name and matching records and asks for approval. With
+2. The holder scans the QR using **Scan** in their own OakGate wallet. This works
+   for local and participating foreign POS homes. A phone camera opens the
+   requesting home directly and does not route the holder back to their own home.
+   The wallet displays the terminal name, the remote domain for a foreign request,
+   and matching records, then asks for approval. With
    multiple matches, the holder checks which records to share; nothing is checked
    by default. With one match, approval remains a single action. A holder
    who is signed out signs in in another tab and returns to the request.
@@ -128,7 +131,7 @@ terminal session. Request state is bound to the terminal and merchant wallet;
 one terminal cannot retrieve another terminal's request. QR approval requires an
 authenticated wallet session and CSRF validation. The QR contains a random invitation
 in its URL fragment, not a record, wallet key or external callback destination.
-OakGate's scanner recognizes this same-home request URL directly.
+OakGate's scanner recognizes local requests directly and exchanges foreign requests through the signed wallet-presentation protocol. Users stay signed in at their own home and see the remote terminal name and domain before approving.
 
 An NFC tap authorizes disclosure of all matching records in the requested allowlisted category.
 This is an additional bearer-card capability: holders should keep only information
@@ -264,4 +267,4 @@ record requests. It does not determine eligibility, grant benefits or trigger
 emergency-contact notifications. The existing card-possession and disclosure
 rules apply; this label adds no new authorization policy.
 
-For remote cards, see [Federated POS card operations](026-nfc-card-payments.md#federated-pos-card-operations). The issuer produces the presentation and a holder receipt identifying the acquiring service. QR wallet approval and card issuance remain home-local.
+For remote cards, see [Federated POS card operations](026-nfc-card-payments.md#federated-pos-card-operations). The issuer produces the presentation and a holder receipt identifying the acquiring service. Wallet QR approval also supports participating homes; card issuance remains home-local.

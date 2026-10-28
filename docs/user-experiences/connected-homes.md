@@ -66,7 +66,7 @@ tap-and-receive experience while remaining documented for operators.
 Cross-home NFC payments, balances and record requests are implemented and covered
 by automated tests with independent homes and keys. Actual deployments still need
 live two-home acceptance checks. Both homes must be updated and reachable online.
-Card issuance, QR wallet approval and login remain home-local. General satellite
+Card issuance and login remain home-local. Wallet record QR approval works across participating homes. General satellite
 support and the complete Go Independent departure workflow remain separate work.
 
 Cards are inexpensive, copyable bearer credentials. POS payment and disclosure
@@ -76,3 +76,16 @@ homes. Familiar interaction does not remove those trust choices.
 
 [Read the operating model and deployment checklist](../039-cross-home-pos.md){ .md-button .md-button--primary }
 [Understand the card trust model](../029-nfc-card-trust.md){ .md-button }
+
+## Present with your phone instead
+
+Maya can also open **Scan** in her own OakGate wallet and scan another home's POS
+record request. Her wallet shows the terminal and its domain. She approves one
+record, or selects which matching records to disclose, while staying signed in
+at her own home. The other POS can then show those records with the same previews
+and OpenETR information. Her private key stays with her home and all wallet-key
+operations go through Acorn.
+
+Use the OakGate wallet scanner for this flow: a native phone camera opens the
+requesting home's website instead. Both homes must support the protocol and
+accept each other's service identity. See [setup, trust and testing details](../039-cross-home-pos.md#wallet-qr-presentations-between-homes).

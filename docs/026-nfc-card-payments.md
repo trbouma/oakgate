@@ -319,7 +319,8 @@ The issuer performs all user-key operations through Acorn. It returns rendered
 record data, not private keys or a general-purpose wallet session. Remote access
 receipts are generated in the holder's wallet and identify the authenticated
 acquiring domain and its claimed terminal name. Emergency contact messaging stays
-at the issuer. Issuing new cards, wallet QR approval and NFC login are not federated.
+at the issuer. Card pairing and NFC login remain local. Wallet-approved QR record
+presentation uses a separate [cross-home protocol](039-cross-home-pos.md#wallet-qr-presentations-between-homes).
 
 ### Payment retries and recovery
 

@@ -78,7 +78,7 @@ nav:
       - Scan and Receive: 020-scan-and-receive.md
       - POS authority and receiving: 023-receive-only-pos.md
       - POS deployment: 024-pos-deployment.md
-      - Cross-home cards and POS: 039-cross-home-pos.md
+      - Cross-home wallets, cards and POS: 039-cross-home-pos.md
       - POS record requests: 038-pos-record-requests.md
       - POS NFC cards: 025-pos-nfc-cards.md
       - Everyday NFC card trust: 029-nfc-card-trust.md

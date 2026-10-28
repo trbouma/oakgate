@@ -103,6 +103,8 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
     app.include_router(card_payment_router)
     from app.card_federation import router as card_federation_router
     app.include_router(card_federation_router)
+    from app.record_federation import router as record_federation_router
+    app.include_router(record_federation_router)
 
     @app.middleware("http")
     async def private_responses(request, call_next):

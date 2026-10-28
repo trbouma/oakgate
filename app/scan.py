@@ -81,6 +81,10 @@ async def scan(request: Request):
                 and record_url.path == '/account/record-request' and not record_url.query
                 and re.fullmatch(r'[A-Za-z0-9_-]{43}', record_url.fragment)):
             return RedirectResponse('/account/record-request#' + record_url.fragment, 303)
+        if record_url.path == '/account/record-request':
+            from app.record_federation import begin
+            ticket = await begin(request, owner, code)
+            return RedirectResponse('/account/record-request#remote.' + ticket, 303)
         recognized_payment = code.lower().startswith(('lnbc', 'lightning:lnbc', 'creqa', 'creqb1', 'bitcoin:'))
         if recognized_payment:
             async with asyncio.timeout(40):

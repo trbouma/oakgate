@@ -18,7 +18,7 @@
 <article class="transaction-card {{ entry.style }}">
 <div class="transaction-card-heading"><strong>{{ _(entry.direction) }}</strong><time{% if entry.datetime %} datetime="{{ entry.datetime }}"{% endif %}>{{ entry.created }}</time></div>
 <p class="transaction-amount">{% if entry.amount is not none %}{{ entry.sign }}{{ '{:,}'.format(entry.amount) }} <span>sats</span>{% else %}{{ _("Amount unavailable") }}{% endif %}</p>
-<dl class="transaction-details"><div><dt>{{ _("Fees") }}</dt><dd>{{ '{:,}'.format(entry.fees) }} sats</dd></div><div><dt>{{ _("Balance after") }}</dt><dd>{% if entry.balance is not none %}{{ '{:,}'.format(entry.balance) }} sats{% else %}—{% endif %}</dd></div></dl>
+<dl class="transaction-details"><div><dt>{{ _("Fees") }}</dt><dd>{{ '{:,}'.format(entry.fees) }} sats</dd></div>{% if entry.balance is not none %}<div><dt>{{ _("Balance after") }}</dt><dd>{{ '{:,}'.format(entry.balance) }} sats</dd></div>{% endif %}</dl>
 {% if entry.comment %}<p class="transaction-note">{{ entry.comment }}</p>{% endif %}
 </article>
 {% else %}{% if not history_error %}<p class="note">{{ _("No cash transactions yet.") }}</p>{% endif %}{% endfor %}

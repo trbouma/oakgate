@@ -58,8 +58,9 @@ The user-facing goal is a familiar app, card and POS experience across participa
 OakGate homes. One home can serve a foreign card through its issuer, and can serve
 requests from a foreign POS through that POS's home. Signed requests connect the
 services while custody, private keys and user accounts remain with each home.
-Current support covers NFC POS payments, balances and scoped record presentation;
-local issuance/login and home-local QR approval retain their existing boundaries.
+Current support covers NFC POS payments, balances and scoped record presentation,
+plus wallet-approved record QR requests between homes. Card pairing and login
+remain with the local home. See [wallet QR presentations](039-cross-home-pos.md#wallet-qr-presentations-between-homes).
 
 See [the illustrated architecture](user-experiences/connected-homes.md) and
 [cross-home operating model](039-cross-home-pos.md). Participation policies and

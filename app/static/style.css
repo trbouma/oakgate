@@ -605,5 +605,9 @@ body:not(.landing) > header { padding-block: 12px; gap: 12px; }
 .message-detail p { margin:.35rem 0; }
 .message-detail .note { font-size:.75rem; }
 
-.record-request-option { display:flex; align-items:center; gap:.75rem; min-height:48px; padding:.65rem; overflow-wrap:anywhere; cursor:pointer; }
+#record-request-choices { min-width:0; margin:1rem 0; padding:.75rem; border:1px solid var(--border); border-radius:8px; }
+#record-request-options { display:grid; gap:.5rem; }
+#record-request-options .record-request-option { display:flex; align-items:center; gap:.75rem; min-height:48px; box-sizing:border-box; margin:0; padding:.65rem; text-align:start; border-radius:6px; cursor:pointer; }
+.record-request-option span { min-width:0; overflow-wrap:anywhere; line-height:1.4; }
+.record-request-option:focus-within { outline:2px solid var(--accent); outline-offset:2px; }
 .record-request-option input[type="checkbox"] { width:24px; height:24px; flex:0 0 24px; margin:0; }

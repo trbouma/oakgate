@@ -9,8 +9,9 @@ POS uses the same repository and Dockerfile, with its own application entry poin
 The terminal opens on **Point of Sale**, which contains the existing activation,
 receiving, NFC card issuance, available-balance and terminal settings controls.
 **Check a Record** requests `whoami`, `myinfo`, `emergency`, `health`, `benefits`,
-`member` or `pass`, including category descendants. Wallet QR approval is
-home-local; NFC cards may come from the local or another participating home. See [POS record requests](038-pos-record-requests.md).
+`member` or `pass`, including category descendants. Wallet QR approval and NFC cards may come from the local or another participating home.
+For cross-home QR approval, scan from the holder’s own OakGate wallet; update
+the app on both homes. No terminal re-pairing is required. See [POS record requests](038-pos-record-requests.md).
 
 Tabs switch within the page without reloading or resetting the terminal. Finish
 or cancel an active payment, card operation or activation scan before switching.
