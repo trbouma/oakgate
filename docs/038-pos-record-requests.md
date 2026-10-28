@@ -36,7 +36,7 @@ not prove entitlement or the truth of every claim.
 card, custody and presentation-receipt behaviour is unchanged. Selection is between whole records, not selective disclosure of fields inside a record.
 
 Both choices use existing case-insensitive unique-label matching, QR approval,
-same-home NFC presentation, two-minute expiry, and holder receipts through Acorn.
+local or federated NFC presentation, two-minute expiry, and holder receipts through Acorn.
 The emergency-contact notification remains exclusive to `emergency`; a contact
 directive inside `member` or `pass` does not trigger it.
 
@@ -75,7 +75,7 @@ and [One wallet, several counters](user-experiences/one-wallet-several-counters.
    who is signed out signs in in another tab and returns to the request.
 3. Alternatively, on a compatible secure NFC browser, choose **Request by NFC**
    and ask the holder to tap their valid, activated OakGate card. This first
-   iteration supports same-home cards only and does not ask for a PIN.
+   flow supports local and remote OakGate cards through the signed issuer protocol and does not ask for a PIN.
 4. When multiple approved records are available, choose one in **Record to display**,
    then **Show Record**. With only one, no selector is shown: choose **Show Record**. Acorn retrieves the presentation for
    display, without importing it into the merchant's wallet.
@@ -244,7 +244,7 @@ configuration or terminal enrollment changes are needed.
 ## Health record requests
 
 Create a record labeled `health` to use this request. It follows the same
-case-insensitive, single-record QR approval or same-home NFC presentation flow,
+case-insensitive, single-record QR approval or local or federated NFC presentation flow,
 including attachment preview and available OpenETR evidence. It does not create
 or infer medical information, request other records, or notify an emergency
 contact. Only `emergency` triggers the contact directive.
@@ -259,7 +259,9 @@ verification claim.
 
 Create a record labeled `benefits` to use this request. The terminal requests
 only that record, with the same case-insensitive matching, QR approval or
-same-home NFC presentation, attachment previews and OpenETR information as other
+local or federated NFC presentation, attachment previews and OpenETR information as other
 record requests. It does not determine eligibility, grant benefits or trigger
 emergency-contact notifications. The existing card-possession and disclosure
 rules apply; this label adds no new authorization policy.
+
+For remote cards, see [Federated POS card operations](026-nfc-card-payments.md#federated-pos-card-operations). The issuer produces the presentation and a holder receipt identifying the acquiring service. QR wallet approval and card issuance remain home-local.

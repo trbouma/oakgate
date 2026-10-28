@@ -173,7 +173,7 @@
             $('pay-nfc').hidden=receiptState!=='pending';
             $('receipt-code').hidden=!code || ['detected','complete'].includes(receiptState);
           } else {
-            $('pay-nfc-status').textContent='Card payment could not be confirmed. Check the paying wallet before trying another payment. Cards from other homes are not supported yet.';
+            $('pay-nfc-status').textContent='Card payment could not be confirmed. Check the paying wallet before trying another payment.';
           }
         }
       }).finally(()=>{nfcBusy=false;});

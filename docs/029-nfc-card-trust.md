@@ -60,16 +60,17 @@ and its durable state being current. There is no offline authorization guarantee
 
 ## Capabilities and their actual protections
 
-The following describes the implementation today, not future NWC or debit powers.
+The following describes the implementation today, not future general-purpose NWC powers.
 
 | Capability | Current authority and checks | Exposure if copied |
 | --- | --- | --- |
 | Receive Cash or Clear through pay-to-card | Payer is signed in, reviews recipient/asset/amount and confirms spending from their own Acorn; issuer validates the card and signs destination resolution | Copy can identify the same recipient; it does not directly authorize debiting that recipient |
-| Available Balance | Activated issuing-instance POS and confirmed disclosure; card validity checked, including revocation before returning balances | An attacker with a copy and access to an authorized terminal could see balances; UI confirmation is not independent holder authentication |
-| POS record presentation | Activated same-home terminal, valid card and a request limited to `whoami`, `myinfo`, `emergency`, `health`, `benefits`, `member` or `pass`, including slash descendants in that category; card and wallet rechecked before retrieval | A lost or copied card can disclose those records without a PIN; clearing the screen cannot erase information already seen |
+| Available Balance | Activated local POS or authenticated remote home and confirmed disclosure; card validity checked, including revocation before returning balances | An attacker with a copy and access to an authorized terminal could see balances; UI confirmation is not independent holder authentication |
+| POS record presentation | Activated local terminal or authenticated remote home, valid card and a request limited to `whoami`, `myinfo`, `emergency`, `health`, `benefits`, `member` or `pass`, including slash descendants in that category; card and wallet rechecked before retrieval | A lost or copied card can disclose those records without a PIN; clearing the screen cannot erase information already seen |
 | Keycloak login with PIN | Explicit holder enrollment, fresh normal authentication to activate, valid card, server-verified PIN and existing enabled Keycloak user | Copy alone is insufficient while PIN checking is enabled; copy plus PIN can authenticate |
 | Keycloak card-only login | Explicit per-card policy choice, risk acknowledgement and fresh normal authentication | Copy alone can authenticate; this is a substantially stronger capability than receiving payments |
-| Direct debit/NWC from card | Not currently granted by this card protocol | Must receive a separate capability and risk design before implementation |
+| POS debit | Valid bearer card, local terminal or accepted signing home, exact receipt and durable one-use payment journal | A copy can authorize payment without a PIN; issuer revocation and optional home allowlist apply |
+| General-purpose NWC | Not granted by this protocol | Requires a separate authorization design |
 
 **Payment, balance and POS record-presentation operations do not currently prompt for the PIN.** Generating
 a PIN during issuance does not automatically protect every card capability.
@@ -79,8 +80,8 @@ card as receive-only would therefore be misleading for a card enrolled for login
 Sensitive recovery disclosure and card-policy changes still require fresh normal
 Google/email authentication.
 
-The implemented signed payment instruction is recipient resolution for
-**paying to** a card, not authorization to debit the holder. See
+The original signed recipient-resolution instruction only supports **paying to**
+a card. The separate federated POS protocol authorizes receipt-bound debit. See
 [NFC payment execution](026-nfc-card-payments.md).
 
 ## PIN: useful online protection, with clear limits
@@ -189,7 +190,7 @@ identities. Wallet routing uses Acorn identity and `safebox.json`, not social
 NIP-05. User-private-key operations remain inside Acorn; service signing uses
 Stroma with the operator's separate identity.
 
-The optional `OAKGATE_CARD_TRUSTED_INSTANCES` list restricts recipient resolution
+The optional `OAKGATE_CARD_TRUSTED_INSTANCES` list restricts recipient resolution and federated POS debit, balance and record requests
 by acquiring **service npub**. Its default empty value allows verified signing
 instances, not anonymous or unsigned instructions. An allowlist is not a secure
 reader guarantee or a substitute for holder authorization.
@@ -204,7 +205,7 @@ and preserve backups without resurrecting revoked credentials or stale payments.
 TLS and signed service messages protect particular links; they do not remove
 custodial trust or make a compromised issuer honest.
 
-No offline payments, direct card-debit authorization, NWC spending capability,
+No offline payments, general-purpose NWC spending capability,
 daily card spending caps or merchant-specific spending permissions are claimed
 here. Any future debit capability needs explicit enrollment, transaction-bound
 authorization, amount/asset limits, durable retry/deduplication, revocation and
@@ -222,3 +223,21 @@ See also [issuance](025-pos-nfc-cards.md), [payment protocol](026-nfc-card-payme
 [Keycloak operations](028-keycloak-operations.md).
 
 Emergency records may include a `contact:<safebox address>` directive to authorize a best-effort access notice from the holder’s Acorn. A lost or copied card can also trigger such notices. No emergency contents are sent; publication does not establish reading or summon assistance. See [POS record requests](038-pos-record-requests.md#emergency-record-and-contact-notification).
+
+## Federated POS capability update
+
+The card is now a bearer credential for POS payment requests on local and remote
+homes, as well as balance and scoped record disclosure. A copied card can authorize
+these operations **without a PIN** in this iteration. The earlier receiving-only
+limits in the historical design discussion do not describe the current POS debit
+capability. Issuer revocation, expiry, active-wallet checks and payment recovery
+apply on every home; encryption does not make the physical tag unclonable.
+
+The acquiring home authenticates its terminal, signs the operation, and forwards it
+to the issuer encoded on the card. The issuer validates that home's HTTPS-published
+service key and optional allowlist. This trusts the acquiring home to represent
+its terminal and the physical tap; its signature is not independent proof of
+holder consent. The issuer alone uses the Acorn keys. Remote records and balances
+are disclosed to the acquiring home, whose operator may retain what it receives.
+
+See [the current protocol and deployment checks](026-nfc-card-payments.md#federated-pos-card-operations).

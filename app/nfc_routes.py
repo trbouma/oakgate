@@ -30,42 +30,19 @@ async def card_operation(request, actor, operation, payload):
         if (not isinstance(data, dict) or set(data) != {'card_payload', 'confirmed'}
                 or not isinstance(data['card_payload'], str) or data['confirmed'] != 'yes'):
             raise HTTPException(400, 'Confirm the card balance lookup first.')
+        from app.card_federation import remote_card, call_remote
+        if remote_card(request, data['card_payload']):
+            try:
+                return await call_remote(request, actor, data['card_payload'], 'balance', '', {})
+            except HTTPException:
+                raise
+            except Exception:
+                raise HTTPException(503, 'Could not verify the balance with the card issuer.') from None
         store = await card_store(request)
         authority = await invoke(store.balance_authority, actor['id'], data['card_payload'], limit=True)
-        service = request.app.state.wallets
-        record = await invoke(service.store.get, authority['owner'])
-        if (not record or record['status'] != 'active'
-                or hashlib.sha256(record['material']['npub'].encode()).hexdigest() != authority['wallet_id']):
-            raise HTTPException(403, 'This card is no longer available.')
-        async def clear_balances():
-            try:
-                async with asyncio.timeout(12):
-                    rows = payment_assets(await service.clear_balances(record['material']))
-                return [{**{k: row[k] for k in ('id', 'display_name', 'display_unit', 'mint', 'unit')},
-                         'amount': str(row['amount'])} for row in rows], False
-            except Exception:
-                return [], True
-        try:
-            async with asyncio.timeout(40):
-                sats, (clear, clear_unavailable) = await asyncio.gather(
-                    service.balance(record['material']), clear_balances())
-            if type(sats) is not int or sats < 0:
-                raise ValueError('Invalid balance')
-        except Exception:
-            raise HTTPException(503, 'Balance unavailable. Please tap the card and try again.') from None
-        # Do not disclose a result if the card or either wallet was revoked/replaced during lookup.
-        await invoke(store.balance_authority, actor['id'], data['card_payload'])
-        local = None
-        rates = request.app.state.rates
-        if rates:
-            try:
-                currency = await invoke(rates.store.currency, authority['owner'], rates.default_currency)
-                estimate = await invoke(rates.estimate, sats, currency)
-                if estimate and not estimate['stale']:
-                    local = {k: estimate[k] for k in ('code', 'symbol', 'amount')}
-            except Exception:
-                pass  # A missing/stale exchange rate must not hide the cash balance.
-        return {'sats': sats, 'local': local, 'clear': clear, 'clear_unavailable': clear_unavailable}
+        async def recheck():
+            await invoke(store.balance_authority, actor['id'], data['card_payload'])
+        return await read_card_balance(request, authority, recheck)
     fields = {'request_key', 'card_payload'} if operation == 'card-verify' else {'request_key'}
     if (not isinstance(data, dict) or set(data) != fields or any(not isinstance(v,str) for v in data.values())
             or not 16 <= len(data['request_key']) <= 80):
@@ -141,3 +118,40 @@ async def withdraw_login_request(request: Request, ident: str):
     store = await card_store(request, enabled=False)
     await invoke(store.withdraw_login_request, identity_key(session['user']), ident)
     return RedirectResponse('/account/cards',303)
+
+
+async def read_card_balance(request, authority, recheck):
+    service = request.app.state.wallets
+    record = await invoke(service.store.get, authority['owner'])
+    if (not record or record['status'] != 'active'
+            or hashlib.sha256(record['material']['npub'].encode()).hexdigest() != authority['wallet_id']):
+        raise HTTPException(403, 'This card is no longer available.')
+    async def clear_balances():
+        try:
+            async with asyncio.timeout(12):
+                rows = payment_assets(await service.clear_balances(record['material']))
+            return [{**{k: row[k] for k in ('id', 'display_name', 'display_unit', 'mint', 'unit')},
+                     'amount': str(row['amount'])} for row in rows], False
+        except Exception:
+            return [], True
+    try:
+        async with asyncio.timeout(40):
+            sats, (clear, clear_unavailable) = await asyncio.gather(
+                service.balance(record['material']), clear_balances())
+        if type(sats) is not int or sats < 0:
+            raise ValueError('Invalid balance')
+    except Exception:
+        raise HTTPException(503, 'Balance unavailable. Please tap the card and try again.') from None
+    # Do not disclose a result if the card or either wallet was revoked/replaced during lookup.
+    await recheck()
+    local = None
+    rates = request.app.state.rates
+    if rates:
+        try:
+            currency = await invoke(rates.store.currency, authority['owner'], rates.default_currency)
+            estimate = await invoke(rates.estimate, sats, currency)
+            if estimate and not estimate['stale']:
+                local = {k: estimate[k] for k in ('code', 'symbol', 'amount')}
+        except Exception:
+            pass  # A missing/stale exchange rate must not hide the cash balance.
+    return {'sats': sats, 'local': local, 'clear': clear, 'clear_unavailable': clear_unavailable}

@@ -1,5 +1,11 @@
 # NFC cards and payment execution
 
+**Current capability:** in addition to pay-to-card, POS terminals now support
+card-authorized debit, balances and records across independent OakGate homes.
+The receiving-only discussion below describes the original recipient-resolution
+protocol, not a restriction on the newer POS bearer-card capabilities. See
+[Federated POS card operations](#federated-pos-card-operations).
+
 See [Everyday NFC cards: trust and security](029-nfc-card-trust.md) for the NTAG215 trade-offs, loss response and holder/terminal trust boundaries.
 
 The wallet Send page supports a payment address or **Read NFC payment card**.
@@ -283,3 +289,92 @@ Tests exercise two distinct instance keys, signed request/reply binding, allowli
 rejection, revoked cards, mismatched wallet discovery, NFC cancellation and existing
 one-shot send behavior. Live cross-instance payment and NFC hardware tests remain
 deployment acceptance checks.
+
+## Federated POS card operations
+
+An activated POS remains connected to its own home. That home reads the `OGC2`
+issuer HTTPS origin and pinned service npub, checks `/info` against the pin **before
+forwarding the card**, then calls the fixed `/api/cards/v1/pos` endpoint. No new
+card format, shared database, shared encryption key or shared Keycloak is required.
+Each home retains its own users, private keys and payment journals.
+
+Requests use the existing Stroma-signed service event format with purpose
+`pos-card-request`. Content binds `issuer`, random `nonce`, `operation`, encrypted
+`card`, `request_id`, `terminal`, terminal `name`, and operation `data`. The issuer
+verifies the acquiring origin's `/info`, signature, 90-second freshness and
+`OAKGATE_CARD_TRUSTED_INSTANCES` (empty permits verified signing homes). It checks
+its own pinned identity, card activation, expiry, revocation and active wallet.
+Replies have purpose `pos-card-result`, with `request` containing the canonical
+request digest and `result` containing only the operation result. The acquiring
+home checks the reply against the card's pinned key and original digest.
+
+Supported operations:
+
+- `balance`: existing Everyday Funds, local-currency estimate and Community Credits.
+  The POS still asks the operator to confirm disclosure.
+- `debit`: pay the exact invoice or Clear request from the merchant's durable
+  receipt. Browser-supplied destinations and amounts are not accepted by the POS
+  route. Explicit Lightning invoices remain Lightning; Clear policy remains unchanged.
+- `debit-status`: read the original attempt, never prepare or send a payment.
+- `record-open`, `record-status`, `record-present`, `record-cancel`: the existing
+  seven categories, case-insensitive exact/slash matching, up to 20 choices,
+  single-record simplicity, attachment/PDF preview and OpenETR display.
+
+The issuer performs all user-key operations through Acorn. It returns rendered
+record data, not private keys or a general-purpose wallet session. Remote access
+receipts are generated in the holder's wallet and identify the authenticated
+acquiring domain and its claimed terminal name. Emergency contact messaging stays
+at the issuer. Issuing new cards, wallet QR approval and NFC login are not federated.
+
+### Payment retries and recovery
+
+Before network submission, the acquiring home reserves the same durable per-receipt
+hold used for local NFC payments, binding it to the card and exact terms. After an
+uncertain result, it asks only for status; it never silently submits a fresh debit.
+Changing the card or issuer cannot bypass that receipt hold.
+
+The issuer separately claims an attempt keyed by acquiring service npub, terminal
+and receipt ID before preparing anything. It binds the card, wallet and exact
+invoice/request, saves the outgoing payment ID before sending, and lets the existing
+SendService/Acorn journal handle settlement. Duplicate/concurrent requests inspect
+the first attempt. Cancellation, crash, missing status or an uncertain send leaves
+review required, never an automatic second payment. A missing attempt is not proof
+that it is safe to create a new payment. Preparation and transmission may continue
+when the HTTP caller disconnects. `submitted` means the sending operation completed;
+ordinary receipt polling confirms detection/credit on the merchant side.
+
+A fresh debit must arrive within the receipt's two-minute window. Record sessions
+retain the original two-minute lifetime on both homes and are encrypted in the
+issuer's ephemeral store. Switching records does not extend the lifetime. Closing
+locally succeeds if the issuer is offline; the remote copy expires on its original
+deadline. A cancellation tombstone blocks a concurrent preview from reopening it.
+
+### Deployment and acceptance
+
+1. Deploy/rebuild **app and pos on both homes**. No schema migration or Acorn
+   dependency change is required.
+2. Preserve each home's existing `OAKGATE_SERVICE_NSEC` and NFC issuer data. Both
+   `/info` URLs and `/api/cards/v1/pos` must be reachable over public HTTPS with
+   valid certificates. Redirects, private DNS targets and nonstandard ports are
+   refused. POS must be enabled at both homes.
+3. If either issuer has `OAKGATE_CARD_TRUSTED_INSTANCES` configured, include the
+   acquiring home's service npub. No new environment variable is required.
+4. Use an existing `OGC2` card from home A at home B's terminal. Test balance,
+   a small Lightning invoice, a small Clear request of a compatible mint/unit,
+   one record and a multi-record category with a PDF attachment.
+5. Confirm one debit/credit in the Acorn histories and an issuer-generated record
+   access receipt. Repeat a request/status lookup without a second debit. Revoke
+   a disposable test card and confirm subsequent disclosure/payment is rejected.
+
+Automated tests use two independent custody databases and service keys, with an
+in-process replacement for network transport. They do not establish live DNS,
+TLS, reverse proxy, mint/relay or physical NFC interoperability; complete the
+above acceptance checks before describing a deployment as verified.
+
+### Trust implications
+
+This extends the existing **no-PIN bearer-card POS debit** policy across homes.
+A lost/copied card can be used for these operations by an accepted acquiring home.
+Service signatures authenticate the home, not the original physical card or
+independent holder consent. Use the issuer allowlist when access should be limited
+to known homes. The receiving-only card protocol remains distinct from debit.

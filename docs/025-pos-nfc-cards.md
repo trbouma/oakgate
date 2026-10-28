@@ -245,9 +245,9 @@ not cryptographic proof of physical presence. Existing valid cards are eligible.
 A terminal that captures a card credential could misuse it while it remains valid;
 revoke a lost or compromised card. Separate login PIN requirements are unchanged.
 
-This version accepts only cards issued by the same OakGate home, with a pinned
-issuer key. Cross-home debit is not implemented; the signed pay-to-card recipient
-lookup is a different, read-only protocol and cannot authorize spending.
+Cards may be issued by the local home or another deployed OakGate home, with a
+pinned issuer key. Cross-home debit uses the separate signed POS protocol; the
+original pay-to-card recipient lookup remains a read-only operation.
 
 The device-signed request supplies only the original receipt key and presented
 card credential. The home looks up the terminal-owned receipt and its immutable
@@ -272,3 +272,7 @@ a screen does not undo a submitted payment. A timeout is not proof of nonpayment
 
 Deploy both the app and POS images. Test Cash and Clear with small amounts on a
 physical supported device; automated tests cannot establish hardware compatibility.
+
+## Cross-home terminals
+
+Existing `OGC2` cards can now be used at another home's POS for debit, confirmed balance lookup, and scoped record presentation. Both homes must deploy the [federated POS protocol](026-nfc-card-payments.md#federated-pos-card-operations). Card issuance and login enrollment remain on the issuing home.

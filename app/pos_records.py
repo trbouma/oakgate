@@ -198,7 +198,7 @@ async def operation(request, actor, operation, payload):
         await invoke(terminal, request, actor)
         old = await store.get(key('current', actor['id']))
         if old:
-            for kind in ('request', 'claim', 'presentation', 'result', 'failed'):
+            for kind in ('request', 'claim', 'presentation', 'result', 'failed', 'remote'):
                 await store.delete(key(kind, old))
         ident = secrets.token_urlsafe(32)
         item = {'actor': actor, 'label': data['label'], 'expires': int(time.time()) + TTL}
@@ -209,8 +209,29 @@ async def operation(request, actor, operation, payload):
         return {'state': 'waiting', 'request_id': ident, 'expires': item['expires'], 'qr': str(_qr_svg(url))}
     ident = data['request_id']
     item = await load(request, ident, actor)
+    # Remote state is encrypted and retains the original local request lifetime.
+    remote_sealed = await store.get(key('remote', ident))
+    if remote_sealed:
+        from app.card_federation import call_remote
+        source = unseal(request, item, remote_sealed)
+        if operation in {'record-status', 'record-present', 'record-cancel'}:
+            if operation == 'record-cancel':
+                # Closing locally must work even when the issuer is offline. Its
+                # copy retains the original two-minute expiry, never extended.
+                for kind in ('request', 'claim', 'presentation', 'result', 'failed', 'remote'):
+                    await store.delete(key(kind, ident))
+                try:
+                    await call_remote(request, actor, source['card'], operation, ident, {'record_id': ''})
+                except Exception:
+                    pass
+                return {'state': 'cancelled'}
+            result = await call_remote(request, actor, source['card'], operation, ident,
+                                       {'record_id': data.get('record_id', '')})
+            await load(request, ident, actor)
+            return result
+        raise HTTPException(409, 'This request already has a presenter.')
     if operation == 'record-cancel':
-        for kind in ('request', 'claim', 'presentation', 'result', 'failed'):
+        for kind in ('request', 'claim', 'presentation', 'result', 'failed', 'remote'):
             await store.delete(key(kind, ident))
         return {'state': 'cancelled'}
     if operation == 'record-status':
@@ -222,6 +243,15 @@ async def operation(request, actor, operation, payload):
             return {'state': 'ready', 'expires': item['expires'], 'records': choices(source['records'])}
         return {'state': 'unavailable' if await store.get(key('failed', ident)) else 'waiting', 'expires': item['expires']}
     if operation == 'record-nfc':
+        from app.card_federation import remote_card, call_remote
+        if remote_card(request, data['card_payload']):
+            if not await store.pop(key('claim', ident)):
+                raise HTTPException(409, 'This request already has a presenter.')
+            await sealed_put(request, 'remote', ident, item, {'card': data['card_payload']})
+            result = await call_remote(request, actor, data['card_payload'], 'record-open', ident,
+                                       {'label': item['label'], 'expires': item['expires']})
+            await load(request, ident, actor)
+            return result
         from app.nfc_routes import card_store
         cards = await card_store(request)
         auth = await invoke(cards.balance_authority, actor['id'], data['card_payload'], limit=True)
@@ -276,39 +306,7 @@ async def operation(request, actor, operation, payload):
         detail = await service.backend.inspect_scanned_record(merchant['material'], descriptor, True)
     if detail['label'].lower() != selected['label'].lower():
         raise HTTPException(409)
-    contents = detail.get('payload', '')
-    text = contents if isinstance(contents, str) else json.dumps(contents, ensure_ascii=False, indent=2)
-    if len(text.encode()) > 262144:
-        raise HTTPException(413)
-    result = {'state': 'displayed', 'record_id': record_id, 'label': detail['label'], 'contents': text,
-              'expires': min(item['expires'], detail['expires_at']), 'attachment': None,
-              'attachment_note': '', 'verification': None, 'publishers': []}
-    blob = detail.get('blob_data')
-    if blob:
-        result['attachment'], result['attachment_note'] = preview_attachment(blob, detail.get('blob_type'))
-        from app.openetr import query_openetr_history, unavailable_openetr_history
-        config = RecordSettings()
-        digest = hashlib.sha256(blob).hexdigest()
-        try:
-            async with asyncio.timeout(config.openetr_timeout * 3 + 1):
-                history = await query_openetr_history(digest, config.openetr_relays, timeout=config.openetr_timeout,
-                                                     limit=config.openetr_limit, digest_source='computed')
-        except Exception:
-            history = unavailable_openetr_history(digest, config.openetr_relays)
-        result['verification'] = history.get('verification')
-        result['publishers'] = [
-            {
-                'name': (graph.get('signer_profile') or {}).get('display_name')
-                        or (graph.get('signer_profile') or {}).get('name')
-                        or graph['anchor']['author'],
-                'statement': graph['anchor']['content'],
-                'signer': graph['anchor']['author'],
-                'anchored_at': graph['anchor'].get('created_at', ''),
-                'profile': {field: (graph.get('signer_profile') or {}).get(field)
-                            for field in ('name', 'display_name', 'about', 'address')},
-            }
-            for graph in history.get('candidate_graphs', [])
-        ]
+    result = await render_detail(detail, record_id, item['expires'])
     await load(request, ident, actor)
     await verify_source()
     if result['expires'] <= time.time():
@@ -316,7 +314,7 @@ async def operation(request, actor, operation, payload):
     await sealed_put(request, 'result', ident, item, result)
     if detail['label'].lower() == 'emergency':
         from app.emergency_contacts import notify_contact
-        result['notification'] = await notify_contact(request, ident, source, text)
+        result['notification'] = await notify_contact(request, ident, source, result['contents'])
         await sealed_put(request, 'result', ident, item, result)
     from app.presentation_receipts import schedule_receipt
     schedule_receipt(request, ident + ':' + record_id, actor, source, detail['label'])
@@ -362,3 +360,40 @@ async def callback(request: Request, action: str):
             raise HTTPException(503, 'The presentation could not be prepared. Ask for a new request.') from None
     finally:
         await form.close()
+
+
+async def render_detail(detail, record_id, expires):
+    contents = detail.get('payload', '')
+    text = contents if isinstance(contents, str) else json.dumps(contents, ensure_ascii=False, indent=2)
+    if len(text.encode()) > 262144:
+        raise HTTPException(413)
+    result = {'state': 'displayed', 'record_id': record_id, 'label': detail['label'], 'contents': text,
+              'expires': min(expires, detail['expires_at']), 'attachment': None,
+              'attachment_note': '', 'verification': None, 'publishers': []}
+    blob = detail.get('blob_data')
+    if blob:
+        result['attachment'], result['attachment_note'] = preview_attachment(blob, detail.get('blob_type'))
+        from app.openetr import query_openetr_history, unavailable_openetr_history
+        config = RecordSettings()
+        digest = hashlib.sha256(blob).hexdigest()
+        try:
+            async with asyncio.timeout(config.openetr_timeout * 3 + 1):
+                history = await query_openetr_history(digest, config.openetr_relays, timeout=config.openetr_timeout,
+                                                     limit=config.openetr_limit, digest_source='computed')
+        except Exception:
+            history = unavailable_openetr_history(digest, config.openetr_relays)
+        result['verification'] = history.get('verification')
+        result['publishers'] = [
+            {
+                'name': (graph.get('signer_profile') or {}).get('display_name')
+                        or (graph.get('signer_profile') or {}).get('name')
+                        or graph['anchor']['author'],
+                'statement': graph['anchor']['content'],
+                'signer': graph['anchor']['author'],
+                'anchored_at': graph['anchor'].get('created_at', ''),
+                'profile': {field: (graph.get('signer_profile') or {}).get(field)
+                            for field in ('name', 'display_name', 'about', 'address')},
+            }
+            for graph in history.get('candidate_graphs', [])
+        ]
+    return result

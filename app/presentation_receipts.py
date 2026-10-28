@@ -33,7 +33,7 @@ async def send_receipt(request, ident, actor, source, label):
         if not await invoke(claim, service.store, 'holder-receipt:' + ident):
             return
         from app.pos_records import terminal
-        name = await invoke(terminal, request, actor)
+        name = actor.get('_remote_name') or await invoke(terminal, request, actor)
         recipient = await invoke(service.store.get, source['owner'])
         if (not recipient or recipient['status'] != 'active'
                 or recipient['material']['npub'] != source['npub']):

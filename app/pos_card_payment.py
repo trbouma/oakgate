@@ -42,7 +42,8 @@ async def pay(request, actor, payload):
     custody = state.wallets.store
     issuer, _ = pinned_issuer(data['card_payload'])
     if issuer != state.settings.origin:
-        raise HTTPException(400, 'Use a card issued by this OakGate home.')
+        from app.card_federation import remote_pay
+        return await remote_pay(request, actor, data)
     cards = await invoke(CardStore, custody, state.settings.origin)
     # The merchant terminal authenticates the request; the presented bearer card
     # authorizes this debit. No PIN prompt in this initial same-home flow.

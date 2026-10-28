@@ -28,27 +28,27 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
-async def public_json(url, params=None, *, body=None):
+async def public_json(url, params=None, *, body=None, max_bytes=65536, timeout=12):
     """Pin a public DNS result to the TLS connection; never follow redirects."""
     parsed = urlsplit(url)
     if (parsed.scheme != 'https' or not parsed.hostname or parsed.username is not None
             or parsed.password is not None or parsed.port not in (None, 443) or parsed.fragment):
         raise ValueError('Unsupported payment endpoint')
     hostname = parsed.hostname.encode('idna').decode()
-    async with asyncio.timeout(12):
+    async with asyncio.timeout(timeout):
         addresses = await asyncio.get_running_loop().getaddrinfo(hostname, 443, type=socket.SOCK_STREAM)
         ips = list(dict.fromkeys(row[4][0] for row in addresses))
         if not ips or any(not ipaddress.ip_address(ip).is_global for ip in ips):
             raise ValueError('Payment endpoint must be public')
         target = httpx.URL(url).copy_with(host=ips[0])
-        async with httpx.AsyncClient(timeout=10, follow_redirects=False, trust_env=False) as client:
+        async with httpx.AsyncClient(timeout=timeout, follow_redirects=False, trust_env=False) as client:
             async with client.stream('POST' if body is not None else 'GET', target, params=params, json=body, headers={'Host': hostname},
                                      extensions={'sni_hostname': hostname}) as response:
                 response.raise_for_status()
                 body = bytearray()
                 async for chunk in response.aiter_bytes():
                     body.extend(chunk)
-                    if len(body) > 65536:
+                    if len(body) > max_bytes:
                         raise ValueError('Payment response too large')
                 data = json.loads(body)
                 if not isinstance(data, dict):

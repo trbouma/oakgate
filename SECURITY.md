@@ -164,8 +164,8 @@ have different consequences.
 Inexpensive NFC cards contain a revocable credential, not the Acorn private key
 or recovery phrase. They are copyable memory tags, not cryptographic smart cards
 or FIDO2 authenticators. Encrypting their payload does not prevent copying the
-whole payload. The current POS card-payment flow can debit a valid same-home
-card without a PIN; card-based record presentation and balance lookup likewise
+whole payload. The current POS card-payment flow can debit a valid local or remote
+card without a PIN through an accepted acquiring home; card-based record presentation and balance lookup likewise
 have disclosure implications. Do not describe these cards as receive-only.
 
 Login enrollment is separate. PIN policy applies to the flows that actually
