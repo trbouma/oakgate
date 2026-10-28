@@ -184,11 +184,12 @@ def test_membership_and_pass_use_existing_nfc_presentation(env, monkeypatch, lab
     asyncio.run(run())
 
 
-def test_present_includes_anchor_profile_and_statement(env, monkeypatch):
+@pytest.mark.parametrize('media', ['image/png', 'application/pdf; charset=binary'])
+def test_present_includes_anchor_profile_and_statement(env, monkeypatch, media):
     request, _ = setup_records(env, monkeypatch)
     async def inspect(*args):
         return {'label': 'whoami', 'payload': '', 'blob_data': b'example',
-                'blob_type': 'image/png', 'expires_at': 9999999999}
+                'blob_type': media, 'expires_at': 9999999999}
     async def history(*args, **kwargs):
         return {'verification': {'aggregate_state': 'anchored'}, 'candidate_graphs': [
             {'signer_profile': {'display_name': 'Community Centre', 'name': 'centre'},
@@ -203,6 +204,7 @@ def test_present_includes_anchor_profile_and_statement(env, monkeypatch):
         await fulfil(request, ident, 'owner')
         response = await call(env, 'record-present', {'request_id': ident})
         assert response.status_code == 200
+        assert response.json()['attachment']['type'] == media.split(';')[0]
         assert response.json()['publishers'] == [
             {'name': 'Community Centre', 'statement': 'Membership confirmed.',
              'signer': 'npub-example', 'anchored_at': '2026-10-27 15:44 UTC',

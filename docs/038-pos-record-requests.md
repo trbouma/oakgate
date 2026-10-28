@@ -91,8 +91,11 @@ records or arbitrary labels.
 
 The existing Acorn public-only presentation method creates a short-lived
 presentation. Record text and JSON are displayed as text, never executable HTML.
-Raster image attachments up to 5 MiB are previewed; other attachments show an
-unsupported-preview notice. OpenETR checks use the computed attachment digest and
+Raster image and PDF attachments up to 5 MiB are previewed; other attachments
+show an unsupported-preview notice. PDFs use the wallet's bundled PDF.js library
+with canvas rendering and Previous/Next controls for multi-page documents. No
+external PDF viewer is loaded. Closing, replacing or expiring the request, or
+leaving the page, clears the preview and releases the PDF document. OpenETR checks use the computed attachment digest and
 show the ruleset result and details. A retrieval failure is not evidence that no
 anchor exists. A successful presentation or an OpenETR result alone does not prove
 that a person's identity or the claims in a record are true.

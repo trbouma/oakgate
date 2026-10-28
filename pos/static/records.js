@@ -6,6 +6,7 @@
  const nfc=()=>isSecureContext && typeof window.NDEFReader==='function';
  function stopNFC(){if(reader){reader.abort();reader=null;}}
  function clearDisplay(){
+  window.oakgatePOSPDF?.clear();
   if(imageURL)URL.revokeObjectURL(imageURL);imageURL=null;
   $('record-anchor-summary').replaceChildren();$('record-verification-details').open=false;
   $('record-result').hidden=true;$('record-image').hidden=true;$('record-image').removeAttribute('src');
@@ -96,6 +97,10 @@
     if(fields.length)lines.push('', 'Anchor Signer Profile', ...fields.map(field=>`${field}: ${profile[field]}`));
     return lines.join('\n');
    }).join('\n\n');
+   if(result.attachment?.type==='application/pdf'){
+    if(window.oakgatePOSPDF)window.oakgatePOSPDF.show(result.attachment.data);
+    else $('record-attachment-note').textContent='PDF preview unavailable. Reload the terminal and create a new request.';
+   }
    if(result.attachment && ['image/png','image/jpeg','image/webp','image/gif'].includes(result.attachment.type)){
     const bytes=Uint8Array.from(atob(result.attachment.data),c=>c.charCodeAt(0));
     imageURL=URL.createObjectURL(new Blob([bytes],{type:result.attachment.type}));$('record-image').src=imageURL;$('record-image').hidden=false;

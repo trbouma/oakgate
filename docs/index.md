@@ -15,6 +15,8 @@ hide:
 
 <p class="oakgate-tagline">More freedom in everyday life.</p>
 
+[Read our Security Statement](security-statement.md)
+
 <div class="oakgate-community-story" markdown>
 
 <img class="oakgate-community-image" width="1536" height="1024" src="assets/oakgate-community-hero.png" alt="Leah stands confidently in a lively neighbourhood market, holding her phone and a grocery bag as neighbours exchange goods and help with a community event." fetchpriority="high">

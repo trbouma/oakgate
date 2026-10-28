@@ -48,6 +48,7 @@ nav:
       - A city-backed food network: user-experiences/food-hamper-network.md
       - Ad example: user-experiences/ad-example.md
   - Understand OakGate:
+      - Security Statement: security-statement.md
       - Product direction: product-direction.md
       - Mainstay client roles: 021-mainstay-client-roles.md
       - Home and satellite instances: 037-home-and-satellite-instances.md

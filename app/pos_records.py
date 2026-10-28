@@ -199,9 +199,9 @@ async def operation(request, actor, operation, payload):
               'attachment_note': '', 'verification': None, 'publishers': []}
     blob = detail.get('blob_data')
     if blob:
-        # Only raster images are embedded. Never execute HTML/SVG from a presented record.
-        media = detail.get('blob_type', '')
-        if media in {'image/jpeg', 'image/png', 'image/webp', 'image/gif'} and len(blob) <= 5 * 1024 * 1024:
+        # Raster images and PDFs are previewed. Never execute HTML/SVG from a presented record.
+        media = detail.get('blob_type', '').split(';', 1)[0].strip().lower()
+        if media in {'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'} and len(blob) <= 5 * 1024 * 1024:
             result['attachment'] = {'type': media, 'data': base64.b64encode(blob).decode()}
         else:
             result['attachment_note'] = 'This attachment cannot be previewed on this terminal.'

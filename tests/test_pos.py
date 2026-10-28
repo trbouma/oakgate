@@ -153,3 +153,11 @@ def test_record_presentation_proxy_preserves_publishers_and_filters_private_fiel
             'state': 'displayed', 'label': 'whoami',
             'verification': {'aggregate_state': 'anchored'}, 'publishers': publishers,
         }
+
+
+def test_pos_serves_only_pdf_library_assets():
+    with TestClient(create_app(POSSettings.from_env())) as client:
+        for path in ('pdf.mjs', 'pdf.worker.mjs', 'standard_fonts/FoxitSerif.pfb'):
+            assert client.get('/pdf-assets/' + path).status_code == 200
+        assert client.get('/pdf-assets/record-actions.js').status_code == 404
+        assert "script-src 'self'" in client.get('/').headers['content-security-policy']

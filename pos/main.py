@@ -34,6 +34,15 @@ def create_app(settings=None, transport=None):
             raise HTTPException(404)
         return FileResponse(ROOT.parent / 'app/static' / filename, media_type='text/javascript')
 
+    @app.get('/pdf-assets/{filename}')
+    async def pdf_asset(filename: str):
+        if filename not in {'pdf.mjs', 'pdf.worker.mjs'}:
+            raise HTTPException(404)
+        return FileResponse(ROOT.parent / 'app/static' / filename, media_type='text/javascript')
+
+    app.mount('/pdf-assets/standard_fonts',
+              StaticFiles(directory=ROOT.parent / 'app/static/standard_fonts'), name='pdf-fonts')
+
     @app.get('/shared/receive-keypad.js')
     async def keypad():
         return FileResponse(ROOT.parent / 'app/static/receive-keypad.js', media_type='text/javascript')
