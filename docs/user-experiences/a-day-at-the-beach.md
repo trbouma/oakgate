@@ -34,8 +34,7 @@ has OpenETR information, the terminal shows that verification information too.
 The resort decides whether the evidence satisfies its membership policy.
 
 The record remains in Kai's Acorn. The terminal displays a temporary presentation;
-it does not import the record into the resort's wallet. A new request or **Stop
-Request** removes the display, and the request expires after two minutes.
+it does not import the record into the resort's wallet. A new request or **Close Request** removes the display, and the request expires after two minutes.
 
 ## A second tap to pay
 
@@ -74,7 +73,7 @@ record operations; Nostr relays carry wallet messages, Cashu supports funds and
 Blossom supplies record attachments quietly in the background. The staff terminal
 and services need connectivity; the bracelet does not run an offline wallet.
 
-The current flow uses activated same-home cards and compatible Android NFC
+The current flow uses activated local or accepted remote cards and compatible Android NFC
 browsers. Record access does not ask for a PIN, including emergency access.
 Anyone possessing the bracelet may be able to present these designated records
 at an authorized terminal, so Kai chooses carefully what she puts there. She can
@@ -85,3 +84,12 @@ See [POS record requests](../038-pos-record-requests.md) for setup, notification
 limits and the supported record labels.
 
 *Terminology: Everyday Funds means Cash; Community Credits means Clear balances. Some illustrations and payment controls retain Cash/Clear. See [user-facing language](../product-direction.md#user-facing-language).*
+
+## Across participating homes
+
+The wallet and terminal can belong to independent OakGate homes. The terminal
+stays with its own home, which verifies and contacts the card issuer for the
+requested operation. The holder does not need a second account at the merchant's
+home. Acceptance policies, compatible credit assets and online connectivity still
+apply; card issuance and wallet QR approval remain home-local. See
+[Independent homes, one connected experience](connected-homes.md).

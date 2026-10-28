@@ -30,6 +30,19 @@ one canonical home and its identity namespace. An independent deployment with
 its own custody and users is another home, even if it shares infrastructure.
 See [Home and satellite instances](037-home-and-satellite-instances.md).
 
+## Plan participation in the OakGate network
+
+Independent homes can serve one another's cards without merging users or custody.
+Decide whether to accept any verified signing home or restrict remote requests
+using `OAKGATE_CARD_TRUSTED_INSTANCES`. Plan public HTTPS reachability, stable
+service identities, clock synchronization, compatible payment assets and live
+two-home acceptance tests. A separate login or shared database is not required
+for the visitor. See [Cross-home cards and POS](039-cross-home-pos.md).
+
+The goal is one familiar app/card/POS experience across participating homes.
+This does not imply universal credit acceptance, offline operation, shared
+accounts or already-implemented satellite deployment.
+
 ## Decide where identity and data will live
 
 | Decision | Bundled commissioning path today | Existing infrastructure option |
@@ -164,6 +177,7 @@ Record decisions and references to protected secret storage, never the secrets.
 - [ ] SMTP, registration, recovery and optional Google/NFC flows planned.
 - [ ] Mint, relay, media and rate-service dependencies selected.
 - [ ] POS/NFC device requirements and enabled capabilities agreed.
+- [ ] Cross-home acceptance policy, connectivity and interoperability tests planned.
 - [ ] Secrets, backups, retention, restore drills and monitoring assigned.
 - [ ] Staging acceptance checks and a controlled launch agreed.
 

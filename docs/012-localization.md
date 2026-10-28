@@ -56,7 +56,7 @@ than inventing terminology. Reuse this approach for future account controls.
 ## Expanded screens and Inuktitut demonstration
 
 The account screens now extract labels in the scanner, product and OpenETR
-views as well as Funds, Records, Messages, Preferences, Send and Receive.
+views as well as Funds, Records, Receipts, Preferences, Send and Receive.
 Scanner status, PDF paging and copy feedback receive a request-local JSON
 translation dictionary. `tojson` escapes that dictionary; browser code displays
 translations as text, never HTML. User records, handles, balances, asset units
@@ -85,7 +85,7 @@ from OakGate itself, never a font CDN. Navigation wraps on smaller screens and
 syllabic headings avoid condensed letter spacing. Font source:
 https://github.com/google/fonts/tree/main/ofl/notosanscanadianaboriginal
 
-For a demo, save Inuktitut in Preferences, then visit Funds, Records, Messages,
+For a demo, save Inuktitut in Preferences, then visit Funds, Records, Receipts,
 Receive and Preferences on mobile and desktop. Confirm syllabics render and
 record labels stay exactly as supplied. Sign into another account to confirm
 preferences remain account-specific. Restart the app after catalog changes.

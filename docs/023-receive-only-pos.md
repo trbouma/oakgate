@@ -1,8 +1,15 @@
-# Receive-only point-of-sale terminals
+# POS terminal authority and receiving design
 
 Status: **deployment, browser-bound activation and Cash/Clear receiving implemented**. This note defines a separate POS
 application using OakGate's existing receipt and settlement capabilities. It does
 not grant existing account sessions new permissions or introduce another wallet.
+
+This note describes the terminal credential's authority over the **merchant's**
+wallet. Current POS also supports separately authorized card issuance, bearer-card
+debit, balance disclosure and record presentation, including across homes. A
+terminal credential alone cannot spend the merchant's funds; a presented card
+adds authority over its holder's permitted operations. See
+[Cross-home cards and POS](039-cross-home-pos.md) for the current network model.
 
 ## Purpose and trust model
 
@@ -365,6 +372,8 @@ already-issued invoice/request. Late payments still settle to the original owner
 
 POS terminals may also issue an encrypted random NFC credential after the wallet
 holder approves a short-lived pairing. This is a separate, narrow capability;
-funds access stays receive-only. It does not grant login or spending permissions.
+it does not turn the merchant's terminal session into a wallet login. Subsequent
+card presentation can authorize POS debit and disclosure under the card policy;
+login requires separate enrollment.
 See [the NFC issuance contract](025-pos-nfc-cards.md) for approval, revocation,
 card encoding and the boundary for future NWC support.

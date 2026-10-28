@@ -30,10 +30,10 @@ such as Google or an email-and-password account. She can create a new Acorn or
 connect an existing one using its recovery information.
 
 Once connected, the everyday interface is straightforward: **Funds**, **Records**
-and **Messages**. She has a receipt address that looks like an email address.
+and **Receipts**. She has a receipt address that looks like an email address.
 She can show a payment request, receive Everyday Funds or Community Credits, and open a shared record.
 At an OakGate terminal, she can also present her `whoami` or `myinfo` record:
-she approves a QR request in her wallet or taps a same-home NFC card. Staff use
+she approves a QR request in her wallet or taps a card from a participating OakGate home. Staff use
 **Show Record** to view it temporarily, including a supported image attachment
 and OpenETR information. [See the record presentation flow](../038-pos-record-requests.md).
 
@@ -113,3 +113,12 @@ herself.**
 [Go Independent design](../004-go-independent.md)
 
 *Terminology: Everyday Funds means Cash; Community Credits means Clear balances. Some illustrations and payment controls retain Cash/Clear. See [user-facing language](../product-direction.md#user-facing-language).*
+
+## Across participating homes
+
+The wallet and terminal can belong to independent OakGate homes. The terminal
+stays with its own home, which verifies and contacts the card issuer for the
+requested operation. The holder does not need a second account at the merchant's
+home. Acceptance policies, compatible credit assets and online connectivity still
+apply; card issuance and wallet QR approval remain home-local. See
+[Independent homes, one connected experience](connected-homes.md).

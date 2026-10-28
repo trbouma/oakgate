@@ -88,10 +88,11 @@ The included GitHub Pages workflow publishes on pushes to `main` once **Settings
 
 ## Design
 
-- [Receive-only POS terminals and browser-bound keys](docs/023-receive-only-pos.md)
+- [POS terminal authority and browser-bound keys](docs/023-receive-only-pos.md)
 - [POS NFC card issuance](docs/025-pos-nfc-cards.md)
 - [Everyday NFC card trust and security](docs/029-nfc-card-trust.md)
 - [NFC cards and payment execution](docs/026-nfc-card-payments.md)
+- [Cards and POS terminals across OakGate homes](docs/039-cross-home-pos.md)
 - [Keycloak operations and sign-in flows](docs/028-keycloak-operations.md)
 - [Keycloak NFC card and PIN login](docs/027-keycloak-nfc-login.md)
 
@@ -243,3 +244,11 @@ use the staged `init-instance.sh` workflow. Keycloak setup, enabled-feature test
 and a tested off-host backup are required commissioning work; container health
 alone is not production readiness. Never run fresh initialization on an existing
 instance. Satellite support is not required to operate a standalone home.
+
+## Connected OakGate homes
+
+Independent homes support signed NFC POS payments, balance lookups and record
+requests across their boundaries. Apps, cards and participating terminals share
+a familiar experience while users, custody and private keys stay with each home.
+See the [illustrated architecture](docs/user-experiences/connected-homes.md) and
+[deployment and acceptance checklist](docs/039-cross-home-pos.md).

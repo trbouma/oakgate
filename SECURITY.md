@@ -166,7 +166,11 @@ or recovery phrase. They are copyable memory tags, not cryptographic smart cards
 or FIDO2 authenticators. Encrypting their payload does not prevent copying the
 whole payload. The current POS card-payment flow can debit a valid local or remote
 card without a PIN through an accepted acquiring home; card-based record presentation and balance lookup likewise
-have disclosure implications. Do not describe these cards as receive-only.
+have disclosure implications. Do not describe these cards as receive-only. The
+issuer verifies the acquiring home's signed requests and optional service-key
+allowlist; the acquiring home authenticates its terminal. This is not a shared
+login or custody database. Remote homes can retain disclosed information. See
+[the cross-home operating model](docs/039-cross-home-pos.md).
 
 Login enrollment is separate. PIN policy applies to the flows that actually
 check it; generating a PIN does not protect every card operation. Card-only login

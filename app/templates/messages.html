@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>{{ _('Your Messages') }}</h2>
+<h2>{{ _('Your Receipts') }}</h2>
 {% if notice %}<p role="status">{{ _(notice) }}</p>{% endif %}
 {% if not connected %}<p>{{ _('Connect or create an Acorn first.') }}</p><a href="/account">{{ _('Funds') }}</a>
 {% elif not enabled %}<p>{{ _('Wallet messaging requires the updated Safebox Acorn component.') }}</p>
 {% else %}
 {% if failed %}<p role="status">{{ _('Wallet messages are unavailable. Please try again later.') }}</p>
-{% elif not messages %}<p>{{ _('No messages yet.') }}</p>{% endif %}
+{% elif not messages %}<p>{{ _('No receipts yet.') }}</p>{% endif %}
 <div class="message-list">
 {% for message in messages %}<details class="message-row">
 <summary>
-<span class="message-preview">{{ message.content.splitlines()[0] if message.content.splitlines() else _('Message') }}</span>
+<span class="message-preview">{{ message.content.splitlines()[0] if message.content.splitlines() else _('Receipt') }}</span>
 <span class="message-meta"><span class="message-sender">{% if message.claimed_sender and message.verification == 'verified' %}{{ message.claimed_sender }}{% else %}{{ message.sender[:12] }}…{% endif %}</span><time>{{ message.date }}</time></span>
 </summary>
 <div class="message-detail">

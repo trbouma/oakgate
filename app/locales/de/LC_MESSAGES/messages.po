@@ -2363,3 +2363,21 @@ msgstr "Geld für den Alltag"
 
 msgid "Community Credits"
 msgstr "Gemeinschaftsguthaben"
+
+msgid "Receipts"
+msgstr "Belege"
+
+msgid "Your Receipts"
+msgstr "Ihre Belege"
+
+msgid "No receipts yet."
+msgstr "Noch keine Belege."
+
+msgid "Receipt"
+msgstr "Beleg"
+
+msgid "This form has expired. Open Receipts again."
+msgstr "Dieses Formular ist abgelaufen. Öffnen Sie die Belege erneut."
+
+msgid "Approve card pairing"
+msgstr "Kartenkopplung bestätigen"

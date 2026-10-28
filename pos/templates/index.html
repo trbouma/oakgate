@@ -29,7 +29,7 @@
 <button type="button" data-key="1">1</button><button type="button" data-key="2">2</button><button type="button" data-key="3">3</button><button type="button" data-key="4">4</button><button type="button" data-key="5">5</button><button type="button" data-key="6">6</button><button type="button" data-key="7">7</button><button type="button" data-key="8">8</button><button type="button" data-key="9">9</button>
 <button type="button" data-key="." aria-label="Decimal point">.</button><button type="button" data-key="0">0</button><button type="button" data-key="backspace" aria-label="Delete last digit">⌫</button><button type="button" data-key="clear">Clear amount</button></div>
 <button id="create-request" type="submit">Create request</button>
-<button type="button" class="secondary" id="issue-card" hidden>Issue NFC card</button>
+<button type="button" class="secondary" id="issue-card" hidden>Pair NFC Card</button>
 <button type="button" id="available-balance" hidden>Available Balance</button>
 <button type="button" class="quiet" id="refresh-options">Refresh currencies and assets</button>
 </form>
@@ -47,7 +47,7 @@
 </div>
 </div>
 <section id="card-issuance" hidden>
-<h2>Issue NFC card</h2><p id="card-status" role="status" aria-live="polite"></p>
+<h2>Pair NFC Card</h2><p id="card-status" role="status" aria-live="polite"></p>
 <p id="card-pair-code"></p><div id="card-qr" class="card-qr" hidden></div>
 <p id="card-wallet"></p><button id="card-prepare" type="button" hidden>Prepare card for this wallet</button>
 <div id="card-hardware" hidden><p>Use a writable NDEF card with at least 496 bytes of usable space. The wallet holder saves their PIN privately.</p>
@@ -55,9 +55,9 @@
 <button id="card-write" type="button" disabled>Write card</button>
 <button id="card-read" type="button">Read back and verify</button>
 <button id="card-stop" type="button" class="secondary" hidden>Stop NFC operation</button></div>
-<button id="card-refresh" type="button" class="secondary" hidden>Check issuance status</button>
-<button id="card-cancel" type="button" class="secondary">Cancel issuance</button>
-<p class="note">The card holds an encrypted random credential. Same-home POS payments do not ask for a PIN. Sign-in requires separate enrollment.</p>
+<button id="card-refresh" type="button" class="secondary" hidden>Check pairing status</button>
+<button id="card-cancel" type="button" class="secondary">Cancel pairing</button>
+<p class="note">The card holds an encrypted random credential. POS payments do not ask for a PIN. Sign-in requires separate enrollment.</p>
 </section>
 <section id="card-balance-panel" hidden>
 <h2>Available Balance</h2>

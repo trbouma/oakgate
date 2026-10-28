@@ -52,6 +52,20 @@ The FastAPI app supports Keycloak sign-in, connecting or creating an Acorn, encr
 
 Custody is a choice, community operation is a first-class deployment model, and Google is a replaceable upstream sign-in provider. The [Mainstay principles and review](010-mainstay-principles.md) records these requirements, the safe provider-transition boundary, and the gaps still to close. The user must retain a path to independence; the complete workflow is not implemented yet.
 
+## A connected experience across independent homes
+
+The user-facing goal is a familiar app, card and POS experience across participating
+OakGate homes. One home can serve a foreign card through its issuer, and can serve
+requests from a foreign POS through that POS's home. Signed requests connect the
+services while custody, private keys and user accounts remain with each home.
+Current support covers NFC POS payments, balances and scoped record presentation;
+local issuance/login and home-local QR approval retain their existing boundaries.
+
+See [the illustrated architecture](user-experiences/connected-homes.md) and
+[cross-home operating model](039-cross-home-pos.md). Participation policies and
+compatible credit assets apply; seamless experience is the design goal, not a
+claim of universal acceptance or completed live testing.
+
 ## Home and satellite deployment
 
 A home can serve one user population through multiple branded satellite sites.

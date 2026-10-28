@@ -2430,3 +2430,21 @@ msgstr "ᖃᐅᑕᒫᑦ ᑮᓇᐅᔭᐃᑦ"
 # Provisional UI adaptation; fluent Inuktitut speaker review required.
 msgid "Community Credits"
 msgstr "ᓄᓇᓕᐅᑉ ᑮᓇᐅᔭᖏᑦ"
+
+msgid "Receipts"
+msgstr "ᑎᒍᓯᓃᑦ"
+
+msgid "Your Receipts"
+msgstr "ᑎᒍᓯᓂᑎᑦ"
+
+msgid "No receipts yet."
+msgstr "ᑎᒍᓯᓃᑦ ᐱᑕᖃᙱᑦᑐᑦ."
+
+msgid "Receipt"
+msgstr "ᑎᒍᓯᓂᖅ"
+
+msgid "This form has expired. Open Receipts again."
+msgstr "ᐱᒋᐊᒃᑲᓐᓂᕆᑦ."
+
+msgid "Approve card pairing"
+msgstr "ᐊᖏᕐᓗᒍ"

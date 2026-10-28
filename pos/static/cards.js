@@ -42,12 +42,12 @@
     $('card-prepare').hidden=state!=='approved';
     $('card-hardware').hidden=state!=='prepared';
     $('card-refresh').hidden=['issued','cancelled','expired','revoked'].includes(state);
-    $('card-cancel').textContent=state==='issued'?'Done':'Cancel issuance';
+    $('card-cancel').textContent=state==='issued'?'Done':'Cancel pairing';
     const labels={waiting:'Scan this code with the OakGate wallet that will own the card. Compare the pairing code and approve.',
       pin_pending:'Waiting for the wallet holder to save their private PIN.',
       approved:'Wallet approved. Check the wallet label, then prepare its card.',prepared:'Card prepared. Confirm the intended card, then write it. If a write was interrupted, read it back first.',
-      issued:'Card verified and issued. You can now remove it.',cancelled:'Issuance cancelled.',expired:'Pairing expired. Start a new issuance.',revoked:'Card revoked. Start a new issuance.'};
-    message(labels[state] || 'Check issuance status.');
+      issued:'Card paired and verified. You can now remove it.',cancelled:'Pairing cancelled.',expired:'Pairing expired. Start a new pairing.',revoked:'Card revoked. Start a new pairing.'};
+    message(labels[state] || 'Check pairing status.');
     if(state==='waiting')drawQR(result.qr);
     prepared=state==='prepared'?result.payload:null;
     if(state==='issued'){sessionStorage.removeItem(storageKey);stopPoll();}
@@ -59,7 +59,7 @@
   async function work(fn){
     if(busy || active)return;
     busy=true;controls();
-    try {await fn();} catch(error){message(error.message || 'Could not confirm issuance. Check status before writing again.');$('card-refresh').hidden=false;}
+    try {await fn();} catch(error){message(error.message || 'Could not confirm pairing. Check status before writing again.');$('card-refresh').hidden=false;}
     finally{busy=false;controls();}
   }
   function poll(){
@@ -126,7 +126,7 @@
         const bytes=new Uint8Array(record.data.buffer,record.data.byteOffset,record.data.byteLength);
         const encoded=btoa(String.fromCharCode(...bytes));
         if(encoded!==prepared){stopHardware('This card does not match the prepared credential. Nothing was submitted.');return;}
-        stopHardware('Card read. Confirming issuance…');
+        stopHardware('Card read. Confirming pairing…');
         await work(async()=>render(await operation('card-verify',{card_payload:encoded})));
       };
       reader.onreadingerror=()=>{if(active===op)stopHardware('Card could not be read. Remove it and try again.');};

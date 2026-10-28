@@ -1,7 +1,10 @@
-# Wallet messages
+# Receipts and wallet messaging
 
-OakGate's **Wallet messages** page sends and reads private messages between
-Acorn wallets. The sender key is the Acorn key, never the social npub in
+OakGate calls its received wallet messages **Receipts**, with the heading
+**Your Receipts**. This compact inbox includes receipts for record presentations;
+the compose form is hidden. The underlying transport remains private messaging
+between Acorn wallets. Receipt wording does not make every message proof of a
+completed payment or a complete presentation audit. The sender key is the Acorn key, never the social npub in
 Preferences. Google and Keycloak authenticate access to OakGate; they are not
 message identities.
 
@@ -36,7 +39,7 @@ messages. Relay publication does not prove delivery to a device or reading.
 
 CSRF and origin checks protect sends. The existing busy indicator disables
 repeat clicks. A ten-minute form token is bound to the authenticated owner; its
-hash is consumed in SQLite before sending. This blocks replay across app workers
+hash is consumed in the application database before sending. This blocks replay across app workers
 and restarts, including when the delivery result is uncertain. Consumed hashes
 are retained for one day and pruned on subsequent sends. No message plaintext,
 recipient, or new user key is stored in that table. The wallet operation lease

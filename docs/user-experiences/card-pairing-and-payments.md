@@ -5,9 +5,9 @@ description: Visually confirm a pairing, issue an NFC card at the POS, pay with 
 
 # From a wallet to a card
 
-[![OakGate card journey: the POS displays a pairing QR; the wallet holder checks the terminal and code, approves issuance and saves a PIN; the POS writes and verifies the card; a later Cash or Clear request is paid by tapping the card.](../assets/user-experiences/card-pairing-and-payments.png)](../assets/user-experiences/card-pairing-and-payments.png){ .oakgate-experience-image }
+[![OakGate card journey: the POS displays a pairing QR; the wallet holder checks the terminal and code, approves issuance and saves a PIN; the POS writes and verifies the card; a later Cash or Clear request is paid by tapping the card.](../assets/user-experiences/card-pairing-and-payments-network.png)](../assets/user-experiences/card-pairing-and-payments-network.png){ .oakgate-experience-image }
 
-[Open the full-size infographic](../assets/user-experiences/card-pairing-and-payments.png){ .md-button }
+[Open the full-size infographic](../assets/user-experiences/card-pairing-and-payments-network.png){ .md-button }
 
 *Illustrated screens explain the flow; they are not exact application screenshots.*
 
@@ -15,14 +15,17 @@ Maya visits a community café that uses OakGate. She already has a wallet with
 funds, but would like a card she can tap at the counter. The café's POS and her
 wallet belong to the same OakGate home.
 
+Pairing and issuance take place within one home. Afterwards, the card can be used
+at participating remote homes through the [connected network](connected-homes.md).
+
 ## A pairing she can see
 
-The staff member selects **Issue NFC card**. A QR code appears on the terminal,
+The staff member selects **Pair NFC Card**. A QR code appears on the terminal,
 along with a short pairing code. Maya scans it with her phone and opens the
 pairing request in her signed-in wallet.
 
 She checks the terminal's name and compares the code on her phone with the one
-in front of her. They match. She selects **Approve card issuance** and saves her
+in front of her. They match. She selects **Approve card pairing** and saves her
 new PIN separately when prompted.
 
 The terminal now has approval to prepare a card for Maya's wallet. The staff
@@ -68,7 +71,7 @@ Maya's previous record disappears from the display. **Close Request** also remov
 the display, and requests expire after two minutes. The record stays in Maya's
 Acorn; it is not imported into the café's wallet.
 
-NFC presentation currently uses the same-home card without a PIN. Maya therefore
+NFC presentation currently accepts a card from the local or an accepted remote home without a PIN. Maya therefore
 puts only information she is comfortable presenting in these two records and
 revokes a lost card promptly. QR presentation asks for approval in her wallet.
 
@@ -104,3 +107,12 @@ If a payment cannot be confirmed, check its status before trying another payment
 [Explore User Experiences](index.md)
 
 *Terminology: Everyday Funds means Cash; Community Credits means Clear balances. Some illustrations and payment controls retain Cash/Clear. See [user-facing language](../product-direction.md#user-facing-language).*
+
+## Across participating homes
+
+The wallet and terminal can belong to independent OakGate homes. The terminal
+stays with its own home, which verifies and contacts the card issuer for the
+requested operation. The holder does not need a second account at the merchant's
+home. Acceptance policies, compatible credit assets and online connectivity still
+apply; card issuance and wallet QR approval remain home-local. See
+[Independent homes, one connected experience](connected-homes.md).

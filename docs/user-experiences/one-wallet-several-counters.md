@@ -62,7 +62,7 @@ his wallet. They switch from **Point of Sale** to **Check a Record**, choose
 **whoami** or **myinfo**, and select **Create Request**.
 
 A customer scans the request and approves in their OakGate wallet, or presents
-a same-home NFC card when staff select **Request by NFC**. Staff then choose
+a card from a participating home when staff select **Request by NFC**. Staff then choose
 **Show Record** to see the text, supported image attachment and available
 OpenETR verification information. The customer decides what to keep in these
 records: `whoami` for the information they use to introduce themselves, and
@@ -129,3 +129,12 @@ rollouts need operator review rather than a promise of unlimited devices.
 [Explore User Experiences](index.md)
 
 *Terminology: Everyday Funds means Cash; Community Credits means Clear balances. Some illustrations and payment controls retain Cash/Clear. See [user-facing language](../product-direction.md#user-facing-language).*
+
+## Across participating homes
+
+The wallet and terminal can belong to independent OakGate homes. The terminal
+stays with its own home, which verifies and contacts the card issuer for the
+requested operation. The holder does not need a second account at the merchant's
+home. Acceptance policies, compatible credit assets and online connectivity still
+apply; card issuance and wallet QR approval remain home-local. See
+[Independent homes, one connected experience](connected-homes.md).

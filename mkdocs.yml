@@ -44,6 +44,7 @@ nav:
       - Meet Project OakGate: user-experiences/meet-project-oakgate.md
       - From a wallet to a card: user-experiences/card-pairing-and-payments.md
       - One wallet, several counters: user-experiences/one-wallet-several-counters.md
+      - Independent homes, connected experience: user-experiences/connected-homes.md
       - A day at the beach: user-experiences/a-day-at-the-beach.md
       - A city-backed food network: user-experiences/food-hamper-network.md
       - Ad example: user-experiences/ad-example.md
@@ -71,12 +72,13 @@ nav:
       - Language preferences: 012-localization.md
       - Local currency and rates: 013-local-currency.md
       - Direct Safebox payments: 014-direct-ecash-payments.md
-      - Wallet messages: 019-wallet-messages.md
+      - Receipts and wallet messaging: 019-wallet-messages.md
       - Safebox address discovery: 018-safebox-address-discovery.md
       - Clear payments: 015-clear-payments.md
       - Scan and Receive: 020-scan-and-receive.md
-      - Receive-only POS design: 023-receive-only-pos.md
+      - POS authority and receiving: 023-receive-only-pos.md
       - POS deployment: 024-pos-deployment.md
+      - Cross-home cards and POS: 039-cross-home-pos.md
       - POS record requests: 038-pos-record-requests.md
       - POS NFC cards: 025-pos-nfc-cards.md
       - Everyday NFC card trust: 029-nfc-card-trust.md

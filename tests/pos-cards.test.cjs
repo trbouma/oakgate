@@ -29,7 +29,7 @@ test('write requires explicit consent and does not activate until a matching rea
   assert.equal(f.calls.filter(c=>c.op==='card-verify').length,0);
   await f.click('card-read');await f.readers.at(-1).onreading(reading());
   assert.equal(f.calls.at(-1).op,'card-verify');assert.equal(f.calls.at(-1).data.card_payload,encoded);
-  assert.match(f.el('card-status').textContent,/verified and issued/);assert.equal(f.storage.size,0);
+  assert.match(f.el('card-status').textContent,/paired and verified/);assert.equal(f.storage.size,0);
 });
 test('wrong MIME or wrong card never reaches the server',async()=>{
   const f=fixture();await f.init();await f.click('issue-card');

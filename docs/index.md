@@ -27,7 +27,7 @@ Leah stops at the market, pays for her groceries and greets a neighbour. Her com
 on with her day.
 
 OakGate brings these everyday exchanges into a familiar place: **Funds, Records
-and Messages**, with a trusted provider looking after the technical details.
+and Receipts**, with a trusted provider looking after the technical details.
 Leah can focus on being part of her community.
 
 [Meet Leah and discover OakGate](user-experiences/meet-project-oakgate.md){ .md-button .md-button--primary }
@@ -98,13 +98,27 @@ Meet Project OakGate, the custodial version of Safebox, then see how it fits
 into everyday life: a wallet holder pairs a card and pays
 with a tap, while a small merchant equips several counters to receive Everyday Funds and
 Community Credits into one wallet. The same terminals can now request and display `whoami`,
-`myinfo` and `emergency` records through QR approval or NFC.
+`myinfo`, `emergency`, `health`, `benefits`, `member` and `pass` records, including
+category descendants. QR wallet approval is home-local; NFC supports participating
+remote homes.
 
 [Meet Project OakGate](user-experiences/meet-project-oakgate.md){ .md-button .md-button--primary }
 [From a wallet to a card](user-experiences/card-pairing-and-payments.md){ .md-button }
 [One wallet, several counters](user-experiences/one-wallet-several-counters.md){ .md-button }
 [A city-backed food network](user-experiences/food-hamper-network.md){ .md-button }
 [Explore User Experiences](user-experiences/index.md){ .md-button }
+
+## Independent homes. One connected experience.
+
+[![A wallet, card and merchant POS connect across two independent OakGate homes, with private keys retained at the issuing home.](assets/user-experiences/connected-homes.png)](user-experiences/connected-homes.md){ .oakgate-experience-image }
+
+Your app, card and a participating merchant's POS can work together even when
+operated by different OakGate homes. Signed requests connect payments, balance
+lookups and record presentations while each home retains its own users and custody.
+Acceptance policies and online connectivity apply; live deployment checks remain required.
+
+[Explore the connected experience](user-experiences/connected-homes.md){ .md-button .md-button--primary }
+[How the homes work together](039-cross-home-pos.md){ .md-button }
 
 ## One family, different responsibilities
 

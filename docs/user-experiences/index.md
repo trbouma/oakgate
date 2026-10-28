@@ -32,7 +32,7 @@ individual independence built into its direction.
 
 <article class="oakgate-experience-preview" markdown>
 
-[![Card pairing and payment infographic](../assets/user-experiences/card-pairing-and-payments.png)](card-pairing-and-payments.md)
+[![Card pairing and payment infographic](../assets/user-experiences/card-pairing-and-payments-network.png)](card-pairing-and-payments.md)
 
 <div markdown>
 
@@ -115,6 +115,23 @@ Everyday Funds, Community Credits and Records that Matter. A full-page advertisi
 concept about everyday exchanges, community and the company we keep.
 
 [View the ad →](ad-example.md){ .md-button .md-button--primary }
+
+</div>
+
+</article>
+
+<article class="oakgate-experience-preview" markdown>
+
+[![Independent OakGate homes connected by verified card requests](../assets/user-experiences/connected-homes.png)](connected-homes.md)
+
+<div markdown>
+
+## Independent homes, one connected experience
+
+Maya's wallet and the merchant's POS belong to different homes. A familiar card
+tap connects them for payments, balances and records without moving her custody.
+
+[See how the network fits together →](connected-homes.md){ .md-button .md-button--primary }
 
 </div>
 

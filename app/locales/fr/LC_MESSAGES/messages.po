@@ -2896,3 +2896,21 @@ msgstr "Fonds du quotidien"
 
 msgid "Community Credits"
 msgstr "Crédits communautaires"
+
+msgid "Receipts"
+msgstr "Reçus"
+
+msgid "Your Receipts"
+msgstr "Vos reçus"
+
+msgid "No receipts yet."
+msgstr "Aucun reçu pour le moment."
+
+msgid "Receipt"
+msgstr "Reçu"
+
+msgid "This form has expired. Open Receipts again."
+msgstr "Ce formulaire a expiré. Ouvrez à nouveau les reçus."
+
+msgid "Approve card pairing"
+msgstr "Approuver l’association de la carte"

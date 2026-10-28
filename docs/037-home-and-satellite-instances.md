@@ -13,6 +13,15 @@ This is an agreed design direction. General satellite enrollment, API access,
 branding and address aliases are not implemented by this note. Existing POS
 device enrollment provides a starting point, not a complete satellite platform.
 
+## Independent homes can also work together
+
+Implemented [card/POS federation](039-cross-home-pos.md) connects independent
+homes, each retaining its own users, wallet bindings, service identity and custody.
+A card issued at one home can be used by a POS connected to another accepted home.
+This is separate from the planned satellite model: satellites share one home's
+user population; federation connects distinct populations through scoped requests.
+Neither sharing a host nor accepting another home's cards merges accounts.
+
 ## Responsibilities
 
 | Responsibility | Home | Satellite |

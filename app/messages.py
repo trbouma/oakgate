@@ -93,7 +93,7 @@ async def send(request: Request):
             raise ValueError()
         digest = hashlib.sha256(token['nonce'].encode()).hexdigest()
     except Exception:
-        return error_page(request, 'This form has expired. Open Wallet messages again.', 400)
+        return error_page(request, 'This form has expired. Open Receipts again.', 400)
     try:
         async with asyncio.timeout(6):
             destination = await resolver(request)(address)

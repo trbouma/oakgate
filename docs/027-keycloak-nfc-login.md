@@ -235,7 +235,7 @@ and plugin allow a blank field, but OakGate's server alone decides whether that
 specific card can log in without a PIN. A blank PIN never bypasses an On policy.
 Enrollment, card expiry/revocation, wallet binding, issuer identity, challenge
 replay protection and Keycloak user checks still apply. Payments are unchanged.
-This grants full account login, not merely receive-only POS access. POS devices
+This grants full account login, not merely scoped POS operations. POS devices
 that have read the card credential could also use it for login when PIN is Off.
 
 The `nfc_login_policy` table is included in custody database backups. Missing

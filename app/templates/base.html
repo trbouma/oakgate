@@ -15,7 +15,7 @@
 {% if active_page and active_page != 'scan' %}{% if active_page != 'receive' %}<nav class="account-nav" aria-label='{{ _("Account navigation") }}'>
 <a href="/account"{% if active_page == 'balances' %} aria-current="page"{% endif %}>{{ _("Funds") }}</a>
 <a href="/account/records"{% if active_page == 'records' %} aria-current="page"{% endif %}>{{ _("Records") }}</a>
-<a href="/account/messages"{% if active_page == 'messages' %} aria-current="page"{% endif %}>{{ _("Messages") }}</a>
+<a href="/account/messages"{% if active_page == 'messages' %} aria-current="page"{% endif %}>{{ _("Receipts") }}</a>
 <a href="/account/preferences"{% if active_page == 'preferences' %} aria-current="page"{% endif %}>{{ _("Preferences") }}</a>
 </nav>{% endif %}<div class="wallet-actions" aria-label="{{ _('Wallet actions') }}"><a class="primary-action" href="/account/scan"{% if active_page == 'scan' %} aria-current="page"{% endif %}>{{ _('Scan') }}</a>{% if active_page != 'receive' %}<a class="primary-action" href="/account/receive"{% if active_page == 'receive' %} aria-current="page"{% endif %}>{{ _('Receive') }}</a>{% endif %}</div>{% endif %}
 <p id="page-progress" class="page-progress" role="status" aria-live="polite" aria-atomic="true" data-working="{{ _('Working. Please wait…') }}" data-opening="{{ _('Opening…') }}" hidden></p>

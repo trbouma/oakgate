@@ -76,7 +76,8 @@ The following describes the implementation today, not future general-purpose NWC
 a PIN during issuance does not automatically protect every card capability.
 Conversely, successful card login creates a normal OakGate session, with the
 wallet actions that session permits, including sending payments. Describing the
-card as receive-only would therefore be misleading for a card enrolled for login.
+card as receive-only would be misleading: it supports POS debit and disclosure,
+and an enrolled card may also permit login.
 Sensitive recovery disclosure and card-policy changes still require fresh normal
 Google/email authentication.
 

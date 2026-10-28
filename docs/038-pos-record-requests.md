@@ -217,7 +217,7 @@ social NIP-05 lookup. No wallet handle is required for the holder.
 
 The receipt includes the record label, terminal name, access time in UTC and a
 request reference. It contains no record contents, attachment or presentation
-capability. The holder sees it under **Your Messages**, newest first. Tap a compact
+capability. The holder sees it under **Your Receipts**, newest first. Tap a compact
 row to expand its full text and sender details. Only a verified wallet address is
 used as the collapsed sender label; otherwise a shortened wallet public key is
 shown. Compose is hidden for now; the existing protected send endpoint remains.

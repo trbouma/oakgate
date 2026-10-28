@@ -8,8 +8,9 @@ POS uses the same repository and Dockerfile, with its own application entry poin
 
 The terminal opens on **Point of Sale**, which contains the existing activation,
 receiving, NFC card issuance, available-balance and terminal settings controls.
-**Check a Record** requests a short-lived presentation of a `whoami` record by
-wallet QR approval or a same-instance NFC card. See [POS record requests](038-pos-record-requests.md).
+**Check a Record** requests `whoami`, `myinfo`, `emergency`, `health`, `benefits`,
+`member` or `pass`, including category descendants. Wallet QR approval is
+home-local; NFC cards may come from the local or another participating home. See [POS record requests](038-pos-record-requests.md).
 
 Tabs switch within the page without reloading or resetting the terminal. Finish
 or cancel an active payment, card operation or activation scan before switching.
@@ -156,9 +157,17 @@ promise of final settlement. Check the owner's transactions for final credit.
 The server-enforced policy and recovery behaviour are described in
 [the POS design note](023-receive-only-pos.md#implemented-receiving-policy-and-recovery).
 
-## Issue NFC cards
+## Pair NFC cards
 
-The POS now includes **Issue NFC card** for wallet-approved pairing, writing and
+The POS now includes **Pair NFC Card** for wallet-approved pairing, writing and
 read-back verification. See [POS NFC card issuance](025-pos-nfc-cards.md) for the
 steps, card format and hardware requirements. No new environment variables are
-needed. Cards are issuance-only credentials; PIN, spending and NWC are later work.
+needed. Cards support PIN issuance, POS payment and disclosure capabilities;
+PIN enforcement depends on the operation. General-purpose NWC is not granted.
+
+## Use cards across independent homes
+
+A POS can use cards issued by another home, and its own home can serve signed
+requests from other homes. The terminal stays connected to its configured API;
+the homes communicate server-to-server. See [Cross-home cards and POS](039-cross-home-pos.md)
+for both directions, trust boundaries, configuration and acceptance checks.

@@ -96,7 +96,7 @@ def test_compiled_catalogs_include_oakgate_vocabulary(language,label):
 @pytest.mark.parametrize('language', ['fr','es','pt','de','it','zh-Hans'])
 def test_new_screen_and_browser_vocabulary_is_translated(language):
     translator=translations_for(language)
-    for text in ['Your Funds','Your Records','Your Messages','Receive','Store as',
+    for text in ['Your Funds','Your Records','Your Receipts','Receive','Store as',
                  'Waiting for payment','Check unavailable','Requesting camera access…','Copied.']:
         assert translator.gettext(text) != text
     assert '%(page)s' in translator.gettext('Page %(page)s of %(total)s')

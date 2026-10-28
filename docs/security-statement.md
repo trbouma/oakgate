@@ -89,3 +89,17 @@ operator responsibilities in more detail.
 For current capabilities and remaining acceptance checks, see
 [Project status](project-status.md). For how these choices fit the wider
 architecture, see [Mainstay principles](010-mainstay-principles.md).
+
+## Connected homes, distinct responsibilities
+
+A participating OakGate home can accept signed POS requests from another home,
+or contact a foreign card's issuer. The issuer retains the wallet's private keys
+and checks card validity and its acceptance policy. The merchant's home receives
+the operation result, including any explicitly requested balances or records.
+These homes do not share an account session or custody database.
+
+Current card-based POS payments and disclosure do not require a PIN. A copied
+card may therefore be usable through an accepted home. Signatures verify the
+service, not the physical tag or independent holder consent. Revocation and the
+issuer's optional allowlist remain important choices. See
+[the cross-home trust model](039-cross-home-pos.md#trust-and-holder-agency).

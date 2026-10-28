@@ -2344,3 +2344,21 @@ msgstr "日常资金"
 
 msgid "Community Credits"
 msgstr "社区积分"
+
+msgid "Receipts"
+msgstr "回执"
+
+msgid "Your Receipts"
+msgstr "你的回执"
+
+msgid "No receipts yet."
+msgstr "暂无回执。"
+
+msgid "Receipt"
+msgstr "回执"
+
+msgid "This form has expired. Open Receipts again."
+msgstr "此表单已过期。请重新打开回执。"
+
+msgid "Approve card pairing"
+msgstr "批准卡片配对"

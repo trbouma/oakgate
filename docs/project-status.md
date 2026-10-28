@@ -5,11 +5,11 @@ operator-reported results on the existing deployment, and checks still required
 for a new home instance. Deployment reports are not a certification or a guarantee
 that every integration and failure mode has been tested.
 
-## Implemented and exercised
+## Implementation and verification status
 
 | Area | Current state |
 | --- | --- |
-| Wallet app | Funds, Records, Messages and Preferences; Everyday Funds and Community Credits with friendly units and local-currency display |
+| Wallet app | Funds, Records, Receipts and Preferences; Everyday Funds and Community Credits with friendly units and local-currency display |
 | Local development | Python 3.12, Poetry, automatic reload and automated tests; containers built on the deployment host |
 | Sign-in | Keycloak with Google, email registration and recovery, and enrolled NFC card authentication; operator reported successful login flows and logout |
 | Acorn custody | Create/connect, encrypted custody storage and balance readback; operator confirmed an existing Acorn's displayed balance matched |
@@ -17,9 +17,10 @@ that every integration and failure mode has been tested.
 | Zaps | Receipt handling implemented; independent end-to-end verification remains a deployment check rather than inferred from a successful ordinary Lightning payment |
 | Records | Creation, attachment preview, update, deletion, sharing and presentation through Acorn; operator reported attachment display and accepted sharing working |
 | POS | Browser-bound activation, receiving, NFC issuance, balance lookup and card payment flows implemented; operator reported activation, card issuance and balance lookup working |
-| POS record presentation | `whoami`, `myinfo`, `emergency`, `member` and `pass` requests through QR approval or same-home NFC; temporary display and OpenETR information; operator reported NFC presentation working |
+| POS record presentation | Seven categories (`whoami`, `myinfo`, `emergency`, `health`, `benefits`, `member`, `pass`) with case-insensitive slash descendants, selection and PDF/OpenETR previews; local NFC reported working; remote flows have automated coverage |
+| Cross-home POS | Signed issuer-pinned NFC debit, balance lookup and record presentation implemented with two-home automated tests; live two-home acceptance remains required |
 | Presentation notices | Emergency contact-wallet notifications and holder presentation receipts implemented with duplicate protection and local tests; live delivery verification pending |
-| Messages | Compact newest-first received-message list, expandable details, compose hidden; reads Acorn messages, including available presentation receipts |
+| Receipts | Compact newest-first received-message list, expandable details, compose hidden; reads Acorn messages, including available presentation receipts |
 | Application storage | PostgreSQL runtime and Alembic migration tooling implemented; operator reported verified data migration and healthy application startup |
 | Keycloak storage | Separate PostgreSQL database and role; operator reported import verification preserving realm user IDs and identity links, then healthy startup and working sign-in |
 | Deployment | Environment-based storage paths, health checks and refresh scripts; operator reported healthy services on SSD-backed storage |
@@ -36,6 +37,9 @@ retain Cash/Clear. See [user-facing language](product-direction.md#user-facing-l
   demonstrated restore.
 - The complete **Go Independent** departure and deletion workflow remains planned.
   Displaying recovery information does not end custody or prove erasure.
+- Cross-home NFC operations require live acceptance with independent homes,
+  devices, TLS/proxies, mints and relays. Automated coverage is not a live
+  interoperability result. See [the checklist](039-cross-home-pos.md#acceptance-checks-before-relying-on-a-deployment).
 - Home/satellite deployment is a documented architecture, not deployed satellite
   support.
 - Presentation receipts and emergency notifications are best-effort messages,

@@ -85,7 +85,7 @@ Cash and Clear reads run independently. A Clear relay failure displays “Clear 
 
 ## Records
 
-The signed-in account navigation switches between **Funds**, **Records**, **Messages**, and **Preferences**. Records lists user-record labels in descending event-timestamp order, with alphabetical ordering for ties. It reads Acorn's standard stored user records (kind 37375); Acorn filters its internal wallet records. The list shows labels. Clicking a label opens its detail view with safe content rendering and supported attachment previews. Record creation, editing, deletion, presentation and sharing have since been added through Acorn; see [POS record requests](038-pos-record-requests.md) for terminal presentations.
+The signed-in account navigation switches between **Funds**, **Records**, **Receipts**, and **Preferences**. Records lists user-record labels in descending event-timestamp order, with alphabetical ordering for ties. It reads Acorn's standard stored user records (kind 37375); Acorn filters its internal wallet records. The list shows labels. Clicking a label opens its detail view with safe content rendering and supported attachment previews. Record creation, editing, deletion, presentation and sharing have since been added through Acorn; see [POS record requests](038-pos-record-requests.md) for terminal presentations.
 
 Detail URLs contain an opaque record reference and resolve only against the signed-in user's Acorn user-record listing, not arbitrary internal labels. Missing records return 404; unavailable reads return 503 without exposing provider errors.
 

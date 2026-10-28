@@ -2360,3 +2360,21 @@ msgstr "Fundos do dia a dia"
 
 msgid "Community Credits"
 msgstr "Créditos comunitários"
+
+msgid "Receipts"
+msgstr "Recibos"
+
+msgid "Your Receipts"
+msgstr "Os seus recibos"
+
+msgid "No receipts yet."
+msgstr "Ainda não há recibos."
+
+msgid "Receipt"
+msgstr "Recibo"
+
+msgid "This form has expired. Open Receipts again."
+msgstr "Este formulário expirou. Abra novamente os Recibos."
+
+msgid "Approve card pairing"
+msgstr "Aprovar a associação do cartão"

@@ -4,19 +4,21 @@ See [Everyday NFC cards: trust and security](029-nfc-card-trust.md) for the NTAG
 
 OakGate POS can pair with a signed-in OakGate wallet, prepare an encrypted card
 credential, write an NDEF card and verify it by reading it back. This implements
-issuance and a confirmed, read-only Cash and Clear balance lookup. Issuance alone
-does not authorize login, spending, NWC calls or access to records. Optional
+issuance, confirmed balance lookup, receipt-bound POS debit and scoped record
+presentation. Valid cards can be used locally or through the signed cross-home
+protocol. Debit and disclosure currently do not ask for a PIN. General-purpose
+NWC is not granted. Optional
 [Keycloak NFC login](027-keycloak-nfc-login.md) requires separate activation and, by default, a PIN; card-only login is an explicit per-card exception. New cards receive a private server-side PIN during issuance;
 current payments and balance lookup do not prompt for it.
 
 ## Operator flow
 
-1. On a compatible NFC-enabled POS device, choose **Issue NFC card**.
+1. On a compatible NFC-enabled POS device, choose **Pair NFC Card**.
 2. The wallet holder uses OakGate's Scan page to scan the pairing QR. A normal
    camera can also open its HTTPS link. Signed-out users sign in in another tab,
    return and continue; the pairing secret is never passed through OIDC.
 3. The wallet holder compares the terminal name and six-character pairing code,
-   then explicitly chooses **Approve card issuance**. Their wallet displays a
+   then explicitly chooses **Approve card pairing**. Their wallet displays a
    randomly generated four-digit PIN. They memorize it or store it separately,
    then choose **I have saved my PIN** before the POS can prepare the card.
 4. The POS polls OakGate's state and shows the approving wallet's handle. Check
@@ -59,9 +61,10 @@ display label, pairing status and the encrypted bytes needed to write the card.
 Every operation retains the existing browser key proof and terminal revocation
 checks. Wallet replacement invalidates pending issuance.
 
-This adds a narrow, owner-approved card-issuance operation to the POS. Its funds
-permissions remain receive-only. It grants no authority to manage the paired
-wallet, access its custody material, or revoke another user's issued cards.
+Pairing adds an owner-approved issuance operation. The terminal credential alone
+cannot spend the merchant's funds. A subsequently presented valid card provides
+separate bearer authority for POS debit and disclosure. Neither grants general
+account management, access to custody material or another user's revocation controls.
 
 ## Private PIN provisioning
 
@@ -157,16 +160,16 @@ it does not make an ordinary NDEF card unclonable. Read-back proves that the
 browser submitted the expected prepared bytes, not hardware possession or
 hardware-backed attestation: the issuer browser already held those bytes.
 
-The random secret is not itself a NIP-47 signing key. Future NWC or payment use
-must define an explicit permission grant, authentication/PIN policy, limits and
-revocation checks. Existing issuance-only cards must not silently acquire spending
-or login permissions. Any future Nostr work must use Stroma, and all Acorn
-private-key operations must remain in Acorn.
+The random secret is not a NIP-47 signing key. Current POS debit follows the
+explicit bearer-card policy described below; general-purpose NWC requires a
+separate permission design. Login requires separate enrollment. Any further
+capability changes must be reviewed and disclosed. Nostr operations use Stroma,
+and user private-key operations remain in Acorn.
 
 ## Persistence and recovery
 
-`nfc_issuer`, `nfc_pairings`, `nfc_cards`, `nfc_card_pins` and `nfc_login_requests` live in the existing custody SQLite
-database. A dedicated random issuer encryption key is created once and encrypted
+`nfc_issuer`, `nfc_pairings`, `nfc_cards`, `nfc_card_pins` and `nfc_login_requests` live in the configured custody
+database (PostgreSQL for a production home; SQLite remains supported for development). A dedicated random issuer encryption key is created once and encrypted
 at rest with the operator's custody encryption key. No new `.env` secret is
 required. Back up the custody database and its existing encryption key together;
 losing the issuer key/mapping makes these cards unusable, not the underlying Acorn.
