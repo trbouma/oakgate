@@ -40,6 +40,8 @@ retain Cash/Clear. See [user-facing language](product-direction.md#user-facing-l
 - Cross-home NFC operations and wallet QR presentations require live acceptance with independent homes,
   devices, TLS/proxies, mints and relays. Automated coverage is not a live
   interoperability result. See [the checklist](039-cross-home-pos.md#acceptance-checks-before-relying-on-a-deployment).
+- NWC-based cross-home coordination is planned. The implemented transport is signed
+  HTTPS between app servers; stabilize it first. See [the roadmap](039-cross-home-pos.md#transport-roadmap-stabilize-https-then-evaluate-nwc).
 - Home/satellite deployment is a documented architecture, not deployed satellite
   support.
 - Presentation receipts and emergency notifications are best-effort messages,

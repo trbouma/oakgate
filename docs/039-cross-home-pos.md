@@ -1,4 +1,4 @@
-# Cards and POS terminals across OakGate homes
+# Wallets, cards and POS terminals across OakGate homes
 
 [![Wallet app and card at Home A, POS at Home B, signed requests and verified results between independent homes with separate custody.](assets/user-experiences/connected-homes.png)](assets/user-experiences/connected-homes.png){ .oakgate-experience-image }
 
@@ -67,6 +67,88 @@ in Home A, and the POS does not switch its configured API server for each card.
 The homes can exchange roles on another transaction. Home A can acquire a card
 issued by Home B, provided Home B's policy permits Home A. Acceptance is directional:
 allowing B at A does not automatically configure A's acceptance at B.
+
+## Home-server boundary and client coordination
+
+Cross-instance coordination occurs **between the OakGate app servers**, not
+between a wallet browser and a foreign POS server. Each client uses its own
+home's interface:
+
+```text
+Wallet browser at Home A                         POS browser at Home B
+          |                                               |
+          | Local wallet requests and approval            | Local terminal requests and polling
+          v                                               v
+   OakGate App A <------ signed HTTPS ------> OakGate App B <---- POS Server B
+   Wallet/custody home                        Merchant home      Own-home API proxy
+```
+
+The full logical path is:
+
+```text
+Wallet browser → App A ↔ App B ← POS Server B ← POS browser
+```
+
+The POS server forwards terminal operations to its configured
+`OAKGATE_POS_API_URL` at its own home. It does not change that destination to the
+visitor's home. App B resolves the remote home and performs the authenticated
+cross-home exchange with App A. For wallet QR approval, App A also fetches the
+request from B and submits the user's approved presentation grant to B.
+
+The POS browser polls its local API for request status and displays the returned
+result. The wallet browser fetches request details and explicitly submits approval
+to its own app server; it does not need to continuously poll or connect directly
+to the foreign home. The homes make signed API calls as the flow requires. A
+foreign domain in a QR code or card is routing information for those server-side
+exchanges, not permission to move the user's login session to that domain.
+
+This boundary describes the cross-home coordination protocol. It does not mean
+all browser network traffic is confined to the home: sign-in redirects and other
+existing resource flows have their own paths. Opening a foreign QR URL in a native
+camera still opens that website; use the wallet scanner to retain the own-home
+approval flow.
+
+User sessions, custody databases and Acorn private keys are not shared between
+homes. Record operations continue through Acorn, with Nostr relays and Blossom
+storage underneath. Payment operations retain their existing Acorn and mint
+contracts. The HTTPS coordination layer does not replace that architecture.
+
+## Transport roadmap: stabilize HTTPS, then evaluate NWC
+
+**Current implementation:** FastAPI HTTPS APIs coordinate independent homes using
+signed, purpose-specific requests and responses. Client polling provides the POS
+experience. This is the first major cross-home iteration and should be stabilized
+through real two-home operation before changing the coordination transport.
+
+**Planned direction:** use Nostr Wallet Connect (NWC) for cross-home coordination
+to reduce dependence on directly reachable REST endpoints between homes. The
+intended change is the **App A ↔ App B** link. Wallet and POS browsers would still
+use their own home interfaces, and each POS server would still use its configured
+home app. This does not propose eliminating HTTP from the entire deployment.
+
+NWC coordination is not implemented or advertised as a supported transport.
+A separate protocol design must define which operations map to NWC and which
+require explicit extensions, particularly record requests, selected-record
+presentation, status and cancellation. We must not assume general NWC clients
+already understand OakGate's record operations.
+
+Before introducing it:
+
+- Verify the HTTPS baseline across independent deployments, including interrupted
+  requests, expiry, cancellation, identity changes and recovery.
+- Preserve stable service-key identity, explicit user or card authority, terminal
+  binding, approved-record scope and directional acceptance policies.
+- Specify authenticated and confidential request/result envelopes, correlation,
+  replay handling, bounded lifetimes and relay delivery failure behavior through
+  Stroma. User private-key operations must continue through Acorn.
+- Preserve durable payment attempts and idempotency across transports. A timeout
+  must never trigger a fresh payment over a different transport. Any fallback
+  policy must be explicit and use the same operation identity and recovery state.
+- Plan capability negotiation and mixed-version deployment so existing HTTPS
+  homes keep working while NWC-capable homes are introduced.
+
+The goal is to evolve the infrastructure transport while preserving the user
+experience, custody boundary and existing payment safeguards.
 
 ## Identity, routing and authorization
 

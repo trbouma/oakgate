@@ -67,6 +67,19 @@ See [the illustrated architecture](user-experiences/connected-homes.md) and
 compatible credit assets apply; seamless experience is the design goal, not a
 claim of universal acceptance or completed live testing.
 
+## Cross-home transport direction
+
+Stabilize the current signed HTTPS coordination between OakGate app servers first.
+Wallet browsers use their own app; POS browsers use their own POS server, which
+forwards to its configured home app. Cross-home calls do not pass user login
+sessions or private keys between homes.
+
+The planned next transport is Nostr Wallet Connect for the app-to-app link,
+reducing reliance on cross-home REST endpoints while retaining the local client
+interfaces. Record-operation extensions, delivery/replay semantics and safe
+mixed-transport recovery need a separate design; NWC federation is not implemented.
+See [the server boundary and transport roadmap](039-cross-home-pos.md#home-server-boundary-and-client-coordination).
+
 ## Home and satellite deployment
 
 A home can serve one user population through multiple branded satellite sites.

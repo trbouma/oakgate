@@ -172,3 +172,12 @@ A POS can use cards issued by another home, and its own home can serve signed
 requests from other homes. The terminal stays connected to its configured API;
 the homes communicate server-to-server. See [Cross-home cards and POS](039-cross-home-pos.md)
 for both directions, trust boundaries, configuration and acceptance checks.
+
+## Which server does the terminal contact?
+
+The POS browser talks to its own POS server. That server forwards operations to
+its configured `OAKGATE_POS_API_URL`. Foreign cards and wallet presentations are
+coordinated by **home app server to home app server**; the POS does not switch API
+servers for each visitor. Wallet browsers likewise approve through their own home.
+See [the client/server boundary](039-cross-home-pos.md#home-server-boundary-and-client-coordination)
+and [the planned NWC transport](039-cross-home-pos.md#transport-roadmap-stabilize-https-then-evaluate-nwc).
