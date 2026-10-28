@@ -96,6 +96,8 @@ nav:
       - Keycloak on Beelink: 002-keycloak-beelink.md
       - Authentication design: 001-authentication-design.md
 
+  - QR Scan: qr-scan.md
+
 markdown_extensions:
   - attr_list
   - md_in_html
