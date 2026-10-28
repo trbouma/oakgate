@@ -105,16 +105,16 @@ the counter.
 
 <article class="oakgate-experience-preview" markdown>
 
-[![OakGate full-page advertising concept](../assets/advertising/oakgate-full-page-ad.png)](ad-example.md)
+[![Your wallet, close at hand—even without your phone: OakGate NFC bracelet advertising concept](../assets/advertising/oakgate-close-at-hand-ad.png)](ad-example.md)
 
 <div markdown>
 
-## Ad example
+## Ad examples
 
-Everyday Funds, Community Credits and Records that Matter. A full-page advertising
-concept about everyday exchanges, community and the company we keep.
+Your wallet, close at hand—even without your phone. Explore two full-page
+advertising concepts about everyday freedom, community and the company we keep.
 
-[View the ad →](ad-example.md){ .md-button .md-button--primary }
+[View the ads →](ad-example.md){ .md-button .md-button--primary }
 
 </div>
 
