@@ -231,3 +231,109 @@ def test_preview_rejection_distinguishes_size_and_format():
         attachment, note = preview_attachment(blob, media)
         assert attachment is None
         assert 'format' in note
+
+
+def category_setup(env, monkeypatch):
+    request, calls = setup_records(env, monkeypatch)
+    rows = [{'label': 'benefits', 'ref': 'general'},
+            {'label': 'Benefits/Dental', 'ref': 'dental'},
+            {'label': 'benefits/health', 'ref': 'health'},
+            {'label': 'benefits-other', 'ref': 'outside'}]
+    async def listing(material): return rows
+    async def action(material, name, *args):
+        calls.append((name, args))
+        return {'descriptor': args[0], 'expires_at': 9999999999}
+    async def inspect(material, descriptor, presentation):
+        return {'label': next(r['label'] for r in rows if r['ref'] == descriptor),
+                'payload': descriptor, 'expires_at': 9999999999}
+    monkeypatch.setattr(request.app.state.wallets, 'records', listing)
+    monkeypatch.setattr(request.app.state.wallets, 'record_action', action)
+    monkeypatch.setattr(request.app.state.wallets.backend, 'inspect_scanned_record', inspect)
+    return request, calls, rows
+
+
+def test_category_nfc_lazy_selection_and_revocation(env, monkeypatch):
+    request, calls, rows = category_setup(env, monkeypatch)
+    from app.pos_records import selection_id
+    class Cards:
+        revoked = False
+        def balance_authority(self, *args, **kwargs):
+            if self.revoked: raise HTTPException(403)
+            return {'owner': 'owner', 'wallet_id': 'wallet'}
+    cards = Cards()
+    async def card_store(request): return cards
+    monkeypatch.setattr('app.nfc_routes.card_store', card_store)
+    async def run():
+        ident = (await call(env, 'record-start', {'label': 'benefits'})).json()['request_id']
+        result = await call(env, 'record-nfc', {'request_id': ident, 'card_payload': 'test'})
+        assert result.status_code == 200
+        assert [r['label'] for r in result.json()['records']] == [r['label'] for r in rows[:3]]
+        assert not calls  # no capability or attachment is created by listing
+        assert (await call(env, 'record-present', {'request_id': ident})).status_code == 400
+        assert (await call(env, 'record-present', {'request_id': ident, 'record_id': selection_id(rows[3])})).status_code == 400
+        for row in rows[:3]:
+            response = await call(env, 'record-present', {'request_id': ident, 'record_id': selection_id(row)})
+            assert response.status_code == 200
+            assert response.json()['label'] == row['label']
+        assert len(calls) == 3
+        # Cached results and the available index both recheck card authority.
+        cards.revoked = True
+        assert (await call(env, 'record-status', {'request_id': ident})).status_code == 403
+        assert (await call(env, 'record-present', {'request_id': ident, 'record_id': selection_id(rows[2])})).status_code == 403
+    asyncio.run(run())
+
+
+def test_wallet_category_approves_only_selected_records(env, monkeypatch):
+    request, calls, rows = category_setup(env, monkeypatch)
+    from app.pos_records import selection_id
+    async def current(request): return {'csrf': 'token', 'user': {}}
+    monkeypatch.setattr('app.pos_records.current_session', current)
+    monkeypatch.setattr('app.pos_records.identity_key', lambda user: 'owner')
+    async def run():
+        ident = (await call(env, 'record-start', {'label': 'benefits'})).json()['request_id']
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(request.app), base_url='https://oakgate.example') as client:
+            form = {'csrf': 'token', 'request_id': ident}
+            details = (await client.post('/account/record-request/details', data=form)).json()
+            assert len(details['records']) == 3 and not calls
+            approved = await client.post('/account/record-request/approve', data={**form, 'selected': json.dumps([selection_id(rows[1])])})
+            assert approved.status_code == 200
+            assert len(approved.json()['records']) == 1
+            status = (await call(env, 'record-status', {'request_id': ident})).json()
+            assert status['records'] == approved.json()['records']
+            assert (await call(env, 'record-present', {'request_id': ident, 'record_id': selection_id(rows[2])})).status_code == 400
+            # Exactly one approved record needs no POS selection parameter.
+            shown = await call(env, 'record-present', {'request_id': ident})
+            assert shown.json()['label'] == 'Benefits/Dental'
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize('selection', [None, [], ['forged']])
+def test_wallet_multiple_matches_require_explicit_valid_selection(env, monkeypatch, selection):
+    request, calls, _ = category_setup(env, monkeypatch)
+    async def run():
+        ident = (await call(env, 'record-start', {'label': 'benefits'})).json()['request_id']
+        with pytest.raises(HTTPException): await fulfil(request, ident, 'owner', selected=selection)
+        assert not calls
+    asyncio.run(run())
+
+
+def test_category_selection_rejects_changed_reference_and_expired_request(env, monkeypatch):
+    request, calls, rows = category_setup(env, monkeypatch)
+    from app.pos_records import selection_id
+    async def run():
+        ident = (await call(env, 'record-start', {'label': 'benefits'})).json()['request_id']
+        selected = [selection_id(row) for row in rows[:3]]
+        await fulfil(request, ident, 'owner', selected=selected)
+        rows[1]['ref'] = 'changed'
+        assert (await call(env, 'record-present', {'request_id': ident, 'record_id': selected[1]})).status_code == 409
+        assert not calls
+        (await load(request, ident))['expires'] = 0
+        assert (await call(env, 'record-present', {'request_id': ident, 'record_id': selected[0]})).status_code == 404
+    asyncio.run(run())
+
+
+def test_category_bound_and_case_ambiguity():
+    from app.pos_records import matching_records
+    for rows in ([{'label': 'benefits/dental', 'ref': 'a'}, {'label': 'BENEFITS/DENTAL', 'ref': 'b'}],
+                 [{'label': f'benefits/{i}', 'ref': str(i)} for i in range(21)]):
+        with pytest.raises(HTTPException): matching_records(rows, 'benefits')

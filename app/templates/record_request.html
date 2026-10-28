@@ -4,7 +4,8 @@
 <section class="wallet-panel nfc-panel" id="record-request" data-signed-in="{{ 'yes' if request_signed_in else 'no' }}" data-csrf="{{ csrf or '' }}">
 {% if request_signed_in %}
 <p id="record-request-details">Checking request…</p>
-<p>Approve only if you want this terminal to view your matching record and its attachment. This does not transfer the record or authorize a payment.</p>
+<p>Approve only if you want this terminal to view your selected records and their attachments. This does not transfer the record or authorize a payment.</p>
+<fieldset id="record-request-choices" hidden><legend>Choose records to present</legend><div id="record-request-options"></div></fieldset>
 <button id="record-request-approve" class="primary-action nfc-action" type="button" disabled>Present Record</button>
 {% else %}
 <p>Sign in in another tab, then return here and continue.</p>

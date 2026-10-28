@@ -12,7 +12,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from app.auth import current_session
-from app.custody import identity_key
+from app.custody import identity_key, Busy
 from app.pos_api import invoke
 from app.pos_store import POSDenied, POSStore
 from app.record_previews import _qr_svg
@@ -80,7 +80,49 @@ def unseal(request, item, value):
     return decoded['material']
 
 
-async def fulfil(request, ident, owner, card_check=None, card_payload=None):
+def selection_id(row):
+    return hashlib.sha256((row['label'] + '\0' + row['ref']).encode()).hexdigest()[:24]
+
+
+def matching_records(rows, category):
+    matches = [row for row in rows if row['label'].lower() == category
+               or row['label'].lower().startswith(category + '/')]
+    if not matches or len(matches) > 20 or len({r['label'].lower() for r in matches}) != len(matches):
+        raise HTTPException(404, 'No unambiguous record selection is available (maximum 20 records).')
+    return sorted(matches, key=lambda row: row['label'].lower())
+
+
+def choices(rows):
+    return [{'id': selection_id(row), 'label': row['label']} for row in rows]
+
+
+async def presentation_lease(store, owner):
+    # A just-published presentation receipt may briefly hold the same wallet.
+    # Retry acquisition only, never retry the Acorn operation itself.
+    for attempt in range(31):
+        try:
+            return await invoke(store.acquire, owner)
+        except Busy:
+            if attempt == 30:
+                raise
+            await asyncio.sleep(0.1)
+
+
+async def verify_presenter(request, actor, source):
+    service = request.app.state.wallets
+    row = await invoke(service.store.get, source['owner'])
+    if not row or row['status'] != 'active' or row['material']['npub'] != source['npub']:
+        raise HTTPException(403)
+    if source.get('card_payload'):
+        from app.nfc_routes import card_store
+        cards = await card_store(request)
+        auth = await invoke(cards.balance_authority, actor['id'], source['card_payload'])
+        if auth['owner'] != source['owner']:
+            raise HTTPException(403)
+    return row
+
+
+async def fulfil(request, ident, owner, card_check=None, card_payload=None, selected=None):
     item = await load(request, ident)
     # Atomic one-use claim prevents concurrent QR approvals/NFC taps overwriting a presenter.
     if not await request.app.state.store.pop(key('claim', ident)):
@@ -97,14 +139,26 @@ async def fulfil(request, ident, owner, card_check=None, card_payload=None):
         if card_check:
             await card_check()
         rows = await service.records(material)
-        matches = [row for row in rows if row['label'].lower() == item['label']]
-        # A duplicate case-variant is ambiguous: do not disclose an arbitrary record.
-        if len(matches) != 1:
-            raise HTTPException(404, 'A unique matching record was not found.')
-        lease = await invoke(service.store.acquire, owner)
-        result = await service.record_action(material, 'create_record_capability', matches[0]['ref'], 'present',
-                                            await invoke(service.store.preference, owner) or None)
-        descriptor = result['descriptor']
+        matches = matching_records(rows, item['label'])
+        if not card_check:
+            if selected is None:
+                if len(matches) != 1:
+                    raise HTTPException(400, 'Select the records to present.')
+            else:
+                if (not isinstance(selected, list) or not selected or len(selected) > 20
+                        or any(not isinstance(v, str) for v in selected)
+                        or len(set(selected)) != len(selected)):
+                    raise HTTPException(400, 'Invalid selection.')
+                approved = [row for row in matches if selection_id(row) in selected]
+                if len(approved) != len(selected):
+                    raise HTTPException(409, 'Records changed. Scan a new request.')
+                matches = approved
+        # Multiple matches only disclose the approved index; create a capability on selection.
+        if len(matches) == 1:
+            lease = await invoke(service.store.acquire, owner)
+            result = await service.record_action(material, 'create_record_capability', matches[0]['ref'], 'present',
+                                                await invoke(service.store.preference, owner) or None)
+            descriptor = result['descriptor']
         await load(request, ident)
         if card_check:
             await card_check()
@@ -112,8 +166,9 @@ async def fulfil(request, ident, owner, card_check=None, card_payload=None):
         if not current or current['status'] != 'active' or current['material']['npub'] != material['npub']:
             raise HTTPException(403)
         await sealed_put(request, 'presentation', ident, item, {'descriptor': descriptor, 'owner': owner,
-                         'npub': material['npub'], 'card_payload': card_payload})
-        return {'state': 'ready'}
+                         'npub': material['npub'], 'card_payload': card_payload,
+                         'records': [{'label': r['label'], 'ref': r['ref']} for r in matches]})
+        return {'state': 'ready', 'records': choices(matches)}
     except Exception:
         await request.app.state.store.put(key('failed', ident), True, TTL)
         if descriptor and material:
@@ -133,7 +188,8 @@ async def operation(request, actor, operation, payload):
     except ValueError:
         raise HTTPException(400, 'Invalid record request') from None
     fields = {'label'} if operation == 'record-start' else {'request_id', 'card_payload'} if operation == 'record-nfc' else {'request_id'}
-    if not isinstance(data, dict) or set(data) != fields or any(not isinstance(v, str) for v in data.values()):
+    valid_fields = [fields, fields | {'record_id'}] if operation == 'record-present' else [fields]
+    if not isinstance(data, dict) or set(data) not in valid_fields or any(not isinstance(v, str) for v in data.values()):
         raise HTTPException(400, 'Invalid record request')
     store = request.app.state.store
     if operation == 'record-start':
@@ -158,10 +214,13 @@ async def operation(request, actor, operation, payload):
             await store.delete(key(kind, ident))
         return {'state': 'cancelled'}
     if operation == 'record-status':
-        state = ('ready' if await store.get(key('presentation', ident)) else
-                 'displayed' if await store.get(key('result', ident)) else
-                 'unavailable' if await store.get(key('failed', ident)) else 'waiting')
-        return {'state': state, 'expires': item['expires']}
+        sealed = await store.get(key('presentation', ident))
+        if sealed:
+            source = unseal(request, item, sealed)
+            await verify_presenter(request, actor, source)
+            await load(request, ident, actor)
+            return {'state': 'ready', 'expires': item['expires'], 'records': choices(source['records'])}
+        return {'state': 'unavailable' if await store.get(key('failed', ident)) else 'waiting', 'expires': item['expires']}
     if operation == 'record-nfc':
         from app.nfc_routes import card_store
         cards = await card_store(request)
@@ -179,34 +238,49 @@ async def operation(request, actor, operation, payload):
     service = request.app.state.wallets
     source = unseal(request, item, sealed)
     async def verify_source():
-        row = await invoke(service.store.get, source['owner'])
-        if not row or row['status'] != 'active' or row['material']['npub'] != source['npub']:
-            raise HTTPException(403)
-        if source.get('card_payload'):
-            from app.nfc_routes import card_store
-            cards = await card_store(request)
-            auth = await invoke(cards.balance_authority, actor['id'], source['card_payload'])
-            if auth['owner'] != source['owner']:
-                raise HTTPException(403)
+        return await verify_presenter(request, actor, source)
     await verify_source()
+    records = source['records']
+    requested = data.get('record_id')
+    selected = next((r for r in records if selection_id(r) == requested), None) if requested else records[0] if len(records) == 1 else None
+    if selected is None:
+        raise HTTPException(400, 'Select an approved record.')
+    record_id = selection_id(selected)
     cached = await store.get(key('result', ident))
     if cached:
         result = unseal(request, item, cached)
-        if result['expires'] <= time.time():
-            raise HTTPException(404)
-        await load(request, ident, actor)
-        return result
+        if result.get('record_id') == record_id:
+            if result['expires'] <= time.time():
+                raise HTTPException(404)
+            await load(request, ident, actor)
+            return result
     merchant = await invoke(service.store.get, actor['owner'])
     descriptor = source['descriptor']
+    if not descriptor:
+        holder = await verify_source()
+        matches = matching_records(await service.records(holder['material']), item['label'])
+        if not any(r['ref'] == selected['ref'] and r['label'] == selected['label'] for r in matches):
+            raise HTTPException(409, 'Record changed. Create a new request.')
+        lease = await presentation_lease(service.store, source['owner'])
+        try:
+            await load(request, ident, actor)
+            holder = await verify_source()
+            capability = await service.record_action(holder['material'], 'create_record_capability', selected['ref'], 'present',
+                                                    await invoke(service.store.preference, source['owner']) or None)
+            descriptor = capability['descriptor']
+        finally:
+            await invoke(service.store.release, source['owner'], lease)
+    await load(request, ident, actor)
+    await verify_source()
     async with asyncio.timeout(40):
         detail = await service.backend.inspect_scanned_record(merchant['material'], descriptor, True)
-    if detail['label'].lower() != item['label']:
+    if detail['label'].lower() != selected['label'].lower():
         raise HTTPException(409)
     contents = detail.get('payload', '')
     text = contents if isinstance(contents, str) else json.dumps(contents, ensure_ascii=False, indent=2)
     if len(text.encode()) > 262144:
         raise HTTPException(413)
-    result = {'state': 'displayed', 'label': detail['label'], 'contents': text,
+    result = {'state': 'displayed', 'record_id': record_id, 'label': detail['label'], 'contents': text,
               'expires': min(item['expires'], detail['expires_at']), 'attachment': None,
               'attachment_note': '', 'verification': None, 'publishers': []}
     blob = detail.get('blob_data')
@@ -240,12 +314,12 @@ async def operation(request, actor, operation, payload):
     if result['expires'] <= time.time():
         raise HTTPException(404)
     await sealed_put(request, 'result', ident, item, result)
-    if item['label'] == 'emergency':
+    if detail['label'].lower() == 'emergency':
         from app.emergency_contacts import notify_contact
         result['notification'] = await notify_contact(request, ident, source, text)
         await sealed_put(request, 'result', ident, item, result)
     from app.presentation_receipts import schedule_receipt
-    schedule_receipt(request, ident, actor, source, detail['label'])
+    schedule_receipt(request, ident + ':' + record_id, actor, source, detail['label'])
     return result
 
 
@@ -265,14 +339,23 @@ async def callback(request: Request, action: str):
         raise HTTPException(503)
     form = await checked_form(request, session)
     try:
-        if set(form) != {'csrf', 'request_id'} or action not in {'details', 'approve'}:
+        if set(form) not in ({'csrf', 'request_id'}, {'csrf', 'request_id', 'selected'}) or action not in {'details', 'approve'}:
             raise HTTPException(400)
         ident = form['request_id']
         item = await load(request, ident)
         if action == 'details':
-            return JSONResponse({'name': await invoke(terminal, request, item['actor']), 'label': item['label'], 'expires': item['expires']})
+            holder = await invoke(request.app.state.wallets.store.get, identity_key(session['user']))
+            if not holder or holder['status'] != 'active':
+                raise HTTPException(404, 'Connect an Acorn first.')
+            matches = matching_records(await request.app.state.wallets.records(holder['material']), item['label'])
+            await load(request, ident)
+            return JSONResponse({'name': await invoke(terminal, request, item['actor']), 'label': item['label'], 'expires': item['expires'], 'records': choices(matches)})
         try:
-            return JSONResponse(await fulfil(request, ident, identity_key(session['user'])))
+            try:
+                selected = json.loads(form['selected']) if 'selected' in form else None
+            except ValueError:
+                raise HTTPException(400, 'Invalid selection.') from None
+            return JSONResponse(await fulfil(request, ident, identity_key(session['user']), selected=selected))
         except HTTPException:
             raise
         except Exception:

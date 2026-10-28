@@ -38,3 +38,18 @@ test('anchor publisher and statement render as text and clear with the request',
  assert.equal(f.el('record-verification-details').open,false);
  await f.click('record-cancel');assert.equal(f.el('record-publishers').textContent,'');assert.equal(f.el('record-anchor-summary').children.length,0);
 });
+test('multiple records expose a selector and selection changes discard an in-flight display',async()=>{
+ const f=fixture();let resolve;const calls=[];
+ f.start(async(op,payload)=>{calls.push([op,payload]);return op==='record-start'?request:op==='record-status'?{state:'ready',records:[{id:'dental',label:'benefits/dental'},{id:'health',label:'benefits/health'}]}:new Promise(r=>resolve=r);});
+ f.el('record-type').value='benefits';await f.click('record-start');await Promise.resolve();
+ assert.equal(f.el('record-choice-wrap').hidden,false);assert.equal(f.el('record-choice').children[0].textContent,'dental');
+ f.el('record-choice').value='dental';const pending=f.click('record-present');
+ assert.equal(calls.at(-1)[1].record_id,'dental');
+ f.el('record-choice').value='health';f.el('record-choice').listeners.change();
+ resolve({label:'benefits/dental',contents:'old'});await pending;
+ assert.equal(f.el('record-result').hidden,true);assert.equal(f.el('record-contents').textContent,'');assert.equal(f.el('record-present').disabled,false);
+});
+test('one approved record never shows the selector',async()=>{
+ const f=fixture();f.start(async op=>op==='record-start'?request:{state:'ready',records:[{id:'one',label:'benefits/dental'}]});
+ f.el('record-type').value='benefits';await f.click('record-start');await Promise.resolve();assert.equal(f.el('record-choice-wrap').hidden,true);
+});

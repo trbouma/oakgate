@@ -604,3 +604,6 @@ body:not(.landing) > header { padding-block: 12px; gap: 12px; }
 .message-detail { padding:0 .25rem .5rem; }
 .message-detail p { margin:.35rem 0; }
 .message-detail .note { font-size:.75rem; }
+
+.record-request-option { display:flex; align-items:center; gap:.75rem; min-height:48px; padding:.65rem; overflow-wrap:anywhere; cursor:pointer; }
+.record-request-option input[type="checkbox"] { width:24px; height:24px; flex:0 0 24px; margin:0; }

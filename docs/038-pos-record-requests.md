@@ -33,8 +33,7 @@ not prove entitlement or the truth of every claim.
 
 `member` can omit identifying content, and requesting it does not also request
 `whoami`. This is a content choice, not an anonymity guarantee: existing wallet,
-card, custody and presentation-receipt behaviour is unchanged. No selective
-disclosure or additional privacy mechanism is introduced.
+card, custody and presentation-receipt behaviour is unchanged. Selection is between whole records, not selective disclosure of fields inside a record.
 
 Both choices use existing case-insensitive unique-label matching, QR approval,
 same-home NFC presentation, two-minute expiry, and holder receipts through Acorn.
@@ -70,12 +69,15 @@ and [One wallet, several counters](user-experiences/one-wallet-several-counters.
 1. Select **whoami**, **myinfo**, **emergency**, **health**, **benefits**, **member** or **pass**, then **Create Request**. A new request clears the previous
    displayed record and invalidates the previous request on this terminal.
 2. The holder scans the QR using their OakGate wallet or phone camera. The wallet
-   displays the terminal name and requested label and asks for approval. A holder
+   displays the terminal name and matching records and asks for approval. With
+   multiple matches, the holder checks which records to share; nothing is checked
+   by default. With one match, approval remains a single action. A holder
    who is signed out signs in in another tab and returns to the request.
 3. Alternatively, on a compatible secure NFC browser, choose **Request by NFC**
    and ask the holder to tap their valid, activated OakGate card. This first
    iteration supports same-home cards only and does not ask for a PIN.
-4. When ready, choose **Show Record**. Acorn retrieves the presentation for
+4. When multiple approved records are available, choose one in **Record to display**,
+   then **Show Record**. With only one, no selector is shown: choose **Show Record**. Acorn retrieves the presentation for
    display, without importing it into the merchant's wallet.
 5. Create a new request or select **Close Request** to remove the display.
 
@@ -85,11 +87,28 @@ cleared display. Switching back to Point of Sale does not change a payment journ
 
 ## Record selection and verification
 
-Labels are compared in lowercase: `whoami`, `WhoAmI` and `WHOAMI` match; `myinfo` and `MyInfo` also match. A missing
-record or multiple matching labels produces an unavailable result rather than
-selecting an arbitrary record. Only user records returned through Acorn's existing
-record-listing methods are eligible; the terminal cannot request internal wallet
-records or arbitrary labels.
+A category matches its exact label and slash descendants, case-insensitively.
+For example, `benefits` matches `benefits`, `Benefits/Dental` and
+`benefits/health`, but not `benefits-other`. The exact match is displayed as
+**General** in the POS selector, and descendants as **Dental** or **health** using
+their stored spelling. Case-variant duplicates remain ambiguous and are rejected.
+No match, or more than 20 matches, requires a new request after adjusting records.
+Only user records returned through Acorn are eligible.
+
+The wallet holder may approve one or several matches. The POS receives only the
+approved labels and opaque selection IDs; unapproved record IDs cannot be used.
+An NFC presentation makes all matches in the requested category available to the
+terminal. With one match (or one approved record), the existing flow is unchanged.
+With multiple matches, contents and attachments are acquired through Acorn only
+when **Show Record** is selected. Switching selections immediately clears the
+previous preview, including PDFs, and stale responses cannot restore it.
+
+The two-minute request deadline does not restart when switching records. Each
+record has its own OpenETR lookup and best-effort presentation receipt, with
+receipt duplicate protection scoped to the request and selected record. Only the
+exact `emergency` record triggers its contact directive; descendants do not.
+No new schema, configuration, Acorn API or terminal provisioning is required.
+Rebuild both **app** and **pos** and create a fresh request after deployment.
 
 The existing Acorn public-only presentation method creates a short-lived
 presentation. Record text and JSON are displayed as text, never executable HTML.
@@ -111,9 +130,9 @@ authenticated wallet session and CSRF validation. The QR contains a random invit
 in its URL fragment, not a record, wallet key or external callback destination.
 OakGate's scanner recognizes this same-home request URL directly.
 
-An NFC tap authorizes disclosure of the selected allowlisted record in this iteration.
+An NFC tap authorizes disclosure of all matching records in the requested allowlisted category.
 This is an additional bearer-card capability: holders should keep only information
-they intend to present in that record. A lost or copied card can disclose that
+they intend to present in that category. A lost or copied card can disclose that
 record until revoked. The card and wallet are checked again after preparation and
 before retrieval, including cached retrieval. Stronger card consent/PIN policy can
 be introduced later; it is not implied by the current implementation.

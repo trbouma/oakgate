@@ -161,3 +161,20 @@ def test_pos_serves_only_pdf_library_assets():
             assert client.get('/pdf-assets/' + path).status_code == 200
         assert client.get('/pdf-assets/record-actions.js').status_code == 404
         assert "script-src 'self'" in client.get('/').headers['content-security-policy']
+
+
+@pytest.mark.parametrize('operation', ['record-status', 'record-nfc', 'record-present'])
+def test_category_choices_cross_pos_proxy_without_private_references(operation):
+    from pos.main import COOKIE
+    settings = enabled_settings()
+    records = [{'id': 'opaque-selection', 'label': 'benefits/dental'}]
+    def backend(request):
+        return httpx.Response(200, json={'state': 'ready', 'records': records,
+                                        'record_id': 'opaque-selection', 'descriptor': 'private',
+                                        'ref': 'private-wallet-reference'})
+    with TestClient(create_app(settings, httpx.MockTransport(backend)), base_url=settings.public_url) as client:
+        client.cookies.set(COOKIE, Fernet(settings.cookie_key.encode()).encrypt(b'oakgate-pos-session-v1:test').decode())
+        response = client.post('/api/' + operation, headers={'Origin': settings.public_url},
+                               json={'payload': '{}', 'challenge': 'test', 'signature': 'test'})
+        assert response.status_code == 200
+        assert response.json() == {'state': 'ready', 'records': records, 'record_id': 'opaque-selection'}

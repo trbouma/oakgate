@@ -1,11 +1,12 @@
 'use strict';
 (() => {
  const $=id=>document.getElementById(id);
- let signed, id, requestedLabel, expires=0, generation=0, timer, expiryTimer, reader, imageURL, busy=false;
+ let signed, id, requestedLabel, expires=0, generation=0, timer, expiryTimer, reader, imageURL, busy=false, displayGeneration=0;
  const message=text=>$('record-status').textContent=text;
  const nfc=()=>isSecureContext && typeof window.NDEFReader==='function';
  function stopNFC(){if(reader){reader.abort();reader=null;}}
  function clearDisplay(){
+  displayGeneration++;
   window.oakgatePOSPDF?.clear();
   if(imageURL)URL.revokeObjectURL(imageURL);imageURL=null;
   $('record-anchor-summary').replaceChildren();$('record-verification-details').open=false;
@@ -14,6 +15,7 @@
  }
  function clear(){
   generation++;clearTimeout(timer);clearTimeout(expiryTimer);stopNFC();clearDisplay();id=null;busy=false;
+  $('record-choice').replaceChildren();$('record-choice-wrap').hidden=true;
   $('record-qr').replaceChildren();$('record-qr').hidden=true;
   $('record-present').hidden=true;$('record-nfc').hidden=true;$('record-cancel').hidden=true;
   $('record-start').disabled=!signed;$('record-type').disabled=false;
@@ -25,11 +27,15 @@
   for(const path of root.querySelectorAll('path')){const d=path.getAttribute('d');if(!d||!/^[MmLlHhVvZz\d.,\s-]+$/.test(d))throw Error();const p=document.createElementNS(svg.namespaceURI,'path');p.setAttribute('d',d);p.setAttribute('fill','#000');svg.append(p);}
   $('record-qr').replaceChildren(svg);$('record-qr').hidden=false;
  }
- function ready(){stopNFC();clearTimeout(timer);$('record-present').hidden=false;$('record-present').disabled=false;$('record-nfc').hidden=true;$('record-qr').hidden=true;message('Presentation ready. Select Show Record to display it.');}
+ function ready(records=[]){
+  $('record-choice').replaceChildren();
+  for(const record of records){const option=document.createElement('option');option.value=record.id;option.textContent=record.label.toLowerCase()===requestedLabel?'General':record.label.slice(requestedLabel.length+1);$('record-choice').append(option);}
+  $('record-choice-wrap').hidden=records.length<=1;
+stopNFC();clearTimeout(timer);$('record-present').hidden=false;$('record-present').disabled=false;$('record-nfc').hidden=true;$('record-qr').hidden=true;message('Presentation ready. Select Show Record to display it.');}
  async function poll(run){
   if(run!==generation||!id)return;
   try{const result=await signed('record-status',{request_id:id});if(run!==generation)return;
-   if(result.state==='ready'){ready();return;}
+   if(result.state==='ready'){ready(result.records);return;}
    if(result.state==='unavailable'){message('The record could not be prepared. Create a new request.');return;}
   }catch(_){if(run!==generation)return;message('Checking request status…');}
   timer=setTimeout(()=>poll(run),2000);
@@ -59,7 +65,7 @@
     if(read.records.length!==1||r.recordType!=='mime'||r.mediaType!=='application/vnd.oakgate.card'||!r.data||r.data.byteLength<100||r.data.byteLength>400)throw Error();
     message('Preparing presentation…');
     const card_payload=btoa(String.fromCharCode(...new Uint8Array(r.data.buffer,r.data.byteOffset,r.data.byteLength)));
-    await signed('record-nfc',{request_id:requestID,card_payload});if(run===generation)ready();
+    const result=await signed('record-nfc',{request_id:requestID,card_payload});if(run===generation)ready(result.records);
    }catch(_){if(run===generation)message('The card or matching record is unavailable. Create a new request.');}
    finally{if(run===generation){busy=false;$('record-nfc').disabled=false;}}
   };
@@ -67,9 +73,10 @@
   try{await scan.scan({signal:controller.signal});}catch(_){if(run===generation){stopNFC();busy=false;$('record-nfc').disabled=false;message('NFC unavailable. Check permissions or use the QR request.');}}
  });
  $('record-present').addEventListener('click',async()=>{
-  if(!id||busy)return;busy=true;const run=generation;$('record-present').disabled=true;message('Acquiring record and verification information…');
-  try{const result=await signed('record-present',{request_id:id});if(run!==generation)return;
-   clearDisplay();$('record-label').textContent=result.label;$('record-contents').textContent=result.contents;
+  if(!id||busy)return;clearDisplay();busy=true;const run=generation, display=displayGeneration;$('record-present').disabled=true;message('Acquiring record and verification information…');
+  try{const payload={request_id:id};if($('record-choice').value)payload.record_id=$('record-choice').value;
+   const result=await signed('record-present',payload);if(run!==generation||display!==displayGeneration)return;
+   $('record-label').textContent=result.label;$('record-contents').textContent=result.contents;
    $('record-attachment-note').textContent=result.attachment_note || '';
    $('record-verification-summary').textContent=result.verification
     ? `OpenETR: ${String(result.verification.aggregate_state || 'unverifiable').replaceAll('_',' ')}`
@@ -106,8 +113,12 @@
     imageURL=URL.createObjectURL(new Blob([bytes],{type:result.attachment.type}));$('record-image').src=imageURL;$('record-image').hidden=false;
    }
    $('record-result').hidden=false;$('record-present').hidden=true;message('Record presented. Review the record and verification information.' + (result.notification ? ' ' + result.notification : ''));
-  }catch(_){if(run===generation){message('Presentation unavailable or expired. Create a new request.');$('record-present').disabled=false;}}
-  finally{if(run===generation)busy=false;}
+  }catch(_){if(run===generation&&display===displayGeneration){message('Presentation unavailable or expired. Create a new request.');$('record-present').disabled=false;}}
+  finally{if(run===generation){busy=false;$('record-present').disabled=false;}}
+ });
+ $('record-choice').addEventListener('change',()=>{
+  clearDisplay();$('record-present').hidden=false;$('record-present').disabled=busy;
+  message('Select Show Record to display the selected record.');
  });
  function cancel(){const old=id;clear();message('Create a request to check a record.');if(old&&signed)signed('record-cancel',{request_id:old}).catch(()=>{});}
  $('record-cancel').addEventListener('click',cancel);
