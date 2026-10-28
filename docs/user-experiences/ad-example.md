@@ -64,3 +64,5 @@ their everyday exchanges while the underlying technology stays in the background
 experience; OakGate still uses a custodial model with a trusted home operator.
 
 [Explore User Experiences](index.md){ .md-button }
+
+[Compare OakGate with payment and ID cards](../card-capabilities-policy-brief.md){ .md-button }

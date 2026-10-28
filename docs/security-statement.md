@@ -103,3 +103,9 @@ card may therefore be usable through an accepted home. Signatures verify the
 service, not the physical tag or independent holder consent. Revocation and the
 issuer's optional allowlist remain important choices. See
 [the cross-home trust model](039-cross-home-pos.md#trust-and-holder-agency).
+
+## Comparing card capabilities
+
+See the [card capabilities policy brief](card-capabilities-policy-brief.md) for a
+comparison with credit cards, debit cards and government IDs, including the
+distinction between current features, earlier demonstrations and planned integration.
