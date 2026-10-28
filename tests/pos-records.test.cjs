@@ -1,8 +1,8 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const vm=require('node:vm');
 function fixture(){
  const nodes={},events={},timers=new Map();let counter=0;
- const el=id=>nodes[id]||={hidden:true,disabled:false,value:id==='record-type'?'whoami':'',textContent:'',listeners:{},addEventListener(k,v){this.listeners[k]=v;},replaceChildren(){},removeAttribute(){},setAttribute(){},append(){}};
- const document={hidden:false,getElementById:el,addEventListener(k,v){events[k]=v;},createElementNS:()=>({setAttribute(){},append(){}})};
+ const el=id=>nodes[id]||={hidden:true,disabled:false,value:id==='record-type'?'whoami':'',textContent:'',listeners:{},addEventListener(k,v){this.listeners[k]=v;},children:[],replaceChildren(){this.children=[];this.textContent='';},removeAttribute(){},setAttribute(){},append(...items){this.children.push(...items);}};
+ const document={hidden:false,getElementById:el,addEventListener(k,v){events[k]=v;},createElement:()=>el('created-'+(++counter)),createElementNS:()=>({setAttribute(){},append(){}})};
  const context={document,window:{},isSecureContext:true,addEventListener(){},CustomEvent:function(){},Date,Uint8Array,Blob,URL,atob,btoa,AbortController,
  setTimeout:fn=>{timers.set(++counter,fn);return counter;},clearTimeout:id=>timers.delete(id),DOMParser:class{parseFromString(){return {documentElement:{localName:'svg',getAttribute:()=> '0 0 100 100',querySelectorAll:()=>[]}};}}};
  vm.runInNewContext(fs.readFileSync('pos/static/records.js','utf8'),context);
@@ -31,5 +31,10 @@ test('anchor publisher and statement render as text and clear with the request',
  await f.click('record-start');await f.click('record-present');
  assert.equal(f.el('record-publishers').textContent,'Anchor signer\nCommunity Centre\n\nAnchor statement\n<b>Membership confirmed</b>');
  assert.equal(f.el('record-verification-summary').textContent,'OpenETR: anchored');
- await f.click('record-cancel');assert.equal(f.el('record-publishers').textContent,'');
+ const block=f.el('record-anchor-summary').children[0];
+ assert.equal(block.children[0].children[0].textContent,'✓');
+ assert.equal(block.children[0].children[1].textContent,'Community Centre');
+ assert.equal(block.children[1].textContent,'<b>Membership confirmed</b>');
+ assert.equal(f.el('record-verification-details').open,false);
+ await f.click('record-cancel');assert.equal(f.el('record-publishers').textContent,'');assert.equal(f.el('record-anchor-summary').children.length,0);
 });

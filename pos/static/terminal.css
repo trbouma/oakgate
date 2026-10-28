@@ -23,3 +23,7 @@ body{padding:14px 16px}main{width:min(100%,540px)}header{margin-bottom:12px}sect
   #receive-form:has([data-receive-currency][hidden]) .selectors{grid-column:1/-1}
   #receive-form:has([data-receive-currency][hidden]) .receive-keypad{grid-row:2/5}
 }
+
+.record-anchor { margin:12px 0; overflow-wrap:anywhere; white-space:pre-wrap; }
+.record-anchor p { margin:6px 0; }
+.record-anchor-check { color:#228b45; margin-right:.45em; font-weight:800; }

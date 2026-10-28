@@ -7,6 +7,7 @@
  function stopNFC(){if(reader){reader.abort();reader=null;}}
  function clearDisplay(){
   if(imageURL)URL.revokeObjectURL(imageURL);imageURL=null;
+  $('record-anchor-summary').replaceChildren();$('record-verification-details').open=false;
   $('record-result').hidden=true;$('record-image').hidden=true;$('record-image').removeAttribute('src');
   ['record-label','record-contents','record-verification','record-verification-summary','record-publishers','record-attachment-note'].forEach(name=>$(name).textContent='');
  }
@@ -73,8 +74,19 @@
     ? `OpenETR: ${String(result.verification.aggregate_state || 'unverifiable').replaceAll('_',' ')}`
     : 'No attached artifact to check with OpenETR.';
    $('record-verification').textContent=result.verification?JSON.stringify(result.verification,null,2):'No attached artifact to check with OpenETR.';
-   $('record-publishers').textContent=(result.publishers || []).map(p=>{
-    const shortKey=value=>typeof value==='string' && value.startsWith('npub1') && value.length>16 ? `${value.slice(0,9)}...${value.slice(-4)}` : value;
+   const shortKey=value=>typeof value==='string' && value.startsWith('npub1') && value.length>16 ? `${value.slice(0,9)}...${value.slice(-4)}` : value;
+   const publishers=result.publishers || [];
+   for(const publisher of publishers){
+    const block=document.createElement('div'), heading=document.createElement('p');
+    const check=document.createElement('span'), name=document.createElement('strong'), statement=document.createElement('p');
+    block.className='record-anchor';check.className='record-anchor-check';
+    check.textContent='✓';check.setAttribute('role','img');check.setAttribute('aria-label','Anchor found');
+    name.textContent=shortKey(publisher.name || publisher.signer || 'Unknown signer');
+    statement.textContent=publisher.statement || '';
+    heading.append(check, name);block.append(heading, statement);$('record-anchor-summary').append(block);
+   }
+   if(!publishers.length)$('record-anchor-summary').textContent=$('record-verification-summary').textContent;
+   $('record-publishers').textContent=publishers.map(p=>{
     const lines=['Anchor signer', shortKey(p.name)];
     if(p.signer && p.signer!==p.name)lines.push(shortKey(p.signer));
     if(p.anchored_at)lines.push('', 'Anchored at', p.anchored_at);
