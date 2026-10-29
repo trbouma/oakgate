@@ -46,6 +46,13 @@ const t = (message) => window.oakgateTranslate ? window.oakgateTranslate(message
       window.removeEventListener('beforeunload', warn);
     }
   });
+  document.querySelector('[data-record-card]')?.addEventListener('submit', (event) => {
+    if (!event.defaultPrevented) {
+      submitted = true;
+      clearTimeout(timer);
+      window.removeEventListener('beforeunload', warn);
+    }
+  });
   document.addEventListener('visibilitychange', update);
   window.addEventListener('pagehide', () => clearTimeout(timer));
   window.addEventListener('pageshow', () => {

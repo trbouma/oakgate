@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="record-detail">
+<a class="back-link" href="/account/records">← {{ _('Your Records') }}</a>
+<h1>{{ _('Share to NFC Card') }}</h1>
+{% if item %}<h2>{{ item.terms.label }}</h2><p>{{ item.recipient }} · {{ item.issuer }}</p>{% endif %}
+{% if state == 'ready' %}
+<p>{{ _('Send a copy to this card’s wallet? The recipient can keep it. Existing records will not be overwritten.') }}</p>
+<form method="post" data-progress-message="{{ _('Sharing record…') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="confirmed" value="yes"><button class="primary-action">{{ _('Confirm sharing') }}</button></form>
+{% elif state == 'complete' %}<p role="status">✓ {{ _('Record received by the card’s wallet.') }}</p>
+{% elif state == 'unavailable' %}<p role="status">{{ _('The card could not be verified, or the sharing code expired. No record was sent.') }}</p>
+{% elif state == 'rejected' %}<p role="status">{{ _('The record was not imported. The wallet may be busy, the label may already exist, or the storage server may not be allowed. Check with the recipient before creating a new share.') }}</p>
+{% else %}<p role="status">{{ _('Delivery is not yet confirmed. Ask the recipient to check Records before creating another share. Checking status will not send another copy.') }}</p>
+{% if item %}<form method="post" data-progress-message="{{ _('Checking delivery…') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="confirmed" value="yes"><button class="primary-action">{{ _('Check delivery status') }}</button></form>{% endif %}
+{% endif %}
+</section>
+{% endblock %}

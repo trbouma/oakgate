@@ -339,3 +339,10 @@ test two real homes: scan in A's wallet, approve one or several records, display
 at B, check PDF/OpenETR and Receipts, then close/replace/expire the request. Also
 verify that the other wallet cannot approve A's local ticket. Live cross-home
 acceptance remains an operator deployment check.
+
+## Sharing a record to a foreign card
+
+A wallet can also scan a paired card from another home and confirm delivery of a
+record to that card's Acorn. This is separate from POS record presentation: the
+recipient retains a copy. See [Share records to NFC cards](040-nfc-record-sharing.md)
+for issuer verification, storage permissions and one-attempt recovery semantics.

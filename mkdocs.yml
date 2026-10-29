@@ -81,6 +81,7 @@ nav:
       - POS deployment: 024-pos-deployment.md
       - Cross-home wallets, cards and POS: 039-cross-home-pos.md
       - POS record requests: 038-pos-record-requests.md
+      - Share records to NFC cards: 040-nfc-record-sharing.md
       - POS NFC cards: 025-pos-nfc-cards.md
       - Everyday NFC card trust: 029-nfc-card-trust.md
       - NFC cards and payment execution: 026-nfc-card-payments.md

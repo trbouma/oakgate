@@ -86,6 +86,8 @@ def create_app(settings=None, store=None, provider=None, wallets=None):
     app.include_router(wallet_router)
     app.include_router(message_router)
     app.include_router(record_router)
+    from app.card_record_sharing import router as card_record_router
+    app.include_router(card_record_router)
     app.include_router(payment_router)
     app.include_router(ecash_router)
     app.include_router(send_router)

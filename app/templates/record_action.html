@@ -44,6 +44,15 @@
 <p class="note">{{ _('Keep this page open to request deletion automatically. The code’s expiry still applies if you leave.') }}</p>
 {% endif %}
 {% if expired %}<p role="status">{{ _('This code has expired. You can still request deletion of the temporary copy.') }}</p>{% elif qr %}<button type="button" class="record-qr record-copy-qr" data-copy-value="{{ item.descriptor }}" data-copy-status="record-copy-status" aria-label="{{ _('Copy private code') }}">{{ qr|safe }}</button>{% endif %}
+{% if item.purpose == 'share' %}<a href="/account/record-shares/{{ item.id }}/card">{{ _('Review NFC delivery') }}</a>{% endif %}
+{% if item.purpose == 'share' and not expired %}
+<form method="post" action="/account/record-shares/{{ item.id }}/card" data-record-card data-progress-message="{{ _('Verifying card…') }}">
+<input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="card" value="">
+<button type="button" class="primary-action" hidden data-prompt="{{ _('Tap the recipient’s NFC card. You will confirm before sharing.') }}" data-error="{{ _('Could not read an OakGate card. Try again, or use the QR code.') }}">{{ _('Share to NFC Card') }}</button>
+<p role="status" aria-live="polite"></p>
+</form>
+<script src="/static/record-card.js?v=1" defer></script>
+{% endif %}
 <label for="descriptor">{{ _("Private presentation code") if item.purpose == "present" else _("Private sharing code") }}</label><textarea id="descriptor" readonly rows="5" spellcheck="false">{{ item.descriptor }}</textarea>
 <button type="button" class="secondary-action" data-copy-value="{{ item.descriptor }}" data-copy-status="record-copy-status">{{ _('Copy code') }}</button>
 <p id="record-copy-status" role="status" aria-live="polite" hidden></p>
@@ -60,5 +69,5 @@
 {% endwith %}
 {% endif %}
 </section>
-<script src="/static/record-actions.js?v=20261021-locales" defer></script>
+<script src="/static/record-actions.js?v=20261028-nfc-share" defer></script>
 {% endblock %}

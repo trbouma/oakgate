@@ -32,7 +32,7 @@ The operator-owned service key is distinct from every user key. As explicitly
 requested by the owner, `app/identity.py` may use Stroma to derive the service
 public identity, sign/publish zap receipts, and sign/verify NFC card payment
 recipient-resolution, federated POS operation messages, and wallet-approved
-cross-home record presentation messages. Its only secret source is
+cross-home record presentation and card-directed record sharing messages. Its only secret source is
 OAKGATE_SERVICE_NSEC; it must never accept user custody material. This does not
 relax the Acorn boundary for user-key operations.
 
