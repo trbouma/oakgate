@@ -94,11 +94,11 @@ def test_configured_transfer_servers_delegate_to_acorn(monkeypatch):
     async def run():
         monkeypatch.setenv('OAKGATE_RECORD_ALLOWED_SERVERS','https://peer.example')
         backend = AcornBackend()
-        wallet = type('Wallet',(),{'inspect_record_transfer':AsyncMock(), 'accept_record_transfer':AsyncMock()})()
+        wallet = type('Wallet',(),{'inspect_record_transfer':AsyncMock(), 'accept_record_transfer':AsyncMock(), 'record_exists':AsyncMock(return_value=False)})()
         backend.wallet = lambda material: wallet
         await backend.inspect_scanned_record({},'private')
         assert 'https://peer.example' in wallet.inspect_record_transfer.await_args.kwargs['allowed_servers']
-        await backend.accept_scanned_record({},'private',label='Imported')
+        await backend.accept_scanned_record({'relay':'wss://home.example'},'private',label='Imported')
         assert wallet.accept_record_transfer.await_args.kwargs['record_name'] == 'Imported'
     asyncio.run(run())
 
@@ -174,4 +174,41 @@ def test_sharing_fingerprint_suggests_editable_import_label(tmp_path):
             result = await client.post('/account/scan/accept',data=form(ticket=ticket['id'],confirmed='yes',label='My chosen label'))
             assert result.status_code == 303
             assert backend.accept_scanned_record.await_args.kwargs == {'label':'My chosen label'}
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize('lookup_failure', [False, True])
+def test_qr_exact_collision_or_lookup_failure_blocks_import_outside_listing(tmp_path, lookup_failure):
+    async def run():
+        client,sessions,service,backend=setup(tmp_path)
+        backend.inspect_scanned_record=AsyncMock(return_value={'label':'health/current','sharing_fingerprint':'a'*64,'record_type':'note','has_original':False})
+        backend.accept_scanned_record=AsyncMock()
+        backend.records=AsyncMock(return_value=[])
+        backend.record_exists=AsyncMock(side_effect=TimeoutError() if lookup_failure else None, return_value=True)
+        async with aclosing(client):
+            owner=await login(client,sessions)
+            await client.post('/account/acorn/create',data=form())
+            await client.post('/account/scan',data=form(lightning_payment='acorn:record-transfer:private'))
+            ticket=RequestStore(service.store).recent(owner)[0]
+            result=await client.post('/account/scan/accept',data=form(ticket=ticket['id'],confirmed='yes',label='health/old'))
+            assert result.status_code == (503 if lookup_failure else 409)
+            backend.accept_scanned_record.assert_not_awaited()
+            backend.records.assert_not_awaited()
+            backend.record_exists.assert_awaited_once()
+            assert RequestStore(service.store).get(owner,ticket['id'])['state']=='ready'
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize('failure', ['collision', 'unavailable'])
+def test_adapter_rechecks_exact_label_before_transfer_mutation(failure):
+    from types import SimpleNamespace
+    async def run():
+        backend=AcornBackend()
+        wallet=SimpleNamespace(record_exists=AsyncMock(return_value=True,
+            side_effect=TimeoutError() if failure=='unavailable' else None), accept_record_transfer=AsyncMock())
+        backend.wallet=lambda material:wallet
+        with pytest.raises(Exception):
+            await backend.accept_scanned_record({'relay':'wss://home.example'},'private',label='health/old')
+        wallet.record_exists.assert_awaited_once_with('health/old',record_kind=37375,relays=['wss://home.example'])
+        wallet.accept_record_transfer.assert_not_awaited()
     asyncio.run(run())

@@ -164,8 +164,10 @@ async def receive(request, sender, body, authority, recheck, material):
         inspected = await service.backend.inspect_scanned_record(material, terms['descriptor'])
         if inspected['expires_at'] < time.time():
             raise ValueError('Sharing code expired')
-        rows = await service.records(material)
-        existing = next((r for r in rows if r['label'].casefold() == terms['label'].casefold()), None)
+        existing = await service.record_exists(material, terms['label'])
+        if not existing:
+            rows = await service.records(material)
+            existing = next((r for r in rows if r['label'].casefold() == terms['label'].casefold()), None)
         if existing:
             raise ValueError('Record label already exists')
         await recheck()
@@ -178,8 +180,7 @@ async def receive(request, sender, body, authority, recheck, material):
         result = await service.backend.accept_scanned_record(material, terms['descriptor'], terms['label'])
         if not isinstance(result, dict) or result.get('status') != 'OK':
             raise ValueError('Acorn did not confirm import')
-        rows = await service.records(material)
-        if not any(r['label'] == terms['label'] for r in rows):
+        if not await service.record_exists(material, terms['label']):
             raise ValueError('Record not yet confirmed')
         await recheck()
         await invoke(save_attempt, service.store, owner, attempt, 'complete')

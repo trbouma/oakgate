@@ -161,7 +161,10 @@ async def accept(request: Request):
         return render(request, session, 'scan_result.html', message='Your Acorn is busy. Return to the review and try again shortly.', status=409)
     try:
         if item['purpose'] == 'transfer' and item['state'] == 'ready':
-            existing = next((record for record in await service.records(material) if record['label'].casefold() == label.casefold()), None)
+            existing = await service.record_exists(material, label)
+            if not existing:
+                # Supplemental case-folded UX check; never the overwrite safeguard.
+                existing = next((record for record in await service.records(material) if record['label'].casefold() == label.casefold()), None)
             if existing:
                 return render(request, session, 'scan_result.html', purpose='transfer', ticket=ident,
                     detail={**(item.get('detail') or {}), 'suggested_label':label},

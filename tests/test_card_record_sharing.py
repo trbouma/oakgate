@@ -17,6 +17,7 @@ def network(federation, monkeypatch):
     f.rows = []
     service = f.issuer.app.state.wallets
     service.records = AsyncMock(side_effect=lambda _: list(f.rows))
+    service.record_exists = AsyncMock(side_effect=lambda _, label: any(r['label']==label for r in f.rows))
     service.backend.inspect_scanned_record = AsyncMock(return_value={'expires_at': time.time()+120})
     async def accept(material, code, label):
         f.rows.append({'label': label, 'ref': 'a'*64})
@@ -253,4 +254,37 @@ def test_existing_sharing_label_is_not_overwritten(network):
         service.backend.accept_scanned_record.assert_not_awaited()
         service.backend.inspect_scanned_record.return_value['fingerprint']='b'*64
         assert await sharing.call(f.merchant,f.card['payload'],'deliver','3'*32,f.terms)=={'state':'rejected'}
+    asyncio.run(run())
+
+
+def test_exact_collision_outside_listing_blocks_nfc_import(network):
+    f=network
+    service=f.issuer.app.state.wallets
+    service.record_exists=AsyncMock(return_value=True)
+    async def run():
+        assert await sharing.call(f.merchant,f.card['payload'],'deliver',f.ident,f.terms)=={'state':'rejected'}
+        service.records.assert_not_awaited()
+        service.backend.accept_scanned_record.assert_not_awaited()
+    asyncio.run(run())
+
+
+def test_nfc_lookup_failure_never_imports(network):
+    f=network
+    service=f.issuer.app.state.wallets
+    service.record_exists=AsyncMock(side_effect=TimeoutError())
+    async def run():
+        assert await sharing.call(f.merchant,f.card['payload'],'deliver',f.ident,f.terms)=={'state':'rejected'}
+        service.backend.accept_scanned_record.assert_not_awaited()
+    asyncio.run(run())
+
+
+def test_nfc_confirmation_does_not_depend_on_listing(network):
+    f=network
+    service=f.issuer.app.state.wallets
+    service.records=AsyncMock(return_value=[])
+    async def run():
+        assert await sharing.call(f.merchant,f.card['payload'],'deliver',f.ident,f.terms)=={'state':'complete'}
+        service.records.assert_awaited_once()
+        assert service.record_exists.await_count == 2
+        service.backend.accept_scanned_record.assert_awaited_once()
     asyncio.run(run())

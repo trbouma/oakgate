@@ -21,6 +21,9 @@ class Backend:
         self.down = False
         self.amount = 1234
 
+    async def record_exists(self, material, label):
+        return False
+
     def default_handle(self, material, *, attempt=0):
         return f'producefront{(939 + attempt) % 1000}'
 

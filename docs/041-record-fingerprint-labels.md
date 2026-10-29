@@ -101,6 +101,21 @@ matching suffix. QR users can choose another label; NFC delivery rejects the
 collision. Existing durable attempt status prevents replay of the same delivery;
 uncertain writes still require review, not automatic retry.
 
+QR and NFC receipt perform an exact-label lookup through Acorn against the
+recipient's home relay before importing, independently of the bounded record
+list. The adapter checks again immediately before calling Acorn's import method.
+A failed lookup stops the import; it is never treated as an unused label. NFC
+post-import confirmation also uses the exact-label lookup, rather than searching
+a potentially truncated listing.
+
+The listing-based case-insensitive check remains an additional user-interface
+safeguard. Acorn's underlying labels are case-sensitive: this change protects the
+exact stored label even when it is absent from the listing, but does not provide
+a complete case-insensitive namespace index. The existing OakGate wallet lease
+serializes local writers. Relay lookup followed by publication is not an atomic
+create-if-absent operation against independent clients using the same Acorn;
+this does not claim cross-client transactional exclusion.
+
 Durable NFC delivery attempts retain their originally confirmed terms. Updating
 software does not change labels on an in-flight or uncertain delivery.
 

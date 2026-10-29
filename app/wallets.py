@@ -208,7 +208,17 @@ class AcornBackend:
         return await method(code, allowed_servers=list(self.record_settings.allowed_servers),
             **({"recipient_pubkey": recipient_pubkey} if recipient_pubkey is not None and not presentation else {}))
 
+    async def record_exists(self, material, label):
+        wallet = self.wallet(material)
+        if not callable(getattr(wallet, 'record_exists', None)):
+            raise WalletInputError('Record receipt needs the updated Acorn dependency.')
+        # Exact home-relay lookup is independent of the bounded record listing.
+        # Errors propagate: an unavailable relay must never mean an unused label.
+        return await wallet.record_exists(label, record_kind=37375, relays=[material['relay']])
+
     async def accept_scanned_record(self, material, code, label=None):
+        if not label or await self.record_exists(material, label):
+            raise WalletInputError('The destination label already exists or is missing; nothing was overwritten.')
         return await self.wallet(material).accept_record_transfer(code, record_name=label,
             allowed_servers=list(self.record_settings.allowed_servers))
 
@@ -524,6 +534,10 @@ class WalletService:
     async def records(self, material):
         self.relay(material['relay'])
         return await asyncio.wait_for(self.backend.records(material), timeout=40)
+
+    async def record_exists(self, material, label):
+        self.relay(material['relay'])
+        return await asyncio.wait_for(self.backend.record_exists(material, label), timeout=40)
 
     async def record_detail(self, material, reference):
         self.relay(material['relay'])
