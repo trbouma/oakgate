@@ -37,3 +37,8 @@ body{padding:14px 16px}main{width:min(100%,540px)}header{margin-bottom:12px}sect
 #record-label,#record-status{overflow-wrap:anywhere;min-width:0}
 #record-result,#record-choice-wrap{min-width:0;max-width:100%}
 #record-choice{width:100%;min-width:0;max-width:100%}
+
+.record-content-box{margin:12px 0;padding:14px 16px;border:1px solid #61704f;border-radius:12px;background:#22271f;text-align:left;min-width:0;max-width:100%}
+.record-content-box h3{margin:0 0 8px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:#bac1ad}
+.record-content-box #record-contents{margin:0;max-width:100%}
+.record-content-box:has(#record-contents:empty){display:none}

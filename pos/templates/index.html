@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>OakGate POS</title>
-<link rel="stylesheet" href="/static/terminal.css?v=20261029-fingerprint-2"><script src="/static/cards.js" defer></script><script src="/static/card-balance.js" defer></script><script src="/static/receiving.js" defer></script><script src="/static/records.js?v=20261029-categories-3" defer></script><script src="/static/terminal.js" defer></script><script src="/static/tabs.js" defer></script><script type="module" src="/static/activation-scan.js"></script><script type="module" src="/static/record-pdf.js?v=20261029-pdf"></script></head>
+<link rel="stylesheet" href="/static/terminal.css?v=20261029-content-first"><script src="/static/cards.js" defer></script><script src="/static/card-balance.js" defer></script><script src="/static/receiving.js" defer></script><script src="/static/records.js?v=20261029-categories-3" defer></script><script src="/static/terminal.js" defer></script><script src="/static/tabs.js" defer></script><script type="module" src="/static/activation-scan.js"></script><script type="module" src="/static/record-pdf.js?v=20261029-pdf"></script></head>
 <body><main><header><img src="/logo.png" alt=""><span>MAINSTAY / OAKGATE POS</span></header>
 <div class="terminal-tabs" role="tablist" aria-label="Terminal activities">
 <button id="tab-sale" type="button" role="tab" aria-selected="true" aria-controls="panel-sale">Point of Sale</button>
@@ -85,7 +85,12 @@
 <button id="record-nfc" class="secondary" type="button" hidden>Request by NFC</button>
 <div id="record-choice-wrap" hidden><label for="record-choice">Record to display</label><select id="record-choice"></select></div>
 <button id="record-present" type="button" hidden>Show Record</button>
-<div id="record-result" hidden><h2 id="record-label"></h2><img id="record-image" alt="Presented record attachment" hidden>
+<div id="record-result" hidden><h2 id="record-label"></h2>
+<div class="record-content-box" aria-labelledby="record-content-heading">
+<h3 id="record-content-heading">Record content</h3>
+<pre id="record-contents"></pre>
+</div>
+<img id="record-image" alt="Presented record attachment" hidden>
 <div id="record-pdf" hidden>
 <p id="record-pdf-status" role="status"></p>
 <div id="record-pdf-pages"></div>
@@ -94,7 +99,7 @@
 <span id="record-pdf-page" aria-live="polite"></span>
 <button id="record-pdf-next" type="button">Next</button>
 </div></div>
-<pre id="record-contents"></pre><p class="note" id="record-attachment-note"></p>
+<p class="note" id="record-attachment-note"></p>
 <div id="record-anchor-summary"></div>
 <details id="record-verification-details"><summary>OpenETR verification details</summary>
 <div id="record-publishers" style="white-space: pre-wrap; overflow-wrap: anywhere"></div>
