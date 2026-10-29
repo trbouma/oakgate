@@ -13,10 +13,10 @@ H='a'*64
 
 
 def test_sharing_preserves_categories_replaces_digest_and_ignores_sender():
-    assert suggested_record_label({'label':'/benefits/dental','sharing_fingerprint':H,'originator_handle':'tom'})=='benefits/dental/'+H
+    assert suggested_record_label({'label':'/benefits/dental','sharing_fingerprint':H,'originator_handle':'tom'})=='benefits/'+H
     assert fingerprint_label('benefits/dental/'+H, 'b'*64)=='benefits/dental/'+'b'*64
     assert fingerprint_label(H,'b'*64)=='b'*64
-    with pytest.raises(ValueError):fingerprint_label('x'*140,H)
+    with pytest.raises(ValueError):fingerprint_label('x'*140+'/leaf',H)
     with pytest.raises(ValueError):suggested_record_label({'label':'benefits'})
     assert display_record_label('/benefits/'+H)=='aaaaaaaaaaaa…aaaaaaaa'
     assert display_record_label('benefits/dental',leaf=True)=='dental'
@@ -71,3 +71,13 @@ def test_recipient_edits_do_not_rewrite_sharing_provenance():
     detail = {'label':'benefits/'+H, 'has_blob':False}
     assert updated_record_label(detail, 'edited note') == detail['label']
     assert updated_record_label(detail, 'edited note', b'new original') == detail['label']
+
+
+@pytest.mark.parametrize('source,expected', [
+    ('/health/current', 'health/'+H),
+    ('/health/prescriptions/current/', 'health/prescriptions/'+H),
+    ('health/'+H, 'health/'+H),
+    ('current', H),
+])
+def test_sharing_replaces_only_the_final_path_segment(source, expected):
+    assert suggested_record_label({'label':source, 'sharing_fingerprint':H}) == expected

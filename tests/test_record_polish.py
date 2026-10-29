@@ -167,10 +167,10 @@ def test_sharing_fingerprint_suggests_editable_import_label(tmp_path):
             await client.post('/account/acorn/create',data=form())
             result = await client.post('/account/scan',data=form(lightning_payment='acorn:record-transfer:private'))
             assert result.status_code == 200
-            assert ('value="Certificate/' + 'b'*64 + '"') in result.text
+            assert ('value="' + 'b'*64 + '"') in result.text
             assert 'Shared by' in result.text
             ticket = RequestStore(service.store).recent(owner)[0]
-            assert ticket['label'] == 'Certificate/' + 'b'*64
+            assert ticket['label'] == 'b'*64
             result = await client.post('/account/scan/accept',data=form(ticket=ticket['id'],confirmed='yes',label='My chosen label'))
             assert result.status_code == 303
             assert backend.accept_scanned_record.await_args.kwargs == {'label':'My chosen label'}

@@ -6,11 +6,14 @@ sender's handle part of that filing path.
 
 ## Stored labels and display names
 
-New QR and NFC shares use `category/original-name/<full digest>`. For example,
-`benefits/dental` becomes `benefits/dental/<digest>`, and a top-level `benefits`
-record becomes `benefits/<digest>`. Leading/trailing slashes are normalized away.
-Re-sharing a fingerprint-labelled record replaces its final digest instead of
-appending another. No existing records are renamed in bulk; legacy sender-prefixed
+New QR and NFC shares replace the final label segment with the full sharing
+fingerprint. `/health/current` becomes `health/<sharing fingerprint>`, and
+`health/prescriptions/current` becomes `health/prescriptions/<sharing fingerprint>`.
+The parent path is preserved; the sender's leaf name is not appended to it.
+Leading/trailing slashes are normalized away. A single-segment label such as
+`current` becomes just `<sharing fingerprint>`; use a parent path when the
+received record should be filed in a category. Re-sharing replaces the final
+digest instead of appending another. No existing records are renamed in bulk; legacy sender-prefixed
 paths remain unchanged until explicitly edited.
 
 The stored fingerprint is the full 64-character SHA-256 digest. Lists, headings
@@ -101,7 +104,7 @@ software does not change labels on an in-flight or uncertain delivery.
 
 A doctor keeps a record labelled `/prescription/patient`, with a prescription PDF
 as its original file. On sharing it with the patient's Acorn, the suggested
-recipient label is `prescription/patient/<sharing fingerprint>`.
+recipient label is `prescription/<sharing fingerprint>`.
 
 | Situation | Result |
 | --- | --- |
@@ -131,7 +134,8 @@ whereas a top-level `prescription` request is not currently enabled.
 An organizer can share identical ticket content with hundreds of Acorns. Each
 recipient gets a different sharing fingerprint, while the original-file and
 record-content fingerprints remain common to all identical copies. A suggested
-label such as `pass/<sharing fingerprint>` keeps each receipt distinct by wallet.
+source label such as `pass/ticket` becomes `pass/<sharing fingerprint>`, keeping
+each receipt distinct by wallet.
 
 Sending the same content to the same wallet again produces the same suggested
 label. Two separately issued, otherwise identical tickets for one wallet would

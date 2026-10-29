@@ -174,7 +174,7 @@ def test_web_review_requires_owner_csrf_and_confirmation(tmp_path, monkeypatch):
             result=await client.post(ticket_url,data=form(confirmed='yes'))
             assert result.status_code==200 and 'Record received' in result.text
             assert calls.await_args.args[2]=='deliver'
-            assert calls.await_args.args[4]['label']=='member/'+'a'*64
+            assert calls.await_args.args[4]['label']=='a'*64
             result=await client.post(ticket_url,data=form(confirmed='yes'))
             assert calls.await_args.args[2]=='status'
             other=await login(client,sessions,sub='other')

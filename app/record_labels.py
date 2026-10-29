@@ -29,9 +29,8 @@ def fingerprint_label(label, fingerprint):
     parts = label.strip('/').split('/')
     if any(not p or p in {'.', '..'} or any(ord(c)<32 for c in p) for p in parts):
         raise ValueError('Choose a valid record category path')
-    # Re-sharing replaces a final digest; it never nests another digest.
-    if DIGEST.fullmatch(parts[-1]):
-        parts.pop()
+    # The leaf names the sender record; receipt keeps only its parent path.
+    parts.pop()
     result = '/'.join([*parts, fingerprint.lower()])
     if len(result) > 200:
         raise ValueError('The category path is too long for a fingerprint label')

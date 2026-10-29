@@ -10,8 +10,9 @@ example, Chrome on a compatible Android phone). The QR option remains available.
 4. Confirm sharing. The recipient's home imports the copy through Acorn.
 
 The recipient does not need their phone. The record is stored in their Acorn,
-not on the NFC card. New shares append the sender–content–recipient sharing fingerprint to the category path, matching QR sharing. For example,
-`benefits/dental/<digest>` displays as a compact fingerprint while retaining its
+not on the NFC card. New shares replace the final label segment with the sender–content–recipient
+sharing fingerprint, matching QR sharing. For example, `benefits/dental` becomes
+`benefits/<digest>`, which displays as a compact fingerprint while retaining its
 filing path. See [Record paths and fingerprints](041-record-fingerprint-labels.md)
 for duplicate detection, updates and explicit custom labels. An existing label, compared case-insensitively,
 is never overwritten by this flow. The recipient can subsequently manage the
