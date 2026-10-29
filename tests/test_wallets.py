@@ -21,6 +21,9 @@ class Backend:
         self.down = False
         self.amount = 1234
 
+    async def records_page(self, material, cursor=None):
+        return {'records':await self.records(material), 'next_cursor':None}
+
     async def record_exists(self, material, label):
         return False
 

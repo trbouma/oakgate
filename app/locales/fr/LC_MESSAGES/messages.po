@@ -2965,3 +2965,18 @@ msgstr "Ce document a déjà été reçu. Aucune copie n’a été ajoutée."
 
 msgid "Verifying card…"
 msgstr "Vérification de la carte…"
+
+msgid "No records on this page."
+msgstr "Aucun document sur cette page."
+
+msgid "Folders and records shown are from this page."
+msgstr "Les dossiers et documents affichés proviennent de cette page."
+
+msgid "Record pages"
+msgstr "Pages de documents"
+
+msgid "Next page"
+msgstr "Page suivante"
+
+msgid "First page"
+msgstr "Première page"

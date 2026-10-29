@@ -4,6 +4,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 import time
 from urllib.parse import urlsplit
 
@@ -356,24 +357,55 @@ class AcornBackend:
         identity = record.get('id') or json.dumps([record.get('tag'), record.get('timestamp')])
         return hashlib.sha256(str(identity).encode()).hexdigest()
 
-    async def record_detail(self, material, reference):
+    async def records_page(self, material, cursor=None):
         wallet = self.wallet(material)
-        wallet.logger = RecordReadLogger(wallet.logger, {})
-        # Only records returned by Acorn's user-record reader are accessible.
-        # Do not expose an arbitrary label lookup that could reveal wallet secrets.
-        for record in await wallet.get_user_records(record_kind=37375, reverse=True):
-            if self.record_ref(record) != reference:
-                continue
+        page = await wallet.get_user_records_page(page_size=100, cursor=cursor, relay=material['relay'])
+        rows = []
+        for record in page['records']:
             tag = record.get('tag')
             label = tag[0] if isinstance(tag, list) and tag else tag
-            if not isinstance(label, str) or not label.strip():
-                continue
-            payload = record.get('payload', record.get('content', ''))
-            text = payload if isinstance(payload, str) else json.dumps(payload, ensure_ascii=False, indent=2)
-            return {'label': label, 'contents': text, 'has_blob': bool(record.get('blobsha256') or record.get('blobref')),
-                    'blob_type': record.get('effective_mime') or record.get('blobtype'), 'origsha256': record.get('origsha256'),
-                    'payload': payload, 'record_type': record.get('type', 'generic')}
-        return None
+            event_id = record.get('id')
+            if not isinstance(label, str) or not isinstance(event_id, str) or not re.fullmatch('[a-f0-9]{64}', event_id):
+                raise ValueError('Invalid Acorn record metadata')
+            rows.append({'label':label, 'timestamp':int(record.get('timestamp',0)), 'ref':event_id})
+        return {'records':rows, 'next_cursor':page['next_cursor']}
+
+    async def record_detail(self, material, reference):
+        if not isinstance(reference, str) or not re.fullmatch('[a-f0-9]{64}', reference):
+            return None
+        wallet = self.wallet(material)
+        # Acorn authorizes the event against this wallet and excludes internal state.
+        record = await wallet.get_user_record(event_id=reference, relay=material['relay'])
+        if record is None:
+            # Previously issued URLs hash the event ID. Retain them without the
+            # legacy 1,024-record ceiling; never use the internal-capable reader.
+            cursor = None
+            visited = set()
+            for _ in range(200):
+                page = await wallet.get_user_records_page(page_size=100, cursor=cursor, relay=material['relay'])
+                candidate = next((r for r in page['records'] if self.record_ref(r)==reference), None)
+                if candidate is not None:
+                    record = await wallet.get_user_record(event_id=candidate['id'], relay=material['relay'])
+                    break
+                cursor = page['next_cursor']
+                if cursor is None:
+                    return None
+                if cursor in visited:
+                    raise ValueError('Record discovery cursor did not advance')
+                visited.add(cursor)
+            else:
+                raise ValueError('Legacy record lookup exceeded its page budget; open Records again')
+        if record is None:
+            return None
+        tag = record.get('tag')
+        label = tag[0] if isinstance(tag, list) and tag else tag
+        if not isinstance(label, str) or not label.strip():
+            return None
+        payload = record.get('payload', record.get('content', ''))
+        text = payload if isinstance(payload, str) else json.dumps(payload, ensure_ascii=False, indent=2)
+        return {'label': label, 'contents': text, 'has_blob': bool(record.get('blobsha256') or record.get('blobref')),
+                'blob_type': record.get('effective_mime') or record.get('blobtype'), 'origsha256': record.get('origsha256'),
+                'payload': payload, 'record_type': record.get('type', 'generic')}
 
     async def record_blob(self, material, reference):
         # Reauthorize the opaque reference against this Acorn on every request.
@@ -530,6 +562,10 @@ class WalletService:
     async def transactions(self, material):
         self.relay(material['relay'])
         return await asyncio.wait_for(self.backend.transactions(material), timeout=40)
+
+    async def records_page(self, material, cursor=None):
+        self.relay(material['relay'])
+        return await asyncio.wait_for(self.backend.records_page(material, cursor), timeout=40)
 
     async def records(self, material):
         self.relay(material['relay'])

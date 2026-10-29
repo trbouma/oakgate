@@ -75,10 +75,12 @@ def test_real_adapter_detail_uses_filtered_records_only():
         class Wallet:
             logger=logging.getLogger('records-test')
             get_user_records=AsyncMock(return_value=[{'id':'1'*64,'tag':['Note'],'timestamp':5,'payload':{'message':'hello','count':3}}])
+            get_user_record=AsyncMock(side_effect=lambda **kw: {'id':'1'*64,'tag':['Note'],'timestamp':5,'payload':{'message':'hello','count':3}} if kw['event_id']=='1'*64 else None)
+            get_user_records_page=AsyncMock(return_value={'records':[{'id':'1'*64,'tag':['Note'],'timestamp':5}], 'next_cursor':None})
         backend=AcornBackend()
         backend.wallet=lambda material: Wallet()
         rows=await backend.records({})
-        detail=await backend.record_detail({},rows[0]['ref'])
+        detail=await backend.record_detail({'relay':'wss://home.example'},rows[0]['ref'])
         assert detail['label']=='Note' and '"message": "hello"' in detail['contents']
-        assert await backend.record_detail({},'f'*64) is None
+        assert await backend.record_detail({'relay':'wss://home.example'},'f'*64) is None
     asyncio.run(run())

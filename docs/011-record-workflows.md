@@ -259,3 +259,33 @@ original-file fingerprint remains separate for verification.
 See [Record paths and fingerprints](041-record-fingerprint-labels.md) for the
 precise contract, collision handling, text-only notes, prescription and ticket
 examples, and deployment requirements.
+
+
+## Paginated browsing and direct reads
+
+The wallet Records page uses Acorn's `get_user_records_page` against the wallet's
+bootstrap relay, requesting up to 100 relay events per page. Internal records are
+filtered by Acorn, so a page can contain fewer visible records—or none—while
+still offering **Next page**. **First page** refreshes discovery from the start.
+Folders and their contents are derived from the current page, not a complete
+wallet index. Continue to the next page to discover more; changing folders or
+switching between folder and list views starts a fresh traversal. Pagination is
+not a snapshot when records change during browsing.
+
+Continuation links contain a random token. The underlying cursor is encrypted
+with the instance custody cipher in the session store, expires after 15 minutes,
+and is bound to the owner, Acorn public key, relay, view and selected folder.
+An expired or mismatched link must be reopened from Records.
+
+New detail links use the event ID and Acorn's `get_user_record`, which verifies
+ownership and preserves internal-record protections. OakGate never uses an
+internal-capable record reader. List responses contain labels, timestamps and
+references only; attachments are fetched on demand. Existing hashed detail links
+remain supported by a paginated compatibility search and safe direct re-read.
+That search is bounded to 200 pages and the service's 40-second read timeout;
+failures remain unavailable rather than being reported as an empty wallet.
+
+This change covers wallet list and detail views. Existing bounded discovery used
+by POS selection and other sharing workflows is unchanged. It requires the
+updated safebox-acorn dependency and an app rebuild; no database migration or
+payment recovery changes are involved.

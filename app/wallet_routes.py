@@ -141,9 +141,14 @@ async def records_page(request: Request):
             if record and record['status'] == 'active':
                 context['connected'] = True
                 try:
-                    context['records'] = await service.records(record['material'])
+                    from app.record_browser import load_page
+                    context.update(await load_page(request, service, identity_key(session['user']), record['material']))
+                except HTTPException:
+                    raise
                 except Exception:
                     context['records_error'] = True
+        except HTTPException:
+            raise
         except Exception:
             return error_page(request, 'Safebox storage is unavailable. Please try again shortly.', 503)
     return request.app.state.templates.TemplateResponse(

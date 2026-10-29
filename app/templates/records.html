@@ -12,7 +12,13 @@
 {% elif records or folders %}
 {% if folders %}<ul class="record-list">{% for folder in folders %}<li><a href="{{ folder.url }}">{{ folder.label }} <span>{{ _("Folder →") }}</span></a></li>{% endfor %}</ul>{% endif %}
 <ul class="record-list">{% for record in records %}<li><a href="/account/records/{{ record.ref }}">{{ record_display_label(record.label) }} <span aria-hidden="true">→</span></a></li>{% endfor %}</ul>
-{% else %}<p class="note">{{ _("No records yet.") }}</p>{% endif %}
+{% else %}<p class="note">{{ _("No records on this page.") if next_page_url or has_page_token or folder_mode else _("No records yet.") }}</p>{% endif %}
+{% if paged_records and not records_error %}
+{% if folder_mode %}<p class="note">{{ _('Folders and records shown are from this page.') }}</p>{% endif %}
+<nav class="record-actions" aria-label="{{ _('Record pages') }}">
+{% if next_page_url %}<a class="primary-action" href="{{ next_page_url }}">{{ _('Next page') }}</a>{% endif %}
+{% if has_page_token %}<a class="secondary-action" href="{{ first_page_url }}">{{ _('First page') }}</a>{% endif %}
+</nav>{% endif %}
 </section>
 <form class="signout-form" method="post" action="/auth/logout"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="primary-action" type="submit">{{ _("Sign out") }}</button></form>
 {% endblock %}
