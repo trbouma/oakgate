@@ -322,9 +322,14 @@ def folder_view(records, request):
     prefix = folder + '/' if folder else ''
     children, visible = set(), []
     for record in records:
-        if not record['label'].startswith(prefix):
+        label = record['label'].strip('/')
+        # A path can be both a record and a folder containing other records.
+        if folder and label == folder:
+            visible.append({**record, 'label': folder.rsplit('/', 1)[-1]})
             continue
-        relative = record['label'][len(prefix):]
+        if not label.startswith(prefix):
+            continue
+        relative = label[len(prefix):]
         child, sep, rest = relative.partition('/')
         if sep and child and rest:
             children.add(child)

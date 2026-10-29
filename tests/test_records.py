@@ -62,3 +62,31 @@ def test_records_page_navigation_privacy_and_states(tmp_path):
             await login(client,sessions,sub='someone-else')
             assert 'Connect or create an Acorn' in (await client.get('/account/records')).text
     asyncio.run(run())
+
+
+@pytest.mark.parametrize('outer_slash', ['', '/'])
+def test_folder_includes_its_own_record_and_children(outer_slash):
+    from types import SimpleNamespace
+    from app.wallet_routes import folder_view
+    rows = [
+        {'label':outer_slash+'member', 'ref':'parent', 'timestamp':30},
+        {'label':outer_slash+'member/current', 'ref':'child', 'timestamp':20},
+        {'label':outer_slash+'member/archive/old', 'ref':'nested', 'timestamp':10},
+        {'label':outer_slash+'membership', 'ref':'other', 'timestamp':5},
+    ]
+    result = folder_view(rows, SimpleNamespace(query_params={'view':'folders', 'folder':'/member/'}))
+    assert [(r['label'], r['ref']) for r in result['records']] == [('member','parent'), ('current','child')]
+    assert [f['label'] for f in result['folders']] == ['archive']
+    root = folder_view(rows, SimpleNamespace(query_params={'view':'folders'}))
+    assert any(r['ref']=='parent' for r in root['records'])
+    assert any(f['label']=='member' for f in root['folders'])
+    assert rows[0]['label'] == outer_slash+'member'
+
+
+def test_nested_folder_keeps_exact_record_reference():
+    from types import SimpleNamespace
+    from app.wallet_routes import folder_view
+    rows = [{'label':'health/prescriptions', 'ref':'exact'},
+            {'label':'health/prescriptions/current', 'ref':'child'}]
+    result = folder_view(rows, SimpleNamespace(query_params={'view':'folders','folder':'health/prescriptions'}))
+    assert [(r['label'],r['ref']) for r in result['records']] == [('prescriptions','exact'),('current','child')]
