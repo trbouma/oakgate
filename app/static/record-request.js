@@ -1,5 +1,7 @@
 'use strict';
 (() => {
+ function recordLabel(value){const parts=value.replace(/^\/+|\/+$/g,'').split('/');const fingerprint=[...parts].reverse().find(p=>/^[a-f0-9]{64}$/i.test(p));return fingerprint?fingerprint.slice(0,12).toLowerCase()+'…'+fingerprint.slice(-8).toLowerCase():parts.at(-1);}
+
  const root=document.getElementById('record-request');if(!root)return;
  if(root.dataset.signedIn!=='yes'){document.getElementById('record-request-reload').onclick=()=>location.reload();return;}
  const fragment=location.hash.slice(1),remote=fragment.startsWith('remote.'),id=remote?fragment.slice(7):fragment;history.replaceState(null,'',location.pathname);
@@ -12,13 +14,13 @@
   records=result.records;
   const multiple=records.length>1;
   document.getElementById('record-request-details').textContent=`${result.name} requests your ${result.label} ${multiple?'records':'record'}.`;
-  button.textContent=multiple?'Present selected records':`Present ${records[0].label}`;
+  button.textContent=multiple?'Present selected records':`Present ${recordLabel(records[0].label)}`;
   if(multiple){
    document.getElementById('record-request-choices').hidden=false;
    const options=document.getElementById('record-request-options');
    for(const record of records){
     const label=document.createElement('label'), input=document.createElement('input'), text=document.createElement('span');
-    label.className='record-request-option';input.type='checkbox';input.value=record.id;input.setAttribute('data-record-choice','');text.textContent=record.label;
+    label.className='record-request-option';input.type='checkbox';input.value=record.id;input.setAttribute('data-record-choice','');text.textContent=recordLabel(record.label);
     input.addEventListener('change',()=>{button.disabled=busy||!document.querySelector('[data-record-choice]:checked');});
     label.append(input,text);options.append(label);
    }

@@ -81,8 +81,8 @@ async def begin(request, owner, code):
     origin, ident = destination(code)
     pin = (await transport(origin + '/info'))['service_identity']['npub']
     terms = await rpc(request, origin, pin, 'details', ident, {})
-    from app.pos_records import LABELS
-    if (set(terms) != {'name', 'label', 'expires'} or terms['label'] not in LABELS
+    from app.pos_records import category_path
+    if (set(terms) != {'name', 'label', 'expires'} or not category_path(terms['label'])
             or not isinstance(terms['name'], str) or not 1 <= len(terms['name']) <= 60
             or type(terms['expires']) is not int or not time.time() < terms['expires'] <= time.time() + 125):
         raise ValueError('Invalid presentation terms')
@@ -197,7 +197,7 @@ async def present(request, sender, origin, ident, data):
         await invoke(service.store.release, owner, lease)
     from app.presentation_receipts import schedule_receipt
     local_source = {'owner': owner, 'npub': source['npub']}
-    if detail['label'].lower() == 'emergency':
+    if detail['label'].strip('/').split('/')[0].casefold() == 'emergency':
         from app.emergency_contacts import notify_contact
         result['notification'] = await notify_contact(request, cache_id, local_source, result['contents'])
     schedule_receipt(request, cache_id, {'owner': owner, '_remote_name': source['name'] + ' (' + origin + ')'},
@@ -242,7 +242,7 @@ async def execute(request, envelope, fetch=None):
                 if (not isinstance(r, dict) or set(r) != {'id', 'label'} or not isinstance(r['id'], str)
                         or not re.fullmatch('[a-f0-9]{24}', r['id']) or r['id'] in seen
                         or not isinstance(r['label'], str) or len(r['label']) > 512
-                        or not (r['label'].lower() == item['label'] or r['label'].lower().startswith(item['label'] + '/'))):
+                        or not (r['label'].strip('/').casefold() == item['label'] or r['label'].strip('/').casefold().startswith(item['label'] + '/'))):
                     raise ValueError('Invalid approved record')
                 seen.add(r['id'])
             source = {'origin': origin, 'pin': sender, **data}

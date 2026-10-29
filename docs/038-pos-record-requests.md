@@ -268,3 +268,10 @@ emergency-contact notifications. The existing card-possession and disclosure
 rules apply; this label adds no new authorization policy.
 
 For remote cards, see [Federated POS card operations](026-nfc-card-payments.md#federated-pos-card-operations). The issuer produces the presentation and a holder receipt identifying the acquiring service. Wallet QR approval also supports participating homes; card issuance remains home-local.
+
+## Narrower categories and fingerprint names
+
+The category field accepts paths below the default categories, such as
+`health/prescriptions`. Both regular names and fingerprint-labelled records can
+be selected. See [Record paths and fingerprints](041-record-fingerprint-labels.md)
+for matching rules, display names and update behavior.

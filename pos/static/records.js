@@ -1,5 +1,7 @@
 'use strict';
 (() => {
+ function recordLabel(value){const parts=value.replace(/^\/+|\/+$/g,'').split('/');const fingerprint=[...parts].reverse().find(p=>/^[a-f0-9]{64}$/i.test(p));return fingerprint?fingerprint.slice(0,12).toLowerCase()+'…'+fingerprint.slice(-8).toLowerCase():parts.at(-1);}
+
  const $=id=>document.getElementById(id);
  let signed, id, requestedLabel, expires=0, generation=0, timer, expiryTimer, reader, imageURL, busy=false, displayGeneration=0;
  const message=text=>$('record-status').textContent=text;
@@ -29,7 +31,7 @@
  }
  function ready(records=[]){
   $('record-choice').replaceChildren();
-  for(const record of records){const option=document.createElement('option');option.value=record.id;option.textContent=record.label.toLowerCase()===requestedLabel?'General':record.label.slice(requestedLabel.length+1);$('record-choice').append(option);}
+  for(const record of records){const option=document.createElement('option');option.value=record.id;option.textContent=recordLabel(record.label);$('record-choice').append(option);}
   $('record-choice-wrap').hidden=records.length<=1;
 stopNFC();clearTimeout(timer);$('record-present').hidden=false;$('record-present').disabled=false;$('record-nfc').hidden=true;$('record-qr').hidden=true;message('Presentation ready. Select Show Record to display it.');}
  async function poll(run){
@@ -76,7 +78,7 @@ stopNFC();clearTimeout(timer);$('record-present').hidden=false;$('record-present
   if(!id||busy)return;clearDisplay();busy=true;const run=generation, display=displayGeneration;$('record-present').disabled=true;message('Acquiring record and verification information…');
   try{const payload={request_id:id};if($('record-choice').value)payload.record_id=$('record-choice').value;
    const result=await signed('record-present',payload);if(run!==generation||display!==displayGeneration)return;
-   $('record-label').textContent=result.label;$('record-contents').textContent=result.contents;
+   $('record-label').textContent=recordLabel(result.label);$('record-contents').textContent=result.contents;
    $('record-attachment-note').textContent=result.attachment_note || '';
    $('record-verification-summary').textContent=result.verification
     ? `OpenETR: ${String(result.verification.aggregate_state || 'unverifiable').replaceAll('_',' ')}`

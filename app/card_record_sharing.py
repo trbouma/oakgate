@@ -146,7 +146,7 @@ async def receive(request, sender, body, authority, recheck, material):
         state = attempt['state']
         if state == 'processing' and time.time() - attempt['created_at'] > 180:
             state = 'review'
-        return {'state': state if state in {'complete', 'processing', 'rejected'} else 'review'}
+        return {'state': state if state in {'complete', 'already_received', 'processing', 'rejected'} else 'review'}
     lease = renewal = None
     writing = False
     lease_ok = True
@@ -165,7 +165,8 @@ async def receive(request, sender, body, authority, recheck, material):
         if inspected['expires_at'] < time.time():
             raise ValueError('Sharing code expired')
         rows = await service.records(material)
-        if any(r['label'].casefold() == terms['label'].casefold() for r in rows):
+        existing = next((r for r in rows if r['label'].casefold() == terms['label'].casefold()), None)
+        if existing:
             raise ValueError('Record label already exists')
         await recheck()
         await invoke(service.store.renew, owner, lease)
@@ -229,16 +230,14 @@ async def prepare(request: Request, ident: str):
         share = await invoke(RecordCapabilities(service.store).get, owner, ident)
         if share['purpose'] != 'share' or share['expires_at'] <= time.time():
             raise ValueError('Expired')
-        # Read the originator captured in the transfer, just as QR acceptance does.
-        # Do not infer it from the current handle, which may have changed.
-        async with asyncio.timeout(35):
-            detail = await service.backend.inspect_scanned_record(material, share['descriptor'])
-        label = suggested_record_label(detail)
         card = form.get('card', '')
         target = await call(request, card, 'resolve', ident, {})
         if (set(target) != {'recipient', 'wallet'} or not isinstance(target['recipient'], str)
                 or len(target['recipient']) > 200 or not re.fullmatch('[a-f0-9]{64}', target['wallet'])):
             raise ValueError('Invalid wallet')
+        async with asyncio.timeout(35):
+            detail = await service.backend.inspect_scanned_record(material, share['descriptor'], recipient_pubkey=target['wallet'])
+        label = suggested_record_label(detail)
         issuer, pin = pinned_issuer(card)
         item = {'purpose': 'card-record-out', 'share': ident, 'card': card, 'issuer': issuer,
                 'pin': pin, 'recipient': target['recipient'], 'terms': {
@@ -286,7 +285,7 @@ async def deliver(request, service, owner, item, allow_start=True):
         if share['expires_at'] <= time.time() or share['descriptor'] != item['terms']['descriptor']:
             raise ValueError('Sharing copy expired or changed')
     result = await call(request, item['card'], 'deliver' if fresh else 'status', ident, item['terms'])
-    if result.get('state') not in {'complete', 'processing', 'review', 'rejected'}:
+    if result.get('state') not in {'complete', 'already_received', 'processing', 'review', 'rejected'}:
         raise ValueError('Invalid status')
     await invoke(save_attempt, service.store, owner, attempt, result['state'])
     await invoke(save_attempt, service.store, owner, item, result['state'])

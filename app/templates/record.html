@@ -2,7 +2,7 @@
 {% block content %}
 <section class="record-detail">
 <a class="back-link" href="/account/records">{{ _("← Records") }}</a>
-<h1>{{ record.label }}</h1>
+<h1>{{ record_display_label(record.label) }}</h1>
 <nav class="record-actions record-capabilities" aria-label="{{ _('Record actions') }}">
 {% if record.has_blob %}<a href="/account/records/{{ reference }}/check">{{ _('Check') }}</a>{% else %}<span aria-disabled="true" title="{{ _('Attach a file to check its fingerprint') }}">{{ _('Check') }}</span>{% endif %}
 <a href="/account/records/{{ reference }}/present">{{ _('Present') }}</a>

@@ -4,7 +4,7 @@
 <a class="back-link" href="{% if reference %}/account/records/{{ reference }}{% else %}/account/records{% endif %}">← {% if reference %}{{ _("Record") }}{% else %}{{ _("Records") }}{% endif %}</a>
 {% if action == 'delete' %}
 <h1>{{ _('Delete record') }}</h1>
-<p>{{ record.label }}</p>
+<p>{{ record_display_label(record.label) }}</p>
 <p>{{ _('Delete this record from your Acorn? OakGate cannot undo this action.') }}</p>
 <p class="note">{{ _('Shared copies and separately stored attachments are not deleted. Relays may retain historical copies.') }}</p>
 <form method="post" class="record-form" data-progress-message="{{ _('Deleting your record. Please wait…') }}">
@@ -14,14 +14,15 @@
 <a class="secondary-action" href="/account/records/{{ reference }}">{{ _('Cancel') }}</a>
 </form>
 {% elif action in ['edit', 'present', 'share', 'check'] %}
-<h1>{{ {"edit": _("Edit record"), "present": _("Present record"), "share": _("Share record"), "check": _("Check record")}[action] }}</h1><p>{{ record.label }}</p>
+<h1>{{ {"edit": _("Edit record"), "present": _("Present record"), "share": _("Share record"), "check": _("Check record")}[action] }}</h1><p>{{ record_display_label(record.label) }}</p>
 <form method="post" class="record-form" data-progress-message="{{ _('Processing your record. Please wait…') }}" {% if action == 'edit' %}enctype="multipart/form-data"{% endif %}>
 <input type="hidden" name="csrf" value="{{ csrf }}">
 {% if action == 'edit' %}
+<label for="record-label">{{ _('Label') }}</label><input id="record-label" name="label" value="{{ record.label }}" maxlength="200" required>
 <label for="record-format">{{ _("Format") }}</label><select id="record-format" name="format"><option value="text" {% if record.payload is string %}selected{% endif %}>{{ _("Text") }}</option><option value="json" {% if record.payload is not string %}selected{% endif %}>{{ _("JSON") }}</option></select>
 <label for="record-payload">{{ _("Contents") }}</label><textarea id="record-payload" name="payload" rows="12" spellcheck="false">{{ record.contents }}</textarea>
 <label for="record-attachment">{% if record.has_blob %}{{ _("Replace attached file") }}{% else %}{{ _("Attach a file") }}{% endif %} {{ _("(optional, up to 25 MiB)") }}</label><input type="file" id="record-attachment" name="attachment">
-<p class="note">{{ _("The label stays the same. Leaving the file empty preserves the existing attachment.") }}</p>
+<p class="note">{{ _("Sharing fingerprint labels stay unchanged unless you enter a different label. Leaving the file empty preserves the existing attachment.") }}</p>
 {% elif action == 'check' %}
 <p>{{ _("Check the original file’s fingerprint against OpenETR anchor events and publisher notices. This sends the fingerprint to the configured public relays; your file and private key stay private.") }}</p>
 <p class="note">{{ _("A check evaluates retrieved evidence, not legal validity, ownership or recognition of the publisher.") }}</p>
@@ -34,7 +35,7 @@
 <button class="primary-action" type="submit">{% if action == 'edit' %}{{ _("Save changes") }}{% else %}{{ action_labels[action] }}{% endif %}</button>
 </form>
 {% elif action == 'capability' %}
-<h1>{{ _('Presentation') if item.purpose == 'present' else _('Share record') }}</h1><p>{{ item.label }}</p>
+<h1>{{ _('Presentation') if item.purpose == 'present' else _('Share record') }}</h1><p>{{ record_display_label(item.label) }}</p>
 <p>{{ _("Scan with a compatible Safebox, or copy the code below.") }}</p>
 {% if not expired %}
 <div class="receive-poll-progress" data-share-progress data-remaining-seconds="{{ remaining_seconds }}">
@@ -60,9 +61,9 @@
 <form method="post" action="/account/record-shares/{{ item.id }}/stop" data-stop-record-sharing data-progress-message="{{ _('Requesting deletion of the temporary copy…') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="primary-action">{{ _("Stop presentation") if item.purpose == "present" else _("Stop sharing") }}</button></form>
 {% elif action == 'shares' %}
 <h1>{{ _("Active shares") }}</h1><p class="note">{{ _("Copies awaiting a confirmed deletion request, including expired codes.") }}</p>
-<ul class="record-list">{% for item in shares %}<li><a href="/account/record-shares/{{ item.id }}">{{ item.label }} · {{ _('Presentation') if item.purpose == 'present' else _('Share') }}</a></li>{% else %}<li>{{ _("No sharing copies tracked.") }}</li>{% endfor %}</ul>
+<ul class="record-list">{% for item in shares %}<li><a href="/account/record-shares/{{ item.id }}">{{ record_display_label(item.label) }} · {{ _('Presentation') if item.purpose == 'present' else _('Share') }}</a></li>{% else %}<li>{{ _("No sharing copies tracked.") }}</li>{% endfor %}</ul>
 {% elif action == 'checked' %}
-<h1>{{ _('Check record') }}</h1><p>{{ record.label }}</p>
+<h1>{{ _('Check record') }}</h1><p>{{ record_display_label(record.label) }}</p>
 <p class="note">{% if bytes_verified %}{{ _('The original file was retrieved and its fingerprint verified before this lookup.') }}{% else %}{{ _('This check uses a scanned fingerprint. It has not retrieved or verified the original file.') }}{% endif %}</p>
 {% with has_blob=true, blob_fingerprint=history.digest, openetr_history=history %}
 {% include '_control_history_content.html' %}

@@ -247,3 +247,15 @@ Publish the optional `originator_handle` Acorn API change first, then run
 `poetry update safebox-acorn` in OakGate and commit its lockfile before deployment.
 Old envelopes decode without a handle; older Acorn readers ignore the extra
 optional field. Safebox Web's existing calls and default import labels are unchanged.
+
+## Sharing fingerprints and recipient labels
+
+QR and NFC receipt labels use a fingerprint of the originating Acorn key,
+record content and receiving Acorn key. Repeated unchanged shares to the same
+wallet suggest the same label; changed content or a different wallet changes
+the sharing fingerprint. Recipient edits preserve the accepted label, and the
+original-file fingerprint remains separate for verification.
+
+See [Record paths and fingerprints](041-record-fingerprint-labels.md) for the
+precise contract, collision handling, text-only notes, prescription and ticket
+examples, and deployment requirements.

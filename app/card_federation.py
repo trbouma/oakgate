@@ -167,12 +167,12 @@ def session_key(sender, body):
 
 
 async def issuer_records(request, sender, origin, body, authority, recheck):
-    from app.pos_records import LABELS, matching_records, choices, selection_id, presentation_lease, render_detail
+    from app.pos_records import category_path, matching_records, choices, selection_id, presentation_lease, render_detail
     service, cache = request.app.state.wallets, request.app.state.store
     owner, operation, data = authority['owner'], body['operation'], body['data']
     key = session_key(sender, body)
     if operation == 'record-open':
-        if (set(data) != {'label', 'expires'} or data['label'] not in LABELS
+        if (set(data) != {'label', 'expires'} or not category_path(data['label'])
                 or type(data['expires']) is not int or not time.time() < data['expires'] <= time.time() + 125):
             raise ValueError('Invalid record request')
         # Atomic short-lived claim. Replay cannot extend TTL or switch cards/categories.
@@ -233,7 +233,7 @@ async def issuer_records(request, sender, origin, body, authority, recheck):
     if await cache.get(key + ':closed'):
         await cache.delete(key)
         raise ValueError('Presentation closed')
-    if detail['label'].lower() == 'emergency':
+    if detail['label'].strip('/').split('/')[0].casefold() == 'emergency':
         from app.emergency_contacts import notify_contact
         result['notification'] = await notify_contact(request, key, source, result['contents'])
     from app.presentation_receipts import schedule_receipt

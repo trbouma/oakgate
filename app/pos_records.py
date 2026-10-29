@@ -36,6 +36,8 @@ def preview_attachment(blob, declared_type):
 router = APIRouter()
 TTL = 120
 # Deliberate disclosure scope. Never accept arbitrary/internal Acorn labels.
+from app.record_labels import display_record_label
+
 LABELS = {'whoami', 'myinfo', 'emergency', 'health', 'benefits', 'member', 'pass'}
 
 
@@ -84,16 +86,28 @@ def selection_id(row):
     return hashlib.sha256((row['label'] + '\0' + row['ref']).encode()).hexdigest()[:24]
 
 
+def category_path(value):
+    if not isinstance(value, str):
+        raise ValueError('Invalid record category')
+    value = value.strip().strip('/').casefold()
+    parts = value.split('/')
+    if (len(value)>200 or parts[0] not in LABELS
+            or any(not p or p in {'.','..'} or any(ord(c)<32 for c in p) for p in parts)):
+        raise ValueError('Unsupported record category')
+    return value
+
+
 def matching_records(rows, category):
-    matches = [row for row in rows if row['label'].lower() == category
-               or row['label'].lower().startswith(category + '/')]
-    if not matches or len(matches) > 20 or len({r['label'].lower() for r in matches}) != len(matches):
+    category = category_path(category)
+    def path(row): return row['label'].strip('/').casefold()
+    matches = [row for row in rows if path(row) == category or path(row).startswith(category + '/')]
+    if not matches or len(matches)>20 or len({path(r) for r in matches})!=len(matches):
         raise HTTPException(404, 'No unambiguous record selection is available (maximum 20 records).')
-    return sorted(matches, key=lambda row: row['label'].lower())
+    return sorted(matches, key=path)
 
 
 def choices(rows):
-    return [{'id': selection_id(row), 'label': row['label']} for row in rows]
+    return [{'id':selection_id(row), 'label':row['label']} for row in rows]
 
 
 async def presentation_lease(store, owner):
@@ -193,8 +207,10 @@ async def operation(request, actor, operation, payload):
         raise HTTPException(400, 'Invalid record request')
     store = request.app.state.store
     if operation == 'record-start':
-        if data['label'] not in LABELS:
-            raise HTTPException(400, 'Unsupported record label')
+        try:
+            data['label'] = category_path(data['label'])
+        except ValueError:
+            raise HTTPException(400, 'Unsupported record label') from None
         await invoke(terminal, request, actor)
         old = await store.get(key('current', actor['id']))
         if old:
@@ -317,7 +333,7 @@ async def operation(request, actor, operation, payload):
     if result['expires'] <= time.time():
         raise HTTPException(404)
     await sealed_put(request, 'result', ident, item, result)
-    if detail['label'].lower() == 'emergency':
+    if detail['label'].strip('/').split('/')[0].casefold() == 'emergency':
         from app.emergency_contacts import notify_contact
         result['notification'] = await notify_contact(request, ident, source, result['contents'])
         await sealed_put(request, 'result', ident, item, result)

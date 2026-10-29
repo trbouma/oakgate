@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>OakGate POS</title>
-<link rel="stylesheet" href="/static/terminal.css"><script src="/static/cards.js" defer></script><script src="/static/card-balance.js" defer></script><script src="/static/receiving.js" defer></script><script src="/static/records.js" defer></script><script src="/static/terminal.js" defer></script><script src="/static/tabs.js" defer></script><script type="module" src="/static/activation-scan.js"></script><script type="module" src="/static/record-pdf.js?v=20261029-pdf"></script></head>
+<link rel="stylesheet" href="/static/terminal.css"><script src="/static/cards.js" defer></script><script src="/static/card-balance.js" defer></script><script src="/static/receiving.js" defer></script><script src="/static/records.js?v=20261029-labels" defer></script><script src="/static/terminal.js" defer></script><script src="/static/tabs.js" defer></script><script type="module" src="/static/activation-scan.js"></script><script type="module" src="/static/record-pdf.js?v=20261029-pdf"></script></head>
 <body><main><header><img src="/logo.png" alt=""><span>MAINSTAY / OAKGATE POS</span></header>
 <div class="terminal-tabs" role="tablist" aria-label="Terminal activities">
 <button id="tab-sale" type="button" role="tab" aria-selected="true" aria-controls="panel-sale">Point of Sale</button>
@@ -74,7 +74,7 @@
 <section id="panel-record" role="tabpanel" aria-labelledby="tab-record" hidden>
 <p class="eyebrow">RECORD VERIFICATION</p>
 <h1>Check a Record</h1>
-<label for="record-type">Record</label><select id="record-type"><option value="whoami">whoami</option><option value="myinfo">myinfo</option><option value="emergency">emergency</option><option value="health">health</option><option value="benefits">benefits</option><option value="member">member</option><option value="pass">pass</option></select>
+<label for="record-type">Record category</label><input id="record-type" list="record-categories" value="whoami" maxlength="200" placeholder="health/prescriptions" autocomplete="off" spellcheck="false"><datalist id="record-categories"><option value="whoami"><option value="myinfo"><option value="emergency"><option value="health"><option value="benefits"><option value="member"><option value="pass"></datalist>
 <button id="record-start" type="button" disabled>Create Request</button>
 <p id="record-status" role="status" aria-live="polite">Activate this terminal in Point of Sale to request a record.</p>
 <div id="record-qr" class="card-qr" hidden></div>

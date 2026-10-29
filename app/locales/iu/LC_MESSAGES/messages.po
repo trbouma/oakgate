@@ -338,7 +338,7 @@ msgid "OpenETR Evidence Link"
 msgstr ""
 
 #: app/templates/_openetr_durable_link.html:15 app/templates/record_preview.html:19
-msgid "Record File Fingerprint:"
+msgid "Fingerprint:"
 msgstr ""
 
 #: app/templates/_openetr_durable_link.html:19

@@ -636,8 +636,8 @@ msgid "OpenETR Evidence Link"
 msgstr "Lien vers les éléments de preuve OpenETR"
 
 #: app/templates/_openetr_durable_link.html:15 app/templates/record_preview.html:19
-msgid "Record File Fingerprint:"
-msgstr "Empreinte du fichier du document :"
+msgid "Fingerprint:"
+msgstr "Empreinte :"
 
 #: app/templates/_openetr_durable_link.html:19
 msgid "Scan to inspect the available OpenETR evidence. Tap the QR code to copy its link."

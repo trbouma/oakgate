@@ -176,7 +176,11 @@ async def record_action(request: Request, reference: str, action: str):
                 if not data or len(data) > 25 * 1024 * 1024:
                     raise HTTPException(400, 'Choose a nonempty file up to 25 MiB.')
                 mime = upload.content_type or 'application/octet-stream'
-            result = await service.record_action(material, 'update_record', reference, payload, data, mime)
+            label = form.get('label')
+            if label is not None and not isinstance(label, str):
+                raise HTTPException(400, 'Choose a valid label')
+            args = (reference, payload, data, mime) if label is None else (reference, payload, data, mime, label)
+            result = await service.record_action(material, 'update_record', *args)
             if not isinstance(result, dict) or result.get('verified') is not True:
                 raise RuntimeError('Save not verified')
             return RedirectResponse('/account/records', status_code=303)

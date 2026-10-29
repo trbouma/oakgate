@@ -202,10 +202,11 @@ class AcornBackend:
         amount = sum(credits.values())
         return 'complete' if amount >= item['amount'] else 'review'
 
-    async def inspect_scanned_record(self, material, code, presentation=False):
+    async def inspect_scanned_record(self, material, code, presentation=False, recipient_pubkey=None):
         wallet = self.wallet(material)
         method = wallet.inspect_record_presentation if presentation else wallet.inspect_record_transfer
-        return await method(code, allowed_servers=list(self.record_settings.allowed_servers))
+        return await method(code, allowed_servers=list(self.record_settings.allowed_servers),
+            **({"recipient_pubkey": recipient_pubkey} if recipient_pubkey is not None and not presentation else {}))
 
     async def accept_scanned_record(self, material, code, label=None):
         return await self.wallet(material).accept_record_transfer(code, record_name=label,
@@ -409,14 +410,34 @@ class AcornBackend:
                 phase, time.monotonic() - started)
             raise
 
-    async def update_record(self, material, reference, payload, attachment=None, media_type=None):
+    async def update_record(self, material, reference, payload, attachment=None, media_type=None, explicit_label=None):
         detail = await self.record_detail(material, reference)
         if detail is None:
             raise WalletInputError('This record changed. Reload Records before editing again.')
-        return await self.wallet(material).put_record(
-            detail['label'], payload, record_type=detail.get('record_type', 'generic'),
-            record_kind=37375, preserve_existing_blob=True, return_result=True,
-            blob_data=attachment, blob_type=media_type)
+        from app.record_labels import updated_record_label
+        label = updated_record_label(detail, payload, attachment, explicit_label)
+        wallet = self.wallet(material)
+        if label == detail['label']:
+            return await wallet.put_record(label, payload, record_type=detail.get('record_type','generic'),
+                record_kind=37375, preserve_existing_blob=True, return_result=True,
+                blob_data=attachment, blob_type=media_type)
+        if await wallet.record_exists(label, record_kind=37375):
+            raise WalletInputError('The destination label already exists; nothing was overwritten.')
+        if detail.get('has_blob') and attachment is None:
+            original = await self.record_blob(material, reference)
+            if not original:
+                raise WalletInputError('The original attachment could not be preserved.')
+            _, media_type, attachment = original
+        result = await wallet.put_record(label, payload, record_type=detail.get('record_type','generic'),
+            record_kind=37375, return_result=True, blob_data=attachment, blob_type=media_type)
+        # Preserve the old record unless the new one is confirmed. All mutations
+        # stay in Acorn. A cleanup failure retains both; never repeat automatically.
+        if not isinstance(result, dict) or result.get('verified') is not True:
+            return {'verified':False}
+        removed = await wallet.delete_record(label=detail['label'], record_kind=37375,
+            relays=[material['relay']], delete_blob=False)
+        return {'verified': isinstance(removed,dict) and removed.get('status')=='DELETE_REQUESTED'
+                and material['relay'] in (removed.get('hidden_on') or []), 'label':label}
 
     async def delete_record(self, material, reference):
         # Reauthorize the exact record under the caller's wallet lease.

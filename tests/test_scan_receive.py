@@ -119,7 +119,7 @@ def test_record_import_owner_bound_and_not_repeated(tmp_path):
         async with aclosing(client):
             owner = await login(client, sessions)
             await client.post('/account/acorn/create', data=form())
-            backend.inspect_scanned_record = AsyncMock(return_value={'label':'Test record','record_type':'note'})
+            backend.inspect_scanned_record = AsyncMock(return_value={'label':'Test record','record_type':'note','sharing_fingerprint':'a'*64})
             backend.accept_scanned_record = AsyncMock(return_value={'stored':True})
             backend.records = AsyncMock(return_value=[])
             response = await client.post('/account/scan', data=form(lightning_payment='acorn:record-transfer:secret'))

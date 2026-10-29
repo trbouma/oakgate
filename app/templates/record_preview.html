@@ -5,20 +5,6 @@
   {% if blob_type_notice %}
   <p class="record-type-notice">{{ blob_type_notice }}</p>
   {% endif %}
-  {% if blob_fingerprint %}
-  <p class="record-fingerprint">
-    <svg class="inline-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
-      stroke-linejoin="round" aria-hidden="true">
-      <path d="M12 11a2 2 0 0 1 2 2c0 3-.7 5.7-2 8"></path>
-      <path d="M8.2 20c1.2-2.2 1.8-4.5 1.8-7a2 2 0 0 1 4 0c0 2.6-.4 5-1.2 7.2"></path>
-      <path d="M5.5 18.5A15 15 0 0 0 7 12.8a5 5 0 0 1 10 0c0 2.2-.2 4.4-.8 6.5"></path>
-      <path d="M4 14v-1.2a8 8 0 0 1 16 0c0 1.2 0 2.4-.2 3.6"></path>
-      <path d="M7 6.2A8 8 0 0 1 18.5 8"></path>
-    </svg>
-    <span>{{ _("Record File Fingerprint:") }}</span> <code>{{ blob_fingerprint }}</code>
-  </p>
-  {% endif %}
   {% if blob_preview == "image" %}
   <figure class="blob-preview">
     <img src="{{ blob_inline_url }}" alt="Image attached to {{ label }}">
@@ -196,6 +182,20 @@
   {% endif %}
   {% else %}
   <p>{{ _("No inline preview is available") }}{% if blob_type %} {{ _("for") }} <code>{{ blob_type }}</code>{% endif %}.</p>
+  {% endif %}
+  {% if blob_fingerprint %}
+  <p class="record-fingerprint">
+    <svg class="inline-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+      stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 11a2 2 0 0 1 2 2c0 3-.7 5.7-2 8"></path>
+      <path d="M8.2 20c1.2-2.2 1.8-4.5 1.8-7a2 2 0 0 1 4 0c0 2.6-.4 5-1.2 7.2"></path>
+      <path d="M5.5 18.5A15 15 0 0 0 7 12.8a5 5 0 0 1 10 0c0 2.2-.2 4.4-.8 6.5"></path>
+      <path d="M4 14v-1.2a8 8 0 0 1 16 0c0 1.2 0 2.4-.2 3.6"></path>
+      <path d="M7 6.2A8 8 0 0 1 18.5 8"></path>
+    </svg>
+    <span>{{ _("Fingerprint:") }}</span> <code>{{ blob_fingerprint }}</code>
+  </p>
   {% endif %}
 </section>
 {% endif %}
