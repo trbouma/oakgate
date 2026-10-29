@@ -113,6 +113,71 @@ migration tool for those changes. The owner hash is also bound into encrypted
 custody and payment envelopes; changing an issuer setting or editing one row
 is not a safe migration. See [identity mapping and backups](008-identity-storage-backups.md).
 
+## Apps help; they do not rule
+
+In much of today's app ecosystem, apps act as deputized authorities—gatekeepers
+through which people access funds, credentials and services. Mainstay takes a
+different approach: applications assist; they do not confer authority. Users
+retain the agency to choose their tools and decide whom to trust.
+
+“Deputized authority” describes an app's practical control over access, not a
+claim that every app is the underlying issuer, custodian or legal authority.
+The architectural question is whether a user can exercise the same relationship
+through another compatible client without the original app's continued permission.
+
+> **Applications assist; they do not confer authority. Authority comes from the
+> relevant identities, signed statements and protocol rules. Users retain the
+> agency to decide whom to trust.**
+
+This reflects the OpenETR insight that **the app is not the authority**. An app
+can display an anchor, identify its signer and verify its cryptographic evidence.
+That verification does not establish that the signer's statement is true, that
+the signer is qualified, or that the record grants a particular entitlement. The
+recipient evaluates the signer, the statement's scope and the applicable rules.
+A green check must communicate what was verified, not imply universal approval.
+
+The same distinction applies to OakGate: its interface and helper database do
+not create the validity of funds or records. Acorn implements the relevant
+protocol operations and protections; it is not itself a universal authority.
+Custody delegates operational power to a provider, not the power to redefine
+these relationships merely through an application display.
+
+Applications may be called upon to help users, without becoming a permanent
+authority over their Acorns. A user can delegate work and custody while retaining
+agency over their funds, records and choice of client or provider. Convenience
+must support that choice, not make departure dependent on a proprietary index or
+an application-only representation of the user's records.
+
+OakGate may provide search, folder indexes, cached metadata and other derived
+views to make an Acorn easier to use. These helpers are non-authoritative:
+
+- Acorn remains the protocol boundary for user records and funds. User-key
+  operations continue through Acorn; a cached entry is never permission to read,
+  disclose, modify or spend.
+- A helper index can be discarded and rebuilt from the underlying Acorn records
+  through supported APIs. Its loss must not lose the records or funds it describes.
+- Confirm current records and authority through Acorn when using a result. Treat
+  unavailable infrastructure and incomplete scans as uncertainty, not proof that
+  a record was deleted. Reconcile changes made by other clients as well as OakGate.
+- Protect derived metadata as user data. Labels and folder paths can reveal
+  sensitive information even when the original attachment is not cached. Apply
+  owner isolation, appropriate encryption, retention and deletion policies.
+- An independent client must be able to rediscover the user's records without
+  OakGate's helper database. App-specific preferences may remain conveniences;
+  they must not become hidden protocol requirements.
+
+This is an architectural constraint, not a claim that custody removes operator
+power. OakGate holds private keys and users still trust its operator. Nor does it
+make every application table disposable: custody associations, credentials,
+authorizations and durable payment recovery journals have distinct responsibilities
+and backup requirements. Never discard recovery checkpoints as though they were
+search caches, or rebuild them by guessing from a record index.
+
+A persistent record index is a future optimization, not a currently implemented
+capability. See the [record management roadmap](042-record-management-roadmap.md).
+The acceptance question is: **does this feature help the user exercise agency,
+or make the app harder to replace?**
+
 ## One responsibility per layer
 
 | Layer | Responsibility |

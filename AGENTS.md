@@ -60,3 +60,14 @@ an explicitly designed, verified migration; never transfer custody by email.
 Do not advertise recovery, departure, commissioning or restoration capabilities
 as implemented until their acceptance checks pass. Consult
 `docs/010-mainstay-principles.md` for the review and outstanding boundary work.
+
+
+## Derived helpers serve the user
+
+Applications may provide rebuildable indexes, caches and discovery aids; Acorn
+remains authoritative for user protocol operations. Derived metadata must be
+owner-isolated and protected, never grant authority or bypass Acorn's checks, and
+must not be required for independent record discovery. Incomplete scans are not
+evidence of deletion. Keep disposable helpers distinct from custody state and
+durable payment recovery journals, which must not be discarded or reconstructed
+by inference. See `docs/010-mainstay-principles.md`, “Apps help; they do not rule.”

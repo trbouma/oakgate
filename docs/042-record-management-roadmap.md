@@ -71,3 +71,15 @@ large-wallet discovery outside the migrated wallet Records page.
 For now, commit/deploy the current changes and smoke-test list navigation,
 opening a record and folder browsing. No additional scale work is required just
 because the APIs support larger wallets.
+
+## Optional helper index
+
+A future PostgreSQL index could hold owner-scoped labels, paths, event IDs,
+timestamps and attachment types for fast search and folder browsing. Populate it
+through Acorn, update it after confirmed app operations, and reconcile external
+changes with complete paginated scans. Incomplete scans must not prune entries.
+Opening or acting on a result must recheck the record and authority through Acorn.
+
+This is parked until usage justifies it. The index must be rebuildable and remain
+separate from durable payment recovery and custody state. It follows
+[Apps help; they do not rule](010-mainstay-principles.md#apps-help-they-do-not-rule).
