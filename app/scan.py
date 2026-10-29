@@ -17,6 +17,7 @@ from app.record_routes import account
 from app.wallet_routes import checked_form
 from app.request_store import RequestStore
 from app.record_settings import RecordSettings
+from app.record_labels import suggested_record_label
 from app.record_previews import _blob_preview_kind
 from app.gs1 import product_associations, product_media_type, retrieve_product_artifact
 from app.gs1_discovery import acquire_product, discover_product
@@ -118,10 +119,7 @@ async def scan(request: Request):
                 async with asyncio.timeout(35):
                     detail = await service.backend.inspect_scanned_record(material, code, purpose == 'presentation')
             if detail:
-                handle = detail.get('originator_handle')
-                label = detail['label']
-                suggestion = f'{handle}/{label}' if isinstance(handle, str) and re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]{0,63}', handle) else label
-                detail['suggested_label'] = suggestion if len(suggestion) <= 200 else label
+                detail['suggested_label'] = suggested_record_label(detail)
             ident = RequestStore(service.store).save(owner, {'purpose': purpose, 'code': code, 'label': detail.get('suggested_label') if detail else None,
                 'detail': {k:detail[k] for k in ('label','record_type','has_original','expires_at','originator_handle','suggested_label') if k in detail} if detail else None})
             preview = presentation_preview(detail, ident) if purpose == 'presentation' else None

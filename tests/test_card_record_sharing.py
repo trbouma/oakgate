@@ -157,6 +157,7 @@ def test_web_review_requires_owner_csrf_and_confirmation(tmp_path, monkeypatch):
         async with client:
             assert (await client.get('/account/record-card/'+'a'*32)).status_code==401
             owner=await login(client,sessions)
+            backend.inspect_scanned_record = AsyncMock(return_value={'label':'member', 'originator_handle':'tom'})
             await client.post('/account/acorn/create',data=form())
             ident=RecordCapabilities(service.store).save(owner,{'purpose':'share','label':'member','descriptor':'private-code','expires_at':int(time.time()+120)})
             url='/account/record-shares/'+ident+'/card'
@@ -165,6 +166,7 @@ def test_web_review_requires_owner_csrf_and_confirmation(tmp_path, monkeypatch):
             assert page.status_code==303
             ticket_url=page.headers['location']
             review=await client.get(ticket_url)
+            assert 'tom/member' in review.text
             assert 'Confirm sharing' in review.text and 'https://issuer.example' in review.text
             assert 'private-code' not in review.text and 'secret' not in review.text
             assert (await client.post(ticket_url,data=form())).status_code==400
@@ -172,6 +174,7 @@ def test_web_review_requires_owner_csrf_and_confirmation(tmp_path, monkeypatch):
             result=await client.post(ticket_url,data=form(confirmed='yes'))
             assert result.status_code==200 and 'Record received' in result.text
             assert calls.await_args.args[2]=='deliver'
+            assert calls.await_args.args[4]['label']=='tom/member'
             result=await client.post(ticket_url,data=form(confirmed='yes'))
             assert calls.await_args.args[2]=='status'
             other=await login(client,sessions,sub='other')
@@ -219,4 +222,27 @@ def test_sender_status_with_no_attempt_never_starts_import(network):
         with pytest.raises(ValueError):
             await sharing.deliver(f.merchant,f.merchant.app.state.wallets,'alice',item,False)
         f.issuer.app.state.wallets.backend.accept_scanned_record.assert_not_awaited()
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize('handle,label,expected', [
+    ('tom', 'member', 'tom/member'),
+    ('tom', 'benefits/health', 'tom/benefits/health'),
+    (None, 'member', 'member'),
+    ('invalid/handle', 'member', 'member'),
+    ('tom', 'x'*200, 'x'*200),
+])
+def test_qr_and_nfc_label_convention(handle, label, expected):
+    from app.record_labels import suggested_record_label
+    assert suggested_record_label({'label':label, 'originator_handle':handle}) == expected
+
+
+def test_prefixed_label_is_imported_and_collision_protected(network):
+    f = network
+    f.terms['label'] = 'tom/benefits/health'
+    async def run():
+        assert await sharing.call(f.merchant, f.card['payload'], 'deliver', f.ident, f.terms) == {'state':'complete'}
+        assert f.issuer.app.state.wallets.backend.accept_scanned_record.await_args.args[2] == 'tom/benefits/health'
+        assert await sharing.call(f.merchant, f.card['payload'], 'deliver', '2'*32, f.terms) == {'state':'rejected'}
+        assert f.issuer.app.state.wallets.backend.accept_scanned_record.await_count == 1
     asyncio.run(run())

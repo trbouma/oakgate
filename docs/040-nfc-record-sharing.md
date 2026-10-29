@@ -10,8 +10,11 @@ example, Chrome on a compatible Android phone). The QR option remains available.
 4. Confirm sharing. The recipient's home imports the copy through Acorn.
 
 The recipient does not need their phone. The record is stored in their Acorn,
-not on the NFC card. Its original label is preserved, including categories such
-as `member` and `benefits/health`. An existing label, compared case-insensitively,
+not on the NFC card. The sender's handle from the sharing copy prefixes the
+original label, matching QR sharing: `tom/member` or `tom/benefits/health`.
+The confirmation page shows this destination label. If no valid sender handle
+is present, or the prefixed label exceeds 200 characters, the original label
+is used. Previously prepared delivery attempts retain their confirmed labels. An existing label, compared case-insensitively,
 is never overwritten by this flow. The recipient can subsequently manage the
 record in their wallet. This is record receipt, not proof of the sender's claims;
 OpenETR verification remains a separate operation.

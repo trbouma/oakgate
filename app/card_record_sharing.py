@@ -23,6 +23,7 @@ from app.nfc_cards import CardStore
 from app.pos_api import invoke
 from app.pos_store import POSStore
 from app.record_capabilities import RecordCapabilities
+from app.record_labels import suggested_record_label
 from app.record_routes import account
 from app.request_store import RequestStore
 from app.send import public_json
@@ -222,12 +223,17 @@ def render(request, session, ident, item=None, state=None):
 
 @router.post('/account/record-shares/{ident}/card', include_in_schema=False)
 async def prepare(request: Request, ident: str):
-    session, service, owner, _ = await account(request)
+    session, service, owner, material = await account(request)
     form = await checked_form(request, session)
     try:
         share = await invoke(RecordCapabilities(service.store).get, owner, ident)
         if share['purpose'] != 'share' or share['expires_at'] <= time.time():
             raise ValueError('Expired')
+        # Read the originator captured in the transfer, just as QR acceptance does.
+        # Do not infer it from the current handle, which may have changed.
+        async with asyncio.timeout(35):
+            detail = await service.backend.inspect_scanned_record(material, share['descriptor'])
+        label = suggested_record_label(detail)
         card = form.get('card', '')
         target = await call(request, card, 'resolve', ident, {})
         if (set(target) != {'recipient', 'wallet'} or not isinstance(target['recipient'], str)
@@ -236,7 +242,7 @@ async def prepare(request: Request, ident: str):
         issuer, pin = pinned_issuer(card)
         item = {'purpose': 'card-record-out', 'share': ident, 'card': card, 'issuer': issuer,
                 'pin': pin, 'recipient': target['recipient'], 'terms': {
-                    'descriptor': share['descriptor'], 'label': share['label'],
+                    'descriptor': share['descriptor'], 'label': label,
                     'expires': int(share['expires_at']), 'wallet': target['wallet']}}
         ticket = await invoke(RequestStore(service.store).save, owner, item)
         return RedirectResponse('/account/record-card/' + ticket, 303)
