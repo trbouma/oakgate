@@ -1,5 +1,5 @@
-import * as pdfjsLib from '/pdf-assets/pdf.mjs';
-pdfjsLib.GlobalWorkerOptions.workerSrc='/pdf-assets/pdf.worker.mjs';
+import * as pdfjsLib from '/pdf-assets/pdf.mjs?v=5.4.624-legacy1';
+pdfjsLib.GlobalWorkerOptions.workerSrc='/pdf-assets/pdf.worker.mjs?v=5.4.624-legacy1';
 const $=id=>document.getElementById(id);
 let generation=0, task, pdf, renderTask, pageNumber=1, busy=false;
 function clear(){

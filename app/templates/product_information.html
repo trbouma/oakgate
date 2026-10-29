@@ -63,7 +63,7 @@
     <canvas class="pdf-canvas" aria-label='{{ _("Rendered PDF page") }}' hidden></canvas>
   </div>
   <noscript><p>{{ _("Use the open or download link to view this PDF without JavaScript.") }}</p></noscript>
-  <script type="module" src="/static/pdf-viewer.js?v=20261021-locales"></script>
+  <script type="module" src="/static/pdf-viewer.js?v=20261029-pdf"></script>
   {% elif blob_preview == "video" %}
   <figure class="blob-preview"><video src="{{ blob_inline_url }}" controls playsinline preload="none" aria-label='{{ _("Verified product information video") }}'></video></figure>
   {% else %}

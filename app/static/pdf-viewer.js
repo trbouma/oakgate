@@ -1,7 +1,7 @@
 const t = (message) => window.oakgateTranslate ? window.oakgateTranslate(message) : message;
-import * as pdfjsLib from "/static/pdf.mjs";
+import * as pdfjsLib from "/static/pdf.mjs?v=5.4.624-legacy1";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = "/static/pdf.worker.mjs";
+pdfjsLib.GlobalWorkerOptions.workerSrc = "/static/pdf.worker.mjs?v=5.4.624-legacy1";
 
 const STANDARD_FONT_URL = "/static/standard_fonts/";
 

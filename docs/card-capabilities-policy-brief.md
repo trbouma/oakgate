@@ -9,8 +9,8 @@ description: A policy brief comparing payment, record and sign-in capabilities, 
 
 **OakGate brings payments, records and account access together through a low-cost
 card connected to a trusted custodial wallet.** Its value is the breadth of that
-experience: a person can pay, receive funds and show a record without carrying a
-phone. That breadth does not make the card equivalent to a bank card or a
+experience: a person can pay, receive funds, receive records and show a record
+without carrying a phone. That breadth does not make the card equivalent to a bank card or a
 high-assurance government identity credential.
 
 This brief compares each card **together with its supporting service**, not the
@@ -22,17 +22,16 @@ electronic ID systems where relevant.
 ## Capability comparison
 
 **Current** means implemented in OakGate, subject to enrollment, configuration and
-participating services. **Demonstrated / planned** means demonstrated in earlier
-project iterations, as reported by the project owner, with integration into the
-current OakGate card flow planned. It is not merely a speculative capability, but
-it should not be described as deployed today.
+participating services. The project owner has confirmed that NFC record sharing
+works in deployment. Cross-home support is implemented and covered by automated
+tests; live interoperability should still be checked between participating homes.
 
 | User action | OakGate NFC card | Credit card | Debit card | Government ID card |
 | --- | --- | --- | --- | --- |
 | **Receive a payment** | **Current.** A payer reads the card to resolve its wallet and sends Everyday Funds or supported Community Credits. | **Limited / issuer-dependent.** Refunds and account credits are supported; general incoming transfers are not a universal credit-card function. | **Supported where eligible.** Refunds and push-to-card services can credit the linked account. | **Not a standard ID function.** It may identify someone eligible for a payment, but delivery requires a payment service. |
 | **Send a payment** | **Current.** Tap to authorize payment from the linked Acorn at a participating POS, using supported funds or credits. | **Core function.** Pay merchants using an issuer-provided credit facility; transfers depend on the service. | **Core function.** Pay merchants from the linked account; transfers depend on the service. | **Not a standard ID function.** Combined ID/payment programs require additional payment capabilities. |
 | **Present a record** | **Current.** Present supported records such as membership, a pass, benefits or emergency information; the POS can show attachments and OpenETR information. | **Not a general record wallet.** Card/account details or issuer benefits do not provide arbitrary record presentation. | **Not a general record wallet.** Payment credentials do not normally present independent membership, health or other records. | **Core identity function.** Present issuer-defined identity or entitlement information. Electronic disclosure depends on the ID system. |
-| **Receive a record** | **Current implementation.** A wallet user can scan a paired card and confirm delivery of a shared record to its Acorn, including across homes. Existing labels are protected; live deployment acceptance testing is still required. | **Not a standard card function.** Statements and receipts in an issuer app are separate services. | **Not a standard card function.** Statements and receipts in a banking app are separate services. | **Not generally an open record inbox.** Issuer updates or linked document services are system-specific. |
+| **Receive a record** | **Current.** An issuer scans a paired card and confirms delivery of a record to its linked Acorn; the holder does not need a phone. New shares use the sender-handle label prefix, and existing labels are protected. Cross-home delivery is supported. | **Not a standard card function.** Statements and receipts in an issuer app are separate services. | **Not a standard card function.** Statements and receipts in a banking app are separate services. | **Not generally an open record inbox.** Issuer updates or linked document services are system-specific. |
 | **Sign in** | **Current with explicit enrollment.** The existing Keycloak card-login flow supports a server-verified PIN. A paired card is not automatically enrolled for login. | **Service-specific.** Some issuer authentication schemes use card credentials or readers; general-purpose sign-in is not universal. | **Service-specific.** Some banking authentication schemes use the card; broader sign-in requires integration. | **Supported by some electronic IDs.** For example, Estonian eID supports online authentication. A conventional photo ID alone does not provide digital sign-in. |
 
 Credit and debit cards differ in the source of spending power: credit involves
@@ -62,15 +61,20 @@ depends on the record, its issuer and the program's policy.
 
 The physical card contains an opaque credential and issuer-routing information.
 **Funds, records and the Acorn private key are not stored on the tag.** The home
-instance performs authorized wallet operations through Acorn. Record receipt, when
-integrated, likewise means delivery into the associated wallet—not writing a
-health document or membership file onto the card.
+instance performs authorized wallet operations through Acorn. Record receipt
+means delivery into the associated wallet—not writing a health document or
+membership file onto the card.
 
-Current OakGate supports record import through wallet sharing workflows. That is
-distinct from the planned card-directed record issuance flow. Card sign-in has
-also been demonstrated in earlier work, and the current implementation goes
-further than a roadmap claim: the [enrolled Keycloak flow](027-keycloak-nfc-login.md)
-is already implemented. Future deployments must enable and test it explicitly.
+OakGate now supports both QR sharing and **card-directed record issuance**. The
+sender opens a record, chooses Share to NFC Card, scans the recipient's card and
+confirms the destination. New shares use the same sender-handle prefix as QR
+sharing—for example, `tom/member`—with the destination label shown before
+confirmation. Existing records are not overwritten. An uncertain delivery is
+checked rather than automatically repeated. The recipient can later present or
+manage the received record through their wallet and supported card flows.
+
+The [enrolled Keycloak sign-in flow](027-keycloak-nfc-login.md) is also implemented.
+Deployments must enable and test it explicitly.
 
 ## Capability and security assurance are different questions
 
@@ -79,8 +83,10 @@ not cryptographic smart cards or FIDO2 authenticators. The custodial home can
 revoke a credential and enforce server-side policy, but encryption of the tag
 payload does not stop someone copying that payload.
 
-Current card-based payments, balance lookup and record presentation do not prompt
-for a PIN. Login requires separate enrollment and uses the configured PIN policy;
+Current card-based payments, balance lookup, record presentation and record
+receipt do not prompt for a PIN. Record issuance requires the sender to confirm
+after scanning; possession of a copied card credential could nevertheless allow
+unwanted records to be sent to the linked wallet. Login requires separate enrollment and uses the configured PIN policy;
 an explicitly enabled card-only policy increases the consequences of a copied
 card. A four-digit PIN with server-side controls is an additional protection,
 not a claim of equivalence to a hardware-backed government eID.

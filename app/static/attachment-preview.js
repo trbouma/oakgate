@@ -44,9 +44,9 @@ if (input && panel) {
         content.append(img);
         status.textContent = '';
       } else if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) {
-        const pdfjs = await import('/static/pdf.mjs');
+        const pdfjs = await import('/static/pdf.mjs?v=5.4.624-legacy1');
         if (current !== revision) return;
-        pdfjs.GlobalWorkerOptions.workerSrc = '/static/pdf.worker.mjs';
+        pdfjs.GlobalWorkerOptions.workerSrc = '/static/pdf.worker.mjs?v=5.4.624-legacy1';
         const data = await file.arrayBuffer();
         if (current !== revision) return;
         const task = pdfjs.getDocument({data, isEvalSupported: false});
