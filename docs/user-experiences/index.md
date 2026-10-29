@@ -105,14 +105,14 @@ the counter.
 
 <article class="oakgate-experience-preview" markdown>
 
-[![Your wallet, close at hand—even without your phone: OakGate NFC bracelet advertising concept](../assets/advertising/oakgate-close-at-hand-ad.png)](ad-example.md)
+[![Go Where No Other Card Has Gone: an astronaut holds an OakGate card above four panels showing payments and records](../assets/advertising/oakgate-space-exploration-ad.png)](ad-example.md)
 
 <div markdown>
 
 ## Ad examples
 
-Your wallet, close at hand—even without your phone. Explore two full-page
-advertising concepts about everyday freedom, community and the company we keep.
+Go Where No Other Card Has Gone. Explore three full-page advertising concepts
+about new possibilities, everyday freedom and the company we keep.
 
 [View the ads →](ad-example.md){ .md-button .md-button--primary }
 

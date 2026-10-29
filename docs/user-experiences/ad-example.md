@@ -1,9 +1,39 @@
 ---
 title: Ad examples
-description: OakGate advertising concepts about community, everyday freedom and a wallet close at hand.
+description: OakGate advertising concepts about exploration, community and everyday freedom.
 ---
 
 # Ad examples
+
+## Go Where No Other Card Has Gone.
+
+[![An astronaut holds a green OakGate NFC card on a lunar landscape, with Earth beyond. Four illustrated panels show Pay, Accept payments, Present records and Receive records. The headline reads Go Where No Other Card Has Gone.](../assets/advertising/oakgate-space-exploration-ad.png)](../assets/advertising/oakgate-space-exploration-ad.png){ .oakgate-experience-image }
+
+[Open the full-size ad](../assets/advertising/oakgate-space-exploration-ad.png){ .md-button .md-button--primary }
+
+**One small card. A whole new world of possibilities.**
+
+Pay for the next adventure. Accept funds along the way. Show a record that opens
+a door. Receive a new record for the journey ahead.
+
+An OakGate card brings all four experiences together through a connected wallet:
+**pay, accept payments, present records and receive records.** Everyday Funds,
+Community Credits and Records that Matter—close at hand and safe at home.
+
+The astronaut takes that idea somewhere playful. Here on Earth, the same card
+can pay at a market, receive community credits, show a membership and receive a
+record shared by another wallet. The trusted OakGate home holds the funds and
+records; the card gives access to the supported operations through connected,
+participating apps and terminals.
+
+**Freedom is the Company you keep.**
+
+*A space-inspired concept, built for everyday life. The headline is imaginative
+campaign language, not a historical claim about every card ever made or a claim
+of space deployment. Generated artwork is a concept mockup.*
+
+[Explore card capabilities](../card-capabilities-policy-brief.md){ .md-button }
+[See how connected homes work](connected-homes.md){ .md-button }
 
 ## Your wallet, close at hand
 

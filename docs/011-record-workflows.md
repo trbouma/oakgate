@@ -264,17 +264,20 @@ examples, and deployment requirements.
 ## Paginated browsing and direct reads
 
 The wallet Records page uses Acorn's `get_user_records_page` against the wallet's
-bootstrap relay, requesting up to 100 relay events per page. Internal records are
-filtered by Acorn, so a page can contain fewer visible records—or none—while
-still have a continuation cursor. OakGate automatically skips pages without visible
-records or folders, up to 100 relay pages and 40 seconds per browser request.
-A failure or exhausted search budget is reported as unavailable, not an empty wallet. **First page** refreshes discovery from the start.
-Folders and their contents are derived from the current page, not a complete
-wallet index. Continue to the next page to discover more; changing folders or
-switching between folder and list views starts a fresh traversal. Pagination is
-not a snapshot when records change during browsing.
+bootstrap relay. Relay batches request up to 100 events, but browser pages contain
+up to **20 visible records**, assembled across batches after internal-record and
+selected-folder filtering. **Next page** appears only after finding another visible
+record. Overflow metadata is retained in the encrypted continuation state so no
+records are dropped when a relay batch crosses a browser-page boundary.
 
-Continuation links contain a random token. The underlying cursor is encrypted
+Searches are bounded to 100 relay batches and 40 seconds per browser request.
+Lookup failures or exhausted search budgets are reported as unavailable, not an
+empty wallet. **First page** refreshes discovery from the start. Folders are grouped
+from the current page's records, so a page may show fewer than 20 distinct entries.
+Opening a folder starts discovery again and collects matching records from across
+relay batches. Pagination is not a snapshot when records change during browsing.
+
+Continuation links contain a random token. The underlying cursor and buffered label/reference metadata are encrypted
 with the instance custody cipher in the session store, expires after 15 minutes,
 and is bound to the owner, Acorn public key, relay, view and selected folder.
 An expired or mismatched link must be reopened from Records.

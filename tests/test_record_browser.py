@@ -17,7 +17,7 @@ def test_cursor_encrypted_scoped_and_empty_page_continues():
             cache[key] = value
         store = SimpleNamespace(put=put, get=AsyncMock(side_effect=lambda key:cache.get(key)))
         service = SimpleNamespace(store=SimpleNamespace(cipher=Fernet(Fernet.generate_key())),
-            records_page=AsyncMock(return_value={'records':[{'label':'note'}], 'next_cursor':'PRIVATE_CURSOR'}))
+            records_page=AsyncMock(return_value={'records':[{'label':f'note/{i}'} for i in range(21)], 'next_cursor':'PRIVATE_CURSOR'}))
         request = SimpleNamespace(query_params={}, app=SimpleNamespace(state=SimpleNamespace(store=store)))
         material = {'npub':'wallet', 'relay':'wss://home.example'}
         page = await load_page(request, service, 'owner', material)
@@ -96,7 +96,7 @@ def test_records_route_renders_paging_after_empty_discovery(tmp_path):
     async def run():
         client,sessions,service,backend=setup(tmp_path)
         backend.records_page=AsyncMock(side_effect=[
-            {'records':[{'label':'First record','timestamp':2,'ref':'b'*64}],'next_cursor':'start'},
+            {'records':[{'label':f'First record {i}','timestamp':2,'ref':format(i,'064x')} for i in range(21)],'next_cursor':'start'},
             {'records':[],'next_cursor':'next'},
             {'records':[{'label':'Later record','timestamp':1,'ref':'a'*64}],'next_cursor':None}])
         async with client:
@@ -139,4 +139,45 @@ def test_empty_page_loop_and_lookup_errors_are_not_empty_wallets():
         service.records_page.side_effect=TimeoutError()
         with pytest.raises(TimeoutError):
             await load_page(request,service,'owner',{'npub':'wallet','relay':'relay'})
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize('size', [4, 100])
+@pytest.mark.parametrize('folder', [False, True])
+def test_twenty_visible_records_and_overflow_without_loss(size, folder):
+    async def run():
+        cache={}
+        async def put(k,v,ttl): cache[k]=v
+        store=SimpleNamespace(put=put,get=AsyncMock(side_effect=lambda k:cache.get(k)))
+        expected=[{'label':f'Benefits/card-{i}','ref':format(i,'064x')} for i in range(47)]
+        source=[]
+        for i,row in enumerate(expected):
+            source.append(row)
+            if folder: source.append({'label':f'Other/{i}','ref':'f'+format(i,'063x')})
+        pages=[{'records':source[i:i+size], 'next_cursor':str(i+size) if i+size<len(source) else None}
+            for i in range(0,len(source),size)]
+        service=SimpleNamespace(store=SimpleNamespace(cipher=Fernet(Fernet.generate_key())),
+            records_page=AsyncMock(side_effect=pages))
+        query={'view':'folders','folder':'Benefits'} if folder else {}
+        request=SimpleNamespace(query_params=query,app=SimpleNamespace(state=SimpleNamespace(store=store)))
+        from urllib.parse import urlparse,parse_qsl
+        found=[];sizes=[]
+        for _ in range(10):
+            page=await load_page(request,service,'owner',{'npub':'wallet','relay':'relay'})
+            found.extend(page['records']);sizes.append(len(page['records']))
+            if not page['next_page_url']: break
+            request.query_params=dict(parse_qsl(urlparse(page['next_page_url']).query))
+        assert sizes==[20,20,7]
+        assert found==expected
+        assert service.records_page.await_count==len(pages)
+    asyncio.run(run())
+
+
+def test_exactly_twenty_does_not_offer_empty_next_page():
+    async def run():
+        service=SimpleNamespace(records_page=AsyncMock(side_effect=[
+            {'records':[{'label':str(i)} for i in range(20)],'next_cursor':'tail'},
+            {'records':[],'next_cursor':None}]))
+        result=await load_page(SimpleNamespace(query_params={}),service,'owner',{'npub':'w','relay':'r'})
+        assert len(result['records'])==20 and result['next_page_url'] is None
     asyncio.run(run())

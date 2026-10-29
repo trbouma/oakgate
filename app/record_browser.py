@@ -14,6 +14,7 @@ async def load_page(request, service, owner, material):
     folder = request.query_params.get('folder','')[:1024].strip('/') if view == 'folders' else ''
     scope = {'owner':owner,'npub':material['npub'],'relay':material['relay'],'view':view,'folder':folder}
     cursor = None
+    pending = []
     token = request.query_params.get('page')
     has_page_token = token is not None
     if token is not None:
@@ -25,30 +26,43 @@ async def load_page(request, service, owner, material):
             if state['scope'] != scope:
                 raise ValueError()
             cursor = state['cursor']
+            pending = state.get('pending', [])
         except Exception:
             raise HTTPException(400,'Record page expired or unavailable. Open Records again.') from None
-    # Relay pages can contain only protected records or records outside the
-    # selected folder. These are transport pages, not useful UI pages.
-    from app.wallet_routes import folder_view
+    # A relay batch is not a UI page: internal records and folder filtering can
+    # leave just a handful of visible records. Collect 20 plus one lookahead so
+    # Next page never means only a trailing empty relay query.
+    rows = []
+    batches = 0
+    exhausted = has_page_token and cursor is None
     visited = {cursor} if cursor is not None else set()
     async with asyncio.timeout(40):
-        for _ in range(100):
+        while True:
+            for row in pending:
+                label = row['label'].strip('/')
+                if view != 'folders' or not folder or label == folder or label.startswith(folder + '/'):
+                    rows.append(row)
+            if len(rows) > 20 or exhausted:
+                break
+            if batches >= 100:
+                raise ValueError('Record discovery exceeded its page budget')
             result = await service.records_page(material, cursor)
+            batches += 1
             next_cursor = result['next_cursor']
             if next_cursor is not None and next_cursor in visited:
                 raise ValueError('Record discovery cursor did not advance')
-            visible = folder_view(result['records'], request)
-            if visible.get('records', result['records']) or visible.get('folders') or next_cursor is None:
-                break
-            visited.add(next_cursor)
+            if next_cursor is not None:
+                visited.add(next_cursor)
             cursor = next_cursor
-        else:
-            raise ValueError('Record discovery exceeded its page budget')
+            exhausted = cursor is None
+            pending = result['records']
+    overflow = rows[20:]
+    result = {'records': rows[:20]}
     next_url = None
     params = {'view':'folders','folder':folder} if view == 'folders' else {}
-    if result['next_cursor'] is not None:
+    if overflow:
         token = secrets.token_hex(16)
-        encrypted = service.store.cipher.encrypt(json.dumps({'scope':scope,'cursor':result['next_cursor']}).encode()).decode()
+        encrypted = service.store.cipher.encrypt(json.dumps({'scope':scope,'cursor':cursor,'pending':overflow}).encode()).decode()
         await request.app.state.store.put(record_key('record-page',token),encrypted,900)
         next_url = '/account/records?' + urlencode({**params,'page':token})
     return {**result,'next_page_url':next_url, 'first_page_url':'/account/records'+('?' + urlencode(params) if params else ''),
