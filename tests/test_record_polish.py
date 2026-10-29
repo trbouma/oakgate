@@ -69,7 +69,7 @@ def test_scanner_evidence_links_are_bounded_and_do_not_import(tmp_path, monkeypa
 def test_share_import_label_collision_and_one_shot(tmp_path):
     async def run():
         client, sessions, service, backend = setup(tmp_path)
-        backend.inspect_scanned_record = AsyncMock(return_value={'label':'Existing', 'record_type':'note','has_original':True,'expires_at':2000000000})
+        backend.inspect_scanned_record = AsyncMock(return_value={'label':'Existing', 'record_type':'note','has_original':True,'expires_at':2000000000,'sharing_fingerprint':'a'*64})
         backend.accept_scanned_record = AsyncMock(return_value={'stored':True})
         backend.records = AsyncMock(return_value=[{'label':'Existing'}])
         async with aclosing(client):
@@ -156,20 +156,21 @@ def test_evidence_lookup_provenance_and_profile_binding(monkeypatch):
     asyncio.run(run())
 
 
-def test_originator_suggests_editable_import_label(tmp_path):
+def test_sharing_fingerprint_suggests_editable_import_label(tmp_path):
     async def run():
         client, sessions, service, backend = setup(tmp_path)
-        backend.inspect_scanned_record = AsyncMock(return_value={'label':'Certificate','originator_handle':'alice','record_type':'note','has_original':False})
+        backend.inspect_scanned_record = AsyncMock(return_value={'label':'Certificate','originator_handle':'alice','record_type':'note','has_original':False,'sharing_fingerprint':'b'*64})
         backend.accept_scanned_record = AsyncMock(return_value={'stored':True})
         backend.records = AsyncMock(return_value=[])
         async with aclosing(client):
             owner = await login(client,sessions)
             await client.post('/account/acorn/create',data=form())
             result = await client.post('/account/scan',data=form(lightning_payment='acorn:record-transfer:private'))
-            assert 'value="alice/Certificate"' in result.text
+            assert result.status_code == 200
+            assert ('value="Certificate/' + 'b'*64 + '"') in result.text
             assert 'Shared by' in result.text
             ticket = RequestStore(service.store).recent(owner)[0]
-            assert ticket['label'] == 'alice/Certificate'
+            assert ticket['label'] == 'Certificate/' + 'b'*64
             result = await client.post('/account/scan/accept',data=form(ticket=ticket['id'],confirmed='yes',label='My chosen label'))
             assert result.status_code == 303
             assert backend.accept_scanned_record.await_args.kwargs == {'label':'My chosen label'}

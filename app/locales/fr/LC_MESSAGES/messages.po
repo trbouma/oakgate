@@ -2914,3 +2914,54 @@ msgstr "Ce formulaire a expiré. Ouvrez à nouveau les reçus."
 
 msgid "Approve card pairing"
 msgstr "Approuver l’association de la carte"
+
+msgid "Check delivery status"
+msgstr "Vérifier l’état de la livraison"
+
+msgid "Checking delivery…"
+msgstr "Vérification de la livraison…"
+
+msgid "Confirm sharing"
+msgstr "Confirmer le partage"
+
+msgid "Could not read an OakGate card. Try again, or use the QR code."
+msgstr "Impossible de lire une carte OakGate. Réessayez ou utilisez le code QR."
+
+msgid "Delivery is not yet confirmed. Ask the recipient to check Records before creating another share. Checking status will not send another copy."
+msgstr "La livraison n’est pas encore confirmée. Demandez au destinataire de vérifier ses documents avant de créer un autre partage. Vérifier l’état n’enverra pas de nouvelle copie."
+
+msgid "Record received by the card’s wallet."
+msgstr "Document reçu par le portefeuille associé à la carte."
+
+msgid "Review NFC delivery"
+msgstr "Examiner la livraison NFC"
+
+msgid "Send a copy to this card’s wallet? The recipient can keep it. Existing records will not be overwritten."
+msgstr "Envoyer une copie au portefeuille associé à cette carte ? Le destinataire pourra la conserver. Les documents existants ne seront pas écrasés."
+
+msgid "Share to NFC Card"
+msgstr "Partager avec une carte NFC"
+
+msgid "Sharing fingerprint labels stay unchanged unless you enter a different label. Leaving the file empty preserves the existing attachment."
+msgstr "Les libellés contenant une empreinte de partage restent inchangés, sauf si vous saisissez un autre libellé. Ne sélectionnez aucun fichier pour conserver la pièce jointe existante."
+
+msgid "Sharing record…"
+msgstr "Partage du document…"
+
+msgid "Tap the recipient’s NFC card. You will confirm before sharing."
+msgstr "Approchez la carte NFC du destinataire. Vous devrez confirmer le partage."
+
+msgid "The card could not be verified, or the sharing code expired. No record was sent."
+msgstr "La carte n’a pas pu être vérifiée ou le code de partage a expiré. Aucun document n’a été envoyé."
+
+msgid "The originator handle is supplied provenance, not verified authorship."
+msgstr "L’identifiant de l’expéditeur indique une provenance déclarée, sans garantir l’identité de l’auteur."
+
+msgid "The record was not imported. The wallet may be busy, the label may already exist, or the storage server may not be allowed. Check with the recipient before creating a new share."
+msgstr "Le document n’a pas été importé. Le portefeuille est peut-être occupé, le libellé existe déjà ou le serveur de stockage n’est pas autorisé. Vérifiez auprès du destinataire avant de créer un nouveau partage."
+
+msgid "This record has already been received. No copy was added."
+msgstr "Ce document a déjà été reçu. Aucune copie n’a été ajoutée."
+
+msgid "Verifying card…"
+msgstr "Vérification de la carte…"
