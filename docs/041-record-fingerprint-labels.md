@@ -63,9 +63,11 @@ not a signature attestation. Those checks remain separate future work.
 
 ## Requests and selection
 
-The POS Record category field retains suggestions for `whoami`, `myinfo`,
-`emergency`, `health`, `benefits`, `member` and `pass`, and accepts a narrower path
-under one of those categories, such as `/health/prescriptions`.
+The POS Record category dropdown offers `whoami`, `myinfo`, `emergency`,
+`health`, `benefits`, `member` and `pass`. An optional Subcategory field narrows
+the selection: choosing `health` and entering `prescriptions` requests
+`health/prescriptions`. Nested extensions such as `prescriptions/current` also
+work. Leaving the field blank requests the parent category.
 
 Matching is case-insensitive, normalizes optional outer slashes and respects path
 boundaries. `/health` matches `health/prescriptions/...`, but not `healthcare`.

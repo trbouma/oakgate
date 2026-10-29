@@ -44,8 +44,14 @@ stopNFC();clearTimeout(timer);$('record-present').hidden=false;$('record-present
  }
  $('record-start').addEventListener('click',async()=>{
   if(!signed||busy)return;
+  const parent=$('record-type').value;
+  const child=$('record-subcategory').value.trim().replace(/^\/+|\/+$/g,'');
+  const label=(child?parent+'/'+child:parent).toLowerCase();
+  if(!['whoami','myinfo','emergency','health','benefits','member','pass'].includes(parent)||label.length>200||
+     label.split('/').some(part=>!part||part==='.'||part==='..'||/[\x00-\x1f]/.test(part))){
+   message('Enter a subcategory such as prescriptions or prescriptions/current.');return;
+  }
   clear();busy=true;$('record-start').disabled=true;const run=generation;
-  const label=$('record-type').value;
   message('Creating request…');
   try{const result=await signed('record-start',{label});if(run!==generation)return;
    requestedLabel=label;id=result.request_id;expires=result.expires;qr(result.qr);$('record-cancel').hidden=false;$('record-nfc').hidden=!nfc();$('record-nfc').disabled=false;

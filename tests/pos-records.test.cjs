@@ -64,3 +64,15 @@ test('POS shows fingerprint only while requesting the exact approved record',asy
  f.el('record-choice').value='digest';await f.click('record-present');
  assert.equal(selected.record_id,'digest');assert.equal(f.el('record-label').textContent,'AAAAAAAA');
 });
+
+
+test('parent dropdown supports optional nested subcategory without altering record identifiers',async()=>{
+ const f=fixture(),calls=[];f.start(async(op,payload)=>{calls.push([op,payload]);return op==='record-start'?request:{state:'waiting'};});
+ f.el('record-type').value='health';await f.click('record-start');
+ assert.equal(calls.find(c=>c[0]==='record-start')[1].label,'health');
+ f.el('record-subcategory').value=' /Prescriptions/Current/ ';await f.click('record-start');
+ assert.equal(calls.filter(c=>c[0]==='record-start').at(-1)[1].label,'health/prescriptions/current');
+ const before=calls.length;f.el('record-subcategory').value='../benefits';await f.click('record-start');
+ assert.equal(calls.length,before);
+ f.el('record-subcategory').value='prescriptions//current';await f.click('record-start');assert.equal(calls.length,before);
+});
