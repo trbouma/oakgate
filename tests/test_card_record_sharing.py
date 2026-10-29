@@ -166,7 +166,7 @@ def test_web_review_requires_owner_csrf_and_confirmation(tmp_path, monkeypatch):
             assert page.status_code==303
             ticket_url=page.headers['location']
             review=await client.get(ticket_url)
-            assert 'aaaaaaaaaaaa…aaaaaaaa' in review.text
+            assert 'AAAAAAAA' in review.text
             assert 'Confirm sharing' in review.text and 'https://issuer.example' in review.text
             assert 'private-code' not in review.text and 'secret' not in review.text
             assert (await client.post(ticket_url,data=form())).status_code==400

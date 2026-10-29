@@ -1,6 +1,6 @@
 'use strict';
 (() => {
- function recordLabel(value){const parts=value.replace(/^\/+|\/+$/g,'').split('/');const fingerprint=[...parts].reverse().find(p=>/^[a-f0-9]{64}$/i.test(p));return fingerprint?fingerprint.slice(0,12).toLowerCase()+'…'+fingerprint.slice(-8).toLowerCase():parts.at(-1);}
+ function recordLabel(value){const parts=value.replace(/^\/+|\/+$/g,'').split('/');const fingerprint=[...parts].reverse().find(p=>/^[a-f0-9]{64}$/i.test(p));return fingerprint?fingerprint.slice(0,8).toUpperCase():parts.at(-1);}
 
  const $=id=>document.getElementById(id);
  let signed, id, requestedLabel, expires=0, generation=0, timer, expiryTimer, reader, imageURL, busy=false, displayGeneration=0;

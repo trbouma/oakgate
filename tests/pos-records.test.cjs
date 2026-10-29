@@ -60,7 +60,7 @@ test('POS shows fingerprint only while requesting the exact approved record',asy
  f.start(async(op,data)=>op==='record-start'?request:op==='record-status'?{state:'ready',records:[{id:'plain',label:'benefits/dental'},{id:'digest',label:'benefits/'+'a'.repeat(64)}]}:(selected=data,{label:'benefits/'+'a'.repeat(64),contents:'record'}));
  await f.click('record-start');await Promise.resolve();
  const options=f.el('record-choice').children;
- assert.equal(options[0].textContent,'dental');assert.equal(options[1].textContent,'aaaaaaaaaaaa…aaaaaaaa');
+ assert.equal(options[0].textContent,'dental');assert.equal(options[1].textContent,'AAAAAAAA');
  f.el('record-choice').value='digest';await f.click('record-present');
- assert.equal(selected.record_id,'digest');assert.equal(f.el('record-label').textContent,'aaaaaaaaaaaa…aaaaaaaa');
+ assert.equal(selected.record_id,'digest');assert.equal(f.el('record-label').textContent,'AAAAAAAA');
 });

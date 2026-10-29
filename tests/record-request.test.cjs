@@ -34,7 +34,7 @@ test('mixed labels show short fingerprints but approval retains exact selection 
  const f=fixture([{id:'plain',label:'benefits/dental'},{id:'digest',label:'benefits/'+'a'.repeat(64)}]);
  await new Promise(r=>setImmediate(r));
  const texts=Object.values(f.nodes).map(n=>n.textContent);
- assert.ok(texts.includes('dental'));assert.ok(texts.includes('aaaaaaaaaaaa…aaaaaaaa'));
+ assert.ok(texts.includes('dental'));assert.ok(texts.includes('AAAAAAAA'));
  const boxes=Object.values(f.nodes).filter(n=>n.type==='checkbox');boxes[1].checked=true;boxes[1].listeners.change();
  await f.el('record-request-approve').onclick();assert.deepEqual(JSON.parse(f.calls.at(-1)[1].get('selected')),['digest']);
 });

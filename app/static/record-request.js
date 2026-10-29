@@ -1,6 +1,6 @@
 'use strict';
 (() => {
- function recordLabel(value){const parts=value.replace(/^\/+|\/+$/g,'').split('/');const fingerprint=[...parts].reverse().find(p=>/^[a-f0-9]{64}$/i.test(p));return fingerprint?fingerprint.slice(0,12).toLowerCase()+'…'+fingerprint.slice(-8).toLowerCase():parts.at(-1);}
+ function recordLabel(value){const parts=value.replace(/^\/+|\/+$/g,'').split('/');const fingerprint=[...parts].reverse().find(p=>/^[a-f0-9]{64}$/i.test(p));return fingerprint?fingerprint.slice(0,8).toUpperCase():parts.at(-1);}
 
  const root=document.getElementById('record-request');if(!root)return;
  if(root.dataset.signedIn!=='yes'){document.getElementById('record-request-reload').onclick=()=>location.reload();return;}
@@ -13,7 +13,7 @@
  call('details').then(result=>{
   records=result.records;
   const multiple=records.length>1;
-  document.getElementById('record-request-details').textContent=`${result.name} requests your ${result.label} ${multiple?'records':'record'}.`;
+  document.getElementById('record-request-details').textContent=`${result.name} requests your ${recordLabel(result.label)} ${multiple?'records':'record'}.`;
   button.textContent=multiple?'Present selected records':`Present ${recordLabel(records[0].label)}`;
   if(multiple){
    document.getElementById('record-request-choices').hidden=false;

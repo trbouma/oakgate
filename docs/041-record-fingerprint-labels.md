@@ -18,8 +18,10 @@ paths remain unchanged until explicitly edited.
 
 The stored fingerprint is the full 64-character SHA-256 digest. Lists, headings
 and presentation selectors recognize complete hexadecimal path segments and show
-only the first 12 and last 8 characters, separated by an ellipsis. This is a
-compact display, not a different identifier. Full labels and opaque record IDs
+only the first eight characters in uppercase, matching the original-file
+fingerprint display (for example, `A1B2C3D4`). This is a
+compact recognition aid, not a unique identifier or an integrity check.
+Two different full digests can have the same eight-character display. Full labels and opaque record IDs
 remain in storage, signed coordination and authorization. Editable label fields
 retain the full path so users can make an explicit naming choice.
 

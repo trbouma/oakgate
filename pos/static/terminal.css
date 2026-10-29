@@ -32,3 +32,8 @@ body{padding:14px 16px}main{width:min(100%,540px)}header{margin-bottom:12px}sect
 #record-pdf-controls { display:flex; align-items:center; gap:8px; }
 #record-pdf-controls[hidden] { display:none; }
 #record-pdf-controls button { flex:1; min-height:48px; }
+
+/* Long custom labels must not force the terminal wider than the screen. */
+#record-label,#record-status{overflow-wrap:anywhere;min-width:0}
+#record-result,#record-choice-wrap{min-width:0;max-width:100%}
+#record-choice{width:100%;min-width:0;max-width:100%}

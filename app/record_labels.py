@@ -14,7 +14,7 @@ def fingerprint_segment(label):
 def display_record_label(label, leaf=False):
     fingerprint = fingerprint_segment(label)
     if fingerprint:
-        return fingerprint[:12] + '…' + fingerprint[-8:]
+        return fingerprint[:8].upper()
     return label.strip('/').rsplit('/', 1)[-1] if leaf else label
 
 

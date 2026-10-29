@@ -611,3 +611,7 @@ body:not(.landing) > header { padding-block: 12px; gap: 12px; }
 .record-request-option span { min-width:0; overflow-wrap:anywhere; line-height:1.4; }
 .record-request-option:focus-within { outline:2px solid var(--accent); outline-offset:2px; }
 .record-request-option input[type="checkbox"] { width:24px; height:24px; flex:0 0 24px; margin:0; }
+
+/* Keep record names and fingerprint choices within narrow screens. */
+.record-list a,.record-request-option{overflow-wrap:anywhere;min-width:0}
+#record-request-details{overflow-wrap:anywhere}

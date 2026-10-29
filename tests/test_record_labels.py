@@ -18,7 +18,7 @@ def test_sharing_preserves_categories_replaces_digest_and_ignores_sender():
     assert fingerprint_label(H,'b'*64)=='b'*64
     with pytest.raises(ValueError):fingerprint_label('x'*140+'/leaf',H)
     with pytest.raises(ValueError):suggested_record_label({'label':'benefits'})
-    assert display_record_label('/benefits/'+H)=='aaaaaaaaaaaa…aaaaaaaa'
+    assert display_record_label('/benefits/'+H)=='AAAAAAAA'
     assert display_record_label('benefits/dental',leaf=True)=='dental'
     assert display_record_label('hello-'+H)=='hello-'+H
 
@@ -81,3 +81,11 @@ def test_recipient_edits_do_not_rewrite_sharing_provenance():
 ])
 def test_sharing_replaces_only_the_final_path_segment(source, expected):
     assert suggested_record_label({'label':source, 'sharing_fingerprint':H}) == expected
+
+
+def test_sharing_label_matches_original_file_recognition_format():
+    from app.record_previews import _blob_recognition_fingerprint
+    digest = 'a1b2c3d4' + 'e'*56
+    assert display_record_label('/health/'+digest) == _blob_recognition_fingerprint(digest) == 'A1B2C3D4'
+    assert display_record_label(digest.upper()) == 'A1B2C3D4'
+    assert display_record_label('health/current') == 'health/current'
