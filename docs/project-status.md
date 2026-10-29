@@ -74,3 +74,10 @@ retain Cash/Clear. See [user-facing language](product-direction.md#user-facing-l
 These checks remain necessary after relevant configuration or infrastructure
 changes. See the [Mainstay principles review](010-mainstay-principles.md#review-findings-and-follow-up-work)
 for architectural boundaries and outstanding acceptance requirements.
+
+## Deferred record scaling
+
+Record management is adequate for the anticipated near-term use of dozens of
+records. Remaining POS discovery, folder indexing and larger-wallet performance
+work is parked in the [Record management roadmap](042-record-management-roadmap.md),
+with triggers and acceptance checks for revisiting it.

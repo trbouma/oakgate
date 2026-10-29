@@ -17,7 +17,7 @@ def test_cursor_encrypted_scoped_and_empty_page_continues():
             cache[key] = value
         store = SimpleNamespace(put=put, get=AsyncMock(side_effect=lambda key:cache.get(key)))
         service = SimpleNamespace(store=SimpleNamespace(cipher=Fernet(Fernet.generate_key())),
-            records_page=AsyncMock(return_value={'records':[], 'next_cursor':'PRIVATE_CURSOR'}))
+            records_page=AsyncMock(return_value={'records':[{'label':'note'}], 'next_cursor':'PRIVATE_CURSOR'}))
         request = SimpleNamespace(query_params={}, app=SimpleNamespace(state=SimpleNamespace(store=store)))
         material = {'npub':'wallet', 'relay':'wss://home.example'}
         page = await load_page(request, service, 'owner', material)
@@ -96,6 +96,7 @@ def test_records_route_renders_paging_after_empty_discovery(tmp_path):
     async def run():
         client,sessions,service,backend=setup(tmp_path)
         backend.records_page=AsyncMock(side_effect=[
+            {'records':[{'label':'First record','timestamp':2,'ref':'b'*64}],'next_cursor':'start'},
             {'records':[],'next_cursor':'next'},
             {'records':[{'label':'Later record','timestamp':1,'ref':'a'*64}],'next_cursor':None}])
         async with client:
@@ -103,12 +104,39 @@ def test_records_route_renders_paging_after_empty_discovery(tmp_path):
             await client.post('/account/acorn/create',data=form())
             page=await client.get('/account/records')
             assert page.status_code==200
-            assert 'No records on this page.' in page.text
+            assert 'First record' in page.text
             assert 'Next page' in page.text and 'First page' not in page.text
             import re
             link=re.search(r'href="(/account/records\?page=[a-f0-9]+)"',page.text).group(1)
             page=await client.get(link)
             assert page.status_code==200
             assert 'Later record' in page.text and 'First page' in page.text
+            assert backend.records_page.await_count == 3
+            assert 'No records on this page.' not in page.text
             assert '/account/records/'+ 'a'*64 in page.text
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize('query', [{}, {'view':'folders','folder':'health'}])
+def test_empty_or_unrelated_pages_are_skipped(query):
+    async def run():
+        request=SimpleNamespace(query_params=query)
+        service=SimpleNamespace(records_page=AsyncMock(side_effect=[
+            {'records':[] if not query else [{'label':'other/note'}], 'next_cursor':'second'},
+            {'records':[{'label':'health/note'}], 'next_cursor':None}]))
+        result=await load_page(request,service,'owner',{'npub':'wallet','relay':'relay'})
+        assert result['records']==[{'label':'health/note'}]
+        assert service.records_page.await_count==2
+    asyncio.run(run())
+
+
+def test_empty_page_loop_and_lookup_errors_are_not_empty_wallets():
+    async def run():
+        request=SimpleNamespace(query_params={})
+        service=SimpleNamespace(records_page=AsyncMock(return_value={'records':[], 'next_cursor':'same'}))
+        with pytest.raises(ValueError,match='did not advance'):
+            await load_page(request,service,'owner',{'npub':'wallet','relay':'relay'})
+        service.records_page.side_effect=TimeoutError()
+        with pytest.raises(TimeoutError):
+            await load_page(request,service,'owner',{'npub':'wallet','relay':'relay'})
     asyncio.run(run())

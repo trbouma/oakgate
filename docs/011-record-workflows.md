@@ -266,7 +266,9 @@ examples, and deployment requirements.
 The wallet Records page uses Acorn's `get_user_records_page` against the wallet's
 bootstrap relay, requesting up to 100 relay events per page. Internal records are
 filtered by Acorn, so a page can contain fewer visible records—or none—while
-still offering **Next page**. **First page** refreshes discovery from the start.
+still have a continuation cursor. OakGate automatically skips pages without visible
+records or folders, up to 100 relay pages and 40 seconds per browser request.
+A failure or exhausted search budget is reported as unavailable, not an empty wallet. **First page** refreshes discovery from the start.
 Folders and their contents are derived from the current page, not a complete
 wallet index. Continue to the next page to discover more; changing folders or
 switching between folder and list views starts a fresh traversal. Pagination is
@@ -289,3 +291,6 @@ This change covers wallet list and detail views. Existing bounded discovery used
 by POS selection and other sharing workflows is unchanged. It requires the
 updated safebox-acorn dependency and an app rebuild; no database migration or
 payment recovery changes are involved.
+
+Deferred work and the checklist for resuming it are recorded in the
+[Record management roadmap](042-record-management-roadmap.md).
