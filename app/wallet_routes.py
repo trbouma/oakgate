@@ -342,6 +342,7 @@ def folder_view(records, request):
             visible.append({**record, 'label': relative})
     def url(path):
         return '/account/records?' + urlencode({'view': 'folders', 'folder': path})
+    visible.sort(key=lambda row: (0 if folder and row['label'] == folder.rsplit('/', 1)[-1] else 1, row['label'].casefold(), row['label']))
     parts = folder.split('/') if folder else []
     return {'folder_mode': True, 'records': visible,
         'folders': [{'label': child, 'url': url(prefix + child)} for child in sorted(children, key=str.casefold)],

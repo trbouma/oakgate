@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="records-heading"><h2>{{ _("Your Records") }}</h2><p class="note">{{ _("Newest first") }}</p></div>
+<div class="records-heading"><h2>{{ _("Your Records") }}</h2>{% if not folder_mode %}<p class="note">{{ _("Newest first") }}</p>{% endif %}</div>
 {% if connected %}<div class="wallet-actions record-create-actions"><a class="primary-action" href="/account/add-record">{{ _('Add Record') }}</a></div>{% endif %}
 <nav class="record-actions" aria-label='{{ _("Record views") }}'><a href="/account/records">{{ _("List") }}</a><a href="/account/records?view=folders">{{ _("Folders") }}</a><a href="/account/record-shares">{{ _("Active shares") }}</a></nav>
 {% if folder_mode %}<nav class="record-breadcrumbs" aria-label='{{ _("Folders") }}'>{% for crumb in breadcrumbs %}<a href="{{ crumb.url }}">{{ crumb.label }}</a>{% if not loop.last %}<span>/</span>{% endif %}{% endfor %}</nav>{% endif %}

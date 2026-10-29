@@ -42,7 +42,7 @@ async def load_page(request, service, owner, material):
                 label = row['label'].strip('/')
                 if view != 'folders' or not folder or label == folder or label.startswith(folder + '/'):
                     rows.append(row)
-            if len(rows) > 20 or exhausted:
+            if (view != 'folders' and len(rows) > 20) or exhausted:
                 break
             if batches >= 100:
                 raise ValueError('Record discovery exceeded its page budget')
@@ -56,6 +56,10 @@ async def load_page(request, service, owner, material):
             cursor = next_cursor
             exhausted = cursor is None
             pending = result['records']
+    if view == 'folders':
+        # Sort before pagination, not just within each newest-first relay batch.
+        # Continuations retain the remaining metadata in encrypted session state.
+        rows.sort(key=lambda row: (row['label'].strip('/').casefold(), row['label'].strip('/'), row.get('ref', '')))
     overflow = rows[20:]
     result = {'records': rows[:20]}
     next_url = None

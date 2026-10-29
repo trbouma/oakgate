@@ -168,7 +168,7 @@ def test_twenty_visible_records_and_overflow_without_loss(size, folder):
             if not page['next_page_url']: break
             request.query_params=dict(parse_qsl(urlparse(page['next_page_url']).query))
         assert sizes==[20,20,7]
-        assert found==expected
+        assert found==(sorted(expected, key=lambda row: row['label'].casefold()) if folder else expected)
         assert service.records_page.await_count==len(pages)
     asyncio.run(run())
 

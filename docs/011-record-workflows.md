@@ -274,8 +274,12 @@ Searches are bounded to 100 relay batches and 40 seconds per browser request.
 Lookup failures or exhausted search budgets are reported as unavailable, not an
 empty wallet. **First page** refreshes discovery from the start. Folders are grouped
 from the current page's records, so a page may show fewer than 20 distinct entries.
-Opening a folder starts discovery again and collects matching records from across
-relay batches. Pagination is not a snapshot when records change during browsing.
+Opening a folder collects matching metadata across relay batches and sorts paths
+alphabetically (case-insensitive) before pagination. This avoids alphabetical order
+restarting with each newest-first relay batch. Remaining metadata stays in the
+encrypted continuation state; attachments are not fetched. The same search bounds
+apply, so very large folders may require future indexing work. The regular List
+view remains newest-first. Pagination is not a snapshot when records change during browsing.
 
 Continuation links contain a random token. The underlying cursor and buffered label/reference metadata are encrypted
 with the instance custody cipher in the session store, expires after 15 minutes,

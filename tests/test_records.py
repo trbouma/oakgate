@@ -90,3 +90,15 @@ def test_nested_folder_keeps_exact_record_reference():
             {'label':'health/prescriptions/current', 'ref':'child'}]
     result = folder_view(rows, SimpleNamespace(query_params={'view':'folders','folder':'health/prescriptions'}))
     assert [(r['label'],r['ref']) for r in result['records']] == [('prescriptions','exact'),('current','child')]
+
+
+
+def test_folder_records_sorted_alphabetically_not_by_timestamp():
+    from types import SimpleNamespace
+    from app.wallet_routes import folder_view
+    rows=[{'label':'Benefits/Zebra','ref':'z','timestamp':30},
+          {'label':'Benefits/apple','ref':'a','timestamp':10},
+          {'label':'Benefits/Dental','ref':'d','timestamp':20}]
+    result=folder_view(rows,SimpleNamespace(query_params={'view':'folders','folder':'Benefits'}))
+    assert [r['label'] for r in result['records']]==['apple','Dental','Zebra']
+    assert [r['ref'] for r in rows]==['z','a','d']
