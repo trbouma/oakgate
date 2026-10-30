@@ -1,4 +1,5 @@
 from app.localization import N_
+import logging
 import secrets
 import re
 import asyncio
@@ -283,7 +284,8 @@ async def record_preview(service, material, reference, detail):
             field, renderer = renderers[media_type]
             detail[field] = renderer(result[2])
             detail['preview_error'] = detail[field] is None
-        except Exception:
+        except Exception as exc:
+            logging.getLogger(__name__).warning('Record preview unavailable phase=retrieve_or_render error_type=%s', type(exc).__name__)
             detail['preview_error'] = True
     return detail
 

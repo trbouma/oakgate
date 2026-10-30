@@ -73,3 +73,20 @@ def test_encoded_dtd_and_duplicate_entries_rejected():
         with zipfile.ZipFile(stream, 'a') as archive:
             archive.writestr('mimetype', 'application/epub+zip')
     assert preview(stream.getvalue()) is None
+
+
+@pytest.mark.parametrize('declaration', [
+    '<!DOCTYPE html>',
+    '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">',
+    '<!DOCTYPE html SYSTEM "file:///should-never-be-read">',
+])
+@pytest.mark.parametrize('encoding', ['utf-8', 'utf-16'])
+def test_plain_doctype_accepted_without_external_loading(declaration, encoding):
+    data = (declaration + '<html><body><h1>Chapter</h1><p>Readable.</p></body></html>').encode(encoding)
+    assert preview(book(data))['chapters'][0]['text'] == 'Chapter\n\nReadable.'
+
+
+def test_preview_diagnostics_do_not_log_content(caplog):
+    assert preview(book('<html><body>PRIVATE_CONTENT')) is None
+    assert 'phase=chapter' in caplog.text
+    assert 'PRIVATE_CONTENT' not in caplog.text

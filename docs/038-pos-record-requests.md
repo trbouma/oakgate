@@ -290,5 +290,6 @@ The wallet retains the original-file download. Unsupported or malformed books
 show an unavailable-preview message. POS previews retain their 5 MiB attachment
 limit; wallet parsing accepts at most 25 MiB. Parsing also limits archive expansion
 to 64 MiB, 2,000 entries, 1 MiB per parsed resource, 200 chapters and 500,000 text
-characters. XML DTDs are rejected. Rebuild both app and POS when deploying this
+characters. Plain XML document-type declarations are accepted without loading external DTDs;
+internal DTD subsets and custom entity definitions are rejected. Rebuild both app and POS when deploying this
 viewer update. No user-key operations or Acorn storage formats change.

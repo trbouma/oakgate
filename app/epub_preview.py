@@ -1,5 +1,7 @@
 """Bounded text-only EPUB preview. No network, extraction to disk or active markup."""
 import io
+import logging
+from xml.parsers import expat
 import posixpath
 import zipfile
 import zlib
@@ -7,6 +9,7 @@ from urllib.parse import unquote, urlsplit
 from xml.etree import ElementTree as ET
 
 MIME = 'application/epub+zip'
+logger = logging.getLogger(__name__)
 
 class SafeTree(ET.TreeBuilder):
     def __init__(self):
@@ -14,7 +17,7 @@ class SafeTree(ET.TreeBuilder):
         self.depth = 0
         self.nodes = 0
     def doctype(self, name, pubid, system):
-        raise ValueError('DTD not supported')
+        pass  # Plain declarations are allowed; preflight rejects internal subsets.
     def start(self, tag, attrs):
         self.depth += 1
         self.nodes += 1
@@ -27,6 +30,15 @@ class SafeTree(ET.TreeBuilder):
 
 
 def xml(data):
+    # Expat inspects declarations using the document's actual encoding (including
+    # UTF-16). Never load an external DTD or allow custom entity definitions.
+    parser = expat.ParserCreate()
+    def doctype(name, system, public, internal):
+        if internal:
+            raise ValueError('Internal DTD subset not supported')
+    parser.StartDoctypeDeclHandler = doctype
+    parser.SetParamEntityParsing(expat.XML_PARAM_ENTITY_PARSING_NEVER)
+    parser.Parse(data, True)
     return ET.fromstring(data, parser=ET.XMLParser(target=SafeTree()))
 
 
@@ -66,6 +78,7 @@ def text_content(node):
 
 
 def preview(data):
+    phase = 'archive'
     try:
         if not data or len(data) > 25 * 1024 * 1024:
             return None
@@ -82,9 +95,11 @@ def preview(data):
                 return archive.read(info)
             if read('mimetype').strip() != MIME.encode():
                 return None
+            phase = 'container'
             container = xml(read('META-INF/container.xml'))
             rootfile = next(e for e in container.iter() if local(e.tag) == 'rootfile')
             package_path = path('', rootfile.attrib['full-path'])
+            phase = 'package'
             package = xml(read(package_path))
             manifest = next(e for e in package if local(e.tag) == 'manifest')
             items = {e.attrib['id']: e.attrib for e in manifest if local(e.tag) == 'item'}
@@ -94,6 +109,7 @@ def preview(data):
                 return None
             chapters = []
             size = 0
+            phase = 'chapter'
             for ref in refs:
                 item = items[ref.attrib['idref']]
                 if item.get('media-type') != 'application/xhtml+xml':
@@ -110,5 +126,6 @@ def preview(data):
             if not any(chapter['text'] for chapter in chapters):
                 return None
             return {'title':title[:200], 'chapters':chapters}
-    except (ValueError, KeyError, StopIteration, ET.ParseError, zipfile.BadZipFile, RuntimeError, NotImplementedError, OSError, zlib.error):
+    except (ValueError, KeyError, StopIteration, ET.ParseError, expat.ExpatError, zipfile.BadZipFile, RuntimeError, NotImplementedError, OSError, zlib.error) as exc:
+        logger.warning('EPUB preview unavailable phase=%s error_type=%s', phase, type(exc).__name__)
         return None
