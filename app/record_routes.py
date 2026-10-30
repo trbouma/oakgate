@@ -106,6 +106,25 @@ async def new_record(request: Request):
             await form.close()
 
 
+async def check_record(request, session, service, material, reference, detail):
+    result = await service.record_blob(material, reference)
+    if not result:
+        raise HTTPException(400, 'OpenETR checks require an attached original file.')
+    digest = hashlib.sha256(result[2]).hexdigest()
+    if detail.get('origsha256') and digest != detail['origsha256'].lower():
+        raise HTTPException(409, 'The file does not match the recorded fingerprint.')
+    config = RecordSettings()
+    try:
+        history = await asyncio.wait_for(query_openetr_history(digest, config.openetr_relays,
+            timeout=config.openetr_timeout, limit=config.openetr_limit, digest_source="computed"), config.openetr_timeout * 3 + 1)
+    except Exception:
+        history = unavailable_openetr_history(digest, config.openetr_relays)
+    history["verification"]["artifact"]["digest_source"] = "computed"
+    url = config.evidence_url(digest)
+    return render(request, session, action='checked', reference=reference, record=detail,
+        history=history, durable_url=url, durable_qr=_qr_svg(url), bytes_verified=True)
+
+
 @router.get('/account/records/{reference}/{action}', include_in_schema=False)
 async def record_form(request: Request, reference: str, action: str):
     if action not in {'edit', 'present', 'share', 'check', 'delete'}:
@@ -114,6 +133,8 @@ async def record_form(request: Request, reference: str, action: str):
         session, service, owner, material, detail = await selected(request, reference)
         if action != 'check' and not getattr(service.backend, 'record_workflows_available', True):
             raise HTTPException(503, 'The operator must update the Acorn dependency before enabling record changes and sharing.')
+        if action == 'check':
+            return await check_record(request, session, service, material, reference, detail)
         return render(request, session, action=action, reference=reference, record=detail)
     except HTTPException:
         raise
@@ -133,22 +154,7 @@ async def record_action(request: Request, reference: str, action: str):
         if form.get('confirmed') != 'yes':
             raise HTTPException(400, 'Please confirm this action')
         if action == 'check':
-            result = await service.record_blob(material, reference)
-            if not result:
-                raise HTTPException(400, 'OpenETR checks require an attached original file.')
-            digest = hashlib.sha256(result[2]).hexdigest()
-            if detail.get('origsha256') and digest != detail['origsha256'].lower():
-                raise HTTPException(409, 'The file does not match the recorded fingerprint.')
-            config = RecordSettings()
-            try:
-                history = await asyncio.wait_for(query_openetr_history(digest, config.openetr_relays,
-                    timeout=config.openetr_timeout, limit=config.openetr_limit, digest_source="computed"), config.openetr_timeout * 3 + 1)
-            except Exception:
-                history = unavailable_openetr_history(digest, config.openetr_relays)
-            history["verification"]["artifact"]["digest_source"] = "computed"
-            url = config.evidence_url(digest)
-            return render(request, session, action='checked', reference=reference, record=detail,
-                history=history, durable_url=url, durable_qr=_qr_svg(url), bytes_verified=True)
+            return await check_record(request, session, service, material, reference, detail)
         if not getattr(service.backend, 'record_workflows_available', True):
             raise HTTPException(503, 'The operator must update the Acorn dependency before enabling record changes and sharing.')
         token = service.store.acquire(owner)

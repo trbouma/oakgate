@@ -1,4 +1,19 @@
 <section class="openetr-history-content" aria-label='{{ _("Anchor check details") }}'>
+  {% set anchored = has_blob and blob_fingerprint and openetr_history and not openetr_history.error and openetr_history.candidate_graphs and (not openetr_history.verification or openetr_history.verification.aggregate_state != 'unverifiable') %}
+  {% if anchored %}
+  <div class="record-anchor-summary">
+    {% for graph in openetr_history.candidate_graphs %}
+    {% set profile = graph.signer_profile or {} %}
+    {% set signer = profile.display_name or profile.name or graph.anchor.author %}
+    <div class="record-anchor">
+      <p><span class="record-anchor-check" role="img" aria-label="{{ _('Anchor found') }}">✓</span><strong>{% if signer and signer.startswith('npub1') and signer|length > 16 %}{{ signer[:9] }}...{{ signer[-4:] }}{% else %}{{ signer }}{% endif %}</strong></p>
+      {% if graph.anchor.content %}<p class="record-anchor-statement">{{ graph.anchor.content }}</p>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  <details class="openetr-check-details">
+    <summary>{{ _('Anchor check details') }}</summary>
+  {% endif %}
   {% if not has_blob %}
   <p>{{ _("A Record File is required before its anchor can be checked.") }}</p>
   {% elif not blob_fingerprint %}
@@ -22,7 +37,8 @@
   <section class="openetr-candidate-graph" aria-label="{{ _('Candidate anchor graph %(number)s') % {'number': loop.index} }}">
     {% if openetr_history.candidate_graphs|length > 1 %}<h2>{{ _("Candidate") }} {{ loop.index }}</h2>{% endif %}
     {% with history=openetr_history, graph=graph, graph_number=loop.index %}{% include "_openetr_candidate_graph.html" %}{% endwith %}
-  </section>
+    {% if anchored %}</details>{% endif %}
+</section>
   {% endfor %}
   {% for warning in openetr_history.warnings %}
   <p class="openetr-warning"><strong>{{ _("Note:") }}</strong> {{ warning }}</p>
@@ -51,4 +67,5 @@
     <pre>{{ openetr_history.verification|tojson(indent=2) }}</pre>
   </details>
   {% endif %}
+  {% if anchored %}</details>{% endif %}
 </section>

@@ -63,6 +63,13 @@
 <h1>{{ _("Active shares") }}</h1><p class="note">{{ _("Copies awaiting a confirmed deletion request, including expired codes.") }}</p>
 <ul class="record-list">{% for item in shares %}<li><a href="/account/record-shares/{{ item.id }}">{{ record_display_label(item.label) }} · {{ _('Presentation') if item.purpose == 'present' else _('Share') }}</a></li>{% else %}<li>{{ _("No sharing copies tracked.") }}</li>{% endfor %}</ul>
 {% elif action == 'checked' %}
+{% set check_unavailable = history.error or (history.verification and history.verification.aggregate_state == 'unverifiable') %}
+{% set anchor_found = not check_unavailable and history.candidate_graphs %}
+{% set status_label = _('Check unavailable') if check_unavailable else (_('Anchor found') if anchor_found else _('No anchor found')) %}
+<a class="record-check-status{% if anchor_found %} record-check-found{% endif %}" href="{% if reference %}/account/records/{{ reference }}{% else %}/account/records{% endif %}" aria-label="{{ status_label }} — {{ _('Record') if reference else _('Records') }}">
+<span aria-hidden="true">{{ '✓' if anchor_found else '?' }}</span>
+<strong>{{ status_label }}</strong>
+</a>
 <h1>{{ _('Check record') }}</h1><p>{{ record_display_label(record.label) }}</p>
 <p class="note">{% if bytes_verified %}{{ _('The original file was retrieved and its fingerprint verified before this lookup.') }}{% else %}{{ _('This check uses a scanned fingerprint. It has not retrieved or verified the original file.') }}{% endif %}</p>
 {% with has_blob=true, blob_fingerprint=history.digest, openetr_history=history %}

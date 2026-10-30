@@ -27,18 +27,27 @@ def test_record_check_rich_evidence_and_unavailable(tmp_path, monkeypatch):
         async with aclosing(client):
             await login(client,sessions)
             await client.post('/account/acorn/create',data=form())
-            result = await client.post(f'/account/records/{REF}/check',data=form(confirmed='yes'))
+            result = await client.get(f'/account/records/{REF}/check')
             assert result.status_code == 200
+            assert 'name="confirmed"' not in result.text
+            assert 'record-check-found' in result.text
+            assert f'href="/account/records/{REF}" aria-label="Anchor found' in result.text
             assert 'Anchor found' in result.text and 'Anchor and Signer' in result.text
+            assert '<details class="openetr-check-details">' in result.text
+            summary = result.text.split('<details class="openetr-check-details">')[0]
+            assert 'record-anchor-check' in summary
+            assert '&lt;script&gt;untrusted&lt;/script&gt;' in summary
+            assert 'not recognized authority' not in summary
             assert 'https://openetr.org/etr/'+digest in result.text
             assert '&lt;script&gt;untrusted&lt;/script&gt;' in result.text
             assert '<script>untrusted</script>' not in result.text
             assert query.await_args.kwargs['limit'] == 37
             assert query.await_args.kwargs['digest_source'] == 'computed'
             query.side_effect = TimeoutError()
-            result = await client.post(f'/account/records/{REF}/check',data=form(confirmed='yes'))
+            result = await client.get(f'/account/records/{REF}/check')
             assert result.status_code == 200 and 'Check unavailable' in result.text
             assert 'No anchor found' not in result.text and 'uncertain' not in result.text
+            assert 'record-anchor-check' not in result.text
     asyncio.run(run())
 
 

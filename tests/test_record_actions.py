@@ -80,7 +80,7 @@ def test_record_workflows_and_owner_isolation(tmp_path, monkeypatch, caplog):
             assert (await client.post(url+'/stop', data=form())).status_code == 303
             assert (await client.get(url)).status_code == 404
             assert (await client.get(f'/account/records/{REF}/check')).status_code == 200
-            query.assert_not_awaited()
+            query.assert_awaited_once()
             checked = await client.post(f'/account/records/{REF}/check', data=form(confirmed='yes'))
             assert checked.status_code == 200 and 'No anchor found' in checked.text
             assert query.await_args.args[0] == hashlib.sha256(b'original').hexdigest()
