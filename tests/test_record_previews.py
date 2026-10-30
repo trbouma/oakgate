@@ -4,6 +4,8 @@ import json
 import zipfile
 from unittest.mock import AsyncMock
 
+from test_epub_preview import book
+
 import cbor2
 import pytest
 from app import record_previews as previews
@@ -36,6 +38,7 @@ def test_pass_and_credential_decoding_is_presentation_only():
 
 
 @pytest.mark.parametrize('mime,data,marker',[
+    ('application/epub+zip',book(),'EPUB text preview'),
     ('image/png',b'png','alt="Image attached to Note"'),
     ('application/pdf',b'%PDF-1.4','data-pdf-viewer'),
     ('application/vnd.apple.pkpass',pass_bytes(),'Wallet pass preview'),

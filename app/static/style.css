@@ -615,3 +615,7 @@ body:not(.landing) > header { padding-block: 12px; gap: 12px; }
 /* Keep record names and fingerprint choices within narrow screens. */
 .record-list a,.record-request-option{overflow-wrap:anywhere;min-width:0}
 #record-request-details{overflow-wrap:anywhere}
+
+.epub-preview { min-width:0; overflow-wrap:anywhere; }
+.epub-preview summary { padding:14px 8px; cursor:pointer; font-weight:600; }
+.epub-text { white-space:pre-wrap; line-height:1.65; max-height:65vh; overflow:auto; padding:12px; }

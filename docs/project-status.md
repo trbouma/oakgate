@@ -81,3 +81,10 @@ Record management is adequate for the anticipated near-term use of dozens of
 records. Remaining POS discovery, folder indexing and larger-wallet performance
 work is parked in the [Record management roadmap](042-record-management-roadmap.md),
 with triggers and acceptance checks for revisiting it.
+
+## Pre-release red teaming
+
+The [policy brief](red-teaming-policy-brief.md) and
+[exercise runbook](043-pre-release-red-team-exercise.md) are documented but have
+not yet been executed as a complete release assessment. General release requires
+scoped evidence, remediation/retest and the sign-offs defined in the runbook.

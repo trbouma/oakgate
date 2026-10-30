@@ -50,6 +50,7 @@ nav:
       - Ad examples: user-experiences/ad-example.md
   - Understand OakGate:
       - Security Statement: security-statement.md
+      - Red-teaming policy brief: red-teaming-policy-brief.md
       - Card capabilities policy brief: card-capabilities-policy-brief.md
       - Product direction: product-direction.md
       - Mainstay client roles: 021-mainstay-client-roles.md
@@ -60,6 +61,7 @@ nav:
       - Project status: project-status.md
   - Build and deploy:
       - Planning for OakGate: planning-for-oakgate.md
+      - Pre-release red-team exercise: 043-pre-release-red-team-exercise.md
       - Local development and documentation: getting-started.md
       - New PostgreSQL instance: 035-new-instance.md
       - FastAPI app: 003-fastapi-app.md

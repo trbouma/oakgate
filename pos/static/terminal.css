@@ -42,3 +42,7 @@ body{padding:14px 16px}main{width:min(100%,540px)}header{margin-bottom:12px}sect
 .record-content-box h3{margin:0 0 8px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:#bac1ad}
 .record-content-box #record-contents{margin:0;max-width:100%}
 .record-content-box:has(#record-contents:empty){display:none}
+
+.epub-preview { min-width:0; overflow-wrap:anywhere; }
+.epub-preview summary { padding:14px 8px; cursor:pointer; font-weight:600; }
+.epub-text { white-space:pre-wrap; line-height:1.65; max-height:65vh; overflow:auto; padding:12px; }

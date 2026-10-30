@@ -15,7 +15,7 @@
 {% with label=record.label, has_blob=record.has_blob, blob_type=record.blob_type,
 blob_preview=record.blob_preview, blob_fingerprint=record.blob_fingerprint,
 pkpass_preview=record.pkpass_preview, json_credential_preview=record.json_credential_preview,
-mdoc_preview=record.mdoc_preview, blob_url=record.blob_url, blob_inline_url=record.blob_inline_url %}
+epub_preview=record.epub_preview, mdoc_preview=record.mdoc_preview, blob_url=record.blob_url, blob_inline_url=record.blob_inline_url %}
 {% include "record_preview.html" %}
 {% endwith %}
 <p><a class="back-link" href="{{ record.blob_url }}">{{ _("Download record file") }}</a></p>

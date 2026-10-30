@@ -265,10 +265,11 @@ async def record_preview(service, material, reference, detail):
     media_type = previews._effective_blob_media_type(detail.get('blob_type'), value)
     detail.update(blob_type=media_type, blob_preview=previews._blob_preview_kind(media_type),
                   blob_fingerprint=previews._blob_recognition_fingerprint(detail.get('origsha256')),
-                  pkpass_preview=None, json_credential_preview=None, mdoc_preview=None,
+                  epub_preview=None, pkpass_preview=None, json_credential_preview=None, mdoc_preview=None,
                   blob_url=f'/account/records/{reference}/file',
                   blob_inline_url=f'/account/records/{reference}/file?inline=true')
     renderers = {
+        'application/epub+zip': ('epub_preview', previews._epub_preview),
         previews.PKPASS_MIME_TYPE: ('pkpass_preview', previews._pkpass_preview),
         previews.VC_MIME_TYPE: ('json_credential_preview', previews._json_credential_preview),
         previews.VP_MIME_TYPE: ('json_credential_preview', previews._json_credential_preview),

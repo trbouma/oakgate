@@ -2,6 +2,7 @@
 
 No key operations, network calls or credential-verification claims belong here.
 """
+from app.epub_preview import preview as _epub_preview
 import base64
 import io
 import json

@@ -2980,3 +2980,9 @@ msgstr "Page suivante"
 
 msgid "First page"
 msgstr "Première page"
+
+msgid "EPUB text preview"
+msgstr "Aperçu textuel EPUB"
+
+msgid "EPUB preview unavailable. Download the original to read it."
+msgstr "Aperçu EPUB indisponible. Téléchargez le fichier original pour le lire."

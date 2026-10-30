@@ -261,3 +261,10 @@ Family policies: [Acorn](https://github.com/trbouma/safebox-acorn/blob/main/SECU
 [Stroma](https://github.com/trbouma/stroma/blob/main/SECURITY.md),
 [Mainstay](https://github.com/trbouma/mainstay/blob/main/SECURITY.md), and
 [Grove](https://github.com/trbouma/grove/blob/main/SECURITY.md).
+
+## Pre-release adversarial assessment
+
+The [red-teaming policy brief](docs/red-teaming-policy-brief.md) and
+[detailed exercise](docs/043-pre-release-red-team-exercise.md) define the required
+pre-release assessment, evidence and release gates. These are plans, not completed
+audit results. Testing requires explicit authorization for every target.

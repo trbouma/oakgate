@@ -28,6 +28,10 @@ def preview_attachment(blob, declared_type):
         media = 'application/pdf'
     if len(blob) > 5 * 1024 * 1024:
         return None, 'This attachment exceeds the 5 MiB POS preview limit.'
+    if media == 'application/epub+zip':
+        from app.epub_preview import preview
+        book = preview(blob)
+        return ({'type': media, 'book': book}, '') if book else (None, 'EPUB preview unavailable.')
     if media not in {'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'}:
         return None, 'This attachment format is not supported by the POS preview.'
     return {'type': media, 'data': base64.b64encode(blob).decode()}, ''

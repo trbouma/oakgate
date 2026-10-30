@@ -250,8 +250,9 @@ def presentation_preview(detail, ticket):
     result = dict(label=detail['label'], has_blob=detail.get('has_original'), blob_type=media,
         blob_preview=previews._blob_preview_kind(media), blob_fingerprint=previews._blob_recognition_fingerprint(detail.get('blob_sha256')),
         blob_url=f'/account/scan/presentation/{ticket}/file', blob_inline_url=f'/account/scan/presentation/{ticket}/file?inline=true',
-        pkpass_preview=None, json_credential_preview=None, mdoc_preview=None)
-    renderers = {previews.PKPASS_MIME_TYPE: ('pkpass_preview', previews._pkpass_preview),
+        epub_preview=None, pkpass_preview=None, json_credential_preview=None, mdoc_preview=None)
+    renderers = {'application/epub+zip': ('epub_preview', previews._epub_preview),
+        previews.PKPASS_MIME_TYPE: ('pkpass_preview', previews._pkpass_preview),
         previews.VC_MIME_TYPE: ('json_credential_preview', previews._json_credential_preview),
         previews.VP_MIME_TYPE: ('json_credential_preview', previews._json_credential_preview),
         previews.MDOC_CBOR_MIME_TYPE: ('mdoc_preview', previews._mdoc_preview)}

@@ -10,6 +10,7 @@
  function clearDisplay(){
   displayGeneration++;
   window.oakgatePOSPDF?.clear();
+  $('record-epub').replaceChildren();$('record-epub').hidden=true;
   if(imageURL)URL.revokeObjectURL(imageURL);imageURL=null;
   $('record-anchor-summary').replaceChildren();$('record-verification-details').open=false;
   $('record-result').hidden=true;$('record-image').hidden=true;$('record-image').removeAttribute('src');
@@ -112,6 +113,15 @@ stopNFC();clearTimeout(timer);$('record-present').hidden=false;$('record-present
     if(fields.length)lines.push('', 'Anchor Signer Profile', ...fields.map(field=>`${field}: ${profile[field]}`));
     return lines.join('\n');
    }).join('\n\n');
+   if(result.attachment?.type==='application/epub+zip' && Array.isArray(result.attachment.book?.chapters)){
+    const container=$('record-epub'),book=result.attachment.book;
+    const heading=document.createElement('h3');heading.textContent=book.title;container.append(heading);
+    book.chapters.slice(0,200).forEach((chapter,index)=>{
+     const section=document.createElement('details'),title=document.createElement('summary'),text=document.createElement('div');
+     section.open=index===0;title.textContent=chapter.title;text.className='epub-text';text.textContent=chapter.text;
+     section.append(title,text);container.append(section);
+    });container.hidden=false;
+   }
    if(result.attachment?.type==='application/pdf'){
     if(window.oakgatePOSPDF)window.oakgatePOSPDF.show(result.attachment.data);
     else $('record-attachment-note').textContent='PDF preview unavailable. Reload the terminal and create a new request.';

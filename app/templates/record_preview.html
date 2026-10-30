@@ -5,7 +5,20 @@
   {% if blob_type_notice %}
   <p class="record-type-notice">{{ blob_type_notice }}</p>
   {% endif %}
-  {% if blob_preview == "image" %}
+  {% if blob_type == "application/epub+zip" %}
+  <p class="note">{{ _('EPUB text preview') }}</p>
+  {% if epub_preview %}
+  <article class="epub-preview">
+    <h3>{{ epub_preview.title }}</h3>
+    {% for chapter in epub_preview.chapters %}
+    <details{% if loop.first %} open{% endif %}>
+      <summary>{{ chapter.title }}</summary>
+      <div class="epub-text">{{ chapter.text }}</div>
+    </details>
+    {% endfor %}
+  </article>
+  {% else %}<p>{{ _('EPUB preview unavailable. Download the original to read it.') }}</p>{% endif %}
+  {% elif blob_preview == "image" %}
   <figure class="blob-preview">
     <img src="{{ blob_inline_url }}" alt="Image attached to {{ label }}">
   </figure>

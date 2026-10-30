@@ -8,7 +8,7 @@
 {% with label=preview.label, has_blob=preview.has_blob, blob_type=preview.blob_type,
 blob_preview=preview.blob_preview, blob_fingerprint=preview.blob_fingerprint,
 pkpass_preview=preview.pkpass_preview, json_credential_preview=preview.json_credential_preview,
-mdoc_preview=preview.mdoc_preview, blob_url=preview.blob_url, blob_inline_url=preview.blob_inline_url %}{% include 'record_preview.html' %}{% endwith %}
+epub_preview=preview.epub_preview, mdoc_preview=preview.mdoc_preview, blob_url=preview.blob_url, blob_inline_url=preview.blob_inline_url %}{% include 'record_preview.html' %}{% endwith %}
 <p><a href="{{ preview.blob_url }}">{{ _('Download record file') }}</a></p>{% endif %}
 <section class="presentation-check" aria-labelledby="presentation-verification-title">
 <h2 id="presentation-verification-title">{{ _('OpenETR evidence') }}</h2>
