@@ -1,0 +1,27 @@
+{% if graph.witnesses or graph.witness_warnings %}
+<details class="openetr-protocol-details">
+<summary>{{ _("Witness events") }} ({{ graph.witnesses|default([])|length }})</summary>
+<div class="openetr-protocol-details-content">
+<p>{{ _("Receipt signatures and binding to the exact signed event have been verified. Witness authority, commissioning, authorization and clock accuracy have not been independently assessed. These receipts do not change the Core Record Ruleset result.") }}</p>
+{% for warning in graph.witness_warnings %}<p class="openetr-warning">{{ _(warning) }}</p>{% endfor %}
+{% for witness in graph.witnesses %}
+<article class="openetr-event">
+<dl class="openetr-event-fields">
+<dt>{{ _("Witness signer") }}</dt><dd><code>{{ witness.signer_npub }}</code></dd>
+<dt>{{ _("Observed event") }}</dt><dd><code>{{ witness.body.event_id }}</code></dd>
+<dt>{{ _("Claimed observation time") }}</dt><dd>{{ witness.observed_at_ms_display }}</dd>
+<dt>{{ _("Claimed issuance time") }}</dt><dd>{{ witness.issued_at_ms_display }}</dd>
+<dt>{{ _("Observation mode") }}</dt><dd>{{ witness.body.observation_mode }}</dd>
+<dt>{{ _("Clock basis") }}</dt><dd>{{ witness.body.clock_basis|default('Not specified') }}</dd>
+<dt>{{ _("Claimed clock uncertainty") }}</dt><dd>{% if witness.body.clock_uncertainty_ms is not none %}{{ witness.body.clock_uncertainty_ms }} ms{% else %}{{ _("Unspecified") }}{% endif %}</dd>
+<dt>{{ _("Receipt event ID") }}</dt><dd><code>{{ witness.id }}</code></dd>
+<dt>{{ _("Authorization reference (not verified)") }}</dt><dd><code>{{ witness.body.authorization_event_id }}</code></dd>
+<dt>{{ _("Policy digest (not verified)") }}</dt><dd><code>{{ witness.body.witness_policy_digest }}</code></dd>
+<dt>{{ _("Retrieved from") }}</dt><dd>{{ witness.sources|join(', ') }}</dd>
+</dl>
+<details><summary>{{ _("Signed witness event") }}</summary><pre>{{ witness.event|tojson(indent=2) }}</pre></details>
+</article>
+{% endfor %}
+<p>{{ _("Discovery is limited to the configured OpenETR relays and bounded queries. Missing receipts do not prove that no witness exists; multiple copies of one receipt are not independent witnesses.") }}</p>
+</div></details>
+{% endif %}

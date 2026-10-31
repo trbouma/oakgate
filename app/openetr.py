@@ -308,11 +308,38 @@ async def query_openetr_history(digest, relays, *, timeout=5.0, limit=100, diges
         profile_filter = {"kinds": [PROFILE_KIND],
                           "authors": sorted({g["anchor"]["author_hex"] for g in graphs}),
                           "limit": min(200, max(10, len(graphs) * 3))}
-        profiles = await asyncio.gather(*(query(relay, profile_filter) for relay in relays),
-                                        return_exceptions=True)
+        from app.openetr_witnesses import collect_receipts
+        subject_ids = sorted({event["id"] for graph in graphs
+                              for event in [graph["anchor"], *graph["controls"]]})
+        selected_ids = subject_ids[:200]
+        witness_filter = {"kinds": [1418], "#e": selected_ids, "limit": limit}
+        combined = await asyncio.gather(
+            *(query(relay, profile_filter) for relay in relays),
+            *(query(relay, witness_filter) for relay in relays), return_exceptions=True)
+        profiles, witness_results = combined[:len(relays)], combined[len(relays):]
+        subjects = {}
+        for event in events:
+            if event.id in selected_ids:
+                subjects.setdefault(event.id, []).append(event)
+        receipts, rejected = collect_receipts(witness_results, relays, subjects)
+        witness_warnings = []
+        if any(isinstance(result, BaseException) for result in witness_results):
+            witness_warnings.append("Some witness sources were unavailable; receipt discovery is incomplete.")
+        if len(subject_ids) > 200 or any(not isinstance(result, BaseException) and len(result) >= limit
+                                       for result in witness_results):
+            witness_warnings.append("Witness discovery reached a query limit; additional receipts may exist.")
+        if rejected:
+            witness_warnings.append("Some witness events failed the supported receipt checks and are not displayed.")
+        for receipt in receipts:
+            receipt["signer_npub"] = _npub(receipt["signer"])
+            for field in ("observed_at_ms", "issued_at_ms"):
+                receipt[field + "_display"] = _display_time(receipt["body"][field] // 1000)
         profile_events = [event for result in profiles if not isinstance(result, BaseException)
                           for event in result]
         for graph in graphs:
+            graph_ids = {event["id"] for event in [graph["anchor"], *graph["controls"]]}
+            graph["witnesses"] = [receipt for receipt in receipts if receipt["body"]["event_id"] in graph_ids]
+            graph["witness_warnings"] = witness_warnings
             graph["signer_profile"] = build_signer_profile(graph["anchor"]["author_hex"], profile_events)
             if any(isinstance(result, BaseException) for result in profiles):
                 graph["signer_profile_error"] = "Some signer profile sources were unavailable."

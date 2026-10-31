@@ -105,6 +105,27 @@ The first server receives new/replacement encrypted attachments; the second
 receives temporary encrypted sharing/presentation copies. Existing attachments
 continue to resolve through Acorn. Transfers read existing blobs using Acorn's
 public-only Stroma retrieval. Operators can select community-run infrastructure.
+Record evidence pages also discover optional witness receipts (experimental kind
+1418, Spurline receipt profiles v1–v3) for qualifying anchors and publisher notices.
+The expandable **Witness events** section checks each receipt's signature, event
+ID and commitment to the subject's exact signature. It displays the witness signer,
+claimed observation time, clock basis/uncertainty, authorization and policy
+references, retrieval sources and signed event JSON. Copies of one receipt are
+deduplicated; different witness receipts remain individually visible.
+
+Witness discovery uses only `OAKGATE_OPENETR_RELAYS`. To discover receipts issued
+by Spurline, include `wss://spurline.safebox.dev` in that comma-separated setting.
+No relay URLs in received events are followed. Profile and witness lookups run
+concurrently after anchor discovery, with the existing timeout and result limit;
+witness subject discovery is capped at 200 event IDs. Partial failures and reached
+limits are reported separately from core record verification.
+
+These checks do **not** establish commissioning, authorization validity, policy
+acceptability or truthful timestamps, and do not change Core Record Ruleset
+results. System-clock receipts explicitly have unspecified accuracy. Missing
+receipts do not establish that no witness exists. Unsupported or invalid receipts
+are excluded with a warning rather than represented as verified witnesses.
+
 OpenETR uses 1–8 comma-separated public WSS relays. Queries are bounded, reject
 private DNS destinations and redirects, and require no Google or OpenETR account.
 
