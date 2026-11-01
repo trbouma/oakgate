@@ -1,0 +1,13 @@
+<div class="record-check-findings">
+{% for graph in history.candidate_graphs %}
+<details class="record-finding-pane">
+  <summary><strong>{{ _('Anchor record found') }}</strong>{% if history.candidate_graphs|length > 1 %} — {{ _('Candidate') }} {{ loop.index }}{% endif %}</summary>
+  <div class="record-finding-content">
+    {% with graph_number=loop.index, hide_witnesses=true %}{% include '_openetr_candidate_graph.html' %}{% endwith %}
+  </div>
+</details>
+{% endfor %}
+{% for graph in history.candidate_graphs %}
+  {% with prominent_witnesses=true %}{% include '_openetr_witnesses.html' %}{% endwith %}
+{% endfor %}
+</div>

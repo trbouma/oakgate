@@ -1,8 +1,8 @@
 {% if graph.witnesses or graph.witness_warnings %}
-<details class="openetr-protocol-details">
-<summary>{{ _("Witness events") }} ({{ graph.witnesses|default([])|length }})</summary>
+<details class="{{ 'record-finding-pane' if prominent_witnesses else 'openetr-protocol-details' }}">
+<summary>{% if prominent_witnesses %}<strong>{{ _('Witness record found') if graph.witnesses else _('Witness lookup incomplete') }}</strong>{% else %}{{ _("Witness events") }}{% endif %} ({{ graph.witnesses|default([])|length }})</summary>
 <div class="openetr-protocol-details-content">
-<p>{{ _("Receipt signatures and binding to the exact signed event have been verified. Witness authority, commissioning, authorization and clock accuracy have not been independently assessed. These receipts do not change the Core Record Ruleset result.") }}</p>
+{% if graph.witnesses %}<p>{{ _("Receipt signatures and binding to the exact signed event have been verified. Witness authority, commissioning, authorization and clock accuracy have not been independently assessed. These receipts do not change the Core Record Ruleset result.") }}</p>{% endif %}
 {% for warning in graph.witness_warnings %}<p class="openetr-warning">{{ _(warning) }}</p>{% endfor %}
 {% for witness in graph.witnesses %}
 <article class="openetr-event">

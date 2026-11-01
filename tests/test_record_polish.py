@@ -33,11 +33,11 @@ def test_record_check_rich_evidence_and_unavailable(tmp_path, monkeypatch):
             assert 'record-check-found' in result.text
             assert f'href="/account/records/{REF}" aria-label="Anchor found' in result.text
             assert 'Anchor found' in result.text and 'Anchor and Signer' in result.text
-            assert '<details class="openetr-check-details">' in result.text
-            summary = result.text.split('<details class="openetr-check-details">')[0]
-            assert 'record-anchor-check' in summary
-            assert '&lt;script&gt;untrusted&lt;/script&gt;' in summary
-            assert 'not recognized authority' not in summary
+            assert '<details class="record-finding-pane">' in result.text
+            assert 'Anchor record found' in result.text
+            assert result.text.index('<h1>Check record</h1>') < result.text.index('Anchor record found') < result.text.index('The original file was retrieved')
+            assert 'Witness record found' not in result.text
+            assert result.text.count('id="openetr-anchor-signer-heading-1"') == 1
             assert 'https://openetr.org/etr/'+digest in result.text
             assert '&lt;script&gt;untrusted&lt;/script&gt;' in result.text
             assert '<script>untrusted</script>' not in result.text

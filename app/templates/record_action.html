@@ -70,9 +70,11 @@
 <span aria-hidden="true">{{ '✓' if anchor_found else '?' }}</span>
 <strong>{{ status_label }}</strong>
 </a>
-<h1>{{ _('Check record') }}</h1><p>{{ record_display_label(record.label) }}</p>
+<h1>{{ _('Check record') }}</h1>
+{% if anchor_found %}{% include '_record_check_findings.html' %}{% endif %}
+<p>{{ record_display_label(record.label) }}</p>
 <p class="note">{% if bytes_verified %}{{ _('The original file was retrieved and its fingerprint verified before this lookup.') }}{% else %}{{ _('This check uses a scanned fingerprint. It has not retrieved or verified the original file.') }}{% endif %}</p>
-{% with has_blob=true, blob_fingerprint=history.digest, openetr_history=history %}
+{% with has_blob=true, blob_fingerprint=history.digest, openetr_history=history, prominent_findings=true %}
 {% include '_control_history_content.html' %}
 {% endwith %}
 {% endif %}

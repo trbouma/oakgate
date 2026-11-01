@@ -7,7 +7,7 @@
 {% endif %}
 {% endfor %}
 {% endif %}
-{% include "_openetr_witnesses.html" %}
+{% if not hide_witnesses %}{% include "_openetr_witnesses.html" %}{% endif %}
 <details class="openetr-protocol-details">
 <summary>{{ _("Related events and technical details") }}</summary>
 <div class="openetr-protocol-details-content">

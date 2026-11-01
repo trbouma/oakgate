@@ -88,3 +88,49 @@ def test_query_and_render(monkeypatch):
 def test_no_witness_panel_without_receipts():
     env = Environment(loader=FileSystemLoader("app/templates"), autoescape=True)
     assert not env.get_template("_openetr_witnesses.html").render(graph={}, _=lambda s: s).strip()
+
+
+def test_prominent_findings_are_sibling_disclosures_with_unique_anchor_details():
+    from html.parser import HTMLParser
+    subject = signed()
+    other = signed(time=101)
+    history = openetr.build_openetr_history(DIGEST, [subject, other], [])
+    event = receipt(subject)
+    items, _ = collect_receipts([[event]], ['wss://relay.example'], {subject.id: [subject]})
+    items[0].update(signer_npub='npub-example', observed_at_ms_display='Observed', issued_at_ms_display='Issued')
+    history['candidate_graphs'][0]['witnesses'] = items
+    env = Environment(loader=FileSystemLoader('app/templates'), autoescape=True)
+    html = env.get_template('_record_check_findings.html').render(
+        history=history, _=lambda s: s, ngettext=lambda one, many, count: one if count == 1 else many)
+    class Disclosures(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.depth = 0
+            self.panes = []
+        def handle_starttag(self, tag, attrs):
+            if tag == 'details':
+                if dict(attrs).get('class') == 'record-finding-pane':
+                    self.panes.append(self.depth)
+                assert 'open' not in dict(attrs)
+                self.depth += 1
+        def handle_endtag(self, tag):
+            if tag == 'details':
+                self.depth -= 1
+                assert self.depth >= 0
+    parsed = Disclosures()
+    parsed.feed(html)
+    assert parsed.panes == [0, 0, 0] and parsed.depth == 0
+    assert html.count('Anchor record found') == 2
+    assert html.count('Witness record found') == 1
+    assert html.count('id="openetr-anchor-signer-heading-1"') == 1
+    assert html.count('id="openetr-anchor-signer-heading-2"') == 1
+    assert 'have not been independently assessed' in html
+
+
+def test_failed_witness_lookup_does_not_claim_found():
+    env = Environment(loader=FileSystemLoader('app/templates'), autoescape=True)
+    html = env.get_template('_openetr_witnesses.html').render(
+        graph={'witnesses': [], 'witness_warnings': ['Source unavailable']},
+        prominent_witnesses=True, _=lambda s: s)
+    assert 'Witness lookup incomplete' in html
+    assert 'Witness record found' not in html
