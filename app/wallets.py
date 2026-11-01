@@ -338,18 +338,23 @@ class AcornBackend:
         return history
 
     async def records(self, material):
-        wallet = self.wallet(material)
-        wallet.logger = RecordReadLogger(wallet.logger, {})
-        records = await wallet.get_user_records(record_kind=37375, reverse=True)
-        labels = []
-        for record in records:
-            tag = record.get('tag')
-            label = tag[0] if isinstance(tag, list) and tag else tag
-            if not isinstance(label, str) or not label.strip():
-                continue
-            timestamp = int(record.get('timestamp', 0))
-            labels.append({'label': label, 'timestamp': timestamp, 'ref': self.record_ref(record)})
-        return sorted(labels, key=lambda row: (-row['timestamp'], row['label']))
+        # Selection requires a complete scan, not a single relay-limited batch.
+        # Use the same metadata/ref format as the Records browser.
+        rows = {}
+        cursor = None
+        visited = set()
+        async with asyncio.timeout(40):
+            for _ in range(100):
+                page = await self.records_page(material, cursor)
+                for row in page['records']:
+                    rows[row['ref']] = row
+                cursor = page['next_cursor']
+                if cursor is None:
+                    return sorted(rows.values(), key=lambda row: (-row['timestamp'], row['label']))
+                if cursor in visited:
+                    raise ValueError('Record discovery cursor did not advance')
+                visited.add(cursor)
+        raise ValueError('Record discovery exceeded its page budget')
 
     @staticmethod
     def record_ref(record):

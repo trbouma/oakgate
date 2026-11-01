@@ -79,6 +79,13 @@ cross-home POS approval. Selection limits and exact stored-label
 authorization remain unchanged. Generic editable labels remain supported; the
 normalization applies to generated sharing labels, not silent global renaming.
 
+Selection discovery uses the same paginated Acorn API as the Records browser,
+including empty pages with continuation cursors. It completes the scan before
+offering choices, with a 100-page budget and 40-second timeout. Relay failures,
+repeated cursors, or exhausted budgets fail the request rather than presenting
+a partial list as complete. Record references use the Acorn event IDs returned
+by the paginated API; legacy hashed references remain supported by record lookup.
+
 ## Three explicit fingerprints
 
 - **Record-content fingerprint**: SHA-256 of canonical UTF-8 JSON with

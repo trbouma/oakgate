@@ -13,17 +13,50 @@ def test_record_adapter_returns_only_labels_newest_first():
         backend = AcornBackend()
         class Wallet:
             logger = logging.getLogger('test-records')
-            get_user_records = AsyncMock(return_value=[
-                {'tag':['Old'], 'timestamp':10, 'payload':'PRIVATE'},
-                {'tag':'Newest', 'timestamp':30, 'content':'SECRET'},
-                {'tag':['Middle','ignored'], 'timestamp':20},
-                {'tag':[], 'timestamp':50},
-            ])
+            get_user_records_page = AsyncMock(return_value={'records':[
+                {'tag':['Old'], 'timestamp':10, 'payload':'PRIVATE', 'id':'a'*64},
+                {'tag':'Newest', 'timestamp':30, 'content':'SECRET', 'id':'b'*64},
+                {'tag':['Middle'], 'timestamp':20, 'id':'c'*64},
+            ], 'next_cursor':None})
         wallet=Wallet()
         backend.wallet=lambda material: wallet
-        assert [{k:v for k,v in row.items() if k != 'ref'} for row in await backend.records({})] == [
+        assert [{k:v for k,v in row.items() if k != 'ref'} for row in await backend.records({'relay':'wss://relay.example'})] == [
             {'label':'Newest','timestamp':30}, {'label':'Middle','timestamp':20}, {'label':'Old','timestamp':10}]
-        wallet.get_user_records.assert_awaited_once_with(record_kind=37375, reverse=True)
+        wallet.get_user_records_page.assert_awaited_once_with(page_size=100, cursor=None, relay='wss://relay.example')
+    asyncio.run(run())
+
+
+def test_record_selection_discovers_children_after_empty_page():
+    async def run():
+        backend = AcornBackend()
+        root = {'label':'pass', 'timestamp':3, 'ref':'a'*64}
+        children = [{'label':label, 'timestamp':1, 'ref':str(i)*64}
+                    for i, label in enumerate(['pass/booga1', 'pass/test1-trbouma'])]
+        backend.records_page = AsyncMock(side_effect=[
+            {'records':[root], 'next_cursor':'one'},
+            {'records':[], 'next_cursor':'two'},
+            {'records':children, 'next_cursor':None},
+        ])
+        from app.pos_records import matching_records
+        rows = matching_records(await backend.records({}), 'pass')
+        assert {r['label'] for r in rows} == {'pass', 'pass/booga1', 'pass/test1-trbouma'}
+        assert [c.args[1] for c in backend.records_page.await_args_list] == [None, 'one', 'two']
+    asyncio.run(run())
+
+
+@pytest.mark.parametrize('failure', ['cycle', 'budget', 'error'])
+def test_record_selection_never_returns_partial_scan(failure):
+    async def run():
+        backend = AcornBackend()
+        page = {'records':[{'label':'pass', 'timestamp':1, 'ref':'a'*64}], 'next_cursor':'one'}
+        if failure == 'cycle':
+            backend.records_page = AsyncMock(return_value=page)
+        elif failure == 'budget':
+            backend.records_page = AsyncMock(side_effect=[{**page, 'next_cursor':str(i)} for i in range(100)])
+        else:
+            backend.records_page = AsyncMock(side_effect=[page, TimeoutError('relay unavailable')])
+        with pytest.raises((ValueError, TimeoutError)):
+            await backend.records({})
     asyncio.run(run())
 
 
