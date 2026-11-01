@@ -13,6 +13,23 @@ DETAIL = {'label': 'Personal/Notes', 'contents': 'hello', 'payload': 'hello', 'h
           'record_type': 'credential', 'origsha256': hashlib.sha256(b'original').hexdigest()}
 
 
+@pytest.mark.parametrize('has_blob', [True, False])
+def test_edit_attachment_retention_message(tmp_path, has_blob):
+    async def run():
+        client, sessions, service, backend = setup(tmp_path)
+        backend.record_detail = AsyncMock(return_value={**DETAIL, 'has_blob':has_blob})
+        async with client:
+            await login(client, sessions)
+            await client.post('/account/acorn/create', data=form())
+            page = await client.get(f'/account/records/{REF}/edit')
+            assert page.status_code == 200
+            assert ('Current attachment:' in page.text) == has_blob
+            assert ('Your existing file will be kept.' in page.text) == has_blob
+            assert ('Replace attachment' in page.text) == has_blob
+            assert 'record-attachment.js?v=1' in page.text
+    asyncio.run(run())
+
+
 def test_record_workflows_and_owner_isolation(tmp_path, monkeypatch, caplog):
     async def run():
         client, sessions, service, backend = setup(tmp_path)

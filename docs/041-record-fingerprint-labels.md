@@ -5,6 +5,27 @@ distinguishes the sender–content–recipient combination without making the
 sender's handle an identity or authority claim. A sender hint in the final leaf
 helps the holder recognize which shared copy to select at the POS.
 
+## Scope: OakGate application conventions
+
+The path formation, sharing-label suffixes, display shortening and POS selection
+rules in this document are **OakGate application conventions**. They are not
+requirements of Acorn, Nostr or OpenETR, and do not define a universal record
+namespace or a protocol-level folder hierarchy.
+
+Acorn stores and manages the records and their labels, subject to its own API,
+validation and security rules. OakGate interprets those labels as category paths,
+generates recipient sharing labels, formats selection names and determines which
+records match a POS request. A folder inferred from label prefixes is an OakGate
+navigation aid, not a separate record unless an actual record exists at that label.
+
+Other applications may use different naming and presentation conventions without
+adopting OakGate's rules. Their records may need explicit renaming to participate
+in OakGate's category-based selection; existing labels are not silently migrated.
+Participating OakGate homes use the same conventions for local and cross-home
+presentation. Label compatibility alone never grants access or establishes
+authorship, provenance, integrity or OpenETR validity: Acorn authorization,
+holder approval or card authorization, and evidence verification remain separate.
+
 ## Stored labels and display names
 
 The full stored label, including category paths and fingerprint, is limited to
@@ -131,14 +152,29 @@ the selection: choosing `health` and entering `prescriptions` requests
 work. Leaving the field blank requests the parent category.
 
 Matching is case-insensitive, normalizes optional outer slashes and respects path
-boundaries. `/health` matches `health/prescriptions/...`, but not `healthcare`.
-`/health/prescriptions/<digest>` can select a specific record.
+boundaries. `health` includes an actual record named `health/prescriptions`, but
+not the grandchild `health/prescriptions/current` or unrelated `healthcare`.
+Request `health/prescriptions` to include its root and direct child records.
+Folders derived from other labels are navigation aids, not selectable records.
 
 A `/benefits` request can offer both `benefits/dental` (shown as `dental`) and
 `benefits/<digest>` (shown as the shortened fingerprint). One match retains the
-existing direct display flow; multiple matches use the selector. Wallet approval
-still controls which records are offered. A shortened name never changes the
-selected record's identity. Existing selection limits and cross-home checks apply.
+existing flow without a selector; multiple approved matches use the selector.
+The operator still chooses Show Record to retrieve and display the selected
+record. Options show the final label component, shortening a fingerprint as
+described above; full stored labels and opaque selection IDs remain authoritative.
+
+For QR requests, the holder explicitly approves which matching records to offer.
+Only approved records reach the POS selector. For NFC requests, a validated card
+makes all matching records in the requested category available under the existing
+card-possession authorization policy. Neither path discloses deeper descendants
+or unrelated categories. These rules apply locally and across participating homes.
+
+There must be between one and 20 matching records before approval. Zero matches,
+more than 20, or duplicate normalized labels fail selection rather than truncating
+the choices. Narrow the subcategory when the result exceeds the limit. This
+20-record selection limit is separate from the 100-page/40-second discovery
+budget: discovery must finish before matching and approval proceed.
 
 ## Updates and explicit names
 

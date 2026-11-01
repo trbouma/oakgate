@@ -1,6 +1,6 @@
 # Record management: deferred improvements
 
-Status: parked, 29 October 2026. Expected near-term use is dozens of records per
+Status: updated 1 November 2026; remaining scaling work is deferred. Expected near-term use is dozens of records per
 Acorn. Further scaling work should follow observed needs, not delay other product
 work. This note records implementation status, not confirmation of deployment.
 
@@ -16,6 +16,11 @@ work. This note records implementation status, not confirmation of deployment.
   15-minute lifetime. Attachments are fetched on demand.
 - Folder parents that contain a record remain selectable alongside children.
 - Sharing fingerprints and compact display labels work with record paths.
+- POS selection and other callers of `AcornBackend.records` now use paginated
+  discovery, including empty pages with continuation cursors. The scan must
+  complete within 100 pages and 40 seconds; failures never return a partial list
+  as complete. POS matches the root and direct child records, up to 20 matches.
+  The operator reported successful child selection after deploying this change.
 
 See [Records and sharing](011-record-workflows.md#paginated-browsing-and-direct-reads)
 and [Record paths and fingerprints](041-record-fingerprint-labels.md).
@@ -24,15 +29,16 @@ and [Record paths and fingerprints](041-record-fingerprint-labels.md).
 
 | Priority | Follow-up | Revisit when |
 | --- | --- | --- |
-| 1 | Migrate POS record selection and remaining sharing discovery to Acorn pagination. Preserve the simple single-match flow and make result limits explicit. | A valid matching record is missing from a selection, or wallets routinely require multiple pages. |
+| 1 | Measure complete-scan POS selection and evaluate category-aware discovery if needed. Preserve single-match behaviour and explicit limits. | Complete scans approach the timeout or page budget. |
 | 2 | Improve folder browsing across pages. Current folders describe the current page; navigating into one starts a new traversal. Evaluate category-aware discovery or a rebuildable index rather than eagerly loading every record on every request. | Users find page-scoped folders confusing or cannot easily find older records. |
 | 3 | Measure realistic relay performance with larger disposable wallets before choosing caching or indexing. | Record browsing becomes noticeably slow or growth beyond dozens is expected. |
 | 4 | Reduce reliance on legacy hashed-link searches. New event-ID links are direct; an old link or a missing ID may still trigger a bounded discovery scan. | Old bookmarks cause slow requests or compatibility search failures. |
 | 5 | Review concurrent import collision handling. An exact preflight check is not an atomic reservation across independent clients. | Concurrent sharing/imports produce actual conflicts, or stronger no-overwrite guarantees become a requirement. |
 
 These are deferred proposals, not implemented capabilities. Existing POS match
-limits and other bounded readers remain in effect. There is no claim of complete
-large-wallet discovery outside the migrated wallet Records page.
+limits and other bounded readers remain in effect. Paginated selection is
+implemented, but this does not guarantee completion for arbitrarily large wallets
+or unavailable relays.
 
 ## How to resume
 

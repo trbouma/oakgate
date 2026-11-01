@@ -21,7 +21,11 @@
 <label for="record-label">{{ _('Label') }}</label><input id="record-label" name="label" value="{{ record.label }}" maxlength="1024" required>
 <label for="record-format">{{ _("Format") }}</label><select id="record-format" name="format"><option value="text" {% if record.payload is string %}selected{% endif %}>{{ _("Text") }}</option><option value="json" {% if record.payload is not string %}selected{% endif %}>{{ _("JSON") }}</option></select>
 <label for="record-payload">{{ _("Contents") }}</label><textarea id="record-payload" name="payload" rows="12" spellcheck="false">{{ record.contents }}</textarea>
-<label for="record-attachment">{% if record.has_blob %}{{ _("Replace attached file") }}{% else %}{{ _("Attach a file") }}{% endif %} {{ _("(optional, up to 25 MiB)") }}</label><input type="file" id="record-attachment" name="attachment">
+{% if record.has_blob %}
+<p><strong>{{ _("Current attachment:") }}</strong> {{ _("Attached") }}</p>
+<p id="record-attachment-status" class="note" role="status" aria-live="polite" data-retained="{{ _('Your existing file will be kept. Choose a file below only if you want to replace it.') }}" data-replacement="{{ _('Replacement selected; the existing file will be replaced when you save.') }}">{{ _('Your existing file will be kept. Choose a file below only if you want to replace it.') }}</p>
+{% endif %}
+<label for="record-attachment">{% if record.has_blob %}{{ _("Replace attachment") }}{% else %}{{ _("Attach a file") }}{% endif %} {{ _("(optional, up to 25 MiB)") }}</label><input type="file" id="record-attachment" name="attachment"{% if record.has_blob %} aria-describedby="record-attachment-status"{% endif %}>
 <p class="note">{{ _("Sharing fingerprint labels stay unchanged unless you enter a different label. Leaving the file empty preserves the existing attachment.") }}</p>
 {% elif action == 'check' %}
 <p>{{ _("Check the original file’s fingerprint against OpenETR anchor events and publisher notices. This sends the fingerprint to the configured public relays; your file and private key stay private.") }}</p>
@@ -80,4 +84,5 @@
 {% endif %}
 </section>
 <script src="/static/record-actions.js?v=20261028-nfc-share" defer></script>
+{% if action == 'edit' %}<script src="/static/record-attachment.js?v=1" defer></script>{% endif %}
 {% endblock %}

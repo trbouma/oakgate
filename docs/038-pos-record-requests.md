@@ -276,6 +276,17 @@ The category field accepts paths below the default categories, such as
 be selected. See [Record paths and fingerprints](041-record-fingerprint-labels.md)
 for matching rules, display names and update behavior.
 
+An empty subcategory selects the root and actual direct child records, not all
+descendants. For example, `pass` includes `pass/booga1` and
+`pass/test1-trbouma`, but excludes `pass/events/ticket`. Derived folders are not
+records. Discovery follows all continuation pages within its 100-page/40-second
+budget; incomplete scans fail rather than showing a partial selection. More
+than 20 matching records requires a narrower request.
+
+QR holders choose which matches to approve; a validated NFC card makes all
+matching records available under the card-possession policy. Multiple available
+records produce a selector; one uses the existing Show Record flow without it.
+
 ## EPUB attachment previews
 
 Wallet record views, scanned presentations and POS record presentations support
