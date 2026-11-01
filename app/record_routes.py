@@ -17,6 +17,7 @@ from app.wallets import WalletInputError
 from app.wallet_routes import checked_form
 from app.record_capabilities import RecordCapabilities
 from app.record_settings import RecordSettings
+from app.record_labels import MAX_RECORD_LABEL_LENGTH
 from app.record_previews import _qr_svg
 from app.openetr import query_openetr_history, unavailable_openetr_history
 
@@ -64,8 +65,8 @@ async def new_record(request: Request):
     try:
         form = await checked_form(request, session, max_bytes=26 * 1024 * 1024, multipart=True)
         label = form.get('label', '')
-        if not isinstance(label, str) or not label.strip() or len(label.strip()) > 200 or any(ord(c) < 32 for c in label):
-            raise HTTPException(400, 'Enter a record label of 1–200 characters.')
+        if not isinstance(label, str) or not label.strip() or len(label.strip()) > MAX_RECORD_LABEL_LENGTH or any(ord(c) < 32 for c in label):
+            raise HTTPException(400, 'Enter a record label of 1–1024 characters.')
         label = label.strip()
         payload = form.get('payload', '')
         if not isinstance(payload, str) or len(payload.encode()) > 262144:

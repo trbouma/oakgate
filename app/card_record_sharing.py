@@ -23,7 +23,7 @@ from app.nfc_cards import CardStore
 from app.pos_api import invoke
 from app.pos_store import POSStore
 from app.record_capabilities import RecordCapabilities
-from app.record_labels import suggested_record_label
+from app.record_labels import suggested_record_label, MAX_RECORD_LABEL_LENGTH
 from app.record_routes import account
 from app.request_store import RequestStore
 from app.send import public_json
@@ -123,7 +123,7 @@ async def receive(request, sender, body, authority, recheck, material):
     owner = authority['owner']
     if (set(terms) != {'descriptor', 'label', 'expires', 'wallet'}
             or not isinstance(terms['descriptor'], str) or len(terms['descriptor']) > 12000
-            or not isinstance(terms['label'], str) or not 1 <= len(terms['label']) <= 200
+            or not isinstance(terms['label'], str) or not 1 <= len(terms['label']) <= MAX_RECORD_LABEL_LENGTH
             or terms['label'] != terms['label'].strip() or any(ord(c) < 32 for c in terms['label'])
             or type(terms['expires']) is not int or terms['wallet'] != authority['wallet_id']):
         raise ValueError('Invalid record terms')

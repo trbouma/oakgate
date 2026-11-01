@@ -2,28 +2,61 @@
 
 Record categories describe where a record belongs. A sharing fingerprint
 distinguishes the sender–content–recipient combination without making the
-sender's handle part of that filing path.
+sender's handle an identity or authority claim. A sender hint in the final leaf
+helps the holder recognize which shared copy to select at the POS.
 
 ## Stored labels and display names
 
-New QR and NFC shares replace the final label segment with the full sharing
-fingerprint. `/health/current` becomes `health/<sharing fingerprint>`, and
-`health/prescriptions/current` becomes `health/prescriptions/<sharing fingerprint>`.
-The parent path is preserved; the sender's leaf name is not appended to it.
-Leading/trailing slashes are normalized away. A single-segment label such as
-`current` becomes just `<sharing fingerprint>`; use a parent path when the
-received record should be filed in a category. Re-sharing replaces the final
-digest instead of appending another. No existing records are renamed in bulk; legacy sender-prefixed
-paths remain unchanged until explicitly edited.
+The full stored label, including category paths and fingerprint, is limited to
+1,024 characters. Create, rename, QR import and NFC delivery enforce this bound;
+oversized labels are rejected, never silently truncated. Display shortening
+does not alter the stored label or fingerprint.
+
+Deploy the corresponding Acorn record-transfer limit update before relying on
+long-label sharing. Older Acorn versions reject transferred source labels over
+200 characters. Commit and publish the Acorn change, then refresh OakGate's
+`safebox-acorn` lock entry and rebuild; a local source test is not a deployed
+dependency update. Both sending and receiving homes need compatible versions.
+No database schema migration is required. Labels are metadata, but longer values
+still increase encrypted event and request sizes and remain subject to relay
+and transport limits.
+
+New QR and NFC shares preserve the full original label as the category path and
+append `<originator-handle>-<full-sharing-fingerprint>` as a new leaf:
+
+| Original label | Recipient label |
+| --- | --- |
+| `health` | `health/trbouma-<fingerprint>` |
+| `benefits` | `benefits/trbouma-<fingerprint>` |
+| `health/prescriptions` | `health/prescriptions/trbouma-<fingerprint>` |
+
+Leading/trailing slashes are normalized away. Re-sharing replaces a final legacy
+64-hex digest or recognized `<handle>-<64-hex-digest>` leaf, avoiding accumulated
+provenance folders. That reserved naming shape is a filing convention, not proof
+that the record was previously shared. Other names and intermediate path segments
+remain intact. Existing records are not renamed in bulk.
+
+Handles use Acorn's 1–64-character ASCII letters/digits/underscore/hyphen format,
+beginning with a letter or digit. Missing or invalid handles fall back to
+`sender-<first-12-public-key-hex-characters>` when available, otherwise
+`unknown-sender`. Untrusted handles cannot introduce path separators or markup.
+This is a descriptive sender hint, not a verified issuer identity. Handles do
+not enter the sharing fingerprint computation.
 
 The stored fingerprint is the full 64-character SHA-256 digest. Lists, headings
-and presentation selectors recognize complete hexadecimal path segments and show
-only the first eight characters in uppercase, matching the original-file
-fingerprint display (for example, `A1B2C3D4`). This is a
+and presentation selectors show a new leaf as `trbouma-A1B2C3D4`; legacy complete
+hexadecimal path segments still display as `A1B2C3D4`. Only the fingerprint is
+shortened, to its first eight characters in uppercase. This is a
 compact recognition aid, not a unique identifier or an integrity check.
 Two different full digests can have the same eight-character display. Full labels and opaque record IDs
 remain in storage, signed coordination and authorization. Editable label fields
 retain the full path so users can make an explicit naming choice.
+
+POS category matching remains path-based: `health` includes all nested health
+records; `health/prescriptions` includes that category's descendants, but not
+`health/prescriptions-other`. Both depths work immediately without parsing sender
+suffixes as category names. Existing selection limits and exact stored-label
+authorization remain unchanged.
 
 ## Three explicit fingerprints
 

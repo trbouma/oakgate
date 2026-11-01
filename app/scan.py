@@ -17,7 +17,7 @@ from app.record_routes import account
 from app.wallet_routes import checked_form
 from app.request_store import RequestStore
 from app.record_settings import RecordSettings
-from app.record_labels import suggested_record_label
+from app.record_labels import suggested_record_label, MAX_RECORD_LABEL_LENGTH
 from app.record_previews import _blob_preview_kind
 from app.gs1 import product_associations, product_media_type, retrieve_product_artifact
 from app.gs1_discovery import acquire_product, discover_product
@@ -146,15 +146,16 @@ async def scan(request: Request):
 @router.post('/account/scan/accept', include_in_schema=False)
 async def accept(request: Request):
     session, service, owner, material = await account(request)
-    form = await checked_form(request, session)
+    # URL-encoded Unicode labels can require up to 12 bytes per character.
+    form = await checked_form(request, session, max_bytes=16384)
     store = RequestStore(service.store)
     ident = str(form.get('ticket', ''))
     item = store.get(owner, ident)
     if item['purpose'] not in {'transfer', 'token'} or form.get('confirmed') != 'yes':
         raise HTTPException(400, 'Confirm the import first')
     label = str(form.get('label') or item.get('label') or '').strip()
-    if item['purpose'] == 'transfer' and (not label or len(label) > 200 or any(ord(c) < 32 for c in label)):
-        raise HTTPException(400, 'Choose a record label of 1–200 characters without control characters.')
+    if item['purpose'] == 'transfer' and (not label or len(label) > MAX_RECORD_LABEL_LENGTH or any(ord(c) < 32 for c in label)):
+        raise HTTPException(400, 'Choose a record label of 1–1024 characters without control characters.')
     try:
         lease = service.store.acquire(owner)
     except Busy:

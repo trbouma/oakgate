@@ -12,15 +12,30 @@ from app.wallets import AcornBackend, WalletInputError
 H='a'*64
 
 
-def test_sharing_preserves_categories_replaces_digest_and_ignores_sender():
-    assert suggested_record_label({'label':'/benefits/dental','sharing_fingerprint':H,'originator_handle':'tom'})=='benefits/'+H
-    assert fingerprint_label('benefits/dental/'+H, 'b'*64)=='benefits/dental/'+'b'*64
-    assert fingerprint_label(H,'b'*64)=='b'*64
-    with pytest.raises(ValueError):fingerprint_label('x'*140+'/leaf',H)
+@pytest.mark.parametrize('length', [256, 1024])
+def test_long_labels_keep_full_name_and_fingerprint(length):
+    label = 'x' * length
+    assert updated_record_label({'label': 'old'}, 'payload', explicit_label=label) == label
+    parent = 'x' * (length - 69)
+    result = fingerprint_label(parent, H, 'tom')
+    assert len(result) == length and result == parent + '/tom-' + H
+
+
+def test_label_over_limit_is_rejected_without_truncation():
+    with pytest.raises(ValueError, match='1024'):
+        updated_record_label({'label': 'old'}, 'payload', explicit_label='x' * 1025)
+
+
+
+def test_sharing_preserves_categories_and_adds_sender():
+    assert suggested_record_label({'label':'/benefits/dental','sharing_fingerprint':H,'originator_handle':'tom'})=='benefits/dental/tom-'+H
+    assert fingerprint_label('benefits/dental/'+H, 'b'*64, 'tom')=='benefits/dental/tom-'+'b'*64
+    assert fingerprint_label(H,'b'*64, 'tom')=='tom-'+'b'*64
+    with pytest.raises(ValueError):fingerprint_label('x'*960+'/leaf',H)
     with pytest.raises(ValueError):suggested_record_label({'label':'benefits'})
     assert display_record_label('/benefits/'+H)=='AAAAAAAA'
     assert display_record_label('benefits/dental',leaf=True)=='dental'
-    assert display_record_label('hello-'+H)=='hello-'+H
+    assert display_record_label('hello-'+H)=='hello-AAAAAAAA'
 
 
 def test_nested_requests_mix_regular_and_digest_records_without_changing_identity():
@@ -74,13 +89,16 @@ def test_recipient_edits_do_not_rewrite_sharing_provenance():
 
 
 @pytest.mark.parametrize('source,expected', [
-    ('/health/current', 'health/'+H),
-    ('/health/prescriptions/current/', 'health/prescriptions/'+H),
-    ('health/'+H, 'health/'+H),
-    ('current', H),
+    ('/health/current', 'health/current/tom-'+H),
+    ('/health/prescriptions/current/', 'health/prescriptions/current/tom-'+H),
+    ('health/'+H, 'health/tom-'+H),
+    ('current', 'current/tom-'+H),
+    ('health', 'health/tom-'+H),
+    ('benefits', 'benefits/tom-'+H),
+    ('health/prescriptions/alice-'+H, 'health/prescriptions/tom-'+H),
 ])
-def test_sharing_replaces_only_the_final_path_segment(source, expected):
-    assert suggested_record_label({'label':source, 'sharing_fingerprint':H}) == expected
+def test_sharing_appends_or_replaces_provenance_leaf(source, expected):
+    assert suggested_record_label({'label':source, 'sharing_fingerprint':H, 'originator_handle':'tom'}) == expected
 
 
 def test_sharing_label_matches_original_file_recognition_format():
@@ -89,3 +107,24 @@ def test_sharing_label_matches_original_file_recognition_format():
     assert display_record_label('/health/'+digest) == _blob_recognition_fingerprint(digest) == 'A1B2C3D4'
     assert display_record_label(digest.upper()) == 'A1B2C3D4'
     assert display_record_label('health/current') == 'health/current'
+
+
+def test_new_labels_match_top_level_and_nested_pos_categories():
+    rows = [{'label': suggested_record_label({'label': path, 'sharing_fingerprint': H,
+             'originator_handle': 'trbouma'}), 'ref': str(i)}
+            for i, path in enumerate(['health', 'benefits', 'health/prescriptions', 'health/prescriptions-other'])]
+    assert {r['ref'] for r in matching_records(rows, 'health')} == {'0', '2', '3'}
+    assert {r['ref'] for r in matching_records(rows, 'benefits')} == {'1'}
+    assert {r['ref'] for r in matching_records(rows, 'health/prescriptions')} == {'2'}
+    assert display_record_label(rows[2]['label']) == 'trbouma-AAAAAAAA'
+    assert choices(rows)[2]['label'] == rows[2]['label']
+
+
+def test_sender_fallback_and_hyphenated_handles():
+    detail = {'label': 'health', 'sharing_fingerprint': H, 'originator_handle': '../unsafe',
+              'originator_pubkey': 'b' * 64}
+    assert suggested_record_label(detail) == 'health/sender-' + 'b'*12 + '-' + H
+    detail.pop('originator_pubkey')
+    assert suggested_record_label(detail) == 'health/unknown-sender-' + H
+    detail['originator_handle'] = 'tom-bouma_2'
+    assert display_record_label(suggested_record_label(detail)) == 'tom-bouma_2-AAAAAAAA'
