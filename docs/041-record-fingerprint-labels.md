@@ -64,13 +64,15 @@ remain in storage, signed coordination and authorization. Editable label fields
 retain the full path so users can make an explicit naming choice.
 
 POS matching is case-insensitive and includes the exact requested label,
-root sharing records beginning with that path plus `-`, and child records
-beginning with that path plus `/`. Thus `health` selects both `health-trbouma-…`
-and `health/prescriptions-trbouma-…`, but not `healthcare-trbouma-…`.
-Request `health/prescriptions` to narrow selection to that category and its
-descendants. Slashes after the provenance suffix begins remain invalid for POS
-matching. Request-path hyphens are normalized to spaces too. Legacy child-folder
-labels are included without renaming them. The same rule applies to local and
+root sharing records beginning with that path plus `-`, and direct child record
+entries containing a hyphen suffix. With Record category `pass` and subcategory
+empty, this includes `pass`, `pass-trbouma-…`, `pass/trbouma-test1-…` and
+`pass/trbouma-test2-…`. It excludes a plain category label `pass/events`, deeper
+entries such as `pass/events/ticket-trbouma-…`, and unrelated `passport-…`.
+Select subcategory `events` to request `pass/events` and its direct records.
+The hyphen is a naming convention, not fingerprint or authority validation.
+Slashes after the provenance suffix begins remain invalid for POS matching.
+Request-path hyphens are normalized to spaces too. The same rule applies to local and
 cross-home POS approval. Selection limits and exact stored-label
 authorization remain unchanged. Generic editable labels remain supported; the
 normalization applies to generated sharing labels, not silent global renaming.

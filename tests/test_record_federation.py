@@ -13,10 +13,10 @@ from app.pos_records import operation, key, unseal, load
 def homes(federation, monkeypatch):
     f = federation
     w = f.issuer.app.state.wallets
-    w.records = AsyncMock(return_value=[{'label':'Benefits-Health','ref':'health'}, {'label':'Benefits/Dental','ref':'dental'}])
+    w.records = AsyncMock(return_value=[{'label':'Benefits-Health','ref':'health'}, {'label':'Benefits/Dental-sender','ref':'dental'}])
     w.record_action = AsyncMock(side_effect=lambda m, op, ref, *args: {'descriptor': ref})
     w.backend.inspect_scanned_record = AsyncMock(side_effect=lambda m, ref, p: {
-        'label':('Benefits/' if ref == 'dental' else 'Benefits-') + ref.title(), 'payload':ref, 'blob_data':None, 'expires_at':time.time()+120})
+        'label':('Benefits/Dental-sender' if ref == 'dental' else 'Benefits-Health'), 'payload':ref, 'blob_data':None, 'expires_at':time.time()+120})
     f.receipts = []
     monkeypatch.setattr('app.presentation_receipts.schedule_receipt', lambda *args: f.receipts.append(args))
     async def fetch(url, *, body=None):
@@ -46,7 +46,7 @@ def test_wallet_approval_selection_display_and_cancel(homes):
         assert 'https://merchant.example' in details['name']
         assert len(details['records']) == 2
         f.issuer.app.state.wallets.record_action.assert_not_awaited()
-        selected = next(r['id'] for r in details['records'] if r['label'] == 'Benefits/Dental')
+        selected = next(r['id'] for r in details['records'] if r['label'] == 'Benefits/Dental-sender')
         unselected = next(r['id'] for r in details['records'] if r['id'] != selected)
         await rf.wallet_action(f.issuer, 'alice', token, 'approve', [selected])
         with pytest.raises(ValueError):

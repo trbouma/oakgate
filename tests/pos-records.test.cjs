@@ -66,6 +66,19 @@ test('POS shows fingerprint only while requesting the exact approved record',asy
 });
 
 
+test('pass with empty subcategory presents root and direct record choices',async()=>{
+ const f=fixture(),calls=[];
+ const records=[{id:'root',label:'pass'},
+ {id:'one',label:'pass/trbouma-test1-'+'a'.repeat(64)},
+ {id:'two',label:'pass/trbouma-test2-'+'b'.repeat(64)}];
+ f.start(async(op,payload)=>{calls.push([op,payload]);return op==='record-start'?request:{state:'ready',records};});
+ f.el('record-type').value='pass';f.el('record-subcategory').value='';
+ await f.click('record-start');await Promise.resolve();
+ assert.equal(calls.find(c=>c[0]==='record-start')[1].label,'pass');
+ assert.equal(f.el('record-choice-wrap').hidden,false);
+ assert.deepEqual(f.el('record-choice').children.map(c=>c.textContent),['pass','trbouma-test1-AAAAAAAA','trbouma-test2-BBBBBBBB']);
+});
+
 test('parent dropdown supports optional nested subcategory without altering record identifiers',async()=>{
  const f=fixture(),calls=[];f.start(async(op,payload)=>{calls.push([op,payload]);return op==='record-start'?request:{state:'waiting'};});
  f.el('record-type').value='health';await f.click('record-start');

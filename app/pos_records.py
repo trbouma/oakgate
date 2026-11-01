@@ -106,13 +106,19 @@ def matches_category(label, category):
     # A provenance suffix cannot introduce another folder.
     if '-' in path and '/' in path.split('-', 1)[1]:
         return False
-    return path == category or path.startswith(category + '-') or path.startswith(category + '/')
+    if path == category or path.startswith(category + '-'):
+        return True
+    if path.startswith(category + '/'):
+        child = path[len(category) + 1:]
+        # Direct child records have a hyphen suffix; plain names are categories.
+        return '/' not in child and '-' in child and not child.startswith('-')
+    return False
 
 
 def matching_records(rows, category):
     category = category_path(category)
     def path(row): return row['label'].strip('/').casefold()
-    # Include root records and descendants, but not similarly prefixed categories.
+    # Include root and direct child record entries, not child category entries.
     matches = [row for row in rows if matches_category(row['label'], category)]
     if not matches or len(matches)>20 or len({path(r) for r in matches})!=len(matches):
         raise HTTPException(404, 'No unambiguous record selection is available (maximum 20 records).')
