@@ -2,6 +2,10 @@
 
 For the consolidated current setup, see [Keycloak operations and sign-in flows](028-keycloak-operations.md).
 
+For the implemented separation of browser sessions, Keycloak identity and Acorn
+custody, including comparison with Safebox-web, see
+[Session authentication and wallet custody](044-session-authentication-and-wallet-custody.md).
+
 Status: Draft proposal  
 Date: 2026-10-17
 
