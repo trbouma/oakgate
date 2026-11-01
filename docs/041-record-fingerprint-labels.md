@@ -63,13 +63,15 @@ Two different full digests can have the same eight-character display. Full label
 remain in storage, signed coordination and authorization. Editable label fields
 retain the full path so users can make an explicit naming choice.
 
-POS matching is case-insensitive and includes an exact legacy label or the
-requested path immediately followed by `-`, with no slash in the remaining
-suffix. `health` matches `health-trbouma-…`, not `health/prescriptions-trbouma-…`
-or `healthcare-trbouma-…`. Request `health/prescriptions` to select the nested
-category. Request-path hyphens are normalized to spaces too. Legacy child-folder
-labels are no longer returned by a broad parent request; rename/re-share them or
-request their exact category. Selection limits and exact stored-label
+POS matching is case-insensitive and includes the exact requested label,
+root sharing records beginning with that path plus `-`, and child records
+beginning with that path plus `/`. Thus `health` selects both `health-trbouma-…`
+and `health/prescriptions-trbouma-…`, but not `healthcare-trbouma-…`.
+Request `health/prescriptions` to narrow selection to that category and its
+descendants. Slashes after the provenance suffix begins remain invalid for POS
+matching. Request-path hyphens are normalized to spaces too. Legacy child-folder
+labels are included without renaming them. The same rule applies to local and
+cross-home POS approval. Selection limits and exact stored-label
 authorization remain unchanged. Generic editable labels remain supported; the
 normalization applies to generated sharing labels, not silent global renaming.
 

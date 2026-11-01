@@ -42,8 +42,8 @@ def test_nested_requests_mix_regular_and_digest_records_without_changing_identit
     rows=[{'label':'/Benefits/dental','ref':'1'}, {'label':'benefits-tom-'+H,'ref':'2'},
           {'label':'benefits/dental/'+H,'ref':'3'}, {'label':'benefitsPlus/'+H,'ref':'4'}]
     selected=matching_records(rows,'/BENEFITS')
-    assert {r['ref'] for r in selected}=={'2'}
-    assert {r['ref'] for r in matching_records(rows,'benefits/dental')}=={'1'}
+    assert {r['ref'] for r in selected}=={'1','2','3'}
+    assert {r['ref'] for r in matching_records(rows,'benefits/dental')}=={'1','3'}
     assert choices(selected)[0]['id']==selection_id(selected[0])
     assert all(any(c['label']==r['label'] for r in selected) for c in choices(selected))
     assert category_path('/health/prescriptions')=='health/prescriptions'
@@ -113,7 +113,7 @@ def test_new_labels_match_top_level_and_nested_pos_categories():
     rows = [{'label': suggested_record_label({'label': path, 'sharing_fingerprint': H,
              'originator_handle': 'trbouma'}), 'ref': str(i)}
             for i, path in enumerate(['health', 'benefits', 'health/prescriptions', 'health/prescriptions-other'])]
-    assert {r['ref'] for r in matching_records(rows, 'health')} == {'0'}
+    assert {r['ref'] for r in matching_records(rows, 'health')} == {'0', '2', '3'}
     assert {r['ref'] for r in matching_records(rows, 'benefits')} == {'1'}
     assert {r['ref'] for r in matching_records(rows, 'health/prescriptions')} == {'2'}
     assert display_record_label(rows[2]['label']) == 'prescriptions-trbouma-AAAAAAAA'
@@ -143,9 +143,9 @@ def test_path_hyphens_become_spaces_but_sender_hyphens_survive():
     assert category_path('health/prescription-record') == 'health/prescription record'
 
 
-def test_pos_does_not_include_descendants_or_slashes_after_suffix():
+def test_pos_includes_descendants_but_not_unrelated_prefixes_or_slashes_after_suffix():
     rows = [{'label': label, 'ref': str(i)} for i, label in enumerate([
         'health-trbouma-'+H, 'health/prescriptions-trbouma-'+H,
         'healthcare-trbouma-'+H, 'health-trbouma/hidden-'+H])]
-    assert [r['ref'] for r in matching_records(rows, 'health')] == ['0']
+    assert [r['ref'] for r in matching_records(rows, 'health')] == ['0', '1']
     assert [r['ref'] for r in matching_records(rows, 'health/prescriptions')] == ['1']

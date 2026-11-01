@@ -103,14 +103,16 @@ def category_path(value):
 
 def matches_category(label, category):
     path = label.strip('/').casefold()
-    return path == category or (path.startswith(category + '-') and '/' not in path[len(category) + 1:])
+    # A provenance suffix cannot introduce another folder.
+    if '-' in path and '/' in path.split('-', 1)[1]:
+        return False
+    return path == category or path.startswith(category + '-') or path.startswith(category + '/')
 
 
 def matching_records(rows, category):
     category = category_path(category)
     def path(row): return row['label'].strip('/').casefold()
-    # Exact legacy names remain selectable. Shared names must be at this depth,
-    # not descendants or similarly prefixed categories.
+    # Include root records and descendants, but not similarly prefixed categories.
     matches = [row for row in rows if matches_category(row['label'], category)]
     if not matches or len(matches)>20 or len({path(r) for r in matches})!=len(matches):
         raise HTTPException(404, 'No unambiguous record selection is available (maximum 20 records).')

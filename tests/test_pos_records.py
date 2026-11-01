@@ -243,7 +243,7 @@ def category_setup(env, monkeypatch):
     rows = [{'label': 'benefits', 'ref': 'general'},
             {'label': 'Benefits-dental-'+ 'a'*64, 'ref': 'dental'},
             {'label': 'benefits-health-'+ 'b'*64, 'ref': 'health'},
-            {'label': 'benefits/other', 'ref': 'outside'}]
+            {'label': 'benefitsplus/other', 'ref': 'outside'}]
     async def listing(material): return rows
     async def action(material, name, *args):
         calls.append((name, args))
