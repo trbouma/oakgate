@@ -53,6 +53,38 @@ def test_start_approve_present_and_replace(env,monkeypatch,requested,label):
     asyncio.run(run())
 
 
+@pytest.mark.parametrize('flow', ['nfc', 'qr'])
+def test_pass_direct_records_in_nfc_and_qr_selection(env, monkeypatch, flow):
+    request, _ = setup_records(env, monkeypatch, 'pass')
+    labels = ['pass', 'pass/booga1', 'pass/test1-trbouma', 'pass/events/label']
+    async def records(material):
+        return [{'label': label, 'ref': str(i)} for i, label in enumerate(labels)]
+    monkeypatch.setattr(request.app.state.wallets, 'records', records)
+    class Cards:
+        def balance_authority(self, *args, **kwargs):
+            return {'owner': 'owner', 'wallet_id': 'wallet'}
+    async def card_store(request): return Cards()
+    async def session(request): return {'csrf': 'token', 'user': {}}
+    monkeypatch.setattr('app.nfc_routes.card_store', card_store)
+    monkeypatch.setattr('app.pos_records.current_session', session)
+    monkeypatch.setattr('app.pos_records.identity_key', lambda user: 'owner')
+    async def run():
+        ident = (await call(env, 'record-start', {'label': 'pass'})).json()['request_id']
+        if flow == 'nfc':
+            result = await call(env, 'record-nfc', {'request_id': ident, 'card_payload': 'test-card'})
+        else:
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(request.app), base_url='https://oakgate.example') as client:
+                data = {'csrf': 'token', 'request_id': ident}
+                details = await client.post('/account/record-request/details', data=data)
+                assert {r['label'] for r in details.json()['records']} == set(labels[:3])
+                data['selected'] = json.dumps([r['id'] for r in details.json()['records']])
+                result = await client.post('/account/record-request/approve', data=data)
+        assert result.status_code == 200, result.text
+        status = await call(env, 'record-status', {'request_id': ident})
+        assert {r['label'] for r in status.json()['records']} == set(labels[:3])
+    asyncio.run(run())
+
+
 def test_scope_expiry_revoke_and_cross_terminal(env,monkeypatch):
     request,_=setup_records(env,monkeypatch)
     async def run():

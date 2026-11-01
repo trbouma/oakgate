@@ -65,9 +65,11 @@ retain the full path so users can make an explicit naming choice.
 
 POS matching is case-insensitive and includes the exact requested label,
 root sharing records beginning with that path plus `-`, and direct child record
-entries containing a hyphen suffix. With Record category `pass` and subcategory
+entries with or without a hyphen suffix. With Record category `pass` and subcategory
 empty, this includes `pass`, `pass-trbouma-…`, `pass/trbouma-test1-…` and
-`pass/trbouma-test2-…`. It excludes a plain category label `pass/events`, deeper
+`pass/trbouma-test2-…`, `pass/booga1` and `pass/test1-trbouma`.
+Only actual Acorn records are listed: a derived folder `pass/events` is not a
+record, but an actual record with that label is included. It excludes deeper
 entries such as `pass/events/ticket-trbouma-…`, and unrelated `passport-…`.
 Select subcategory `events` to request `pass/events` and its direct records.
 The hyphen is a naming convention, not fingerprint or authority validation.

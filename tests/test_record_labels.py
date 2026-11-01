@@ -42,8 +42,8 @@ def test_nested_requests_mix_regular_and_digest_records_without_changing_identit
     rows=[{'label':'/Benefits/dental','ref':'1'}, {'label':'benefits-tom-'+H,'ref':'2'},
           {'label':'benefits/dental/'+H,'ref':'3'}, {'label':'benefitsPlus/'+H,'ref':'4'}]
     selected=matching_records(rows,'/BENEFITS')
-    assert {r['ref'] for r in selected}=={'2'}
-    assert {r['ref'] for r in matching_records(rows,'benefits/dental')}=={'1'}
+    assert {r['ref'] for r in selected}=={'1','2'}
+    assert {r['ref'] for r in matching_records(rows,'benefits/dental')}=={'1','3'}
     assert choices(selected)[0]['id']==selection_id(selected[0])
     assert all(any(c['label']==r['label'] for r in selected) for c in choices(selected))
     assert category_path('/health/prescriptions')=='health/prescriptions'
@@ -156,5 +156,5 @@ def test_pass_root_and_direct_child_records_exclude_subcategories():
               'pass/trbouma-test2-'+'b'*64, 'pass/events',
               'pass/events/ticket-trbouma-'+H, 'passport-trbouma-'+H]
     rows = [{'label': label, 'ref': str(i)} for i, label in enumerate(labels)]
-    assert {r['ref'] for r in matching_records(rows, 'PASS')} == {'0', '1', '2', '3'}
+    assert {r['ref'] for r in matching_records(rows, 'PASS')} == {'0', '1', '2', '3', '4'}
     assert {r['ref'] for r in matching_records(rows, 'pass/events')} == {'4', '5'}
