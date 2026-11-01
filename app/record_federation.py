@@ -206,6 +206,8 @@ async def present(request, sender, origin, ident, data):
 
 
 async def execute(request, envelope, fetch=None):
+    from app.pos_records import matches_category
+    from app.record_labels import MAX_RECORD_LABEL_LENGTH
     if not pos_enabled():
         raise ValueError('POS disabled')
     fetch = fetch or transport
@@ -241,8 +243,8 @@ async def execute(request, envelope, fetch=None):
             for r in data['records']:
                 if (not isinstance(r, dict) or set(r) != {'id', 'label'} or not isinstance(r['id'], str)
                         or not re.fullmatch('[a-f0-9]{24}', r['id']) or r['id'] in seen
-                        or not isinstance(r['label'], str) or len(r['label']) > 512
-                        or not (r['label'].strip('/').casefold() == item['label'] or r['label'].strip('/').casefold().startswith(item['label'] + '/'))):
+                        or not isinstance(r['label'], str) or len(r['label']) > MAX_RECORD_LABEL_LENGTH
+                        or not matches_category(r['label'], item['label'])):
                     raise ValueError('Invalid approved record')
                 seen.add(r['id'])
             source = {'origin': origin, 'pin': sender, **data}

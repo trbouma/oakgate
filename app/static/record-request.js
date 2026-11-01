@@ -1,6 +1,6 @@
 'use strict';
 (() => {
- function recordLabel(value){const parts=value.replace(/^\/+|\/+$/g,'').split('/');const shared=parts.at(-1).match(/^([a-z0-9][a-z0-9_-]{0,63})-([a-f0-9]{64})$/i);if(shared)return shared[1]+'-'+shared[2].slice(0,8).toUpperCase();const fingerprint=[...parts].reverse().find(p=>/^[a-f0-9]{64}$/i.test(p));return fingerprint?fingerprint.slice(0,8).toUpperCase():parts.at(-1);}
+ function recordLabel(value){const parts=value.replace(/^\/+|\/+$/g,'').split('/');const shared=parts.at(-1).match(/^(.+)-([a-f0-9]{64})$/i);if(shared)return shared[1]+'-'+shared[2].slice(0,8).toUpperCase();const fingerprint=[...parts].reverse().find(p=>/^[a-f0-9]{64}$/i.test(p));return fingerprint?fingerprint.slice(0,8).toUpperCase():parts.at(-1);}
 
  const root=document.getElementById('record-request');if(!root)return;
  if(root.dataset.signedIn!=='yes'){document.getElementById('record-request-reload').onclick=()=>location.reload();return;}

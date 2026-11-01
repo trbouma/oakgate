@@ -13,10 +13,10 @@ from app.pos_records import operation, key, unseal, load
 def homes(federation, monkeypatch):
     f = federation
     w = f.issuer.app.state.wallets
-    w.records = AsyncMock(return_value=[{'label':'Benefits/Health','ref':'health'}, {'label':'Benefits/Dental','ref':'dental'}])
+    w.records = AsyncMock(return_value=[{'label':'Benefits-Health','ref':'health'}, {'label':'Benefits-Dental','ref':'dental'}])
     w.record_action = AsyncMock(side_effect=lambda m, op, ref, *args: {'descriptor': ref})
     w.backend.inspect_scanned_record = AsyncMock(side_effect=lambda m, ref, p: {
-        'label':'Benefits/' + ref.title(), 'payload':ref, 'blob_data':None, 'expires_at':time.time()+120})
+        'label':'Benefits-' + ref.title(), 'payload':ref, 'blob_data':None, 'expires_at':time.time()+120})
     f.receipts = []
     monkeypatch.setattr('app.presentation_receipts.schedule_receipt', lambda *args: f.receipts.append(args))
     async def fetch(url, *, body=None):
@@ -77,7 +77,7 @@ def test_owner_binding_replacement_and_single_record(homes):
         await operation(f.merchant,f.actor,'record-start',json.dumps({'label':'benefits'}))
         with pytest.raises(Exception):
             await rf.wallet_action(f.issuer,'alice',token,'approve',[d['records'][0]['id']])
-        f.issuer.app.state.wallets.records.return_value=[{'label':'Benefits/Health','ref':'health'}]
+        f.issuer.app.state.wallets.records.return_value=[{'label':'Benefits-Health','ref':'health'}]
         ident,token=await start(f)
         d=await rf.wallet_action(f.issuer,'alice',token,'details')
         assert len(d['records'])==1

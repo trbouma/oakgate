@@ -7,6 +7,15 @@ DIGEST = re.compile(r"[a-fA-F0-9]{64}")
 MAX_RECORD_LABEL_LENGTH = 1024
 HANDLE = re.compile(r'[A-Za-z0-9][A-Za-z0-9_-]{0,63}')
 SHARING_LEAF = re.compile(r'([A-Za-z0-9][A-Za-z0-9_-]{0,63})-([a-fA-F0-9]{64})')
+DISPLAY_SUFFIX = re.compile(r'(.+)-([a-fA-F0-9]{64})')
+
+
+def shared_category(label):
+    """Parse the reserved path-handle-digest shape; no slash after its suffix."""
+    path, sep, remainder = label.partition('-')
+    if sep and '/' not in remainder and SHARING_LEAF.fullmatch(remainder):
+        return path
+    return None
 
 
 def fingerprint_segment(label):
@@ -16,7 +25,7 @@ def fingerprint_segment(label):
 
 def display_record_label(label, leaf=False):
     name = str(label).strip('/').rsplit('/', 1)[-1]
-    shared = SHARING_LEAF.fullmatch(name)
+    shared = DISPLAY_SUFFIX.fullmatch(name)
     if shared:
         return shared[1] + '-' + shared[2][:8].upper()
     fingerprint = fingerprint_segment(label)
@@ -33,15 +42,21 @@ def content_fingerprint(payload, record_type='generic'):
 def fingerprint_label(label, fingerprint, sender='unknown-sender'):
     if not isinstance(fingerprint, str) or not DIGEST.fullmatch(fingerprint):
         raise ValueError('Record fingerprint requires the updated Acorn dependency')
-    parts = label.strip('/').split('/')
+    label = label.strip('/')
+    previous = shared_category(label)
+    parts = (previous if previous is not None else label).split('/')
     if any(not p or p in {'.', '..'} or any(ord(c)<32 for c in p) for p in parts):
         raise ValueError('Choose a valid record category path')
     if not HANDLE.fullmatch(sender):
         raise ValueError('Invalid sender label')
     # Replace only a recognized provenance leaf, never a meaningful category.
-    if DIGEST.fullmatch(parts[-1]) or SHARING_LEAF.fullmatch(parts[-1]):
+    if previous is None and (DIGEST.fullmatch(parts[-1]) or SHARING_LEAF.fullmatch(parts[-1])):
         parts.pop()
-    result = '/'.join([*parts, sender + '-' + fingerprint.lower()])
+    # Source labels stay unchanged. Only the recipient's category is normalized.
+    parts = [part.replace('-', ' ').strip() for part in parts]
+    if not parts or any(not p or p in {'.', '..'} for p in parts):
+        raise ValueError('Choose a category path before sharing this record')
+    result = '/'.join(parts) + '-' + sender + '-' + fingerprint.lower()
     if len(result) > MAX_RECORD_LABEL_LENGTH:
         raise ValueError('The category path is too long for a fingerprint label')
     return result

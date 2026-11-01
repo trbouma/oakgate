@@ -21,20 +21,31 @@ No database schema migration is required. Labels are metadata, but longer values
 still increase encrypted event and request sizes and remain subject to relay
 and transport limits.
 
-New QR and NFC shares preserve the full original label as the category path and
-append `<originator-handle>-<full-sharing-fingerprint>` as a new leaf:
+New QR and NFC shares append `-<originator-handle>-<full-sharing-fingerprint>`
+to the original label's leaf, without creating another folder. Hyphens in the
+original category path become spaces; source records remain unchanged:
 
 | Original label | Recipient label |
 | --- | --- |
-| `health` | `health/trbouma-<fingerprint>` |
-| `benefits` | `benefits/trbouma-<fingerprint>` |
-| `health/prescriptions` | `health/prescriptions/trbouma-<fingerprint>` |
+| `health` | `health-trbouma-<fingerprint>` |
+| `benefits` | `benefits-trbouma-<fingerprint>` |
+| `health/prescriptions` | `health/prescriptions-trbouma-<fingerprint>` |
+| `health-care/prescription-record` | `health care/prescription record-trbouma-<fingerprint>` |
 
-Leading/trailing slashes are normalized away. Re-sharing replaces a final legacy
-64-hex digest or recognized `<handle>-<64-hex-digest>` leaf, avoiding accumulated
-provenance folders. That reserved naming shape is a filing convention, not proof
-that the record was previously shared. Other names and intermediate path segments
-remain intact. Existing records are not renamed in bulk.
+Leading/trailing slashes and segment-edge whitespace are normalized away.
+In the new convention the first hyphen begins provenance; the last hyphen
+separates the full digest. Handles may contain hyphens, but the suffix cannot
+contain slashes. Re-sharing replaces a recognized suffix. Legacy digest-only or
+simple handle/digest leaves are removed before applying the new suffix; a
+digest-only label without a remaining category must be renamed before sharing.
+Reserved naming shapes are filing conventions, not proof of provenance. Ambiguous
+legacy names should be explicitly renamed before re-sharing. Existing stored
+records are not renamed in bulk.
+
+Hyphen normalization can map two original names to the same category (for example
+`health-care` and `health care`). Existing destination-label collision checks
+still reject overwrites. QR users can review/edit the suggested label; NFC senders
+review the destination label before confirming delivery.
 
 Handles use Acorn's 1–64-character ASCII letters/digits/underscore/hyphen format,
 beginning with a letter or digit. Missing or invalid handles fall back to
@@ -44,7 +55,7 @@ This is a descriptive sender hint, not a verified issuer identity. Handles do
 not enter the sharing fingerprint computation.
 
 The stored fingerprint is the full 64-character SHA-256 digest. Lists, headings
-and presentation selectors show a new leaf as `trbouma-A1B2C3D4`; legacy complete
+and presentation selectors show a new leaf as `prescriptions-trbouma-A1B2C3D4`; legacy complete
 hexadecimal path segments still display as `A1B2C3D4`. Only the fingerprint is
 shortened, to its first eight characters in uppercase. This is a
 compact recognition aid, not a unique identifier or an integrity check.
@@ -52,11 +63,15 @@ Two different full digests can have the same eight-character display. Full label
 remain in storage, signed coordination and authorization. Editable label fields
 retain the full path so users can make an explicit naming choice.
 
-POS category matching remains path-based: `health` includes all nested health
-records; `health/prescriptions` includes that category's descendants, but not
-`health/prescriptions-other`. Both depths work immediately without parsing sender
-suffixes as category names. Existing selection limits and exact stored-label
-authorization remain unchanged.
+POS matching is case-insensitive and includes an exact legacy label or the
+requested path immediately followed by `-`, with no slash in the remaining
+suffix. `health` matches `health-trbouma-…`, not `health/prescriptions-trbouma-…`
+or `healthcare-trbouma-…`. Request `health/prescriptions` to select the nested
+category. Request-path hyphens are normalized to spaces too. Legacy child-folder
+labels are no longer returned by a broad parent request; rename/re-share them or
+request their exact category. Selection limits and exact stored-label
+authorization remain unchanged. Generic editable labels remain supported; the
+normalization applies to generated sharing labels, not silent global renaming.
 
 ## Three explicit fingerprints
 

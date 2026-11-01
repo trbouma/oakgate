@@ -93,7 +93,7 @@ def selection_id(row):
 def category_path(value):
     if not isinstance(value, str):
         raise ValueError('Invalid record category')
-    value = value.strip().strip('/').casefold()
+    value = value.strip().strip('/').casefold().replace('-', ' ')
     parts = value.split('/')
     if (len(value)>200 or parts[0] not in LABELS
             or any(not p or p in {'.','..'} or any(ord(c)<32 for c in p) for p in parts)):
@@ -101,10 +101,17 @@ def category_path(value):
     return value
 
 
+def matches_category(label, category):
+    path = label.strip('/').casefold()
+    return path == category or (path.startswith(category + '-') and '/' not in path[len(category) + 1:])
+
+
 def matching_records(rows, category):
     category = category_path(category)
     def path(row): return row['label'].strip('/').casefold()
-    matches = [row for row in rows if path(row) == category or path(row).startswith(category + '/')]
+    # Exact legacy names remain selectable. Shared names must be at this depth,
+    # not descendants or similarly prefixed categories.
+    matches = [row for row in rows if matches_category(row['label'], category)]
     if not matches or len(matches)>20 or len({path(r) for r in matches})!=len(matches):
         raise HTTPException(404, 'No unambiguous record selection is available (maximum 20 records).')
     return sorted(matches, key=path)

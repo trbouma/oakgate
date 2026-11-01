@@ -18,7 +18,7 @@ def test_long_labels_keep_full_name_and_fingerprint(length):
     assert updated_record_label({'label': 'old'}, 'payload', explicit_label=label) == label
     parent = 'x' * (length - 69)
     result = fingerprint_label(parent, H, 'tom')
-    assert len(result) == length and result == parent + '/tom-' + H
+    assert len(result) == length and result == parent + '-tom-' + H
 
 
 def test_label_over_limit_is_rejected_without_truncation():
@@ -28,9 +28,9 @@ def test_label_over_limit_is_rejected_without_truncation():
 
 
 def test_sharing_preserves_categories_and_adds_sender():
-    assert suggested_record_label({'label':'/benefits/dental','sharing_fingerprint':H,'originator_handle':'tom'})=='benefits/dental/tom-'+H
-    assert fingerprint_label('benefits/dental/'+H, 'b'*64, 'tom')=='benefits/dental/tom-'+'b'*64
-    assert fingerprint_label(H,'b'*64, 'tom')=='tom-'+'b'*64
+    assert suggested_record_label({'label':'/benefits/dental','sharing_fingerprint':H,'originator_handle':'tom'})=='benefits/dental-tom-'+H
+    assert fingerprint_label('benefits/dental/'+H, 'b'*64, 'tom')=='benefits/dental-tom-'+'b'*64
+    with pytest.raises(ValueError): fingerprint_label(H,'b'*64, 'tom')
     with pytest.raises(ValueError):fingerprint_label('x'*960+'/leaf',H)
     with pytest.raises(ValueError):suggested_record_label({'label':'benefits'})
     assert display_record_label('/benefits/'+H)=='AAAAAAAA'
@@ -39,11 +39,11 @@ def test_sharing_preserves_categories_and_adds_sender():
 
 
 def test_nested_requests_mix_regular_and_digest_records_without_changing_identity():
-    rows=[{'label':'/Benefits/dental','ref':'1'}, {'label':'benefits/'+H,'ref':'2'},
+    rows=[{'label':'/Benefits/dental','ref':'1'}, {'label':'benefits-tom-'+H,'ref':'2'},
           {'label':'benefits/dental/'+H,'ref':'3'}, {'label':'benefitsPlus/'+H,'ref':'4'}]
     selected=matching_records(rows,'/BENEFITS')
-    assert {r['ref'] for r in selected}=={'1','2','3'}
-    assert {r['ref'] for r in matching_records(rows,'benefits/dental')}=={'1','3'}
+    assert {r['ref'] for r in selected}=={'2'}
+    assert {r['ref'] for r in matching_records(rows,'benefits/dental')}=={'1'}
     assert choices(selected)[0]['id']==selection_id(selected[0])
     assert all(any(c['label']==r['label'] for r in selected) for c in choices(selected))
     assert category_path('/health/prescriptions')=='health/prescriptions'
@@ -89,13 +89,13 @@ def test_recipient_edits_do_not_rewrite_sharing_provenance():
 
 
 @pytest.mark.parametrize('source,expected', [
-    ('/health/current', 'health/current/tom-'+H),
-    ('/health/prescriptions/current/', 'health/prescriptions/current/tom-'+H),
-    ('health/'+H, 'health/tom-'+H),
-    ('current', 'current/tom-'+H),
-    ('health', 'health/tom-'+H),
-    ('benefits', 'benefits/tom-'+H),
-    ('health/prescriptions/alice-'+H, 'health/prescriptions/tom-'+H),
+    ('/health/current', 'health/current-tom-'+H),
+    ('/health/prescriptions/current/', 'health/prescriptions/current-tom-'+H),
+    ('health/'+H, 'health-tom-'+H),
+    ('current', 'current-tom-'+H),
+    ('health', 'health-tom-'+H),
+    ('benefits', 'benefits-tom-'+H),
+    ('health/prescriptions/alice-'+H, 'health/prescriptions-tom-'+H),
 ])
 def test_sharing_appends_or_replaces_provenance_leaf(source, expected):
     assert suggested_record_label({'label':source, 'sharing_fingerprint':H, 'originator_handle':'tom'}) == expected
@@ -113,18 +113,39 @@ def test_new_labels_match_top_level_and_nested_pos_categories():
     rows = [{'label': suggested_record_label({'label': path, 'sharing_fingerprint': H,
              'originator_handle': 'trbouma'}), 'ref': str(i)}
             for i, path in enumerate(['health', 'benefits', 'health/prescriptions', 'health/prescriptions-other'])]
-    assert {r['ref'] for r in matching_records(rows, 'health')} == {'0', '2', '3'}
+    assert {r['ref'] for r in matching_records(rows, 'health')} == {'0'}
     assert {r['ref'] for r in matching_records(rows, 'benefits')} == {'1'}
     assert {r['ref'] for r in matching_records(rows, 'health/prescriptions')} == {'2'}
-    assert display_record_label(rows[2]['label']) == 'trbouma-AAAAAAAA'
+    assert display_record_label(rows[2]['label']) == 'prescriptions-trbouma-AAAAAAAA'
     assert choices(rows)[2]['label'] == rows[2]['label']
 
 
 def test_sender_fallback_and_hyphenated_handles():
     detail = {'label': 'health', 'sharing_fingerprint': H, 'originator_handle': '../unsafe',
               'originator_pubkey': 'b' * 64}
-    assert suggested_record_label(detail) == 'health/sender-' + 'b'*12 + '-' + H
+    assert suggested_record_label(detail) == 'health-sender-' + 'b'*12 + '-' + H
     detail.pop('originator_pubkey')
-    assert suggested_record_label(detail) == 'health/unknown-sender-' + H
+    assert suggested_record_label(detail) == 'health-unknown-sender-' + H
     detail['originator_handle'] = 'tom-bouma_2'
-    assert display_record_label(suggested_record_label(detail)) == 'tom-bouma_2-AAAAAAAA'
+    assert display_record_label(suggested_record_label(detail)) == 'health-tom-bouma_2-AAAAAAAA'
+
+
+def test_path_hyphens_become_spaces_but_sender_hyphens_survive():
+    detail = {'label': 'health-care/prescription-record', 'sharing_fingerprint': H,
+              'originator_handle': 'tom-bouma'}
+    label = suggested_record_label(detail)
+    assert label == 'health care/prescription record-tom-bouma-' + H
+    assert detail['label'] == 'health-care/prescription-record'
+    assert '/' not in label.split('-', 1)[1]
+    assert display_record_label(label) == 'prescription record-tom-bouma-AAAAAAAA'
+    detail.update(label=label, originator_handle='alice', sharing_fingerprint='b'*64)
+    assert suggested_record_label(detail) == 'health care/prescription record-alice-' + 'b'*64
+    assert category_path('health/prescription-record') == 'health/prescription record'
+
+
+def test_pos_does_not_include_descendants_or_slashes_after_suffix():
+    rows = [{'label': label, 'ref': str(i)} for i, label in enumerate([
+        'health-trbouma-'+H, 'health/prescriptions-trbouma-'+H,
+        'healthcare-trbouma-'+H, 'health-trbouma/hidden-'+H])]
+    assert [r['ref'] for r in matching_records(rows, 'health')] == ['0']
+    assert [r['ref'] for r in matching_records(rows, 'health/prescriptions')] == ['1']

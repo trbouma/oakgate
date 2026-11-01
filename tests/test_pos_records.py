@@ -241,9 +241,9 @@ def test_preview_rejection_distinguishes_size_and_format():
 def category_setup(env, monkeypatch):
     request, calls = setup_records(env, monkeypatch)
     rows = [{'label': 'benefits', 'ref': 'general'},
-            {'label': 'Benefits/Dental', 'ref': 'dental'},
-            {'label': 'benefits/health', 'ref': 'health'},
-            {'label': 'benefits-other', 'ref': 'outside'}]
+            {'label': 'Benefits-dental-'+ 'a'*64, 'ref': 'dental'},
+            {'label': 'benefits-health-'+ 'b'*64, 'ref': 'health'},
+            {'label': 'benefits/other', 'ref': 'outside'}]
     async def listing(material): return rows
     async def action(material, name, *args):
         calls.append((name, args))
@@ -308,7 +308,7 @@ def test_wallet_category_approves_only_selected_records(env, monkeypatch):
             assert (await call(env, 'record-present', {'request_id': ident, 'record_id': selection_id(rows[2])})).status_code == 400
             # Exactly one approved record needs no POS selection parameter.
             shown = await call(env, 'record-present', {'request_id': ident})
-            assert shown.json()['label'] == 'Benefits/Dental'
+            assert shown.json()['label'] == rows[1]['label']
     asyncio.run(run())
 
 
@@ -339,6 +339,6 @@ def test_category_selection_rejects_changed_reference_and_expired_request(env, m
 
 def test_category_bound_and_case_ambiguity():
     from app.pos_records import matching_records
-    for rows in ([{'label': 'benefits/dental', 'ref': 'a'}, {'label': 'BENEFITS/DENTAL', 'ref': 'b'}],
-                 [{'label': f'benefits/{i}', 'ref': str(i)} for i in range(21)]):
+    for rows in ([{'label': 'benefits-dental', 'ref': 'a'}, {'label': 'BENEFITS-DENTAL', 'ref': 'b'}],
+                 [{'label': f'benefits-{i}', 'ref': str(i)} for i in range(21)]):
         with pytest.raises(HTTPException): matching_records(rows, 'benefits')
