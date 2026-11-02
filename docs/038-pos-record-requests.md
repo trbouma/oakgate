@@ -304,3 +304,14 @@ to 64 MiB, 2,000 entries, 1 MiB per parsed resource, 200 chapters and 500,000 te
 characters. Plain XML document-type declarations are accepted without loading external DTDs;
 internal DTD subsets and custom entity definitions are rejected. Rebuild both app and POS when deploying this
 viewer update. No user-key operations or Acorn storage formats change.
+
+### Anchor and witness details
+
+The POS presents separate collapsed **Anchor record found** and **Witness record
+found** panes, matching the wallet check screen. Each anchor remains associated
+with its own witness receipts. Incomplete witness discovery is labelled
+**Witness lookup incomplete**, not absence of witnesses. Expand a pane for
+signer information, statements, observation times and signed evidence. Witness
+receipts do not change the Core Record Ruleset result or establish witness
+authority. Starting or closing a request clears these details with the record.
+Deploy both the app and POS to carry the evidence and display the new panes.

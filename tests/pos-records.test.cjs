@@ -89,3 +89,20 @@ test('parent dropdown supports optional nested subcategory without altering reco
  assert.equal(calls.length,before);
  f.el('record-subcategory').value='prescriptions//current';await f.click('record-start');assert.equal(calls.length,before);
 });
+
+ test('anchor and witness panes preserve text, distinguish incomplete lookup, and reset',async()=>{
+ const f=fixture();
+ f.start(async op=>op==='record-start'?request:op==='record-status'?{state:'ready'}:{label:'health',contents:'',record_findings:[
+ {anchor:{author:'npub-test',content:'<script>statement</script>'},signer_profile:{name:'Clinic'},witnesses:[{signer_npub:'npub-witness',body:{clock_uncertainty_ms:0},sources:['wss://example.test']}],witness_warnings:[]},
+ {anchor:{author:'npub-other'},witness_warnings:['<b>Lookup incomplete</b>']} ]});
+ await f.click('record-start');await f.click('record-present');
+ const panes=f.el('record-findings').children;
+ assert.equal(panes.length,4);
+ assert.equal(panes[0].children[0].textContent,'Anchor record found');
+ assert.equal(panes[0].children[2].textContent,'<script>statement</script>');
+ assert.equal(panes[2].children[0].textContent,'Witness record found (1)');
+ assert.equal(panes[3].children[0].textContent,'Witness lookup incomplete (0)');
+ assert.equal(panes[3].children[1].textContent,'<b>Lookup incomplete</b>');
+ assert.ok(panes.every(p=>!p.open));
+ await f.click('record-cancel');assert.equal(f.el('record-findings').children.length,0);
+ });

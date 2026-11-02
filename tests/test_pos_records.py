@@ -229,7 +229,8 @@ def test_present_includes_anchor_profile_and_statement(env, monkeypatch, media):
                 'blob_type': media, 'expires_at': 9999999999}
     async def history(*args, **kwargs):
         return {'verification': {'aggregate_state': 'anchored'}, 'candidate_graphs': [
-            {'signer_profile': {'display_name': 'Community Centre', 'name': 'centre'},
+            {'witnesses': [{'id': 'receipt', 'signer_npub': 'npub-witness'}], 'witness_warnings': ['Lookup incomplete'],
+             'signer_profile': {'display_name': 'Community Centre', 'name': 'centre'},
              'anchor': {'author': 'npub-example', 'content': 'Membership confirmed.', 'created_at': '2026-10-27 15:44 UTC'}},
             {'signer_profile': None,
              'anchor': {'author': 'npub-fallback', 'content': 'Second statement.'}},
@@ -242,6 +243,8 @@ def test_present_includes_anchor_profile_and_statement(env, monkeypatch, media):
         response = await call(env, 'record-present', {'request_id': ident})
         assert response.status_code == 200
         assert response.json()['attachment']['type'] == media.split(';')[0]
+        assert response.json()['record_findings'][0]['witnesses'][0]['id'] == 'receipt'
+        assert response.json()['record_findings'][0]['witness_warnings'] == ['Lookup incomplete']
         assert response.json()['publishers'] == [
             {'name': 'Community Centre', 'statement': 'Membership confirmed.',
              'signer': 'npub-example', 'anchored_at': '2026-10-27 15:44 UTC',

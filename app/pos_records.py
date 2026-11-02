@@ -419,7 +419,7 @@ async def render_detail(detail, record_id, expires):
         raise HTTPException(413)
     result = {'state': 'displayed', 'record_id': record_id, 'label': detail['label'], 'contents': text,
               'expires': min(expires, detail['expires_at']), 'attachment': None,
-              'attachment_note': '', 'verification': None, 'publishers': []}
+              'attachment_note': '', 'verification': None, 'publishers': [], 'record_findings': []}
     blob = detail.get('blob_data')
     if blob:
         result['attachment'], result['attachment_note'] = preview_attachment(blob, detail.get('blob_type'))
@@ -433,6 +433,11 @@ async def render_detail(detail, record_id, expires):
         except Exception:
             history = unavailable_openetr_history(digest, config.openetr_relays)
         result['verification'] = history.get('verification')
+        result['record_findings'] = [
+            {key: graph.get(key) for key in
+             ('anchor', 'signer_profile', 'witnesses', 'witness_warnings')}
+            for graph in history.get('candidate_graphs', [])
+        ]
         result['publishers'] = [
             {
                 'name': (graph.get('signer_profile') or {}).get('display_name')

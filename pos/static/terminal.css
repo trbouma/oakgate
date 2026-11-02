@@ -46,3 +46,7 @@ body{padding:14px 16px}main{width:min(100%,540px)}header{margin-bottom:12px}sect
 .epub-preview { min-width:0; overflow-wrap:anywhere; }
 .epub-preview summary { padding:14px 8px; cursor:pointer; font-weight:600; }
 .epub-text { white-space:pre-wrap; line-height:1.65; max-height:65vh; overflow:auto; padding:12px; }
+
+.record-finding-pane { margin:12px 0; padding:12px; border:1px solid currentColor; border-radius:12px; overflow-wrap:anywhere; }
+.record-finding-pane summary { padding:12px 0; font-weight:700; cursor:pointer; }
+.record-finding-pane pre { white-space:pre-wrap; overflow-wrap:anywhere; }

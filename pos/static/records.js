@@ -12,7 +12,7 @@
   window.oakgatePOSPDF?.clear();
   $('record-epub').replaceChildren();$('record-epub').hidden=true;
   if(imageURL)URL.revokeObjectURL(imageURL);imageURL=null;
-  $('record-anchor-summary').replaceChildren();$('record-verification-details').open=false;
+  $('record-findings').replaceChildren();$('record-anchor-summary').replaceChildren();$('record-verification-details').open=false;
   $('record-result').hidden=true;$('record-image').hidden=true;$('record-image').removeAttribute('src');
   ['record-label','record-contents','record-verification','record-verification-summary','record-publishers','record-attachment-note'].forEach(name=>$(name).textContent='');
  }
@@ -103,6 +103,45 @@ stopNFC();clearTimeout(timer);$('record-present').hidden=false;$('record-present
     heading.append(check, name);block.append(heading, statement);$('record-anchor-summary').append(block);
    }
    if(!publishers.length)$('record-anchor-summary').textContent=$('record-verification-summary').textContent;
+   const pane=(label)=>{
+    const element=document.createElement('details'),summary=document.createElement('summary');
+    element.className='record-finding-pane';summary.textContent=label;element.append(summary);
+    $('record-findings').append(element);return element;
+   };
+   const paragraph=(parent,text)=>{const p=document.createElement('p');p.textContent=text;parent.append(p);};
+   const evidence=(parent,label,value)=>{
+    const section=document.createElement('details'),summary=document.createElement('summary'),pre=document.createElement('pre');
+    summary.textContent=label;pre.textContent=JSON.stringify(value,null,2);section.append(summary,pre);parent.append(section);
+   };
+   for(const graph of result.record_findings || []){
+    const anchor=graph.anchor || {},profile=graph.signer_profile || {};
+    const section=pane('Anchor record found');
+    paragraph(section,profile.display_name || profile.name || shortKey(anchor.author) || 'Unknown signer');
+    if(anchor.content)paragraph(section,anchor.content);
+    paragraph(section,`Anchor signer: ${shortKey(anchor.author) || ''}`);
+    paragraph(section,`Anchored at: ${anchor.created_at || ''}`);
+    evidence(section,'Anchor and signer details',{anchor,profile});
+   }
+   for(const graph of result.record_findings || []){
+    const witnesses=graph.witnesses || [],warnings=graph.witness_warnings || [];
+    if(!witnesses.length&&!warnings.length)continue;
+    const section=pane(`${witnesses.length?'Witness record found':'Witness lookup incomplete'} (${witnesses.length})`);
+    if(witnesses.length)paragraph(section,'Receipt signatures and binding to the exact signed event have been verified. Witness authority, commissioning, authorization and clock accuracy have not been independently assessed. These receipts do not change the Core Record Ruleset result.');
+    for(const warning of warnings)paragraph(section,warning);
+    for(const witness of witnesses){
+     const body=witness.body || {};
+     paragraph(section,`Witness signer: ${shortKey(witness.signer_npub) || ''}`);
+     paragraph(section,`Claimed observation time: ${witness.observed_at_ms_display || ''}`);
+     paragraph(section,`Claimed issuance time: ${witness.issued_at_ms_display || ''}`);
+     paragraph(section,`Observation mode: ${body.observation_mode || ''}`);
+     paragraph(section,`Clock basis: ${body.clock_basis || 'Not specified'}`);
+     paragraph(section,`Claimed clock uncertainty: ${body.clock_uncertainty_ms == null?'Unspecified':body.clock_uncertainty_ms+' ms'}`);
+     paragraph(section,`Retrieved from: ${(witness.sources || []).join(', ')}`);
+     evidence(section,'Witness details and signed event',witness);
+    }
+    paragraph(section,'Discovery is limited to the configured OpenETR relays and bounded queries. Missing receipts do not prove that no witness exists; multiple copies of one receipt are not independent witnesses.');
+   }
+
    $('record-publishers').textContent=publishers.map(p=>{
     const lines=['Anchor signer', shortKey(p.name)];
     if(p.signer && p.signer!==p.name)lines.push(shortKey(p.signer));
