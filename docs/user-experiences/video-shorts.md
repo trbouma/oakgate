@@ -13,6 +13,7 @@ See OakGate in action through short demonstrations of the wallet and POS termina
 2. [Accept Community Credits at a point of sale](#point-of-sale-with-clear-payments)
 3. [Verify a record and read the certifier’s statement](#how-a-record-can-be-verified)
 4. [Request and check records at a point of sale](#point-of-sale-check-records)
+5. [Issue and verify a health record using an NFC card](#issuing-and-verifying-a-health-record-using-a-nfc-card)
 
 ## Using a Card to Present a Proof and Make a Payment
 
@@ -74,6 +75,22 @@ presentation, with OpenETR anchor and publisher information when available.
 
 Explore the story in [From a wallet to a card](card-pairing-and-payments.md), or
 read about [POS record requests](../038-pos-record-requests.md).
+
+## Issuing and Verifying a Health Record Using A NFC Card
+
+<div class="oakgate-video-wide">
+  <iframe src="https://www.youtube-nocookie.com/embed/6zE7oMwtULE"
+    title="Issuing and Verifying a Health Record Using A NFC Card"
+    width="640" height="360" loading="lazy"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+</div>
+
+[Watch on YouTube](https://www.youtube.com/watch?v=6zE7oMwtULE){ .md-button }
+
+Explore issuing and verifying a health record using an NFC card. For more on
+these flows, see [card-directed record sharing](../040-nfc-record-sharing.md)
+and [POS record requests](../038-pos-record-requests.md).
 
 <!-- Add more shorts below: a heading, an oakgate-video-short embed with a unique
      video ID and descriptive title, a direct YouTube link, and a short caption. -->
