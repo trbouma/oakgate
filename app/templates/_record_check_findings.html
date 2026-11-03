@@ -3,7 +3,16 @@
 <details class="record-finding-pane">
   <summary><strong>{{ _('Anchor record found') }}</strong>{% if history.candidate_graphs|length > 1 %} — {{ _('Candidate') }} {{ loop.index }}{% endif %}</summary>
   <div class="record-finding-content">
-    {% with graph_number=loop.index, hide_witnesses=true %}{% include '_openetr_candidate_graph.html' %}{% endwith %}
+    {% set profile = graph.signer_profile or {} %}
+    {% set signer = profile.display_name or profile.name or graph.anchor.author %}
+    <p><strong>{% if signer and signer.startswith('npub1') and signer|length > 16 %}{{ signer[:9] }}...{{ signer[-4:] }}{% else %}{{ signer }}{% endif %}</strong></p>
+    {% if graph.anchor.content %}<p class="record-anchor-statement">{{ graph.anchor.content }}</p>{% endif %}
+    <p>{{ _('Signer Public Key') }}: {% set key = graph.anchor.author %}{% if key and key.startswith('npub1') and key|length > 16 %}{{ key[:9] }}...{{ key[-4:] }}{% else %}{{ key }}{% endif %}</p>
+    <p>{{ _('Signer-declared anchor time') }}: {{ graph.anchor.created_at }}</p>
+    <details>
+      <summary>{{ _('Anchor and signer details') }}</summary>
+      {% with graph_number=loop.index, hide_witnesses=true %}{% include '_openetr_candidate_graph.html' %}{% endwith %}
+    </details>
   </div>
 </details>
 {% endfor %}

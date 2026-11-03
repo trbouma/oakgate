@@ -6,6 +6,15 @@
 {% for warning in graph.witness_warnings %}<p class="openetr-warning">{{ _(warning) }}</p>{% endfor %}
 {% for witness in graph.witnesses %}
 <article class="openetr-event">
+{% set key = witness.signer_npub %}
+<p>{{ _('Witness signer') }}: {% if key and key.startswith('npub1') and key|length > 16 %}{{ key[:9] }}...{{ key[-4:] }}{% else %}{{ key }}{% endif %}</p>
+<p>{{ _('Claimed observation time') }}: {{ witness.observed_at_ms_display }}</p>
+<p>{{ _('Claimed issuance time') }}: {{ witness.issued_at_ms_display }}</p>
+<p>{{ _('Observation mode') }}: {{ witness.body.observation_mode }}</p>
+<p>{{ _('Clock basis') }}: {{ witness.body.clock_basis|default('Not specified') }}</p>
+<p>{{ _('Claimed clock uncertainty') }}: {% if witness.body.clock_uncertainty_ms is defined and witness.body.clock_uncertainty_ms is not none %}{{ witness.body.clock_uncertainty_ms }} ms{% else %}{{ _('Unspecified') }}{% endif %}</p>
+<p>{{ _('Retrieved from') }}: {{ witness.sources|join(', ') }}</p>
+<details><summary>{{ _('Witness details and signed event') }}</summary>
 <dl class="openetr-event-fields">
 <dt>{{ _("Witness signer") }}</dt><dd><code>{{ witness.signer_npub }}</code></dd>
 <dt>{{ _("Observed event") }}</dt><dd><code>{{ witness.body.event_id }}</code></dd>
@@ -20,6 +29,7 @@
 <dt>{{ _("Retrieved from") }}</dt><dd>{{ witness.sources|join(', ') }}</dd>
 </dl>
 <details><summary>{{ _("Signed witness event") }}</summary><pre>{{ witness.event|tojson(indent=2) }}</pre></details>
+</details>
 </article>
 {% endfor %}
 <p>{{ _("Discovery is limited to the configured OpenETR relays and bounded queries. Missing receipts do not prove that no witness exists; multiple copies of one receipt are not independent witnesses.") }}</p>

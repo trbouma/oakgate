@@ -2986,3 +2986,9 @@ msgstr "Aperçu textuel EPUB"
 
 msgid "EPUB preview unavailable. Download the original to read it."
 msgstr "Aperçu EPUB indisponible. Téléchargez le fichier original pour le lire."
+
+msgid "Anchor and signer details"
+msgstr "Détails de l’ancrage et du signataire"
+
+msgid "Witness details and signed event"
+msgstr "Détails du témoin et événement signé"
