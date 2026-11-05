@@ -353,3 +353,109 @@ Redis is deliberately ephemeral and need not be restored to recover wallets.
 Keep protected backups on a separate device: moving all active services to Lexar
 improves latency but does not itself create a backup. See the
 [backup inventory and restore constraints](008-identity-storage-backups.md).
+
+## Keycloak 26.8.1 security update on Beelink
+
+The standard image, custom NFC image and provider Maven dependency are updated
+from 26.8.0 to 26.8.1 together. No authentication flow, realm, user ID, secret,
+database URL or storage path changes are part of this patch. Build, image scans
+and live acceptance tests must run on Beelink; this update has not been validated
+by a local Mac Java build or container run.
+
+Read the [release notes](https://www.keycloak.org/2026/10/keycloak-2681-released)
+and [upgrade guide](https://www.keycloak.org/docs/26.8.1/upgrading/).
+In particular, enabled SMTP STARTTLS now requires a successful TLS upgrade;
+OIDC broker backchannel logout signatures are enforced. Test the configured
+email and identity-provider flows rather than weakening either check.
+
+### Prepare and build
+
+From the existing OakGate deployment directory, preserve any local tracked
+changes, then pull the committed update. Keep the existing `.env` and its
+`COMPOSE_FILE` overrides, including NFC and Keycloak PostgreSQL.
+
+```sh
+git status --short
+git pull --ff-only
+mountpoint /mnt/lexar
+docker compose config --quiet
+docker compose ps
+```
+
+Before replacing the running service, make and validate a fresh Keycloak database
+backup using the [backup and recovery plan](036-backup-and-recovery-plan.md).
+Preserve the matching configuration, secrets and previous image securely. Do not
+paste secrets or a complete resolved Compose configuration into support logs.
+Record the previous image ID for rollback planning:
+
+```sh
+docker inspect "$(docker compose ps -q keycloak)" --format '{{.Image}}'
+docker compose build --pull keycloak
+```
+
+This build fetches current base layers and runs the provider's Maven package
+phase, including its Java tests. It does not replace the running container.
+Stop here if it fails. Do not start an image whose provider build failed.
+
+### Replace only Keycloak
+
+After the backup is confirmed and the build succeeds:
+
+```sh
+docker compose up -d --no-deps --force-recreate --wait --wait-timeout 300 keycloak
+docker compose exec keycloak /opt/keycloak/bin/kc.sh --version
+docker compose ps
+docker compose logs --since=5m --tail=100 keycloak
+```
+
+Expect Keycloak 26.8.1 and a healthy service. App, POS, Redis and PostgreSQL
+remain running. Sign-in is briefly unavailable while Keycloak starts. Do not
+run `docker compose down`, re-import realms or recreate users for this update.
+
+### Acceptance checklist
+
+- [ ] Administration console opens with the existing administrator.
+- [ ] Google login reaches the same existing user's Acorn.
+- [ ] Email/password login reaches the same existing user's Acorn.
+- [ ] Verification and password-recovery emails arrive for a test account.
+- [ ] Password recovery completes for that test account.
+- [ ] NFC login works with an enrolled test card and its configured PIN policy.
+- [ ] Wrong PIN and revoked/unenrolled card attempts remain rejected where applicable.
+- [ ] Fresh normal login for recovery disclosure remains available.
+- [ ] App and POS remain healthy and existing wallet associations are unchanged.
+
+If acceptance fails, preserve logs and stop the rollout. Do not simply launch
+26.8.0 against a database modified by 26.8.1. Rollback requires the matching
+pre-upgrade database backup, image and configuration, with Keycloak stopped;
+follow the recovery plan and account for identity changes made after the backup.
+
+### Scan the images actually running
+
+Use Docker Scout on Beelink with an authenticated Docker account. First check
+`docker scout version`; install/enable the official Scout CLI if unavailable.
+Run `docker login` interactively if Scout requires authentication. Scans can send
+package metadata to Docker's vulnerability service. These commands inspect
+images and do not restart services or scan mounted wallet/database data.
+
+```sh
+(
+  set -eu
+  for service in app pos keycloak postgres sessions; do
+    container_id=$(docker compose ps -q "$service")
+    test -n "$container_id"
+    image_id=$(docker inspect "$container_id" --format '{{.Image}}')
+    printf '\nScanning %s: %s\n' "$service" "$image_id"
+    docker scout cves "local://$image_id" --only-severity critical,high
+  done
+)
+```
+
+Retain the image IDs, scan date, scanner version and reports. The severity filter
+is initial triage, not a clean bill of health; repeat without the filter for a
+complete severity report. Review applicability and fixed versions before
+changing images. A scan error or authentication failure is not a passed scan.
+Application images also contain Python packages; the custom Keycloak image
+contains Java dependencies. Runtime scans do not cover the discarded Maven and
+Python builder stages. Refresh scripts do not currently guarantee fresh base
+layers: use an explicit `docker compose build --pull` for planned base-image
+updates. Rebuilding alone does not update locked Python dependency versions.

@@ -99,7 +99,7 @@ docker compose logs --since=2m --tail=80 keycloak
 ```
 
 Wait for Keycloak to become healthy. The Dockerfile compiles and tests the provider
-against the same 26.8.0 version as the runtime. Future Keycloak upgrades must update
+against the same 26.8.1 version as the runtime. Future Keycloak upgrades must update
 the POM and image together and rerun tests. Do not copy an untested provider JAR
 across Keycloak versions. The ordinary app Docker build does not include Java.
 

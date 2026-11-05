@@ -31,7 +31,7 @@ docker compose up -d keycloak
 docker compose logs --tail=100 keycloak
 ```
 
-The image is pinned to `26.8.0`, the version shown in the official Docker getting-started guide consulted for this setup. The bind mount retains realms and users across container recreation. Docker stores this data directly in `/mnt/lexar/keycloak`, rather than a Docker-managed named volume.
+The image is pinned to `26.8.1`, including the security fixes described in the [release notes](https://www.keycloak.org/2026/10/keycloak-2681-released). The bind mount retains realms and users across container recreation. Docker stores this data directly in `/mnt/lexar/keycloak`, rather than a Docker-managed named volume.
 
 ## External storage
 
@@ -46,7 +46,7 @@ sudo chown 1000:0 /mnt/lexar/keycloak
 sudo chmod 700 /mnt/lexar/keycloak
 ```
 
-These commands target the directory you already created. The pinned Keycloak image runs as UID 1000, GID 0 ([image source](https://github.com/keycloak/keycloak/blob/26.8.0/quarkus/container/Dockerfile)). These host permissions assume standard rootful Docker without user-namespace remapping.
+These commands target the directory you already created. The pinned Keycloak image runs as UID 1000, GID 0 ([image source](https://github.com/keycloak/keycloak/blob/26.8.1/quarkus/container/Dockerfile)). These host permissions assume standard rootful Docker without user-namespace remapping.
 
 Compose uses `create_host_path: false` so it will fail if the directory is missing instead of creating it. This does not prove the external drive is mounted: ensure `/mnt/lexar` is mounted before starting Docker at boot as well. The storage filesystem must support normal Linux ownership and database file locking.
 

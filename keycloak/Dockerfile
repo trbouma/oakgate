@@ -3,5 +3,5 @@ WORKDIR /build
 COPY keycloak/nfc/pom.xml ./pom.xml
 COPY keycloak/nfc/src ./src
 RUN mvn -B -ntp package
-FROM quay.io/keycloak/keycloak:26.8.0
+FROM quay.io/keycloak/keycloak:26.8.1
 COPY --from=build --chown=keycloak:keycloak /build/target/oakgate-nfc-0.1.0.jar /opt/keycloak/providers/oakgate-nfc.jar

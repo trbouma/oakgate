@@ -5,9 +5,9 @@
 `compose.keycloak-postgres.yaml` is an explicit opt-in. The base deployment keeps
 H2 and `start-dev`; adding environment values does not activate the override.
 No service, database or user has been migrated by committing this configuration.
-The configuration has been rendered/checked locally, but the actual Keycloak
-26.8.0 export/import and authentication flows require a rehearsal on Beelink or
-an isolated staging host. Do not treat configuration checks as migration proof.
+The original migration configuration targeted Keycloak 26.8.0. Current images
+target 26.8.1; live export/import and authentication flows require a rehearsal on
+Beelink or an isolated staging host. Do not treat configuration checks as migration proof.
 
 Reuse the existing private PostgreSQL 17 container, with a **separate database**
 and dedicated login for Keycloak. Its tables and schema migrations are managed
@@ -18,8 +18,9 @@ Never point Keycloak at the `oakgate` database.
 
 The override uses production `start`, keeps HTTPS termination at Nginx and inherits
 the hostname, proxy headers, health check and NFC provider from the existing
-Compose files. Keep Keycloak **26.8.0**, its matching custom provider image and
-all client/backchannel secrets unchanged during this migration. `start` may
+Compose files. Keep the source Keycloak version, its matching custom provider
+image and all client/backchannel secrets unchanged during a database migration.
+Perform the separate [26.8.1 security update](028-keycloak-operations.md#keycloak-2681-security-update-on-beelink) only after that migration is verified. `start` may
 perform configuration augmentation; this is not a prebuilt `--optimized` image.
 
 ## Storage and secrets

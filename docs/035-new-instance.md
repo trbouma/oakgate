@@ -17,7 +17,7 @@ A healthy container is not proof that Google, email, NFC or payments work.
 
 The current implementation is tested with mocked container lifecycle operations,
 real Compose rendering, and fresh native PostgreSQL 14 provisioning. An actual
-PostgreSQL 17/Keycloak 26.8.0 container commissioning rehearsal is still required
+PostgreSQL 17/Keycloak 26.8.1 container commissioning rehearsal is still required
 on staging; no containers were built or run in the development environment.
 
 
