@@ -53,7 +53,9 @@ async def page(request, session, notice=None, status=200):
                 rows = await service.backend.wallet_messages(record['material'], resolver(request))
             rows = sorted(rows, key=lambda row: row['created_at'], reverse=True)
             for row in rows:
-                row['date'] = datetime.fromtimestamp(row['created_at'], timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
+                instant = datetime.fromtimestamp(row['created_at'], timezone.utc)
+                row['date'] = instant.strftime('%Y-%m-%d %H:%M UTC')
+                row['datetime'] = instant.isoformat()
         except Exception:
             failed = True
     return request.app.state.templates.TemplateResponse(request=request, name='messages.html', status_code=status,

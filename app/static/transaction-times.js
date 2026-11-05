@@ -1,4 +1,4 @@
-/* Display UTC transaction instants in the device timezone; never change stored data. */
+/* Display UTC transaction and receipt instants in the device timezone; never change stored data. */
 (() => {
   'use strict';
   let formatter;

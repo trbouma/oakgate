@@ -32,6 +32,9 @@ def test_wallet_messages_auth_csrf_and_replay(tmp_path):
             assert page.headers['cache-control'] == 'no-store'
             assert 'action="/account/messages"' not in page.text and 'name="recipient"' not in page.text
             assert 'message-row' in page.text
+            assert 'data-local-transaction-time datetime="1970-01-01T00:00:01+00:00"' in page.text
+            assert '1970-01-01 00:00 UTC</time>' in page.text
+            assert '/static/transaction-times.js' in page.text
             assert '&lt;script&gt;' in page.text and '<script>private' not in page.text
             assert 'Address does not match sender wallet' in page.text
             data = form(recipient='alice@oakgate.example',message='hello',submission=submission(service, owner))

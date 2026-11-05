@@ -11,7 +11,7 @@
 {% for message in messages %}<details class="message-row">
 <summary>
 <span class="message-preview">{{ message.content.splitlines()[0] if message.content.splitlines() else _('Receipt') }}</span>
-<span class="message-meta"><span class="message-sender">{% if message.claimed_sender and message.verification == 'verified' %}{{ message.claimed_sender }}{% else %}{{ message.sender[:12] }}…{% endif %}</span><time>{{ message.date }}</time></span>
+<span class="message-meta"><span class="message-sender">{% if message.claimed_sender and message.verification == 'verified' %}{{ message.claimed_sender }}{% else %}{{ message.sender[:12] }}…{% endif %}</span><time data-local-transaction-time{% if message.datetime %} datetime="{{ message.datetime }}"{% endif %}>{{ message.date }}</time></span>
 </summary>
 <div class="message-detail">
 <p class="message-content">{{ message.content }}</p>
