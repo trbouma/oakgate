@@ -5,7 +5,7 @@
 {% if message %}<p role="alert">{{ _(message) }}</p>{% endif %}
 {% if available is sameas false %}<p role="alert">{{ _('Acorn history is unavailable. The outcome remains uncertain. Contact the recipient or operator before making a replacement payment.') }}</p>{% endif %}
 {% if cards is not none %}<h2>{{ _('Recent Acorn transactions') }}</h2>
-{% for card in cards %}<article><p>{{ card.created }} · {{ _(card.direction) }} · {{ card.amount }}</p><p>{{ card.comment }}</p></article>{% else %}<p>{{ _('No recent entries were returned. This does not prove that the payment failed.') }}</p>{% endfor %}
+{% for card in cards %}<article><p><time data-local-transaction-time{% if card.datetime %} datetime="{{ card.datetime }}"{% endif %}>{{ card.created }}</time> · {{ _(card.direction) }} · {{ card.amount }}</p><p>{{ card.comment }}</p></article>{% else %}<p>{{ _('No recent entries were returned. This does not prove that the payment failed.') }}</p>{% endfor %}
 <p>{{ _('History can be incomplete or delayed. Matching amounts alone do not prove a payment outcome. Check with the recipient if needed.') }}</p>{% endif %}
 {% for item in items %}<article class="payment-review-item"><h2>{{ item.display_name or _('Cash') }} · {{ item.amount }} {{ item.display_unit or 'sats' }}</h2>
 <p>{{ item.date }}</p><p class="breakable">{{ item.address }}</p>

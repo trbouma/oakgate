@@ -13,7 +13,7 @@
 {% if history_error %}<p class="note" role="status">{{ _("Acorn transaction history is unavailable right now.") }} <a href="/account/clear-transactions?asset={{ asset }}">{{ _('Try again') }}</a>.</p>{% endif %}
 {% for entry in transactions %}
 <article class="transaction-card {{ entry.style }}">
-<div class="transaction-card-heading"><strong>{{ _(entry.direction) }}</strong><time{% if entry.datetime %} datetime="{{ entry.datetime }}"{% endif %}>{{ entry.created }}</time></div>
+<div class="transaction-card-heading"><strong>{{ _(entry.direction) }}</strong><time data-local-transaction-time{% if entry.datetime %} datetime="{{ entry.datetime }}"{% endif %}>{{ entry.created }}</time></div>
 <p class="transaction-amount">{% if entry.amount is not none %}{{ entry.sign }}{{ '{:,}'.format(entry.amount) }} <span>{{ item.display_unit }}</span>{% else %}{{ _('Amount unavailable') }}{% endif %}</p>
 {% if entry.comment %}<p class="transaction-note">{{ entry.comment }}</p>{% endif %}
 </article>
